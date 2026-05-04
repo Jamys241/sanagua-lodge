@@ -403,7 +403,7 @@
 <body>
 
 <header>
-  <h1>📋 Cotizaciones</h1>
+  <h1>📋 Sanagua Lodge - Cotizaciones</h1>
   <span id="quote-counter">Cargando...</span>
 </header>
 
@@ -456,7 +456,7 @@
       <div class="add-product-form">
         <div class="form-group">
           <label>Nombre del producto</label>
-          <input type="text" id="new-product-name" placeholder="Ej: Servicio de diseño">
+          <input type="text" id="new-product-name" placeholder="Ej: Servicio">
         </div>
         <div class="form-group">
           <label>Precio (USD)</label>
@@ -466,6 +466,7 @@
           <label>¿Aplica ITBMS?</label>
           <select id="new-product-itbms">
             <option value="true">Sí (7%)</option>
+            <option value="true">Sí (10%)</option>
             <option value="false">No</option>
           </select>
         </div>
@@ -519,6 +520,7 @@
         <span class="toggle-slider"></span>
       </label>
       <span style="font-size:0.9rem; font-weight:500;">Aplicar ITBMS (7%) a los productos que lo requieren</span>
+      <span style="font-size:0.9rem; font-weight:500;">Aplicar ITBMS (10%) a los productos que lo requieren</span>
     </div>
 
     <div class="form-group" style="margin-bottom:16px;">
@@ -529,6 +531,7 @@
     <div class="totals-box">
       <div class="totals-row"><span>Subtotal</span><span id="t-subtotal">$0.00</span></div>
       <div class="totals-row"><span>ITBMS (7%)</span><span id="t-itbms">$0.00</span></div>
+      <div class="totals-row"><span>ITBMS (10%)</span><span id="t-itbms">$0.00</span></div>
       <div class="totals-row total"><span>TOTAL</span><span id="t-total">$0.00</span></div>
     </div>
 
