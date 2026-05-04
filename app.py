@@ -169,15 +169,36 @@ def _build_pdf(buffer, data, quote_num):
     rows = [[th('Descripción'), th('Cant.'), th('P. Unitario'), th('ITBMS (7%)'), th('ITBMS (10%)') th('Subtotal')]]
 
     items = data.get('items', [])
-    for it in items:
-        itbms_amt = it.get('itbms_amount', 0)
-        rows.append([
-            td(it.get('desc', '')),
-            td(str(it.get('qty', 1)), TA_CENTER),
-            td(f"${it.get('price', 0):.2f}", TA_RIGHT),
-            td(f"${itbms_amt:.2f}", TA_RIGHT),
-            td(f"${it.get('subtotal', 0) + itbms_amt:.2f}", TA_RIGHT),
-        ])
+
+subtotal_general = 0
+itbms_total = 0
+
+for it in items:
+    precio = it.get('price', 0)
+    cantidad = it.get('qty', 1)
+    exento = it.get('exento', False)
+    tasa = it.get('itbms_rate', 0.07)  # ← aquí decides 7% o 10%
+
+    subtotal = precio * cantidad
+
+    # ITBMS
+    if exento:
+        itbms_amt = 0
+    else:
+        itbms_amt = subtotal * tasa
+
+    total_linea = subtotal + itbms_amt
+
+    subtotal_general += subtotal
+    itbms_total += itbms_amt
+
+    rows.append([
+        td(it.get('desc', '')),
+        td(str(cantidad), TA_CENTER),
+        td(f"${precio:.2f}", TA_RIGHT),
+        td(f"${itbms_amt:.2f}", TA_RIGHT),
+        td(f"${total_linea:.2f}", TA_RIGHT),
+    ])
 
     col_widths = [col_desc, col_qty, col_price, col_itbms, col_sub]
     items_table = Table(rows, colWidths=col_widths, repeatRows=1)
