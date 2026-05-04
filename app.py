@@ -166,7 +166,7 @@ def _build_pdf(buffer, data, quote_num):
     def td(txt, align=TA_LEFT):
         return Paragraph(txt, style('td', fontSize=9, alignment=align))
 
-    rows = [[th('Descripción'), th('Cant.'), th('P. Unitario'), th('ITBMS (7%)'), th('Subtotal')]]
+    rows = [[th('Descripción'), th('Cant.'), th('P. Unitario'), th('ITBMS (7%)'), th('ITBMS (10%)') th('Subtotal')]]
 
     items = data.get('items', [])
     for it in items:
