@@ -108,10 +108,10 @@ def _build_pdf(buffer, data, quote_num):
         return ParagraphStyle(name, parent=getSampleStyleSheet()['Normal'], **kw)
 
     # ── EMPRESA + NÚMERO ───────────────────────────────────────────────────────
-    company_name  = "Mi Empresa S.A."
-    company_ruc   = "RUC: 000-000-00"
-    company_tel   = "Tel: +507 0000-0000"
-    company_email = "info@miempresa.com"
+    company_name  = "Sanagua Lodge S.A."
+    company_ruc   = "RUC: 155761744-2-2025"
+    company_tel   = "Tel: +507 6166-0114"
+    company_email = "sanagualodge@gmail.com"
 
     hdr = Table([[
         Paragraph(f'<font color="#c8541a"><b>{company_name}</b></font>',
