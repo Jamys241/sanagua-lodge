@@ -108,10 +108,10 @@ def _build_pdf(buffer, data, quote_num):
         return ParagraphStyle(name, parent=getSampleStyleSheet()['Normal'], **kw)
 
     # ── EMPRESA + NÚMERO ───────────────────────────────────────────────────────
-    company_name  = "Sanagua Lodge, S.A."
-    company_ruc   = "RUC: 155761744-2-2025"
-    company_tel   = "Tel: +507 6166-0114"
-    company_email = "sanagualodge@gmail.com"
+    company_name  = "Mi Empresa S.A."
+    company_ruc   = "RUC: 000-000-00"
+    company_tel   = "Tel: +507 0000-0000"
+    company_email = "info@miempresa.com"
 
     hdr = Table([[
         Paragraph(f'<font color="#c8541a"><b>{company_name}</b></font>',
@@ -263,13 +263,18 @@ def _build_pdf(buffer, data, quote_num):
     if itbms10_total > 0 or has_10:
         tot_data.append(tot_row('ITBMS 10%:', f'${itbms10_total:.2f}', color=RED10))
 
+    abono_50 = data.get('abono_50', total * 0.5)
     tot_data.append(tot_row('TOTAL:', f'${total:.2f}', color=BRAND, bold=True, size=11))
+    tot_data.append(tot_row('Abono requerido (50%):', f'${abono_50:.2f}', color=BLUE, bold=True, size=10))
 
     tc = [W*0.52, W*0.28, W*0.20]
     tot_table = Table(tot_data, colWidths=tc)
     disc_row_idx = 1 if (disc_pct and disc_pct > 0) else None
     ts = [
-        ('LINEABOVE',    (1, len(tot_data)-1), (-1, len(tot_data)-1), 1.5, BRAND),
+        ('LINEABOVE',    (1, len(tot_data)-2), (-1, len(tot_data)-2), 1.5, BRAND),
+        ('LINEABOVE',    (1, len(tot_data)-1), (-1, len(tot_data)-1), 0.5, BLUE),
+        ('BACKGROUND',   (0, len(tot_data)-1), (-1, len(tot_data)-1), colors.HexColor('#e8f0fa')),
+        ('ROUNDEDCORNERS', [4]),
         ('TOPPADDING',   (0,0),(-1,-1), 5),
         ('BOTTOMPADDING',(0,0),(-1,-1), 5),
         ('RIGHTPADDING', (0,0),(-1,-1), 4),
