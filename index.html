@@ -1296,9 +1296,11 @@
     const cardsHTML = `
       <div class="hist-cards">
         ${list.map((q,i) => {
-          const total = Number(q.total||0);
-          const abono = Number(q.abono_pagado||0);
-          const saldo = total - abono;
+          const total      = Number(q.total||0);
+          const abono      = Number(q.abono_pagado||0);
+          const cancelacion= Number(q.cancelacion_pagada||0);
+          const recibido   = abono + cancelacion;
+          const saldo      = Math.max(0, total - recibido);
           return `
           <div class="hist-card">
             <div class="hist-card-head">
@@ -1316,8 +1318,8 @@
               </div>
               <div style="text-align:right;flex-shrink:0;">
                 <div class="hist-card-total">$${total.toFixed(2)}</div>
-                <div style="font-size:.74rem;color:var(--blue);font-weight:600">Abono: $${abono.toFixed(2)}</div>
-                <div style="font-size:.74rem;color:var(--accent);font-weight:600">Saldo: $${saldo.toFixed(2)}</div>
+                <div style="font-size:.74rem;color:var(--blue);font-weight:600">Recibido: $${recibido.toFixed(2)}</div>
+                <div style="font-size:.74rem;color:${saldo===0?'var(--success)':'var(--accent)'};font-weight:600">Saldo: $${saldo.toFixed(2)}</div>
               </div>
             </div>
             <div class="hist-card-actions">
@@ -1989,8 +1991,11 @@
     evts.forEach(q => {
       const idx   = allHistory.indexOf(q);
       const label = calEventLabel(q);
-      const total = q.total || 0;
-      const abono = q.abono_pagado || 0;
+      const total      = q.total || 0;
+      const abono      = q.abono_pagado || 0;
+      const cancelacion= q.cancelacion_pagada || 0;
+      const recibido   = abono + cancelacion;
+      const saldo      = Math.max(0, total - recibido);
       const dc    = dotColor(q);
       const estado = q.estado || 'Pendiente';
       const estadoBadge = estado === 'Confirmada'  ? `<span class="badge s-conf">${estado}</span>`
@@ -2004,7 +2009,7 @@
           <div class="cal-dia-info">
             <div class="cal-dia-name">${label}</div>
             <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
-            <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Abono: $${abono.toFixed(2)} · Saldo: $${(total-abono).toFixed(2)}</div>
+            <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
           </div>
           ${estadoBadge}
         </div>`;
