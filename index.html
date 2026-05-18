@@ -611,11 +611,57 @@
         </div>
         <div class="form-group">
           <label>Abono recibido (USD)</label>
-          <input type="number" id="edit-abono" placeholder="0.00" step="0.01" min="0">
+          <input type="number" id="edit-abono" placeholder="0.00" step="0.01" min="0" oninput="updateResumen()">
+        </div>
+        <div class="form-group">
+          <label>Cancelación recibida (USD)</label>
+          <input type="number" id="edit-cancelacion" placeholder="0.00" step="0.01" min="0" oninput="updateResumen()">
         </div>
         <div class="form-group full">
           <label>Notas internas / Observaciones</label>
           <textarea id="edit-notas" placeholder="Observaciones internas sobre esta reservación..." style="min-height:80px;"></textarea>
+        </div>
+      </div>
+
+      <!-- Resumen financiero dinámico -->
+      <div id="resumen-financiero" style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:9px;overflow:hidden;">
+        <div style="background:var(--ink);color:white;padding:10px 16px;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">
+          Resumen de Pagos
+        </div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-muted);">
+            <span>Total de la reserva</span>
+            <strong id="rf-total" style="color:var(--ink)">$0.00</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-muted);">
+            <span>Abono requerido (50%)</span>
+            <span id="rf-abono50" style="color:var(--blue);font-weight:600;">$0.00</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:2px 0;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-muted);">
+            <span>Abono recibido</span>
+            <span id="rf-abono" style="color:var(--success);font-weight:600;">$0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-muted);">
+            <span>Cancelación recibida</span>
+            <span id="rf-cancelacion" style="color:var(--success);font-weight:600;">$0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--ink-muted);">
+            <span>Total recibido</span>
+            <span id="rf-recibido" style="color:var(--success);font-weight:700;">$0.00</span>
+          </div>
+          <div style="height:1.5px;background:var(--border);margin:2px 0;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;">
+            <span>Saldo pendiente</span>
+            <span id="rf-saldo" style="color:var(--accent);">$0.00</span>
+          </div>
+          <!-- Barra de progreso -->
+          <div style="margin-top:4px;">
+            <div style="height:6px;background:var(--border);border-radius:6px;overflow:hidden;">
+              <div id="rf-barra" style="height:100%;background:var(--success);border-radius:6px;width:0%;transition:width .3s;"></div>
+            </div>
+            <div id="rf-pct" style="font-size:.72rem;color:var(--ink-muted);margin-top:4px;text-align:right;">0% pagado</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1315,9 +1361,11 @@
     renderEditItems(q.items || []);
 
     // Reservación
-    document.getElementById('edit-estado').value   = q.estado || 'Pendiente';
-    document.getElementById('edit-abono').value    = q.abono_pagado || 0;
-    document.getElementById('edit-notas').value    = q.notas_internas || '';
+    document.getElementById('edit-estado').value      = q.estado || 'Pendiente';
+    document.getElementById('edit-abono').value       = q.abono_pagado || '';
+    document.getElementById('edit-cancelacion').value = q.cancelacion_pagada || '';
+    document.getElementById('edit-notas').value       = q.notas_internas || '';
+    updateResumen();
 
     document.getElementById('edit-modal').classList.add('open');
   }
@@ -1380,6 +1428,28 @@
     currentQuote = null;
   }
 
+  function updateResumen() {
+    if (!currentQuote) return;
+    const total      = Number(currentQuote.total || 0);
+    const abono50    = Number(currentQuote.abono_50 || total * .5 || 0);
+    const abono      = parseFloat(document.getElementById('edit-abono').value) || 0;
+    const cancelacion= parseFloat(document.getElementById('edit-cancelacion').value) || 0;
+    const recibido   = abono + cancelacion;
+    const saldo      = Math.max(0, total - recibido);
+    const pct        = total > 0 ? Math.min(100, Math.round(recibido / total * 100)) : 0;
+
+    document.getElementById('rf-total').textContent      = `$${total.toFixed(2)}`;
+    document.getElementById('rf-abono50').textContent    = `$${abono50.toFixed(2)}`;
+    document.getElementById('rf-abono').textContent      = `$${abono.toFixed(2)}`;
+    document.getElementById('rf-cancelacion').textContent= `$${cancelacion.toFixed(2)}`;
+    document.getElementById('rf-recibido').textContent   = `$${recibido.toFixed(2)}`;
+    document.getElementById('rf-saldo').textContent      = `$${saldo.toFixed(2)}`;
+    document.getElementById('rf-saldo').style.color      = saldo === 0 ? 'var(--success)' : 'var(--accent)';
+    document.getElementById('rf-barra').style.width      = `${pct}%`;
+    document.getElementById('rf-barra').style.background = pct >= 100 ? 'var(--success)' : pct >= 50 ? 'var(--blue)' : 'var(--accent)';
+    document.getElementById('rf-pct').textContent        = `${pct}% pagado${pct >= 100 ? ' ✅' : ''}`;
+  }
+
   async function saveEdit() {
     if(!currentQuote) return;
     // Recalcular totales con los ítems editados
@@ -1391,11 +1461,12 @@
     const total    = sub - discAmt + i7 + i10;
 
     const updates = {
-      estado:         document.getElementById('edit-estado').value,
-      abono_pagado:   parseFloat(document.getElementById('edit-abono').value)||0,
-      notas_internas: document.getElementById('edit-notas').value,
-      visit_date:     document.getElementById('edit-visit-date').value,
-      categoria:      document.getElementById('edit-categoria').value,
+      estado:              document.getElementById('edit-estado').value,
+      abono_pagado:        parseFloat(document.getElementById('edit-abono').value)||0,
+      cancelacion_pagada:  parseFloat(document.getElementById('edit-cancelacion').value)||0,
+      notas_internas:      document.getElementById('edit-notas').value,
+      visit_date:          document.getElementById('edit-visit-date').value,
+      categoria:           document.getElementById('edit-categoria').value,
       client: {
         name:    document.getElementById('edit-client-name').value.trim(),
         ruc:     document.getElementById('edit-client-ruc').value.trim(),
