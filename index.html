@@ -922,9 +922,23 @@
   document.getElementById('quote-valid').value = localDateStr(valid);
 
   // ── Init: carga en paralelo contador y productos desde el backend ────────────
+  // Fetch con timeout de 8 segundos para no colgar la página
+  async function safeFetch(url, opts={}) {
+    const ctrl = new AbortController();
+    const tid = setTimeout(()=>ctrl.abort(), 8000);
+    try {
+      const r = await fetch(url, {...opts, signal: ctrl.signal});
+      clearTimeout(tid);
+      return r;
+    } catch(e) {
+      clearTimeout(tid);
+      throw e;
+    }
+  }
+
   async function loadCounter() {
     try {
-      const r = await fetch(`${BACKEND_URL}/counter`);
+      const r = await safeFetch(`${BACKEND_URL}/counter`);
       const d = await r.json();
       document.getElementById('quote-counter').textContent = `Próxima: #${String(d.next).padStart(4,'0')}`;
     } catch { document.getElementById('quote-counter').textContent = 'Sin conexión'; }
@@ -932,10 +946,9 @@
 
   async function loadProducts() {
     try {
-      const r = await fetch(`${BACKEND_URL}/products`);
+      const r = await safeFetch(`${BACKEND_URL}/products`);
       products = await r.json();
     } catch {
-      // Si no hay backend, usar localStorage como fallback
       products = JSON.parse(localStorage.getItem('cot_products') || '[]');
       if (!products.length) {
         products = [
@@ -962,10 +975,19 @@
     } catch { /* fallo silencioso, ya guardó en localStorage */ }
   }
 
-  Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]).then(() => {
-    loadHistory().then(() => renderCalendario());
-  });
+  // Init — esperar DOM listo antes de renderizar calendario
+  document.addEventListener('DOMContentLoaded', () => {});
   setDiscount('none');
+  // Cargar datos en background, mostrar calendario cuando lleguen
+  (async () => {
+    try {
+      await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
+    } catch(e) { console.warn('Init partial error:', e); }
+    try {
+      await loadHistory();
+    } catch(e) { console.warn('History load error:', e); }
+    renderCalendario();
+  })();
 
   // ── Empresa ─────────────────────────────────────────────────────────────────
   let empresaData = {
@@ -977,7 +999,7 @@
 
   async function loadEmpresa() {
     try {
-      const r = await fetch(`${BACKEND_URL}/empresa`);
+      const r = await safeFetch(`${BACKEND_URL}/empresa`);
       if (!r.ok) return;
       const d = await r.json();
       if (d.nombre) empresaData = d;
@@ -1018,7 +1040,7 @@
 
   async function loadLogo() {
     try {
-      const r = await fetch(`${BACKEND_URL}/logo`);
+      const r = await safeFetch(`${BACKEND_URL}/logo`);
       if (!r.ok) return;
       const d = await r.json();
       if (d.logo) { logoBase64 = d.logo; _applyLogoPreview(d.logo); }
@@ -1347,7 +1369,7 @@
   async function loadHistory() {
     document.getElementById('history-container').innerHTML='<div class="empty-hist">Cargando...</div>';
     try {
-      const r = await fetch(`${BACKEND_URL}/history`);
+      const r = await safeFetch(`${BACKEND_URL}/history`);
       allHistory = await r.json();
       renderHistory(allHistory);
     } catch { document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>'; }
@@ -2174,7 +2196,7 @@
 
   async function loadEvents() {
     try {
-      const r = await fetch(`${BACKEND_URL}/events`);
+      const r = await safeFetch(`${BACKEND_URL}/events`);
       if (!r.ok) return;
       allEvents = await r.json();
     } catch { allEvents = []; }
