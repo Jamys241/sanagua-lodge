@@ -23,8 +23,9 @@ JSONBIN_API_KEY = os.environ.get('JSONBIN_API_KEY', '')
 JSONBIN_BIN_ID  = os.environ.get('JSONBIN_BIN_ID', '')
 JSONBIN_HIST_ID = os.environ.get('JSONBIN_HIST_ID', '')
 JSONBIN_PROD_ID = os.environ.get('JSONBIN_PROD_ID', '')
-JSONBIN_LOGO_ID = os.environ.get('JSONBIN_LOGO_ID', '')
-JSONBIN_EMP_ID  = os.environ.get('JSONBIN_EMP_ID', '')
+JSONBIN_LOGO_ID   = os.environ.get('JSONBIN_LOGO_ID', '')
+JSONBIN_EMP_ID    = os.environ.get('JSONBIN_EMP_ID', '')
+JSONBIN_EVENTS_ID = os.environ.get('JSONBIN_EVENTS_ID', '')
 JSONBIN_BASE    = 'https://api.jsonbin.io/v3/b'
 
 HEADERS_R = {'X-Master-Key': JSONBIN_API_KEY}
@@ -168,6 +169,19 @@ def update_empresa():
     save_empresa(data)
     return jsonify({'ok': True})
 
+# Eventos manuales
+@app.route('/events', methods=['GET'])
+def get_events():
+    return jsonify(load_events())
+
+@app.route('/events', methods=['PUT'])
+def update_events():
+    data = request.get_json()
+    if not isinstance(data, list):
+        return jsonify({'error': 'Expected a list'}), 400
+    save_events(data)
+    return jsonify({'ok': True})
+
 # Historial CRUD
 @app.route('/history', methods=['GET'])
 def get_history():
@@ -281,6 +295,25 @@ def save_empresa(data):
         return
     try:
         req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_EMP_ID}', headers=HEADERS_W, json=data, timeout=5)
+    except:
+        pass
+
+# ── Eventos manuales ───────────────────────────────────────────────────────────
+def load_events():
+    if not JSONBIN_API_KEY or not JSONBIN_EVENTS_ID:
+        return []
+    try:
+        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_EVENTS_ID}/latest', headers=HEADERS_R, timeout=5)
+        return r.json().get('record', {}).get('events', [])
+    except:
+        return []
+
+def save_events(events):
+    if not JSONBIN_API_KEY or not JSONBIN_EVENTS_ID:
+        return
+    try:
+        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_EVENTS_ID}', headers=HEADERS_W,
+                    json={'events': events}, timeout=5)
     except:
         pass
 

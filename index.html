@@ -510,6 +510,78 @@
 
 </div><!-- /container -->
 
+<!-- ═══════════════ MODAL NUEVO EVENTO ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="event-modal-title">📅 Nuevo Evento</h2>
+      <button class="modal-close" onclick="closeEventModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <div class="modal-section-title">Datos del cliente</div>
+        <div class="form-grid">
+          <div class="form-group full"><label>Nombre / Empresa</label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
+          <div class="form-group"><label>RUC / Cédula</label><input type="text" id="ev-client-ruc" placeholder="8-888-8888"></div>
+          <div class="form-group"><label>Teléfono</label><input type="tel" id="ev-client-phone" placeholder="+507 6000-0000"></div>
+          <div class="form-group full"><label>Correo electrónico</label><input type="email" id="ev-client-email" placeholder="correo@ejemplo.com"></div>
+          <div class="form-group full"><label>Dirección</label><input type="text" id="ev-client-address" placeholder="Ciudad de Panamá"></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Detalles del evento</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="ev-categoria">
+              <option value="">— Sin categoría —</option>
+              <option value="Pasadia Sencilla">Pasadia Sencilla</option>
+              <option value="Pasadia Completa">Pasadia Completa</option>
+              <option value="Camping Propio">Camping Propio</option>
+              <option value="Camping Suministro">Camping Suministro</option>
+              <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
+              <option value="Cabaña Ocelot">Cabaña Ocelot</option>
+              <option value="Cabaña Motmot">Cabaña Motmot</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="ev-estado">
+              <option value="Pendiente">Pendiente</option>
+              <option value="Confirmada">Confirmada</option>
+              <option value="Aplazada">Aplazada</option>
+              <option value="Cancelada">Cancelada</option>
+              <option value="Completada">Completada</option>
+            </select>
+          </div>
+          <div class="form-group"><label>📅 Fecha de visita</label><input type="date" id="ev-visit-date"></div>
+          <div class="form-group"><label>Total (USD)</label><input type="number" id="ev-total" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
+          <div class="form-group"><label>Abono recibido (USD)</label><input type="number" id="ev-abono" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
+          <div class="form-group"><label>Cancelación recibida (USD)</label><input type="number" id="ev-cancelacion" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
+          <div class="form-group full"><label>Notas</label><textarea id="ev-notas" placeholder="Observaciones..." style="min-height:70px;"></textarea></div>
+        </div>
+
+        <!-- Resumen financiero del evento -->
+        <div id="ev-resumen" style="margin-top:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:none;">
+          <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:3px 0;color:var(--muted);"><span>Total</span><strong id="evr-total" style="color:var(--ink)">$0.00</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:3px 0;color:var(--muted);"><span>Abono 50%</span><span id="evr-abono50" style="color:var(--blue);font-weight:600">$0.00</span></div>
+          <div style="height:1px;background:var(--border);margin:6px 0;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:3px 0;color:var(--muted);"><span>Total recibido</span><span id="evr-recibido" style="color:var(--success);font-weight:600">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.95rem;font-weight:700;padding:6px 0 0;border-top:1.5px solid var(--border);margin-top:6px;"><span>Saldo pendiente</span><span id="evr-saldo" style="color:var(--accent)">$0.00</span></div>
+        </div>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;">🗑 Eliminar</button>
+        <button class="btn btn-outline" onclick="closeEventModal()">Cancelar</button>
+        <button class="btn btn-green" onclick="saveEvent()">💾 Guardar evento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════ MODAL EDICIÓN ════════════════════════════════════════════ -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
@@ -686,10 +758,13 @@
         <button class="cal-nav-btn" onclick="calNav(1)">&#8250;</button>
         <button class="cal-nav-btn" onclick="calToday()" style="font-size:.75rem;padding:5px 10px;">Hoy</button>
       </div>
-      <div class="cal-view-btns">
-        <button class="cal-view-btn active" onclick="setCalView('mes',this)">Mes</button>
-        <button class="cal-view-btn" onclick="setCalView('semana',this)">Semana</button>
-        <button class="cal-view-btn" onclick="setCalView('dia',this)">Día</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-accent btn-sm" onclick="openNewEvent()" style="font-size:.82rem;">+ Nuevo evento</button>
+        <div class="cal-view-btns">
+          <button class="cal-view-btn active" onclick="setCalView('mes',this)">Mes</button>
+          <button class="cal-view-btn" onclick="setCalView('semana',this)">Semana</button>
+          <button class="cal-view-btn" onclick="setCalView('dia',this)">Día</button>
+        </div>
       </div>
     </div>
     <!-- Leyenda de estados -->
@@ -699,6 +774,7 @@
       <span><span class="cal-legend-dot" style="background:#2d7a4f"></span>Completada</span>
       <span><span class="cal-legend-dot" style="background:#e09000"></span>Aplazada</span>
       <span><span class="cal-legend-dot" style="background:#888"></span>Cancelada</span>
+      <span><span class="cal-legend-dot" style="background:#c8541a;outline:2px dashed #c8541a;outline-offset:2px;border-radius:50%"></span>Evento manual ✦</span>
     </div>
     <div id="cal-body"></div>
   </div>
@@ -848,7 +924,7 @@
     } catch { /* fallo silencioso, ya guardó en localStorage */ }
   }
 
-  Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa()]).then(() => {
+  Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]).then(() => {
     loadHistory().then(() => renderCalendario());
   });
   setDiscount('none');
@@ -1007,7 +1083,7 @@
     });
     if (name === 'historial') loadHistory();
     if (name === 'resumen')   loadHistory().then(() => renderResumen());
-    if (name === 'calendario') loadHistory().then(() => renderCalendario());
+    if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -1661,14 +1737,14 @@
 
   function resumenGoToday() { resumenDate = new Date(); renderResumen(); }
 
-  function filterByPeriod(quotes) {
+  function filterByPeriod(items) {
     const y = resumenDate.getFullYear();
     const m = resumenDate.getMonth();
     const d = resumenDate.getDate();
-
-    return quotes.filter(q => {
-      if (!q.date) return false;
-      const qd = new Date(q.date + 'T12:00:00');
+    return items.filter(q => {
+      const df = (q.date || q.visit_date || q.created_at || '').slice(0,10);
+      if (!df) return false;
+      const qd = new Date(df + 'T12:00:00');
       if (resumenView === 'dia')  return qd.getFullYear()===y && qd.getMonth()===m && qd.getDate()===d;
       if (resumenView === 'mes')  return qd.getFullYear()===y && qd.getMonth()===m;
       if (resumenView === 'anio') return qd.getFullYear()===y;
@@ -1704,12 +1780,14 @@
 
   function renderResumen() {
     document.getElementById('resumen-periodo-label').textContent = periodoLabel();
-    const filtered = filterByPeriod(allHistory);
+    const filteredQ = filterByPeriod(allHistory);
+    const filteredE = filterByPeriod(allEvents);
+    const filtered  = [...filteredQ, ...filteredE];
 
     // ── KPIs ─────────────────────────────────────────────────────────────
     const total    = filtered.reduce((s,q) => s + (q.total||0), 0);
-    const abonos   = filtered.reduce((s,q) => s + (q.abono_pagado||0), 0);
-    const saldo    = total - abonos;
+    const abonos   = filtered.reduce((s,q) => s + (q.abono_pagado||0) + (q.cancelacion_pagada||0), 0);
+    const saldo    = Math.max(0, total - abonos);
     const nConf    = filtered.filter(q => q.estado==='Confirmada').length;
     const nPend    = filtered.filter(q => (q.estado||'Pendiente')==='Pendiente').length;
     const nAplz    = filtered.filter(q => q.estado==='Aplazada').length;
@@ -1929,10 +2007,10 @@
     for (let d = 1; d <= daysInM; d++) {
       const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const isT = ds === todayStr;
-      const evts = quotesForDate(ds);
+      const evts = allItemsForDate(ds);
       html += `<td onclick="calGoDay('${ds}')">`;
       html += `<span class="cal-day-num${isT?' is-today':''}">${d}</span>`;
-      evts.forEach(q => { html += calEventHTML(q); });
+      evts.forEach(q => { html += itemEventHTML(q); });
       html += `</td>`;
       cell++;
       if (cell % 7 === 0 && d < daysInM) html += `</tr><tr>`;
@@ -1969,9 +2047,9 @@
       const d  = new Date(sun); d.setDate(sun.getDate() + i);
       const ds = localDateStr(d);
       const isT = ds === todayStr;
-      const evts = quotesForDate(ds);
+      const evts = allItemsForDate(ds);
       html += `<td class="${isT?'is-today-col':''}">`;
-      evts.forEach(q => { html += calEventHTML(q); });
+      evts.forEach(q => { html += itemEventHTML(q); });
       html += `</td>`;
     }
     html += `</tr></tbody></table></div>`;
@@ -1983,7 +2061,7 @@
     const ds = localDateStr(calDate);
     document.getElementById('cal-title').textContent =
       `${CAL_DIAS_L[calDate.getDay()]}, ${calDate.getDate()} de ${CAL_MESES[calDate.getMonth()]} de ${calDate.getFullYear()}`;
-    const evts = quotesForDate(ds);
+    const evts = allItemsForDate(ds);
 
     if (!evts.length) {
       document.getElementById('cal-body').innerHTML =
@@ -2021,6 +2099,176 @@
     });
     html += `</div>`;
     document.getElementById('cal-body').innerHTML = html;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // EVENTOS MANUALES
+  // ══════════════════════════════════════════════════════════════════════
+  let allEvents   = [];   // eventos manuales cargados
+  let editingEvent= null; // evento en edición (null = nuevo)
+
+  async function loadEvents() {
+    try {
+      const r = await fetch(`${BACKEND_URL}/events`);
+      if (!r.ok) return;
+      allEvents = await r.json();
+    } catch { allEvents = []; }
+  }
+
+  async function saveEventToServer(ev) {
+    const r = await fetch(`${BACKEND_URL}/events`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(allEvents)
+    });
+    if (!r.ok) throw new Error();
+  }
+
+  // Abrir modal para crear un nuevo evento
+  function openNewEvent(prefillDate) {
+    editingEvent = null;
+    document.getElementById('event-modal-title').textContent = '📅 Nuevo Evento';
+    document.getElementById('ev-delete-btn').style.display = 'none';
+    // Limpiar campos
+    ['ev-client-name','ev-client-ruc','ev-client-phone','ev-client-email',
+     'ev-client-address','ev-total','ev-abono','ev-cancelacion','ev-notas'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ev-categoria').value = '';
+    document.getElementById('ev-estado').value    = 'Confirmada';
+    document.getElementById('ev-visit-date').value= prefillDate || localDateStr(calDate);
+    document.getElementById('ev-resumen').style.display = 'none';
+    document.getElementById('event-modal').classList.add('open');
+  }
+
+  // Abrir modal para editar un evento existente
+  function openEditEvent(evId) {
+    const ev = allEvents.find(e => e.id === evId);
+    if (!ev) return;
+    editingEvent = ev;
+    document.getElementById('event-modal-title').textContent = '📅 Editar Evento';
+    document.getElementById('ev-delete-btn').style.display = 'block';
+    document.getElementById('ev-client-name').value    = ev.client?.name    || '';
+    document.getElementById('ev-client-ruc').value     = ev.client?.ruc     || '';
+    document.getElementById('ev-client-phone').value   = ev.client?.phone   || '';
+    document.getElementById('ev-client-email').value   = ev.client?.email   || '';
+    document.getElementById('ev-client-address').value = ev.client?.address || '';
+    document.getElementById('ev-categoria').value = ev.categoria || '';
+    document.getElementById('ev-estado').value    = ev.estado    || 'Confirmada';
+    document.getElementById('ev-visit-date').value= ev.visit_date || '';
+    document.getElementById('ev-total').value      = ev.total      || '';
+    document.getElementById('ev-abono').value      = ev.abono_pagado    || '';
+    document.getElementById('ev-cancelacion').value= ev.cancelacion_pagada || '';
+    document.getElementById('ev-notas').value      = ev.notas || '';
+    updateEvResumen();
+    document.getElementById('event-modal').classList.add('open');
+  }
+
+  function closeEventModal() {
+    document.getElementById('event-modal').classList.remove('open');
+    editingEvent = null;
+  }
+
+  function updateEvResumen() {
+    const total    = parseFloat(document.getElementById('ev-total').value)      || 0;
+    const abono    = parseFloat(document.getElementById('ev-abono').value)      || 0;
+    const cancel   = parseFloat(document.getElementById('ev-cancelacion').value)|| 0;
+    const recibido = abono + cancel;
+    const saldo    = Math.max(0, total - recibido);
+    const box = document.getElementById('ev-resumen');
+    box.style.display = total > 0 ? 'block' : 'none';
+    document.getElementById('evr-total').textContent    = `$${total.toFixed(2)}`;
+    document.getElementById('evr-abono50').textContent  = `$${(total*.5).toFixed(2)}`;
+    document.getElementById('evr-recibido').textContent = `$${recibido.toFixed(2)}`;
+    document.getElementById('evr-saldo').textContent    = `$${saldo.toFixed(2)}`;
+    document.getElementById('evr-saldo').style.color    = saldo===0?'var(--success)':'var(--accent)';
+  }
+
+  async function saveEvent() {
+    const name = document.getElementById('ev-client-name').value.trim();
+    if (!name) { showToast('Ingresa el nombre del cliente.', 'error'); return; }
+    const total    = parseFloat(document.getElementById('ev-total').value)||0;
+    const abono    = parseFloat(document.getElementById('ev-abono').value)||0;
+    const cancel   = parseFloat(document.getElementById('ev-cancelacion').value)||0;
+
+    const ev = {
+      id:         editingEvent ? editingEvent.id : `ev_${Date.now()}`,
+      type:       'event',  // distinguir de cotizaciones
+      client: {
+        name:    name,
+        ruc:     document.getElementById('ev-client-ruc').value.trim(),
+        phone:   document.getElementById('ev-client-phone').value.trim(),
+        email:   document.getElementById('ev-client-email').value.trim(),
+        address: document.getElementById('ev-client-address').value.trim(),
+      },
+      categoria:          document.getElementById('ev-categoria').value,
+      estado:             document.getElementById('ev-estado').value,
+      visit_date:         document.getElementById('ev-visit-date').value,
+      total,
+      abono_50:           total * .5,
+      abono_pagado:       abono,
+      cancelacion_pagada: cancel,
+      notas:              document.getElementById('ev-notas').value,
+      created_at:         editingEvent ? editingEvent.created_at : new Date().toISOString(),
+    };
+
+    if (editingEvent) {
+      const idx = allEvents.findIndex(e => e.id === editingEvent.id);
+      if (idx >= 0) allEvents[idx] = ev;
+    } else {
+      allEvents.push(ev);
+    }
+
+    showLoading(true);
+    try {
+      await saveEventToServer();
+      closeEventModal();
+      renderCalendario();
+      showToast(`✅ Evento "${name}" guardado`, 'success');
+    } catch { showToast('❌ Error al guardar el evento.', 'error'); }
+    finally { hideLoading(); }
+  }
+
+  async function deleteEvent() {
+    if (!editingEvent) return;
+    if (!confirm(`¿Eliminar el evento de "${editingEvent.client?.name}"?`)) return;
+    allEvents = allEvents.filter(e => e.id !== editingEvent.id);
+    showLoading(true);
+    try {
+      await saveEventToServer();
+      closeEventModal();
+      renderCalendario();
+      showToast('Evento eliminado.', 'success');
+    } catch { showToast('❌ Error al eliminar.', 'error'); }
+    finally { hideLoading(); }
+  }
+
+  // Combinar cotizaciones + eventos para el calendario
+  function allItemsForDate(dateStr) {
+    const quotes = allHistory.filter(q =>
+      q.visit_date && q.visit_date.slice(0,10) === dateStr
+    );
+    const events = allEvents.filter(e =>
+      e.visit_date && e.visit_date.slice(0,10) === dateStr
+    );
+    return [...quotes, ...events];
+  }
+
+  function isEvent(item) { return item.type === 'event'; }
+
+  function itemEventHTML(item) {
+    const cls   = evClass(item);
+    const label = isEvent(item)
+      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} ✦`
+      : calEventLabel(item);
+    if (isEvent(item)) {
+      return `<div class="cal-event ${cls}" style="border-style:dashed;opacity:.9"
+        onclick="event.stopPropagation();openEditEvent('${item.id}')"
+        title="${label} (Evento manual)">${label}</div>`;
+    }
+    const idx = allHistory.indexOf(item);
+    return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openEdit(${idx})"
+      title="${label}">${label}</div>`;
   }
 
 </script>
