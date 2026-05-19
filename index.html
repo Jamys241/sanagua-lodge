@@ -796,10 +796,16 @@
   let allHistory = [];
   let currentQuote = null;
 
+  // ── Utilidad de fecha local (evita bug UTC de toISOString en JS) ────────────
+  function localDateStr(date) {
+    const d = date || new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
   const today = new Date();
-  document.getElementById('quote-date').value = today.toISOString().split('T')[0];
+  document.getElementById('quote-date').value = localDateStr(today);
   const valid = new Date(today); valid.setDate(valid.getDate()+30);
-  document.getElementById('quote-valid').value = valid.toISOString().split('T')[0];
+  document.getElementById('quote-valid').value = localDateStr(valid);
 
   // ── Init: carga en paralelo contador y productos desde el backend ────────────
   async function loadCounter() {
@@ -1851,7 +1857,6 @@
     return `${cat} - ${name} - #${num}`;
   }
 
-  // Todas las cotizaciones con visit_date para una fecha
   function quotesForDate(dateStr) {
     return allHistory.filter(q =>
       q.visit_date && q.visit_date.slice(0,10) === dateStr
@@ -1907,7 +1912,7 @@
   function renderCalMes() {
     const y = calDate.getFullYear(), m = calDate.getMonth();
     document.getElementById('cal-title').textContent = `${CAL_MESES[m]} ${y}`;
-    const todayStr = new Date().toISOString().slice(0,10);
+    const todayStr = localDateStr();
     const firstDow = new Date(y, m, 1).getDay();
     const daysInM  = new Date(y, m+1, 0).getDate();
     const daysInP  = new Date(y, m, 0).getDate();
@@ -1948,12 +1953,12 @@
     const fmt = d => `${d.getDate()} ${CAL_MESES[d.getMonth()].slice(0,3)}`;
     document.getElementById('cal-title').textContent =
       `${fmt(sun)} – ${fmt(sat)}, ${sat.getFullYear()}`;
-    const todayStr = new Date().toISOString().slice(0,10);
+    const todayStr = localDateStr();
 
     let html = `<div style="overflow-x:auto"><table class="cal-week"><thead><tr>`;
     for (let i = 0; i < 7; i++) {
       const d  = new Date(sun); d.setDate(sun.getDate() + i);
-      const ds = d.toISOString().slice(0,10);
+      const ds = localDateStr(d);
       const isT = ds === todayStr;
       html += `<th onclick="calGoDay('${ds}')" style="${isT?'color:var(--accent)':''}">
         ${CAL_DIAS_C[i]}<br><span style="font-size:.95rem;font-weight:700">${d.getDate()}</span>
@@ -1962,7 +1967,7 @@
     html += `</tr></thead><tbody><tr>`;
     for (let i = 0; i < 7; i++) {
       const d  = new Date(sun); d.setDate(sun.getDate() + i);
-      const ds = d.toISOString().slice(0,10);
+      const ds = localDateStr(d);
       const isT = ds === todayStr;
       const evts = quotesForDate(ds);
       html += `<td class="${isT?'is-today-col':''}">`;
@@ -1975,7 +1980,7 @@
 
   // ── VISTA DÍA ─────────────────────────────────────────────────────────
   function renderCalDia() {
-    const ds = calDate.toISOString().slice(0,10);
+    const ds = localDateStr(calDate);
     document.getElementById('cal-title').textContent =
       `${CAL_DIAS_L[calDate.getDay()]}, ${calDate.getDate()} de ${CAL_MESES[calDate.getMonth()]} de ${calDate.getFullYear()}`;
     const evts = quotesForDate(ds);
