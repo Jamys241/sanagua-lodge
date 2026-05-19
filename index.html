@@ -330,7 +330,11 @@
       <div class="form-group full"><label>Dirección</label><input type="text" id="client-address" placeholder="Ciudad de Panamá, Panamá"></div>
       <div class="form-group"><label>Fecha</label><input type="date" id="quote-date"></div>
       <div class="form-group"><label>Válida hasta</label><input type="date" id="quote-valid"></div>
-      <div class="form-group full"><label>📅 Fecha de visita</label><input type="date" id="visit-date"></div>
+      <div class="form-group"><label>📅 Fecha de inicio</label><input type="date" id="visit-date" oninput="updateNights()"></div>
+      <div class="form-group"><label>📅 Fecha de fin</label><input type="date" id="visit-date-end" oninput="updateNights()"></div>
+      <div class="form-group full" id="nights-label-wrap" style="display:none;">
+        <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="nights-label"></div>
+      </div>
       <div class="form-group full">
         <label>Categoría</label>
         <select id="quote-categoria">
@@ -556,7 +560,11 @@
               <option value="Completada">Completada</option>
             </select>
           </div>
-          <div class="form-group"><label>📅 Fecha de visita</label><input type="date" id="ev-visit-date"></div>
+          <div class="form-group"><label>📅 Fecha de inicio</label><input type="date" id="ev-visit-date" oninput="updateEvNights()"></div>
+          <div class="form-group"><label>📅 Fecha de fin</label><input type="date" id="ev-visit-date-end" oninput="updateEvNights()"></div>
+          <div class="form-group full" id="ev-nights-wrap" style="display:none;">
+            <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="ev-nights-label"></div>
+          </div>
           <div class="form-group"><label>Total (USD)</label><input type="number" id="ev-total" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
           <div class="form-group"><label>Abono recibido (USD)</label><input type="number" id="ev-abono" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
           <div class="form-group"><label>Cancelación recibida (USD)</label><input type="number" id="ev-cancelacion" placeholder="0.00" step="0.01" min="0" oninput="updateEvResumen()"></div>
@@ -639,8 +647,15 @@
           </div>
         </div>
         <div class="form-group">
-          <label>📅 Fecha de visita</label>
-          <input type="date" id="edit-visit-date">
+          <label>📅 Fecha de inicio</label>
+          <input type="date" id="edit-visit-date" oninput="updateEditNights()">
+        </div>
+        <div class="form-group">
+          <label>📅 Fecha de fin</label>
+          <input type="date" id="edit-visit-date-end" oninput="updateEditNights()">
+        </div>
+        <div class="form-group full" id="edit-nights-wrap" style="display:none;">
+          <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="edit-nights-label"></div>
         </div>
         <div class="form-group full">
           <label>Categoría</label>
@@ -1299,6 +1314,7 @@
       date:document.getElementById('quote-date').value,
       valid_until:document.getElementById('quote-valid').value,
       visit_date:document.getElementById('visit-date').value,
+      visit_date_end:document.getElementById('visit-date-end').value,
       items:payItems, subtotal:sub,
       discount_amount:totalDisc, discount_label:totalDisc>0?'Descuentos aplicados':null,
       base_after_discount:baseA, itbms7_total:i7, itbms10_total:i10,
@@ -1462,6 +1478,8 @@
     document.getElementById('edit-client-email').value   = cl.email   || '';
     document.getElementById('edit-client-address').value = cl.address || '';
     document.getElementById('edit-visit-date').value     = q.visit_date || '';
+    document.getElementById('edit-visit-date-end').value = q.visit_date_end || '';
+    updateEditNights();
     document.getElementById('edit-categoria').value     = q.categoria || '';
 
     // Ítems editables
@@ -1573,6 +1591,7 @@
       cancelacion_pagada:  parseFloat(document.getElementById('edit-cancelacion').value)||0,
       notas_internas:      document.getElementById('edit-notas').value,
       visit_date:          document.getElementById('edit-visit-date').value,
+      visit_date_end:      document.getElementById('edit-visit-date-end').value,
       categoria:           document.getElementById('edit-categoria').value,
       client: {
         name:    document.getElementById('edit-client-name').value.trim(),
@@ -1711,8 +1730,9 @@
   function clearAll() {
     if(!confirm('¿Limpiar todo?')) return;
     items=[]; setDiscount('none'); renderItems(); calcTotals();
-    ['client-name','client-ruc','client-email','client-phone','client-address','quote-notes','visit-date'].forEach(id=>document.getElementById(id).value='');
+    ['client-name','client-ruc','client-email','client-phone','client-address','quote-notes','visit-date','visit-date-end'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('quote-categoria').value = '';
+    document.getElementById('nights-label-wrap').style.display='none';
   }
 
   function insertCondicionesSanagua() {
@@ -1956,7 +1976,9 @@
     const cat  = q.categoria || 'Sin categoría';
     const name = q.client?.name || '—';
     const num  = String(q.quote_num).padStart(4,'0');
-    return `${cat} - ${name} - #${num}`;
+    const n    = calcNights(q.visit_date, q.visit_date_end);
+    const suffix = n > 0 ? ` (${nightsText(n)})` : '';
+    return `${cat} - ${name} - #${num}${suffix}`;
   }
 
   function quotesForDate(dateStr) {
@@ -2116,6 +2138,11 @@
           <div class="cal-dia-info">
             <div class="cal-dia-name">${label}</div>
             <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
+            <div class="cal-dia-sub">
+              ${q.visit_date_end && q.visit_date_end !== q.visit_date
+                ? `📅 ${fmtDateShort(q.visit_date)} → ${fmtDateShort(q.visit_date_end)} · ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
+                : q.visit_date ? `📅 ${fmtDateShort(q.visit_date)}` : ''}
+            </div>
             <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
           </div>
           ${estadoBadge}
@@ -2160,7 +2187,9 @@
     });
     document.getElementById('ev-categoria').value = '';
     document.getElementById('ev-estado').value    = 'Confirmada';
-    document.getElementById('ev-visit-date').value= prefillDate || localDateStr(calDate);
+    document.getElementById('ev-visit-date').value    = prefillDate || localDateStr(calDate);
+    document.getElementById('ev-visit-date-end').value = '';
+    document.getElementById('ev-nights-wrap').style.display = 'none';
     document.getElementById('ev-resumen').style.display = 'none';
     document.getElementById('event-modal').classList.add('open');
   }
@@ -2179,7 +2208,9 @@
     document.getElementById('ev-client-address').value = ev.client?.address || '';
     document.getElementById('ev-categoria').value = ev.categoria || '';
     document.getElementById('ev-estado').value    = ev.estado    || 'Confirmada';
-    document.getElementById('ev-visit-date').value= ev.visit_date || '';
+    document.getElementById('ev-visit-date').value    = ev.visit_date     || '';
+    document.getElementById('ev-visit-date-end').value = ev.visit_date_end || '';
+    updateEvNights();
     document.getElementById('ev-total').value      = ev.total      || '';
     document.getElementById('ev-abono').value      = ev.abono_pagado    || '';
     document.getElementById('ev-cancelacion').value= ev.cancelacion_pagada || '';
@@ -2228,6 +2259,7 @@
       categoria:          document.getElementById('ev-categoria').value,
       estado:             document.getElementById('ev-estado').value,
       visit_date:         document.getElementById('ev-visit-date').value,
+      visit_date_end:     document.getElementById('ev-visit-date-end').value,
       total,
       abono_50:           total * .5,
       abono_pagado:       abono,
@@ -2267,6 +2299,68 @@
     finally { hideLoading(); }
   }
 
+  // ── Cálculo de noches ────────────────────────────────────────────────────────
+  function calcNights(startStr, endStr) {
+    if (!startStr || !endStr) return 0;
+    const s = new Date(startStr + 'T12:00:00');
+    const e = new Date(endStr   + 'T12:00:00');
+    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  }
+
+  function nightsText(n) {
+    if (n === 0) return '';
+    if (n === 1) return '🌙 1 noche';
+    return `🌙 ${n} noches`;
+  }
+
+  function updateNights() {
+    const s = document.getElementById('visit-date').value;
+    const e = document.getElementById('visit-date-end').value;
+    const n = calcNights(s, e);
+    const wrap = document.getElementById('nights-label-wrap');
+    if (n > 0) {
+      wrap.style.display = 'block';
+      document.getElementById('nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
+    } else { wrap.style.display = 'none'; }
+  }
+
+  function updateEvNights() {
+    const s = document.getElementById('ev-visit-date').value;
+    const e = document.getElementById('ev-visit-date-end').value;
+    const n = calcNights(s, e);
+    const wrap = document.getElementById('ev-nights-wrap');
+    if (n > 0) {
+      wrap.style.display = 'block';
+      document.getElementById('ev-nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
+    } else { wrap.style.display = 'none'; }
+  }
+
+  function updateEditNights() {
+    const s = document.getElementById('edit-visit-date').value;
+    const e = document.getElementById('edit-visit-date-end').value;
+    const n = calcNights(s, e);
+    const wrap = document.getElementById('edit-nights-wrap');
+    if (!wrap) return;
+    if (n > 0) {
+      wrap.style.display = 'block';
+      document.getElementById('edit-nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
+    } else { wrap.style.display = 'none'; }
+  }
+
+  // Genera un array de fechas entre start y end (inclusive)
+  function dateRange(startStr, endStr) {
+    if (!startStr) return [];
+    const dates = [];
+    const cur = new Date(startStr + 'T12:00:00');
+    const end = endStr ? new Date(endStr + 'T12:00:00') : cur;
+    while (cur <= end) {
+      dates.push(localDateStr(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }
+
   function getCalFilters() {
     return {
       estado:    document.getElementById('cal-filter-estado')?.value    || '',
@@ -2286,7 +2380,10 @@
     const matches = item => {
       if (f.estado    && (item.estado    || 'Pendiente') !== f.estado)    return false;
       if (f.categoria && (item.categoria || '')          !== f.categoria) return false;
-      return item.visit_date && item.visit_date.slice(0,10) === dateStr;
+      if (!item.visit_date) return false;
+      // Si hay fecha fin, el item aparece en todos los días del rango
+      const range = dateRange(item.visit_date, item.visit_date_end);
+      return range.includes(dateStr);
     };
     return [
       ...allHistory.filter(matches),
