@@ -2004,6 +2004,19 @@
     });
   }
 
+  function getCalFilters() {
+    return {
+      estado:    document.getElementById('cal-filter-estado')?.value    || '',
+      categoria: document.getElementById('cal-filter-categoria')?.value || '',
+    };
+  }
+
+  function clearCalFilters() {
+    document.getElementById('cal-filter-estado').value    = '';
+    document.getElementById('cal-filter-categoria').value = '';
+    renderCalendario();
+  }
+
   function setCalView(v, btn) {
     calView = v;
     if (btn) {
@@ -2027,6 +2040,7 @@
   function calToday() { calDate = new Date(); renderCalendario(); }
 
   function renderCalendario() {
+    buildCalIndex(); // precalcular índice una sola vez
     if (calView === 'mes')         renderCalMes();
     else if (calView === 'semana') renderCalSemana();
     else                           renderCalDia();
@@ -2348,50 +2362,53 @@
     else { wrap.style.display='none'; }
   }
 
-  // Genera un array de fechas entre start y end-1 (el día de salida NO cuenta)
+  // Genera fechas desde start hasta end-1 (salida no cuenta)
+  // Máximo 60 días para evitar loops accidentales
   function dateRange(startStr, endStr) {
     if (!startStr) return [];
     const dates = [];
     const cur = new Date(startStr + 'T12:00:00');
-    // Si hay fecha fin, el último día (salida) no se muestra
     const end = endStr
       ? new Date(new Date(endStr + 'T12:00:00').getTime() - 86400000)
-      : cur;
-    while (cur <= end) {
+      : new Date(cur);
+    let safety = 0;
+    while (cur <= end && safety < 60) {
       dates.push(localDateStr(cur));
       cur.setDate(cur.getDate() + 1);
+      safety++;
     }
     return dates;
   }
 
-  function getCalFilters() {
-    return {
-      estado:    document.getElementById('cal-filter-estado')?.value    || '',
-      categoria: document.getElementById('cal-filter-categoria')?.value || '',
-    };
-  }
+  // ── Índice de fecha → ítems (se recalcula una vez por render) ──────────────
+  let _calIndex = {}; // { 'YYYY-MM-DD': [item, ...] }
 
-  function clearCalFilters() {
-    document.getElementById('cal-filter-estado').value    = '';
-    document.getElementById('cal-filter-categoria').value = '';
-    renderCalendario();
-  }
-
-  // Combinar cotizaciones + eventos para el calendario aplicando filtros
-  function allItemsForDate(dateStr) {
+  function buildCalIndex() {
     const f = getCalFilters();
-    const matches = item => {
-      if (f.estado    && (item.estado    || 'Pendiente') !== f.estado)    return false;
-      if (f.categoria && (item.categoria || '')          !== f.categoria) return false;
-      if (!item.visit_date) return false;
-      // Si hay fecha fin, el item aparece en todos los días del rango
-      const range = dateRange(item.visit_date, item.visit_date_end);
-      return range.includes(dateStr);
-    };
-    return [
-      ...allHistory.filter(matches),
-      ...allEvents.filter(matches),
+    _calIndex = {};
+    const all = [
+      ...allHistory.filter(q => {
+        if (f.estado    && (q.estado    || 'Pendiente') !== f.estado)    return false;
+        if (f.categoria && (q.categoria || '')          !== f.categoria) return false;
+        return !!q.visit_date;
+      }),
+      ...allEvents.filter(e => {
+        if (f.estado    && (e.estado    || 'Pendiente') !== f.estado)    return false;
+        if (f.categoria && (e.categoria || '')          !== f.categoria) return false;
+        return !!e.visit_date;
+      }),
     ];
+    all.forEach(item => {
+      dateRange(item.visit_date, item.visit_date_end).forEach(ds => {
+        if (!_calIndex[ds]) _calIndex[ds] = [];
+        _calIndex[ds].push(item);
+      });
+    });
+  }
+
+  // Ahora simplemente consulta el índice — O(1) por celda
+  function allItemsForDate(dateStr) {
+    return _calIndex[dateStr] || [];
   }
 
   function isEvent(item) { return item.type === 'event'; }
