@@ -776,6 +776,29 @@
       <span><span class="cal-legend-dot" style="background:#888"></span>Cancelada</span>
       <span><span class="cal-legend-dot" style="background:#c8541a;outline:2px dashed #c8541a;outline-offset:2px;border-radius:50%"></span>Evento manual ✦</span>
     </div>
+    <!-- Filtros -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Filtrar:</span>
+      <select id="cal-filter-estado" onchange="renderCalendario()" style="font-size:.82rem;padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Aplazada">Aplazada</option>
+        <option value="Completada">Completada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      <select id="cal-filter-categoria" onchange="renderCalendario()" style="font-size:.82rem;padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);">
+        <option value="">Todas las categorías</option>
+        <option value="Pasadia Sencilla">Pasadia Sencilla</option>
+        <option value="Pasadia Completa">Pasadia Completa</option>
+        <option value="Camping Propio">Camping Propio</option>
+        <option value="Camping Suministro">Camping Suministro</option>
+        <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
+        <option value="Cabaña Ocelot">Cabaña Ocelot</option>
+        <option value="Cabaña Motmot">Cabaña Motmot</option>
+      </select>
+      <button class="cal-nav-btn" onclick="clearCalFilters()" style="font-size:.75rem;padding:4px 10px;color:var(--muted);">✕ Limpiar</button>
+    </div>
     <div id="cal-body"></div>
   </div>
 </div>
@@ -2244,15 +2267,31 @@
     finally { hideLoading(); }
   }
 
-  // Combinar cotizaciones + eventos para el calendario
+  function getCalFilters() {
+    return {
+      estado:    document.getElementById('cal-filter-estado')?.value    || '',
+      categoria: document.getElementById('cal-filter-categoria')?.value || '',
+    };
+  }
+
+  function clearCalFilters() {
+    document.getElementById('cal-filter-estado').value    = '';
+    document.getElementById('cal-filter-categoria').value = '';
+    renderCalendario();
+  }
+
+  // Combinar cotizaciones + eventos para el calendario aplicando filtros
   function allItemsForDate(dateStr) {
-    const quotes = allHistory.filter(q =>
-      q.visit_date && q.visit_date.slice(0,10) === dateStr
-    );
-    const events = allEvents.filter(e =>
-      e.visit_date && e.visit_date.slice(0,10) === dateStr
-    );
-    return [...quotes, ...events];
+    const f = getCalFilters();
+    const matches = item => {
+      if (f.estado    && (item.estado    || 'Pendiente') !== f.estado)    return false;
+      if (f.categoria && (item.categoria || '')          !== f.categoria) return false;
+      return item.visit_date && item.visit_date.slice(0,10) === dateStr;
+    };
+    return [
+      ...allHistory.filter(matches),
+      ...allEvents.filter(matches),
+    ];
   }
 
   function isEvent(item) { return item.type === 'event'; }
