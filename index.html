@@ -1700,6 +1700,7 @@
   }
 
   function showLoading(on) { document.getElementById('loading').style.display=on?'flex':'none'; }
+  function hideLoading()   { showLoading(false); }
 
   function showToast(msg, type='success') {
     const t=document.getElementById('toast');
