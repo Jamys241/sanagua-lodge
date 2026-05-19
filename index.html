@@ -2140,7 +2140,7 @@
             <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
             <div class="cal-dia-sub">
               ${q.visit_date_end && q.visit_date_end !== q.visit_date
-                ? `📅 ${fmtDateShort(q.visit_date)} → ${fmtDateShort(q.visit_date_end)} · ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
+                ? `📅 Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · 🌙 ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
                 : q.visit_date ? `📅 ${fmtDateShort(q.visit_date)}` : ''}
             </div>
             <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
@@ -2310,50 +2310,53 @@
 
   function nightsText(n) {
     if (n === 0) return '';
-    if (n === 1) return '🌙 1 noche';
-    return `🌙 ${n} noches`;
+    if (n === 1) return '1 noche';
+    return `${n} noches`;
+  }
+
+  function nightsBanner(s, e) {
+    const n = calcNights(s, e);
+    if (n <= 0) return '';
+    return `🌙 ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
   }
 
   function updateNights() {
     const s = document.getElementById('visit-date').value;
     const e = document.getElementById('visit-date-end').value;
-    const n = calcNights(s, e);
     const wrap = document.getElementById('nights-label-wrap');
-    if (n > 0) {
-      wrap.style.display = 'block';
-      document.getElementById('nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
-    } else { wrap.style.display = 'none'; }
+    const txt = nightsBanner(s, e);
+    if (txt) { wrap.style.display='block'; document.getElementById('nights-label').textContent=txt; }
+    else { wrap.style.display='none'; }
   }
 
   function updateEvNights() {
     const s = document.getElementById('ev-visit-date').value;
     const e = document.getElementById('ev-visit-date-end').value;
-    const n = calcNights(s, e);
     const wrap = document.getElementById('ev-nights-wrap');
-    if (n > 0) {
-      wrap.style.display = 'block';
-      document.getElementById('ev-nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
-    } else { wrap.style.display = 'none'; }
+    const txt = nightsBanner(s, e);
+    if (txt) { wrap.style.display='block'; document.getElementById('ev-nights-label').textContent=txt; }
+    else { wrap.style.display='none'; }
   }
 
   function updateEditNights() {
     const s = document.getElementById('edit-visit-date').value;
     const e = document.getElementById('edit-visit-date-end').value;
-    const n = calcNights(s, e);
     const wrap = document.getElementById('edit-nights-wrap');
     if (!wrap) return;
-    if (n > 0) {
-      wrap.style.display = 'block';
-      document.getElementById('edit-nights-label').textContent = `${nightsText(n)} — del ${fmtDateShort(s)} al ${fmtDateShort(e)}`;
-    } else { wrap.style.display = 'none'; }
+    const txt = nightsBanner(s, e);
+    if (txt) { wrap.style.display='block'; document.getElementById('edit-nights-label').textContent=txt; }
+    else { wrap.style.display='none'; }
   }
 
-  // Genera un array de fechas entre start y end (inclusive)
+  // Genera un array de fechas entre start y end-1 (el día de salida NO cuenta)
   function dateRange(startStr, endStr) {
     if (!startStr) return [];
     const dates = [];
     const cur = new Date(startStr + 'T12:00:00');
-    const end = endStr ? new Date(endStr + 'T12:00:00') : cur;
+    // Si hay fecha fin, el último día (salida) no se muestra
+    const end = endStr
+      ? new Date(new Date(endStr + 'T12:00:00').getTime() - 86400000)
+      : cur;
     while (cur <= end) {
       dates.push(localDateStr(cur));
       cur.setDate(cur.getDate() + 1);
