@@ -987,7 +987,88 @@
       await loadHistory();
     } catch(e) { console.warn('History load error:', e); }
     renderCalendario();
+    startPolling(); // ← iniciar sincronización automática
   })();
+
+  // ── Polling — sincronización en tiempo real entre dispositivos ───────────────
+  // Compara un hash simple de los datos para detectar cambios sin sobrecargar
+  let _pollTimer    = null;
+  let _lastHashHist = '';
+  let _lastHashEvts = '';
+  const POLL_INTERVAL = 20000; // 20 segundos
+
+  function simpleHash(obj) {
+    const s = JSON.stringify(obj);
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+    }
+    return String(h);
+  }
+
+  async function pollChanges() {
+    try {
+      // Verificar si el historial cambió
+      const rH = await safeFetch(`${BACKEND_URL}/history`);
+      const newHist = await rH.json();
+      const newHashH = simpleHash(newHist);
+
+      // Verificar si los eventos cambiaron
+      const rE = await safeFetch(`${BACKEND_URL}/events`);
+      const newEvts = await rE.json();
+      const newHashE = simpleHash(newEvts);
+
+      const histChanged  = newHashH !== _lastHashHist;
+      const evtsChanged  = newHashE !== _lastHashEvts;
+
+      if (histChanged || evtsChanged) {
+        if (histChanged) allHistory = newHist;
+        if (evtsChanged) allEvents  = newEvts;
+        _lastHashHist = newHashH;
+        _lastHashEvts = newHashE;
+
+        // Refrescar la vista activa
+        const activeTab = document.querySelector('.tab-panel.active')?.id;
+        if (activeTab === 'tab-calendario') renderCalendario();
+        if (activeTab === 'tab-historial')  renderHistory(allHistory);
+        if (activeTab === 'tab-resumen')    renderResumen();
+
+        // Indicador visual discreto
+        showSyncDot();
+      }
+    } catch { /* fallo silencioso — sin conexión */ }
+  }
+
+  function startPolling() {
+    // Guardar hashes iniciales
+    _lastHashHist = simpleHash(allHistory);
+    _lastHashEvts = simpleHash(allEvents);
+    // Iniciar ciclo de polling
+    _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+    // Detener cuando la pestaña pierde el foco (ahorra batería en móvil)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(_pollTimer);
+      } else {
+        // Al volver, sincronizar de inmediato y reiniciar
+        pollChanges();
+        _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+      }
+    });
+  }
+
+  // Punto verde discreto que aparece 2s cuando hay una actualización
+  function showSyncDot() {
+    let dot = document.getElementById('sync-dot');
+    if (!dot) {
+      dot = document.createElement('div');
+      dot.id = 'sync-dot';
+      dot.style.cssText = 'position:fixed;bottom:70px;right:20px;width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 6px rgba(45,122,79,.6);z-index:999;transition:opacity .4s;';
+      document.body.appendChild(dot);
+    }
+    dot.style.opacity = '1';
+    setTimeout(() => { dot.style.opacity = '0'; }, 2000);
+  }
 
   // ── Empresa ─────────────────────────────────────────────────────────────────
   let empresaData = {
