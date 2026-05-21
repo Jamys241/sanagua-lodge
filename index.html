@@ -335,7 +335,7 @@
       <div class="form-group full" id="nights-label-wrap" style="display:none;">
         <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="nights-label"></div>
       </div>
-      <div class="form-group full">
+      <div class="form-group">
         <label>Categoría</label>
         <select id="quote-categoria">
           <option value="">— Sin categoría —</option>
@@ -346,6 +346,16 @@
           <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
           <option value="Cabaña Ocelot">Cabaña Ocelot</option>
           <option value="Cabaña Motmot">Cabaña Motmot</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Plataforma</label>
+        <select id="quote-plataforma">
+            <option value="">— Sin plataforma —</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Booking">Booking</option>
+            <option value="Airbnb">Airbnb</option>
         </select>
       </div>
     </div>
@@ -551,6 +561,16 @@
             </select>
           </div>
           <div class="form-group">
+            <label>Plataforma</label>
+            <select id="ev-plataforma">
+            <option value="">— Sin plataforma —</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Booking">Booking</option>
+            <option value="Airbnb">Airbnb</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Estado</label>
             <select id="ev-estado">
               <option value="Pendiente">Pendiente</option>
@@ -657,7 +677,7 @@
         <div class="form-group full" id="edit-nights-wrap" style="display:none;">
           <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="edit-nights-label"></div>
         </div>
-        <div class="form-group full">
+        <div class="form-group">
           <label>Categoría</label>
           <select id="edit-categoria">
             <option value="">— Sin categoría —</option>
@@ -668,6 +688,16 @@
             <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
             <option value="Cabaña Ocelot">Cabaña Ocelot</option>
             <option value="Cabaña Motmot">Cabaña Motmot</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plataforma</label>
+          <select id="edit-plataforma">
+            <option value="">— Sin plataforma —</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Booking">Booking</option>
+            <option value="Airbnb">Airbnb</option>
           </select>
         </div>
       </div>
@@ -1424,7 +1454,8 @@
       total, abono_50:total*.5,
       notes:document.getElementById('quote-notes').value,
       logo:logoBase64||null, empresa:empresaData,
-      categoria: document.getElementById('quote-categoria').value || '',
+      categoria:  document.getElementById('quote-categoria').value  || '',
+      plataforma: document.getElementById('quote-plataforma').value || '',
     };
   }
 
@@ -1527,7 +1558,10 @@
               <div style="font-weight:600">${item.client?.name||'—'}</div>
               <div style="font-size:.76rem;color:var(--ink-muted)">${item.client?.phone||item.client?.email||''}</div>
             </td>
-            <td><span style="font-size:.8rem">${item.categoria||'—'}</span></td>
+            <td>
+              <div style="font-size:.8rem">${item.categoria||'—'}</div>
+              ${item.plataforma?`<div style="font-size:.72rem;color:var(--blue);font-weight:600">${item.plataforma}</div>`:''}
+            </td>
             <td style="white-space:nowrap;font-size:.83rem">${item.visit_date ? fmtDateShort(item.visit_date) : '—'}</td>
             <td>
               <strong>$${Number(item.total||0).toFixed(2)}</strong>
@@ -1566,6 +1600,7 @@
                 </div>
                 <div class="hist-card-name">${item.client?.name||'—'}</div>
                 ${item.categoria ? `<div class="hist-card-cat">${item.categoria}</div>` : ''}
+                ${item.plataforma ? `<div style="font-size:.72rem;color:var(--blue);font-weight:600">${item.plataforma}</div>` : ''}
                 <div class="hist-card-meta">
                   ${item.visit_date ? `📅 ${fmtDateShort(item.visit_date)}` : ''}
                   ${item.client?.phone ? ` · ${item.client.phone}` : ''}
@@ -1606,6 +1641,7 @@
       <div class="info-row"><span class="info-label">Válida hasta</span><span class="info-val">${fmtDateShort(q.valid_until)}</span></div>
       <div class="info-row"><span class="info-label">Total</span><span class="info-val" style="color:var(--accent);font-weight:700">$${Number(q.total||0).toFixed(2)}</span></div>
       <div class="info-row"><span class="info-label">Abono 50%</span><span class="info-val" style="color:var(--blue)">$${Number(q.abono_50||q.total*.5||0).toFixed(2)}</span></div>
+      ${q.plataforma?`<div class="info-row"><span class="info-label">Plataforma</span><span class="info-val" style="color:var(--blue);font-weight:600">${q.plataforma}</span></div>`:''}
     `;
 
     // Datos del cliente
@@ -1618,7 +1654,8 @@
     document.getElementById('edit-visit-date').value     = q.visit_date || '';
     document.getElementById('edit-visit-date-end').value = q.visit_date_end || '';
     updateEditNights();
-    document.getElementById('edit-categoria').value     = q.categoria || '';
+    document.getElementById('edit-categoria').value  = q.categoria  || '';
+    document.getElementById('edit-plataforma').value = q.plataforma || '';
 
     // Ítems editables
     renderEditItems(q.items || []);
@@ -1730,7 +1767,8 @@
       notas_internas:      document.getElementById('edit-notas').value,
       visit_date:          document.getElementById('edit-visit-date').value,
       visit_date_end:      document.getElementById('edit-visit-date-end').value,
-      categoria:           document.getElementById('edit-categoria').value,
+      categoria:  document.getElementById('edit-categoria').value,
+      plataforma: document.getElementById('edit-plataforma').value,
       client: {
         name:    document.getElementById('edit-client-name').value.trim(),
         ruc:     document.getElementById('edit-client-ruc').value.trim(),
@@ -1870,6 +1908,7 @@
     items=[]; setDiscount('none'); renderItems(); calcTotals();
     ['client-name','client-ruc','client-email','client-phone','client-address','quote-notes','visit-date','visit-date-end'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('quote-categoria').value = '';
+    document.getElementById('quote-plataforma').value = '';
     document.getElementById('nights-label-wrap').style.display='none';
   }
 
@@ -2338,7 +2377,8 @@
      'ev-client-address','ev-total','ev-abono','ev-cancelacion','ev-notas'].forEach(id => {
       document.getElementById(id).value = '';
     });
-    document.getElementById('ev-categoria').value = '';
+    document.getElementById('ev-categoria').value  = '';
+    document.getElementById('ev-plataforma').value = '';
     document.getElementById('ev-estado').value    = 'Confirmada';
     document.getElementById('ev-visit-date').value    = prefillDate || localDateStr(calDate);
     document.getElementById('ev-visit-date-end').value = '';
@@ -2359,7 +2399,8 @@
     document.getElementById('ev-client-phone').value   = ev.client?.phone   || '';
     document.getElementById('ev-client-email').value   = ev.client?.email   || '';
     document.getElementById('ev-client-address').value = ev.client?.address || '';
-    document.getElementById('ev-categoria').value = ev.categoria || '';
+    document.getElementById('ev-categoria').value  = ev.categoria  || '';
+    document.getElementById('ev-plataforma').value = ev.plataforma || '';
     document.getElementById('ev-estado').value    = ev.estado    || 'Confirmada';
     document.getElementById('ev-visit-date').value    = ev.visit_date     || '';
     document.getElementById('ev-visit-date-end').value = ev.visit_date_end || '';
@@ -2409,7 +2450,8 @@
         email:   document.getElementById('ev-client-email').value.trim(),
         address: document.getElementById('ev-client-address').value.trim(),
       },
-      categoria:          document.getElementById('ev-categoria').value,
+      categoria:  document.getElementById('ev-categoria').value,
+      plataforma: document.getElementById('ev-plataforma').value,
       estado:             document.getElementById('ev-estado').value,
       visit_date:         document.getElementById('ev-visit-date').value,
       visit_date_end:     document.getElementById('ev-visit-date-end').value,
