@@ -1598,16 +1598,17 @@
       : `<strong style="color:var(--accent)">#${item.quote_num}</strong>`;
 
     const actionsCell = (item) => {
-      const realIdx = allHistory.indexOf(item);
-      return item._type==='event' ? `
-      <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
-      </div>` : `
-      <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="openEdit(${realIdx})">✏️ Editar</button>
-        <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${realIdx})">📄 PDF</button>
-        <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${realIdx})">📋 Conf.</button>
-      </div>`;
+      if (item._type==='event') return `
+        <div class="hist-actions">
+          <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+        </div>`;
+      const qnum = item.quote_num;
+      return `
+        <div class="hist-actions">
+          <button class="btn btn-outline btn-sm" onclick="openEditByNum('${qnum}')">✏️ Editar</button>
+          <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${qnum}')">📄 PDF</button>
+          <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${qnum}')">📋 Conf.</button>
+        </div>`;
     };
 
     // Vista escritorio: tabla
@@ -1654,7 +1655,6 @@
           const cancelacion= Number(item.cancelacion_pagada||0);
           const recibido   = abono + cancelacion;
           const saldo      = Math.max(0, total - recibido);
-          const realIdx    = allHistory.indexOf(item);
           const isEv       = item._type === 'event';
           return `
           <div class="hist-card" style="${isEv?'border-color:var(--purple-light);background:#fdf8ff':''}">
@@ -1684,9 +1684,9 @@
               ${isEv ? `
                 <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
               ` : `
-                <button class="btn btn-outline btn-sm" onclick="openEdit(${realIdx})">✏️ Editar</button>
-                <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${realIdx})">📄 PDF</button>
-                <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${realIdx})">📋 Confirmación</button>
+                <button class="btn btn-outline btn-sm" onclick="openEditByNum('${item.quote_num}')">✏️ Editar</button>
+                <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${item.quote_num}')">📄 PDF</button>
+                <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${item.quote_num}')">📋 Confirmación</button>
               `}
             </div>
           </div>`;
@@ -1895,6 +1895,20 @@
       showToast('Cotización eliminada.','success');
     } catch { showToast('❌ Error al eliminar.','error'); }
     finally { showLoading(false); }
+  }
+
+  // Helpers que buscan por quote_num (evitan el bug de indexOf con objetos copiados)
+  function openEditByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) openEdit(idx);
+  }
+  async function reGeneratePDFByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) await reGeneratePDF(idx);
+  }
+  async function quickExportConfByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) await quickExportConfirmation(idx);
   }
 
   async function quickExportConfirmation(idx) {
