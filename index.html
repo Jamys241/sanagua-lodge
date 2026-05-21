@@ -1369,10 +1369,16 @@
   async function loadHistory() {
     document.getElementById('history-container').innerHTML='<div class="empty-hist">Cargando...</div>';
     try {
-      const r = await safeFetch(`${BACKEND_URL}/history`);
-      allHistory = await r.json();
+      const [rH, rE] = await Promise.all([
+        safeFetch(`${BACKEND_URL}/history`),
+        safeFetch(`${BACKEND_URL}/events`),
+      ]);
+      allHistory = await rH.json();
+      allEvents  = await rE.json();
       renderHistory(allHistory);
-    } catch { document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>'; }
+    } catch {
+      document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>';
+    }
   }
 
   function filterHistory() {
@@ -1395,9 +1401,33 @@
     return `<span class="badge ${map[e]||'badge-no'}">${e||'Pendiente'}</span>`;
   }
 
-  function renderHistory(list) {
+  function renderHistory(listQ) {
     const el = document.getElementById('history-container');
-    if (!list.length) { el.innerHTML = '<div class="empty-hist">No hay cotizaciones aún.</div>'; return; }
+    // Combinar cotizaciones + eventos manuales ordenados por fecha desc
+    const combined = [
+      ...listQ.map(q => ({...q, _type:'quote'})),
+      ...allEvents.map(e => ({...e, _type:'event'})),
+    ].sort((a,b) => {
+      const da = (a.date||a.visit_date||a.created_at||'').slice(0,10);
+      const db = (b.date||b.visit_date||b.created_at||'').slice(0,10);
+      return db.localeCompare(da);
+    });
+
+    if (!combined.length) { el.innerHTML = '<div class="empty-hist">No hay registros aún.</div>'; return; }
+
+    const numLabel = item => item._type==='event'
+      ? `<span style="color:var(--purple);font-weight:700">Evento</span>`
+      : `<strong style="color:var(--accent)">#${item.quote_num}</strong>`;
+
+    const actionsCell = (item, i) => item._type==='event' ? `
+      <div class="hist-actions">
+        <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+      </div>` : `
+      <div class="hist-actions">
+        <button class="btn btn-outline btn-sm" onclick="openEdit(${i})">✏️ Editar</button>
+        <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${i})">📄 PDF</button>
+        <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${i})">📋 Conf.</button>
+      </div>`;
 
     // Vista escritorio: tabla
     const tableHTML = `
@@ -1407,56 +1437,57 @@
           <th>#</th><th>Cliente</th><th>Categoría</th><th>Fecha visita</th><th>Total</th><th>Abono</th><th>Estado</th><th>Acciones</th>
         </tr></thead>
         <tbody>
-          ${list.map((q,i) => `
-          <tr>
-            <td><strong style="color:var(--accent)">#${q.quote_num}</strong></td>
+          ${combined.map((item, i) => {
+            const qIdx = listQ.indexOf(item);
+            return `
+          <tr style="${item._type==='event'?'background:#fdf8ff':''}">
+            <td>${numLabel(item)}</td>
             <td>
-              <div style="font-weight:600">${q.client?.name||'—'}</div>
-              <div style="font-size:.76rem;color:var(--ink-muted)">${q.client?.phone||q.client?.email||''}</div>
+              <div style="font-weight:600">${item.client?.name||'—'}</div>
+              <div style="font-size:.76rem;color:var(--ink-muted)">${item.client?.phone||item.client?.email||''}</div>
             </td>
-            <td><span style="font-size:.8rem">${q.categoria||'—'}</span></td>
-            <td style="white-space:nowrap;font-size:.83rem">${q.visit_date ? fmtDateShort(q.visit_date) : '—'}</td>
+            <td><span style="font-size:.8rem">${item.categoria||'—'}</span></td>
+            <td style="white-space:nowrap;font-size:.83rem">${item.visit_date ? fmtDateShort(item.visit_date) : '—'}</td>
             <td>
-              <strong>$${Number(q.total||0).toFixed(2)}</strong>
-              <div style="font-size:.74rem;color:var(--blue)">50%: $${Number(q.abono_50||q.total*.5||0).toFixed(2)}</div>
+              <strong>$${Number(item.total||0).toFixed(2)}</strong>
+              <div style="font-size:.74rem;color:var(--blue)">50%: $${Number(item.abono_50||item.total*.5||0).toFixed(2)}</div>
             </td>
-            <td>${Number(q.abono_pagado||0)>0
-              ? `<strong style="color:var(--success)">$${Number(q.abono_pagado).toFixed(2)}</strong>`
+            <td>${Number(item.abono_pagado||0)>0
+              ? `<strong style="color:var(--success)">$${Number(item.abono_pagado).toFixed(2)}</strong>`
               : '<span style="color:var(--ink-muted)">—</span>'}</td>
-            <td>${estadoBadge(q.estado)}</td>
-            <td>
-              <div class="hist-actions">
-                <button class="btn btn-outline btn-sm" onclick="openEdit(${i})">✏️ Editar</button>
-                <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${i})">📄 PDF</button>
-                <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${i})">📋 Conf.</button>
-              </div>
-            </td>
-          </tr>`).join('')}
+            <td>${estadoBadge(item.estado)}</td>
+            <td>${actionsCell(item, qIdx)}</td>
+          </tr>`;
+          }).join('')}
         </tbody>
       </table></div>`;
 
     // Vista móvil: tarjetas
     const cardsHTML = `
       <div class="hist-cards">
-        ${list.map((q,i) => {
-          const total      = Number(q.total||0);
-          const abono      = Number(q.abono_pagado||0);
-          const cancelacion= Number(q.cancelacion_pagada||0);
+        ${combined.map((item, i) => {
+          const total      = Number(item.total||0);
+          const abono      = Number(item.abono_pagado||0);
+          const cancelacion= Number(item.cancelacion_pagada||0);
           const recibido   = abono + cancelacion;
           const saldo      = Math.max(0, total - recibido);
+          const qIdx       = listQ.indexOf(item);
+          const isEv       = item._type === 'event';
           return `
-          <div class="hist-card">
+          <div class="hist-card" style="${isEv?'border-color:var(--purple-light);background:#fdf8ff':''}">
             <div class="hist-card-head">
               <div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span class="hist-card-num">#${q.quote_num}</span>
-                  ${estadoBadge(q.estado)}
+                  ${isEv
+                    ? '<span style="color:var(--purple);font-weight:700;font-size:.9rem">✦ Evento</span>'
+                    : `<span class="hist-card-num">#${item.quote_num}</span>`}
+                  ${estadoBadge(item.estado)}
                 </div>
-                <div class="hist-card-name">${q.client?.name||'—'}</div>
-                ${q.categoria ? `<div class="hist-card-cat">${q.categoria}</div>` : ''}
+                <div class="hist-card-name">${item.client?.name||'—'}</div>
+                ${item.categoria ? `<div class="hist-card-cat">${item.categoria}</div>` : ''}
                 <div class="hist-card-meta">
-                  ${q.visit_date ? `📅 ${fmtDateShort(q.visit_date)}` : ''}
-                  ${q.client?.phone ? ` · ${q.client.phone}` : ''}
+                  ${item.visit_date ? `📅 ${fmtDateShort(item.visit_date)}` : ''}
+                  ${item.client?.phone ? ` · ${item.client.phone}` : ''}
                 </div>
               </div>
               <div style="text-align:right;flex-shrink:0;">
@@ -1466,9 +1497,13 @@
               </div>
             </div>
             <div class="hist-card-actions">
-              <button class="btn btn-outline btn-sm" onclick="openEdit(${i})">✏️ Editar</button>
-              <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${i})">📄 PDF</button>
-              <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${i})">📋 Confirmación</button>
+              ${isEv ? `
+                <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+              ` : `
+                <button class="btn btn-outline btn-sm" onclick="openEdit(${qIdx})">✏️ Editar</button>
+                <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${qIdx})">📄 PDF</button>
+                <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${qIdx})">📋 Confirmación</button>
+              `}
             </div>
           </div>`;
         }).join('')}
@@ -2019,11 +2054,12 @@
   // Navegar al día al hacer click en una celda
   function calGoDay(dateStr) {
     calDate = new Date(dateStr + 'T12:00:00');
-    setCalView('dia', null);
-    // Activar botón "Día"
+    // Activar botón "Día" visualmente
     document.querySelectorAll('.cal-view-btn').forEach((b,i) => {
       b.classList.toggle('active', i === 2);
     });
+    calView = 'dia';
+    renderCalendario();
   }
 
   function getCalFilters() {
@@ -2408,19 +2444,18 @@
   function buildCalIndex() {
     const f = getCalFilters();
     _calIndex = {};
+    const passFilter = item => {
+      if (f.estado    && (item.estado    || 'Pendiente') !== f.estado)    return false;
+      if (f.categoria && (item.categoria || '')          !== f.categoria) return false;
+      return true;
+    };
     const all = [
-      ...allHistory.filter(q => {
-        if (f.estado    && (q.estado    || 'Pendiente') !== f.estado)    return false;
-        if (f.categoria && (q.categoria || '')          !== f.categoria) return false;
-        return !!q.visit_date;
-      }),
-      ...allEvents.filter(e => {
-        if (f.estado    && (e.estado    || 'Pendiente') !== f.estado)    return false;
-        if (f.categoria && (e.categoria || '')          !== f.categoria) return false;
-        return !!e.visit_date;
-      }),
+      ...allHistory.filter(passFilter),
+      ...allEvents.filter(passFilter),
     ];
     all.forEach(item => {
+      // Si no tiene fecha de visita, no aparece en el calendario
+      if (!item.visit_date) return;
       dateRange(item.visit_date, item.visit_date_end).forEach(ds => {
         if (!_calIndex[ds]) _calIndex[ds] = [];
         _calIndex[ds].push(item);
