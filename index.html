@@ -485,8 +485,44 @@
       <div class="card-title" style="margin:0">Historial de Cotizaciones</div>
       <button class="btn btn-outline" onclick="loadHistory()">🔄 Actualizar</button>
     </div>
-    <div class="history-toolbar">
-      <input type="text" id="hist-search" placeholder="🔍 Buscar por cliente, #cotización..." oninput="filterHistory()">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <input type="text" id="hist-search" placeholder="🔍 Nombre, cédula, #..." oninput="filterHistory()" style="grid-column:1/-1;">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Desde</label>
+        <input type="date" id="hist-date-from" onchange="filterHistory()">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Hasta</label>
+        <input type="date" id="hist-date-to" onchange="filterHistory()">
+      </div>
+      <select id="hist-estado" onchange="filterHistory()">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Aplazada">Aplazada</option>
+        <option value="Completada">Completada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      <select id="hist-plataforma" onchange="filterHistory()">
+        <option value="">Todas las plataformas</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Instagram">Instagram</option>
+        <option value="Booking">Booking</option>
+        <option value="Airbnb">Airbnb</option>
+      </select>
+      <select id="hist-categoria" onchange="filterHistory()" style="grid-column:1/-1;">
+        <option value="">Todas las categorías</option>
+        <option value="Pasadia Sencilla">Pasadia Sencilla</option>
+        <option value="Pasadia Completa">Pasadia Completa</option>
+        <option value="Camping Propio">Camping Propio</option>
+        <option value="Camping Suministro">Camping Suministro</option>
+        <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
+        <option value="Cabaña Ocelot">Cabaña Ocelot</option>
+        <option value="Cabaña Motmot">Cabaña Motmot</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn btn-outline btn-sm" onclick="clearHistFilters()">✕ Limpiar filtros</button>
     </div>
     <div id="history-container"><div class="empty-hist">Cargando historial...</div></div>
   </div>
@@ -1494,13 +1530,43 @@
   }
 
   function filterHistory() {
-    const q = document.getElementById('hist-search').value.toLowerCase();
-    const filtered = allHistory.filter(h =>
-      h.client?.name?.toLowerCase().includes(q) ||
-      String(h.quote_num).includes(q) ||
-      (h.estado||'').toLowerCase().includes(q)
-    );
+    const txt       = (document.getElementById('hist-search')?.value    || '').toLowerCase().trim();
+    const dateFrom  =  document.getElementById('hist-date-from')?.value || '';
+    const dateTo    =  document.getElementById('hist-date-to')?.value   || '';
+    const estado    =  document.getElementById('hist-estado')?.value    || '';
+    const plataforma=  document.getElementById('hist-plataforma')?.value|| '';
+    const categoria =  document.getElementById('hist-categoria')?.value || '';
+
+    const filtered = allHistory.filter(h => {
+      // Texto: nombre, cédula/RUC, # cotización
+      if (txt) {
+        const name  = (h.client?.name  || '').toLowerCase();
+        const ruc   = (h.client?.ruc   || '').toLowerCase();
+        const phone = (h.client?.phone || '').toLowerCase();
+        const num   = String(h.quote_num || '');
+        if (!name.includes(txt) && !ruc.includes(txt) && !phone.includes(txt) && !num.includes(txt)) return false;
+      }
+      // Rango de fechas (por fecha de visita o fecha de cotización)
+      const fechaRef = (h.visit_date || h.date || '').slice(0,10);
+      if (dateFrom && fechaRef && fechaRef < dateFrom) return false;
+      if (dateTo   && fechaRef && fechaRef > dateTo)   return false;
+      // Estado, plataforma, categoría
+      if (estado     && (h.estado     || 'Pendiente') !== estado)     return false;
+      if (plataforma && (h.plataforma || '')           !== plataforma) return false;
+      if (categoria  && (h.categoria  || '')           !== categoria)  return false;
+      return true;
+    });
     renderHistory(filtered);
+  }
+
+  function clearHistFilters() {
+    ['hist-search','hist-date-from','hist-date-to'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    ['hist-estado','hist-plataforma','hist-categoria'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    renderHistory(allHistory);
   }
 
   function estadoBadge(e) {
