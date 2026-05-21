@@ -1597,15 +1597,18 @@
       ? `<span style="color:var(--purple);font-weight:700">Evento</span>`
       : `<strong style="color:var(--accent)">#${item.quote_num}</strong>`;
 
-    const actionsCell = (item, i) => item._type==='event' ? `
+    const actionsCell = (item) => {
+      const realIdx = allHistory.indexOf(item);
+      return item._type==='event' ? `
       <div class="hist-actions">
         <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
       </div>` : `
       <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="openEdit(${i})">✏️ Editar</button>
-        <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${i})">📄 PDF</button>
-        <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${i})">📋 Conf.</button>
+        <button class="btn btn-outline btn-sm" onclick="openEdit(${realIdx})">✏️ Editar</button>
+        <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${realIdx})">📄 PDF</button>
+        <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${realIdx})">📋 Conf.</button>
       </div>`;
+    };
 
     // Vista escritorio: tabla
     const tableHTML = `
@@ -1616,7 +1619,6 @@
         </tr></thead>
         <tbody>
           ${combined.map((item, i) => {
-            const qIdx = listQ.indexOf(item);
             return `
           <tr style="${item._type==='event'?'background:#fdf8ff':''}">
             <td>${numLabel(item)}</td>
@@ -1637,7 +1639,7 @@
               ? `<strong style="color:var(--success)">$${Number(item.abono_pagado).toFixed(2)}</strong>`
               : '<span style="color:var(--ink-muted)">—</span>'}</td>
             <td>${estadoBadge(item.estado)}</td>
-            <td>${actionsCell(item, qIdx)}</td>
+            <td>${actionsCell(item)}</td>
           </tr>`;
           }).join('')}
         </tbody>
@@ -1652,7 +1654,7 @@
           const cancelacion= Number(item.cancelacion_pagada||0);
           const recibido   = abono + cancelacion;
           const saldo      = Math.max(0, total - recibido);
-          const qIdx       = listQ.indexOf(item);
+          const realIdx    = allHistory.indexOf(item);
           const isEv       = item._type === 'event';
           return `
           <div class="hist-card" style="${isEv?'border-color:var(--purple-light);background:#fdf8ff':''}">
@@ -1682,9 +1684,9 @@
               ${isEv ? `
                 <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
               ` : `
-                <button class="btn btn-outline btn-sm" onclick="openEdit(${qIdx})">✏️ Editar</button>
-                <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${qIdx})">📄 PDF</button>
-                <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${qIdx})">📋 Confirmación</button>
+                <button class="btn btn-outline btn-sm" onclick="openEdit(${realIdx})">✏️ Editar</button>
+                <button class="btn btn-accent btn-sm" onclick="reGeneratePDF(${realIdx})">📄 PDF</button>
+                <button class="btn btn-blue btn-sm" onclick="quickExportConfirmation(${realIdx})">📋 Confirmación</button>
               `}
             </div>
           </div>`;
