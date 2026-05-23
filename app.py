@@ -224,7 +224,9 @@ def generate_pdf():
               'updated_at': datetime.now().isoformat(),
               'abono_pagado': 0, 'estado': 'Pendiente', 'notas_internas': ''}
     quotes = load_history()
-    quotes.insert(0, record)
+    quotes.append(record)
+    # Mantener orden por created_at descendente
+    quotes.sort(key=lambda q: q.get('created_at',''), reverse=True)
     save_history(quotes)
 
     buffer = io.BytesIO()

@@ -1109,14 +1109,16 @@
     // Guardar hashes iniciales
     _lastHashHist = simpleHash(allHistory);
     _lastHashEvts = simpleHash(allEvents);
-    // Iniciar ciclo de polling
+    // Keep-alive de Render: ping cada 14 minutos para evitar que duerma
+    setInterval(() => {
+      fetch(`${BACKEND_URL}/`).catch(()=>{});
+    }, 14 * 60 * 1000);
+    // Iniciar ciclo de polling de datos
     _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
-    // Detener cuando la pestaña pierde el foco (ahorra batería en móvil)
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         clearInterval(_pollTimer);
       } else {
-        // Al volver, sincronizar de inmediato y reiniciar
         pollChanges();
         _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
       }
@@ -1529,34 +1531,42 @@
     }
   }
 
-  function filterHistory() {
-    const txt       = (document.getElementById('hist-search')?.value    || '').toLowerCase().trim();
-    const dateFrom  =  document.getElementById('hist-date-from')?.value || '';
-    const dateTo    =  document.getElementById('hist-date-to')?.value   || '';
-    const estado    =  document.getElementById('hist-estado')?.value    || '';
-    const plataforma=  document.getElementById('hist-plataforma')?.value|| '';
-    const categoria =  document.getElementById('hist-categoria')?.value || '';
+  function getHistFilters() {
+    return {
+      txt:        (document.getElementById('hist-search')?.value     || '').toLowerCase().trim(),
+      dateFrom:    document.getElementById('hist-date-from')?.value  || '',
+      dateTo:      document.getElementById('hist-date-to')?.value    || '',
+      estado:      document.getElementById('hist-estado')?.value     || '',
+      plataforma:  document.getElementById('hist-plataforma')?.value || '',
+      categoria:   document.getElementById('hist-categoria')?.value  || '',
+    };
+  }
 
-    const filtered = allHistory.filter(h => {
-      // Texto: nombre, cédula/RUC, # cotización
-      if (txt) {
-        const name  = (h.client?.name  || '').toLowerCase();
-        const ruc   = (h.client?.ruc   || '').toLowerCase();
-        const phone = (h.client?.phone || '').toLowerCase();
-        const num   = String(h.quote_num || '');
-        if (!name.includes(txt) && !ruc.includes(txt) && !phone.includes(txt) && !num.includes(txt)) return false;
-      }
-      // Rango de fechas (por fecha de visita o fecha de cotización)
-      const fechaRef = (h.visit_date || h.date || '').slice(0,10);
-      if (dateFrom && fechaRef && fechaRef < dateFrom) return false;
-      if (dateTo   && fechaRef && fechaRef > dateTo)   return false;
-      // Estado, plataforma, categoría
-      if (estado     && (h.estado     || 'Pendiente') !== estado)     return false;
-      if (plataforma && (h.plataforma || '')           !== plataforma) return false;
-      if (categoria  && (h.categoria  || '')           !== categoria)  return false;
-      return true;
-    });
-    renderHistory(filtered);
+  function matchesHistFilter(item, f) {
+    // Búsqueda de texto
+    if (f.txt) {
+      const name  = (item.client?.name  || '').toLowerCase();
+      const ruc   = (item.client?.ruc   || '').toLowerCase();
+      const phone = (item.client?.phone || '').toLowerCase();
+      const num   = String(item.quote_num || item.id || '').toLowerCase();
+      if (!name.includes(f.txt) && !ruc.includes(f.txt) &&
+          !phone.includes(f.txt) && !num.includes(f.txt)) return false;
+    }
+    // Rango de fechas (fecha de visita tiene prioridad, si no fecha de creación)
+    const fechaRef = (item.visit_date || item.date || item.created_at || '').slice(0,10);
+    if (f.dateFrom && fechaRef && fechaRef < f.dateFrom) return false;
+    if (f.dateTo   && fechaRef && fechaRef > f.dateTo)   return false;
+    // Estado
+    if (f.estado     && (item.estado     || 'Pendiente') !== f.estado)     return false;
+    if (f.plataforma && (item.plataforma || '')           !== f.plataforma) return false;
+    if (f.categoria  && (item.categoria  || '')           !== f.categoria)  return false;
+    return true;
+  }
+
+  function filterHistory() {
+    const f = getHistFilters();
+    const filteredQ = allHistory.filter(h => matchesHistFilter(h, f));
+    renderHistory(filteredQ, f);
   }
 
   function clearHistFilters() {
@@ -1579,15 +1589,21 @@
     return `<span class="badge ${map[e]||'badge-no'}">${e||'Pendiente'}</span>`;
   }
 
-  function renderHistory(listQ) {
+  function renderHistory(listQ, filters) {
     const el = document.getElementById('history-container');
-    // Combinar cotizaciones + eventos manuales ordenados por fecha desc
+    // Aplicar el mismo filtro a los eventos si viene del filterHistory
+    const filteredEvts = filters
+      ? allEvents.filter(e => matchesHistFilter(e, filters))
+      : allEvents;
+
+    // Combinar cotizaciones + eventos ordenados por fecha de creación desc
     const combined = [
       ...listQ.map(q => ({...q, _type:'quote'})),
-      ...allEvents.map(e => ({...e, _type:'event'})),
+      ...filteredEvts.map(e => ({...e, _type:'event'})),
     ].sort((a,b) => {
-      const da = (a.date||a.visit_date||a.created_at||'').slice(0,10);
-      const db = (b.date||b.visit_date||b.created_at||'').slice(0,10);
+      // Ordenar por created_at primero, si no por date/visit_date
+      const da = (a.created_at || a.date || a.visit_date || '').slice(0,19);
+      const db = (b.created_at || b.date || b.visit_date || '').slice(0,19);
       return db.localeCompare(da);
     });
 
