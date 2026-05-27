@@ -1017,8 +1017,10 @@
         return null;
       }
       const d = await r.json();
-      // GitHub devuelve el contenido en base64 con saltos de línea cada 60 chars
-      const content = atob(d.content.replace(/\s/g,''));
+      // Decodificar base64 → bytes → UTF-8 (soporta tildes, ñ, etc.)
+      const b64 = d.content.replace(/\s/g, '');
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      const content = new TextDecoder('utf-8').decode(bytes);
       const parsed = JSON.parse(content);
       return { data: parsed, sha: d.sha };
     } catch(e) {
@@ -1030,7 +1032,12 @@
   async function ghWrite(filename, data, sha) {
     if (!GH_TOKEN || !GH_REPO) return false;
     try {
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+      // Codificar correctamente UTF-8 → base64 (soporta tildes, ñ, etc.)
+      const json = JSON.stringify(data, null, 2);
+      const bytes = new TextEncoder().encode(json);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const content = btoa(binary);
       const payload = { message: `update ${filename}`, content, branch: GH_BRANCH };
       if (sha) payload.sha = sha;
       const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}`, {
