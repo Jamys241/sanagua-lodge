@@ -2939,9 +2939,13 @@
     try {
       await saveEventToServer();
       closeEventModal();
+      // Forzar rebuild del índice antes de renderizar
+      console.log('allEvents después de guardar:', allEvents.length, 'eventos');
+      console.log('Último evento:', JSON.stringify(allEvents[allEvents.length-1]));
       renderCalendario();
+      renderHistory(allHistory);
       showToast(`✅ Evento "${name}" guardado`, 'success');
-    } catch { showToast('❌ Error al guardar el evento.', 'error'); }
+    } catch(e) { console.error('Error saveEvent:', e); showToast('❌ Error al guardar el evento.', 'error'); }
     finally { hideLoading(); }
   }
 
@@ -3041,14 +3045,18 @@
       ...allHistory.filter(passFilter),
       ...allEvents.filter(passFilter),
     ];
+    console.log('buildCalIndex: total items =', all.length, '| eventos =', allEvents.length, '| filtros =', f);
     all.forEach(item => {
-      // Si no tiene fecha de visita, no aparece en el calendario
-      if (!item.visit_date) return;
+      if (!item.visit_date) {
+        if (item.type === 'event') console.log('Evento sin visit_date:', item.client?.name, item.id);
+        return;
+      }
       dateRange(item.visit_date, item.visit_date_end).forEach(ds => {
         if (!_calIndex[ds]) _calIndex[ds] = [];
         _calIndex[ds].push(item);
       });
     });
+    console.log('buildCalIndex: fechas indexadas =', Object.keys(_calIndex).length);
   }
 
   // Ahora simplemente consulta el índice — O(1) por celda
