@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cotizaciones — Sanagua Lodge</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -1013,8 +1013,7 @@
       const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}?ref=${GH_BRANCH}`, {headers: ghHeaders()});
       if (!r.ok) return null;
       const d = await r.json();
-      const content = atob(d.content.replace(/
-/g,''));
+      const content = atob(d.content.replace(/\n/g,''));
       return { data: JSON.parse(content), sha: d.sha };
     } catch { return null; }
   }
@@ -1062,11 +1061,6 @@
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
-  const today = new Date();
-  document.getElementById('quote-date').value = localDateStr(today);
-  const valid = new Date(today); valid.setDate(valid.getDate()+30);
-  document.getElementById('quote-valid').value = localDateStr(valid);
-
   // ── Init: carga en paralelo contador y productos desde el backend ────────────
   // Fetch con timeout de 8 segundos para no colgar la página
   async function loadCounter() {
@@ -1099,20 +1093,29 @@
     await ghReadWrite('products.json', {products});
   }
 
-  // Init — esperar DOM listo antes de renderizar calendario
-  document.addEventListener('DOMContentLoaded', () => {});
-  setDiscount('none');
-  // Cargar datos en background, mostrar calendario cuando lleguen
-  (async () => {
-    try {
-      await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
-    } catch(e) { console.warn('Init partial error:', e); }
-    try {
-      await loadHistory();
-    } catch(e) { console.warn('History load error:', e); }
-    renderCalendario();
-    startPolling(); // ← iniciar sincronización automática
-  })();
+  // Init — todo dentro de DOMContentLoaded para garantizar que el DOM y las
+  // funciones estén disponibles antes de ejecutar
+  document.addEventListener('DOMContentLoaded', () => {
+    setDiscount('none');
+
+    // Fechas por defecto
+    const _today = new Date();
+    document.getElementById('quote-date').value = localDateStr(_today);
+    const _valid = new Date(_today); _valid.setDate(_valid.getDate()+30);
+    document.getElementById('quote-valid').value = localDateStr(_valid);
+
+    // Cargar datos y mostrar calendario
+    (async () => {
+      try {
+        await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
+      } catch(e) { console.warn('Init partial error:', e); }
+      try {
+        await loadHistory();
+      } catch(e) { console.warn('History load error:', e); }
+      renderCalendario();
+      startPolling();
+    })();
+  });
 
   // ── Polling — sincronización en tiempo real entre dispositivos ───────────────
   // Compara un hash simple de los datos para detectar cambios sin sobrecargar
