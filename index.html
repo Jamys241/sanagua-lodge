@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cotizaciones — Sanagua Lodge</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -920,7 +921,34 @@
   <div id="logo-status" style="display:none;" class="card" style="padding:12px 20px;">
   </div>
 
-  <!-- Datos de empresa (editables) -->
+  <!-- Configuración GitHub -->
+  <div class="card">
+    <div class="card-title">Conexión a GitHub</div>
+    <p style="font-size:.82rem;color:var(--ink-muted);margin-bottom:18px;">
+      Los datos se guardan directamente en tu repositorio privado de GitHub.<br>
+      El token se guarda solo en este navegador — debes configurarlo en cada dispositivo.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Personal Access Token (repo scope)</label>
+        <input type="password" id="cfg-gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>Repositorio (usuario/repo)</label>
+        <input type="text" id="cfg-gh-repo" placeholder="sanagua/sanagua-datos">
+      </div>
+      <div class="form-group">
+        <label>Rama</label>
+        <input type="text" id="cfg-gh-branch" placeholder="main" value="main">
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="saveGHConfig()">💾 Guardar configuración</button>
+      <button class="btn btn-outline btn-sm" onclick="testGHConfig()">🔍 Probar conexión</button>
+      <span id="gh-config-status" style="font-size:.82rem;"></span>
+    </div>
+    <div id="gh-config-current" style="margin-top:10px;font-size:.78rem;color:var(--ink-muted);"></div>
+  </div>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0;">Datos de la empresa en PDF</div>
@@ -960,7 +988,59 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const BACKEND_URL = 'https://sanagua-lodge-3.onrender.com';
+  // ── Configuración GitHub (sin Render) ───────────────────────────────────────
+  // GH_TOKEN y GH_REPO se configuran en la pestaña ⚙️ Configuración
+  // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
+  // Para compartir entre dispositivos, cada uno debe configurar su token
+
+  let GH_TOKEN  = localStorage.getItem('gh_token')  || '';
+  let GH_REPO   = localStorage.getItem('gh_repo')   || '';
+  let GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
+  const GH_BASE = 'https://api.github.com';
+  const DATA_PATH = 'Data/json';
+
+  function ghHeaders() {
+    return {
+      'Authorization': `token ${GH_TOKEN}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async function ghRead(filename) {
+    if (!GH_TOKEN || !GH_REPO) return null;
+    try {
+      const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}?ref=${GH_BRANCH}`, {headers: ghHeaders()});
+      if (!r.ok) return null;
+      const d = await r.json();
+      const content = atob(d.content.replace(/
+/g,''));
+      return { data: JSON.parse(content), sha: d.sha };
+    } catch { return null; }
+  }
+
+  async function ghWrite(filename, data, sha) {
+    if (!GH_TOKEN || !GH_REPO) return false;
+    try {
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+      const payload = { message: `update ${filename}`, content, branch: GH_BRANCH };
+      if (sha) payload.sha = sha;
+      const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}`, {
+        method: 'PUT', headers: ghHeaders(), body: JSON.stringify(payload)
+      });
+      return r.ok;
+    } catch { return false; }
+  }
+
+  async function ghReadWrite(filename, newData) {
+    const existing = await ghRead(filename);
+    return ghWrite(filename, newData, existing?.sha || null);
+  }
+
+  // Verifica si GitHub está configurado
+  function ghConfigured() {
+    return !!(GH_TOKEN && GH_REPO);
+  }
 
   const DISCOUNT_MAP = {
     none:   { pct:0,    label:null,                           color:'none'   },
@@ -989,56 +1069,34 @@
 
   // ── Init: carga en paralelo contador y productos desde el backend ────────────
   // Fetch con timeout de 8 segundos para no colgar la página
-  async function safeFetch(url, opts={}) {
-    const ctrl = new AbortController();
-    const tid = setTimeout(()=>ctrl.abort(), 8000);
-    try {
-      const r = await fetch(url, {...opts, signal: ctrl.signal});
-      clearTimeout(tid);
-      return r;
-    } catch(e) {
-      clearTimeout(tid);
-      throw e;
-    }
-  }
-
   async function loadCounter() {
+    if (!ghConfigured()) { document.getElementById('quote-counter').textContent = '⚙️ Configura GitHub'; return; }
     try {
-      const r = await safeFetch(`${BACKEND_URL}/counter`);
-      const d = await r.json();
-      document.getElementById('quote-counter').textContent = `Próxima: #${String(d.next).padStart(4,'0')}`;
+      const res = await ghRead('counter.json');
+      const n = res?.data?.count || 1;
+      document.getElementById('quote-counter').textContent = `Próxima: #${String(n).padStart(4,'0')}`;
     } catch { document.getElementById('quote-counter').textContent = 'Sin conexión'; }
   }
 
   async function loadProducts() {
     try {
-      const r = await safeFetch(`${BACKEND_URL}/products`);
-      products = await r.json();
-    } catch {
-      products = JSON.parse(localStorage.getItem('cot_products') || '[]');
-      if (!products.length) {
-        products = [
-          {id:1, name:'Cabaña Sencilla (noche)',  price:120.00, itbms:7},
-          {id:2, name:'Cabaña Doble (noche)',     price:180.00, itbms:7},
-          {id:3, name:'Cabaña Familiar (noche)',  price:240.00, itbms:7},
-          {id:4, name:'Paquete con alimentación', price:350.00, itbms:7},
-        ];
-      }
+      const res = await ghRead('products.json');
+      products = res?.data?.products || [];
+    } catch { products = []; }
+    if (!products.length) {
+      products = [
+        {id:1,name:'Cabaña Sencilla (noche)', price:120.00,itbms:7},
+        {id:2,name:'Cabaña Doble (noche)',    price:180.00,itbms:7},
+        {id:3,name:'Cabaña Familiar (noche)', price:240.00,itbms:7},
+        {id:4,name:'Paquete con alimentación',price:350.00,itbms:7},
+      ];
     }
     renderProducts();
     renderProductSelect();
   }
 
   async function saveProducts() {
-    // Guardar en backend Y en localStorage como respaldo
-    localStorage.setItem('cot_products', JSON.stringify(products));
-    try {
-      await fetch(`${BACKEND_URL}/products`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(products)
-      });
-    } catch { /* fallo silencioso, ya guardó en localStorage */ }
+    await ghReadWrite('products.json', {products});
   }
 
   // Init — esperar DOM listo antes de renderizar calendario
@@ -1074,14 +1132,13 @@
 
   async function pollChanges() {
     try {
-      // Verificar si el historial cambió
-      const rH = await safeFetch(`${BACKEND_URL}/history`);
-      const newHist = await rH.json();
+      const [rH, rE] = await Promise.all([
+        ghRead('history.json'),
+        ghRead('events.json'),
+      ]);
+      const newHist = rH?.data?.quotes || [];
+      const newEvts = rE?.data?.events || [];
       const newHashH = simpleHash(newHist);
-
-      // Verificar si los eventos cambiaron
-      const rE = await safeFetch(`${BACKEND_URL}/events`);
-      const newEvts = await rE.json();
       const newHashE = simpleHash(newEvts);
 
       const histChanged  = newHashH !== _lastHashHist;
@@ -1109,10 +1166,7 @@
     // Guardar hashes iniciales
     _lastHashHist = simpleHash(allHistory);
     _lastHashEvts = simpleHash(allEvents);
-    // Keep-alive de Render: ping cada 14 minutos para evitar que duerma
-    setInterval(() => {
-      fetch(`${BACKEND_URL}/`).catch(()=>{});
-    }, 14 * 60 * 1000);
+    // Sin Render — no se necesita keep-alive
     // Iniciar ciclo de polling de datos
     _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     document.addEventListener('visibilitychange', () => {
@@ -1148,10 +1202,8 @@
 
   async function loadEmpresa() {
     try {
-      const r = await safeFetch(`${BACKEND_URL}/empresa`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d.nombre) empresaData = d;
+      const res = await ghRead('empresa.json');
+      if (res?.data?.nombre) empresaData = res.data;
     } catch { /* usar defaults */ }
     document.getElementById('emp-nombre').value = empresaData.nombre || '';
     document.getElementById('emp-ruc').value    = empresaData.ruc    || '';
@@ -1169,12 +1221,8 @@
     if (!data.nombre) { showToast('El nombre de la empresa es obligatorio.', 'error'); return; }
     showLoading(true);
     try {
-      const r = await fetch(`${BACKEND_URL}/empresa`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-      });
-      if (r.ok) {
+      const ok = await ghReadWrite('empresa.json', data);
+      if (ok) {
         empresaData = data;
         showToast('✅ Datos de empresa guardados correctamente.', 'success');
       } else {
@@ -1184,16 +1232,68 @@
     finally { showLoading(false); }
   }
 
-  // ── Logo ────────────────────────────────────────────────────────────────────
+  // ── Configuración GitHub ───────────────────────────────────────────────────
+  function _loadGHConfigUI() {
+    document.getElementById('cfg-gh-token').value  = GH_TOKEN  || '';
+    document.getElementById('cfg-gh-repo').value   = GH_REPO   || '';
+    document.getElementById('cfg-gh-branch').value = GH_BRANCH || 'main';
+    document.getElementById('gh-config-current').textContent =
+      GH_REPO ? `✅ Conectado a: ${GH_REPO} (rama: ${GH_BRANCH})` : '⚠️ No configurado aún.';
+  }
+
+  function saveGHConfig() {
+    const token  = document.getElementById('cfg-gh-token').value.trim();
+    const repo   = document.getElementById('cfg-gh-repo').value.trim();
+    const branch = document.getElementById('cfg-gh-branch').value.trim() || 'main';
+    if (!token || !repo) { showToast('Completa el token y el repositorio.', 'error'); return; }
+    GH_TOKEN  = token;
+    GH_REPO   = repo;
+    GH_BRANCH = branch;
+    localStorage.setItem('gh_token',  token);
+    localStorage.setItem('gh_repo',   repo);
+    localStorage.setItem('gh_branch', branch);
+    _loadGHConfigUI();
+    showToast('✅ Configuración de GitHub guardada', 'success');
+    // Recargar datos con la nueva configuración
+    Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()])
+      .then(() => loadHistory().then(() => renderCalendario()));
+  }
+
+  async function testGHConfig() {
+    const token  = document.getElementById('cfg-gh-token').value.trim() || GH_TOKEN;
+    const repo   = document.getElementById('cfg-gh-repo').value.trim()  || GH_REPO;
+    const branch = document.getElementById('cfg-gh-branch').value.trim()|| GH_BRANCH || 'main';
+    const status = document.getElementById('gh-config-status');
+    status.textContent = '⏳ Probando...'; status.style.color = 'var(--muted)';
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repo}/contents/Data/json?ref=${branch}`, {
+        headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
+      });
+      if (r.ok) {
+        status.textContent = '✅ Conexión exitosa — carpeta Data/json encontrada';
+        status.style.color = 'var(--success)';
+      } else if (r.status === 404) {
+        status.textContent = '⚠️ Conexión OK pero carpeta Data/json no existe aún — se creará al guardar';
+        status.style.color = 'var(--gold)';
+      } else if (r.status === 401) {
+        status.textContent = '❌ Token inválido o sin permisos';
+        status.style.color = 'var(--red)';
+      } else {
+        status.textContent = `❌ Error ${r.status}`;
+        status.style.color = 'var(--red)';
+      }
+    } catch {
+      status.textContent = '❌ Sin conexión a GitHub';
+      status.style.color = 'var(--red)';
+    }
+  }
   let logoBase64 = '';
 
   async function loadLogo() {
     try {
-      const r = await safeFetch(`${BACKEND_URL}/logo`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d.logo) { logoBase64 = d.logo; _applyLogoPreview(d.logo); }
-    } catch { /* sin logo, continúa sin él */ }
+      const res = await ghRead('logo.json');
+      if (res?.data?.logo) { logoBase64 = res.data.logo; _applyLogoPreview(res.data.logo); }
+    } catch { /* sin logo */ }
   }
 
   function _applyLogoPreview(b64) {
@@ -1227,14 +1327,10 @@
       _applyLogoPreview(logoBase64);
       showToast('Subiendo logo...', 'success');
       try {
-        const r = await fetch(`${BACKEND_URL}/logo`, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({logo: logoBase64})
-        });
-        showToast(r.ok ? '✅ Logo guardado. Disponible en todos los dispositivos.' : '⚠️ Logo visible pero no guardado en servidor.', r.ok ? 'success' : 'error');
+        const ok = await ghReadWrite('logo.json', {logo: logoBase64});
+        showToast(ok ? '✅ Logo guardado en GitHub.' : '⚠️ Logo visible pero no guardado.', ok ? 'success' : 'error');
       } catch {
-        showToast('⚠️ Logo cargado localmente pero sin conexión al servidor.', 'error');
+        showToast('⚠️ Error al guardar el logo.', 'error');
       }
     };
     reader.readAsDataURL(file);
@@ -1245,13 +1341,7 @@
     logoBase64 = '';
     _applyLogoPreview('');
     document.getElementById('logo-upload').value = '';
-    try {
-      await fetch(`${BACKEND_URL}/logo`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({logo: ''})
-      });
-    } catch { /* silencioso */ }
+    try { await ghReadWrite('logo.json', {logo:''}); } catch { /* silencioso */ }
     showToast('Logo eliminado.', 'success');
   }
 
@@ -1293,6 +1383,7 @@
     if (name === 'historial') loadHistory();
     if (name === 'resumen')   loadHistory().then(() => renderResumen());
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
+    if (name === 'config')    _loadGHConfigUI();
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -1504,14 +1595,30 @@
     const payload = _buildPayload();
     showLoading(true);
     try {
-      const res=await fetch(`${BACKEND_URL}/generate-pdf`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      if(!res.ok) throw new Error();
-      const blob=await res.blob();
-      const num=res.headers.get('X-Quote-Number')||'0000';
-      downloadBlob(blob,`Cotización Sanagua Lodge #${num}.pdf`);
-      document.getElementById('quote-counter').textContent=`Próxima: #${String(parseInt(num)+1).padStart(4,'0')}`;
-      showToast(`✅ Cotización #${num} generada y guardada en historial`,'success');
-    } catch { showToast('❌ Error al generar el PDF.','error'); }
+      // Obtener y actualizar contador
+      const cRes = await ghRead('counter.json');
+      const quoteNum = cRes?.data?.count || 1;
+      const quoteStr = String(quoteNum).padStart(4,'0');
+      await ghReadWrite('counter.json', {count: quoteNum + 1});
+
+      // Guardar en historial
+      const histRes = await ghRead('history.json');
+      const quotes = histRes?.data?.quotes || [];
+      const record = {...payload, quote_num: quoteStr,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        abono_pagado: 0, estado: 'Pendiente', notas_internas: ''};
+      delete record.logo; delete record.empresa;
+      quotes.unshift(record);
+      quotes.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+      await ghReadWrite('history.json', {quotes});
+      allHistory = quotes;
+
+      // Generar PDF en el navegador
+      generatePDFlocal(payload, quoteStr, 'cotizacion');
+
+      document.getElementById('quote-counter').textContent=`Próxima: #${String(quoteNum+1).padStart(4,'0')}`;
+      showToast(`✅ Cotización #${quoteStr} generada`,'success');
+    } catch(e) { console.error(e); showToast('❌ Error al generar la cotización.','error'); }
     finally { showLoading(false); }
   }
 
@@ -1520,11 +1627,11 @@
     document.getElementById('history-container').innerHTML='<div class="empty-hist">Cargando...</div>';
     try {
       const [rH, rE] = await Promise.all([
-        safeFetch(`${BACKEND_URL}/history`),
-        safeFetch(`${BACKEND_URL}/events`),
+        ghRead('history.json'),
+        ghRead('events.json'),
       ]);
-      allHistory = await rH.json();
-      allEvents  = await rE.json();
+      allHistory = rH?.data?.quotes || [];
+      allEvents  = rE?.data?.events || [];
       renderHistory(allHistory);
     } catch {
       document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>';
@@ -1834,6 +1941,54 @@
     document.getElementById('rf-pct').textContent        = `${pct}% pagado${pct >= 100 ? ' ✅' : ''}`;
   }
 
+  const CABANAS = ['Cabaña Yaguarundi','Cabaña Ocelot','Cabaña Motmot'];
+
+  // Verifica si dos rangos de fechas se solapan
+  // Rango = [start, end-1] (end es día de salida, no cuenta)
+  function rangesOverlap(startA, endA, startB, endB) {
+    // Si no hay end, el rango es de un solo día
+    const a1 = startA;
+    const a2 = endA || startA;
+    const b1 = startB;
+    const b2 = endB || startB;
+    // Se solapan si a1 <= b2 y b1 <= a2
+    return a1 <= b2 && b1 <= a2;
+  }
+
+  function checkCabanaConflict(updates, currentId) {
+    const cat = updates.categoria;
+    if (!CABANAS.includes(cat)) return null;
+    if (updates.estado !== 'Confirmada') return null;
+
+    const newStart = updates.visit_date;
+    const newEnd   = updates.visit_date_end || newStart;
+    if (!newStart) return null;
+
+    // Buscar conflicto en historial + eventos, excluyendo el item actual
+    const allItems = [
+      ...allHistory.filter(q => String(q.quote_num) !== String(currentId)),
+      ...allEvents.filter(e => String(e.id) !== String(currentId)),
+    ];
+
+    const conflict = allItems.find(q => {
+      if ((q.estado || 'Pendiente') !== 'Confirmada') return false;
+      if ((q.categoria || '') !== cat) return false;
+      const qStart = q.visit_date;
+      const qEnd   = q.visit_date_end || qStart;
+      if (!qStart) return false;
+      return rangesOverlap(newStart, newEnd, qStart, qEnd);
+    });
+
+    if (conflict) {
+      const name  = conflict.client?.name || '—';
+      const num   = conflict.quote_num ? `#${conflict.quote_num}` : '(evento manual)';
+      const desde = fmtDateShort(conflict.visit_date);
+      const hasta = conflict.visit_date_end ? ` → ${fmtDateShort(conflict.visit_date_end)}` : '';
+      return `⚠️ ${cat} ya está confirmada\n\nCliente: ${name} ${num}\nFechas: ${desde}${hasta}\n\nNo es posible confirmar otra reserva en las mismas fechas.`;
+    }
+    return null;
+  }
+
   async function saveEdit() {
     if(!currentQuote) return;
     // Recalcular totales con los ítems editados
@@ -1869,14 +2024,16 @@
       abono_50: total * .5,
     };
 
+    // Validar conflicto de cabaña antes de guardar
+    const conflict = checkCabanaConflict(updates, currentQuote.quote_num);
+    if (conflict) { alert(conflict); return; }
+
     showLoading(true);
     try {
-      const r = await fetch(`${BACKEND_URL}/history/${currentQuote.quote_num}`,{
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates)
-      });
-      if(!r.ok) throw new Error();
       const idx = allHistory.findIndex(q=>q.quote_num===currentQuote.quote_num);
-      if(idx>=0) allHistory[idx]={...allHistory[idx],...updates};
+      if(idx>=0) allHistory[idx]={...allHistory[idx],...updates, updated_at: new Date().toISOString()};
+      const ok = await ghReadWrite('history.json', {quotes: allHistory});
+      if(!ok) throw new Error();
       renderHistory(allHistory);
       closeModal();
       showToast('✅ Cambios guardados correctamente','success');
@@ -1904,8 +2061,8 @@
     if(!confirm(`¿Eliminar la cotización #${currentQuote.quote_num}? Esta acción no se puede deshacer.`)) return;
     showLoading(true);
     try {
-      await fetch(`${BACKEND_URL}/history/${currentQuote.quote_num}`,{method:'DELETE'});
       allHistory = allHistory.filter(q=>q.quote_num!==currentQuote.quote_num);
+      await ghReadWrite('history.json', {quotes: allHistory});
       renderHistory(allHistory);
       closeModal();
       showToast('Cotización eliminada.','success');
@@ -1930,37 +2087,25 @@
   async function quickExportConfirmation(idx) {
     const q = allHistory[idx];
     if (!q) return;
-    const payload = {...q, logo: logoBase64 || null, empresa: empresaData};
     const num = String(q.quote_num).padStart(4,'0');
     const clientName = q.client?.name || 'Cliente';
     showLoading(true);
     try {
-      const r = await fetch(`${BACKEND_URL}/generate-confirmation`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-      });
-      if (!r.ok) throw new Error();
-      const blob = await r.blob();
-      downloadBlob(blob, `Confirmación Sanagua Lodge ${num} ${clientName}.pdf`);
+      generatePDFlocal({...q, logo: logoBase64||null, empresa: empresaData}, num, 'confirmacion');
       showToast(`✅ Confirmación #${num} exportada`, 'success');
-    } catch { showToast('❌ Error al generar la confirmación.', 'error'); }
+    } catch(e) { showToast('❌ Error al generar la confirmación.','error'); }
     finally { showLoading(false); }
   }
 
   async function reGeneratePDF(idx) {
     const q = allHistory[idx];
     if (!q) return;
-    const payload = {...q, logo: logoBase64 || null, empresa: empresaData};
     const num = String(q.quote_num).padStart(4,'0');
     showLoading(true);
     try {
-      const r = await fetch(`${BACKEND_URL}/regenerate-pdf`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-      });
-      if (!r.ok) throw new Error();
-      const blob = await r.blob();
-      downloadBlob(blob, `Cotización Sanagua Lodge #${num}.pdf`);
+      generatePDFlocal({...q, logo: logoBase64||null, empresa: empresaData}, num, 'cotizacion');
       showToast(`✅ Cotización #${num} regenerada`, 'success');
-    } catch { showToast('❌ Error al regenerar la cotización.', 'error'); }
+    } catch(e) { showToast('❌ Error al regenerar.','error'); }
     finally { showLoading(false); }
   }
 
@@ -1977,12 +2122,8 @@
 
     showLoading(true);
     try {
-      const r = await fetch(`${BACKEND_URL}/generate-confirmation`,{
-        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-      });
-      if(!r.ok) throw new Error();
-      const blob = await r.blob();
-      downloadBlob(blob, `Confirmación Sanagua Lodge ${num} ${clientName}.pdf`);
+      const qnum = String(num).padStart(4,'0');
+      generatePDFlocal(payload, qnum, 'confirmacion');
       showToast(`✅ Confirmación exportada correctamente`,'success');
     } catch { showToast('❌ Error al generar la confirmación.','error'); }
     finally { showLoading(false); }
@@ -1993,6 +2134,198 @@
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a'); a.href=url; a.download=name; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  // ── Generador de PDF local con jsPDF ─────────────────────────────────────────
+  function generatePDFlocal(data, quoteNum, tipo) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'letter' });
+    const emp = data.empresa || empresaData;
+    const W = 216, margin = 20, cW = W - margin*2;
+    let y = 20;
+
+    const accent  = [200, 84, 26];
+    const dark    = [26,  24, 20];
+    const muted   = [107, 102, 96];
+    const success = [45,  122, 79];
+
+    // ── Logo ──────────────────────────────────────────────────────────────
+    const logo = data.logo || logoBase64;
+    if (logo && logo.startsWith('data:image')) {
+      try {
+        const ext = logo.includes('png') ? 'PNG' : 'JPEG';
+        doc.addImage(logo, ext, margin, y, 40, 14);
+      } catch {}
+    }
+
+    // ── Encabezado ────────────────────────────────────────────────────────
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.setTextColor(...accent);
+    doc.text(emp.nombre || 'Sanagua Lodge S.A.', margin + (logo?44:0), y+8);
+
+    const titulo = tipo === 'confirmacion'
+      ? `Confirmación de Reserva\n#${quoteNum}`
+      : `Cotización Sanagua Lodge\n#${quoteNum}`;
+    doc.setFontSize(10);
+    doc.setTextColor(...dark);
+    doc.text(titulo, W - margin, y+4, {align:'right'});
+
+    y += 18;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text(`RUC: ${emp.ruc||''} | Tel: ${emp.tel||''} | ${emp.email||''}`, margin, y);
+    y += 4;
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.8);
+    doc.line(margin, y, W-margin, y);
+    y += 6;
+
+    // ── Datos cliente ─────────────────────────────────────────────────────
+    const cl = data.client || {};
+    doc.setFillColor(245, 243, 238);
+    doc.roundedRect(margin, y, cW, 28, 2, 2, 'F');
+    doc.setFontSize(9);
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+7);
+    doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+7);
+    doc.setFont('helvetica','bold'); doc.text('RUC/Cédula:', margin+4, y+13);
+    doc.setFont('helvetica','normal'); doc.text(cl.ruc||'—', margin+26, y+13);
+    doc.setFont('helvetica','bold'); doc.text('Teléfono:', margin+4, y+19);
+    doc.setFont('helvetica','normal'); doc.text(cl.phone||'—', margin+22, y+19);
+    doc.setFont('helvetica','bold'); doc.text('Correo:', margin+4, y+25);
+    doc.setFont('helvetica','normal'); doc.text(cl.email||'—', margin+18, y+25);
+
+    // Fecha y categoría a la derecha
+    const fmtD = s => { if(!s)return'—'; try{const d=new Date(s+'T12:00:00');return d.toLocaleDateString('es-PA',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;} };
+    doc.setFont('helvetica','bold'); doc.text('Fecha:', W-margin-60, y+7);
+    doc.setFont('helvetica','normal'); doc.text(fmtD(data.date), W-margin-40, y+7);
+    if (data.visit_date) {
+      doc.setFont('helvetica','bold'); doc.text('Entrada:', W-margin-60, y+13);
+      doc.setFont('helvetica','normal'); doc.text(fmtD(data.visit_date), W-margin-40, y+13);
+    }
+    if (data.visit_date_end) {
+      doc.setFont('helvetica','bold'); doc.text('Salida:', W-margin-60, y+19);
+      doc.setFont('helvetica','normal'); doc.text(fmtD(data.visit_date_end), W-margin-40, y+19);
+    }
+    if (data.categoria) {
+      doc.setFont('helvetica','bold'); doc.text('Categoría:', W-margin-60, y+25);
+      doc.setFont('helvetica','normal'); doc.text(data.categoria, W-margin-35, y+25);
+    }
+    y += 34;
+
+    // ── En confirmación: mostrar notas internas ───────────────────────────
+    if (tipo === 'confirmacion') {
+      // Resumen de pagos
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...dark);
+      doc.text('Resumen de Pagos', margin, y); y += 6;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      const total = data.total||0;
+      const abono = data.abono_pagado||0;
+      const cancel = data.cancelacion_pagada||0;
+      const recibido = abono+cancel;
+      const saldo = Math.max(0, total-recibido);
+      const rows = [
+        ['Total de la reserva', `$${total.toFixed(2)}`],
+        ['Abono requerido (50%)', `$${(total*.5).toFixed(2)}`],
+        ['Abono recibido', `$${abono.toFixed(2)}`],
+        ['Cancelación recibida', `$${cancel.toFixed(2)}`],
+        ['Total recibido', `$${recibido.toFixed(2)}`],
+        ['Saldo pendiente', `$${saldo.toFixed(2)}`],
+      ];
+      rows.forEach(([lbl,val],i) => {
+        doc.setTextColor(...(i===rows.length-1?accent:muted));
+        doc.text(lbl, margin+4, y);
+        doc.setFont('helvetica','bold');
+        doc.text(val, W-margin-4, y, {align:'right'});
+        doc.setFont('helvetica','normal');
+        y += 6;
+      });
+      if (data.notas_internas) {
+        y += 4;
+        doc.setFont('helvetica','bold'); doc.setTextColor(...dark); doc.text('Observaciones:', margin, y); y += 6;
+        doc.setFont('helvetica','normal'); doc.setTextColor(...muted);
+        const lines = doc.splitTextToSize(data.notas_internas, cW);
+        doc.text(lines, margin, y); y += lines.length*5+4;
+      }
+    } else {
+      // ── Tabla de ítems (cotización) ────────────────────────────────────
+      const items = data.items || [];
+      if (items.length) {
+        // Cabecera
+        doc.setFillColor(...dark); doc.rect(margin, y, cW, 7, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+        doc.text('Descripción', margin+3, y+5);
+        doc.text('Cant.', margin+cW*0.55, y+5);
+        doc.text('P. Unit.', margin+cW*0.65, y+5);
+        doc.text('ITBMS', margin+cW*0.77, y+5);
+        doc.text('Total', margin+cW*0.88, y+5);
+        y += 7;
+        items.forEach((it,i) => {
+          const bg = i%2===0 ? [255,255,255] : [245,243,238];
+          doc.setFillColor(...bg); doc.rect(margin, y, cW, 6, 'F');
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...dark);
+          doc.text(it.desc||'', margin+3, y+4.5, {maxWidth: cW*0.5});
+          doc.text(String(it.qty||1), margin+cW*0.55, y+4.5);
+          doc.text(`$${Number(it.price||0).toFixed(2)}`, margin+cW*0.65, y+4.5);
+          doc.text(`$${Number(it.itbms_amount||0).toFixed(2)}`, margin+cW*0.77, y+4.5);
+          doc.text(`$${Number(it.line_total||0).toFixed(2)}`, margin+cW*0.88, y+4.5);
+          y += 6;
+          if (y > 240) { doc.addPage(); y = 20; }
+        });
+        y += 4;
+      }
+
+      // ── Totales ─────────────────────────────────────────────────────────
+      const sub   = data.subtotal||0;
+      const disc  = data.discount_amount||0;
+      const i7    = data.itbms7_total||0;
+      const i10   = data.itbms10_total||0;
+      const total = data.total||0;
+      const abono50 = data.abono_50||total*.5;
+      const totRows = [
+        ['Subtotal', `$${sub.toFixed(2)}`],
+        ...(disc>0?[[data.discount_label||'Descuento', `-$${disc.toFixed(2)}`]]:[]),
+        ...(i7>0?[['ITBMS 7%', `$${i7.toFixed(2)}`]]:[]),
+        ...(i10>0?[['ITBMS 10%', `$${i10.toFixed(2)}`]]:[]),
+      ];
+      const xL = margin + cW*0.55;
+      const xR = W - margin - 4;
+      doc.setFontSize(9);
+      totRows.forEach(([lbl,val]) => {
+        doc.setFont('helvetica','normal'); doc.setTextColor(...muted);
+        doc.text(lbl, xL, y); doc.text(val, xR, y, {align:'right'}); y+=5.5;
+      });
+      doc.setDrawColor(...accent); doc.setLineWidth(0.6); doc.line(xL, y, xR, y); y+=4;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...accent);
+      doc.text('TOTAL', xL, y); doc.text(`$${total.toFixed(2)}`, xR, y, {align:'right'}); y+=5;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...[26,95,168]);
+      doc.text('Abono requerido (50%)', xL, y+5); doc.text(`$${abono50.toFixed(2)}`, xR, y+5, {align:'right'}); y+=12;
+
+      // ── Notas ────────────────────────────────────────────────────────────
+      if (data.notes) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...dark);
+        doc.text('Notas y Condiciones:', margin, y); y+=5;
+        doc.setFont('helvetica','normal'); doc.setTextColor(...muted);
+        const lines = doc.splitTextToSize(data.notes, cW);
+        doc.text(lines, margin, y); y += lines.length*4.5+4;
+      }
+    }
+
+    // ── Pie ───────────────────────────────────────────────────────────────
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+    const footer = tipo==='confirmacion'
+      ? `Gracias por elegir ${emp.nombre||'Sanagua Lodge S.A.'}. ¡Esperamos recibirle pronto!`
+      : `Esta cotización es válida hasta el ${fmtD(data.valid_until)}. Gracias por su confianza en ${emp.nombre||'Sanagua Lodge S.A.'}.`;
+    doc.text(footer, W/2, 275, {align:'center', maxWidth: cW});
+
+    // ── Descargar ─────────────────────────────────────────────────────────
+    const clientName = data.client?.name || 'Cliente';
+    const filename = tipo==='confirmacion'
+      ? `Confirmación Sanagua Lodge ${quoteNum} ${clientName}.pdf`
+      : `Cotización Sanagua Lodge #${quoteNum}.pdf`;
+    doc.save(filename);
   }
 
   function fmtDateShort(d) {
@@ -2450,19 +2783,14 @@
 
   async function loadEvents() {
     try {
-      const r = await safeFetch(`${BACKEND_URL}/events`);
-      if (!r.ok) return;
-      allEvents = await r.json();
+      const res = await ghRead('events.json');
+      allEvents = res?.data?.events || [];
     } catch { allEvents = []; }
   }
 
-  async function saveEventToServer(ev) {
-    const r = await fetch(`${BACKEND_URL}/events`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(allEvents)
-    });
-    if (!r.ok) throw new Error();
+  async function saveEventToServer() {
+    const ok = await ghReadWrite('events.json', {events: allEvents});
+    if (!ok) throw new Error('GitHub write failed');
   }
 
   // Abrir modal para crear un nuevo evento
@@ -2537,6 +2865,16 @@
     const total    = parseFloat(document.getElementById('ev-total').value)||0;
     const abono    = parseFloat(document.getElementById('ev-abono').value)||0;
     const cancel   = parseFloat(document.getElementById('ev-cancelacion').value)||0;
+
+    // Validar conflicto de cabaña
+    const evUpdates = {
+      categoria:  document.getElementById('ev-categoria').value,
+      estado:     document.getElementById('ev-estado').value,
+      visit_date: document.getElementById('ev-visit-date').value,
+      visit_date_end: document.getElementById('ev-visit-date-end').value,
+    };
+    const evConflict = checkCabanaConflict(evUpdates, editingEvent?.id || '__new__');
+    if (evConflict) { alert(evConflict); return; }
 
     const ev = {
       id:         editingEvent ? editingEvent.id : `ev_${Date.now()}`,
