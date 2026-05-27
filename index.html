@@ -1010,12 +1010,21 @@
   async function ghRead(filename) {
     if (!GH_TOKEN || !GH_REPO) return null;
     try {
-      const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}?ref=${GH_BRANCH}`, {headers: ghHeaders()});
-      if (!r.ok) return null;
+      const url = `${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}?ref=${GH_BRANCH}`;
+      const r = await fetch(url, {headers: ghHeaders()});
+      if (!r.ok) {
+        console.warn(`ghRead ${filename}: HTTP ${r.status}`);
+        return null;
+      }
       const d = await r.json();
-      const content = atob(d.content.replace(/\n/g,''));
-      return { data: JSON.parse(content), sha: d.sha };
-    } catch { return null; }
+      // GitHub devuelve el contenido en base64 con saltos de línea cada 60 chars
+      const content = atob(d.content.replace(/\s/g,''));
+      const parsed = JSON.parse(content);
+      return { data: parsed, sha: d.sha };
+    } catch(e) {
+      console.warn(`ghRead ${filename} error:`, e.message);
+      return null;
+    }
   }
 
   async function ghWrite(filename, data, sha) {
@@ -1267,28 +1276,38 @@
     const repo   = document.getElementById('cfg-gh-repo').value.trim()  || GH_REPO;
     const branch = document.getElementById('cfg-gh-branch').value.trim()|| GH_BRANCH || 'main';
     const status = document.getElementById('gh-config-status');
-    status.textContent = '⏳ Probando...'; status.style.color = 'var(--muted)';
-    try {
-      const r = await fetch(`https://api.github.com/repos/${repo}/contents/Data/json?ref=${branch}`, {
-        headers: {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'}
-      });
-      if (r.ok) {
-        status.textContent = '✅ Conexión exitosa — carpeta Data/json encontrada';
-        status.style.color = 'var(--success)';
-      } else if (r.status === 404) {
-        status.textContent = '⚠️ Conexión OK pero carpeta Data/json no existe aún — se creará al guardar';
-        status.style.color = 'var(--gold)';
-      } else if (r.status === 401) {
-        status.textContent = '❌ Token inválido o sin permisos';
-        status.style.color = 'var(--red)';
-      } else {
-        status.textContent = `❌ Error ${r.status}`;
-        status.style.color = 'var(--red)';
-      }
-    } catch {
-      status.textContent = '❌ Sin conexión a GitHub';
-      status.style.color = 'var(--red)';
+    status.innerHTML = '⏳ Probando...'; status.style.color = 'var(--muted)';
+
+    const hdrs = {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'};
+
+    // 1. Verificar repo
+    const rRepo = await fetch(`https://api.github.com/repos/${repo}`, {headers: hdrs});
+    if (!rRepo.ok) {
+      status.innerHTML = `❌ Repo no encontrado o token sin permisos (${rRepo.status})`;
+      status.style.color = 'var(--red)'; return;
     }
+
+    // 2. Verificar carpeta Data/json
+    const rFolder = await fetch(`https://api.github.com/repos/${repo}/contents/Data/json?ref=${branch}`, {headers: hdrs});
+    if (!rFolder.ok) {
+      status.innerHTML = `⚠️ Repo OK pero carpeta <code>Data/json</code> no existe (${rFolder.status}). Créala y sube los JSON.`;
+      status.style.color = 'var(--gold)'; return;
+    }
+
+    // 3. Listar archivos encontrados
+    const files = await rFolder.json();
+    const names = Array.isArray(files) ? files.map(f=>f.name) : [];
+
+    // 4. Probar leer history.json
+    const EXPECTED = ['counter.json','history.json','products.json','logo.json','empresa.json','events.json'];
+    const missing  = EXPECTED.filter(f => !names.includes(f));
+    const found    = EXPECTED.filter(f =>  names.includes(f));
+
+    let msg = `✅ Carpeta encontrada<br>`;
+    msg += `📁 Archivos: <strong>${found.join(', ')||'ninguno'}</strong><br>`;
+    if (missing.length) msg += `⚠️ Faltan: <em>${missing.join(', ')}</em>`;
+    status.innerHTML = msg;
+    status.style.color = missing.length ? 'var(--gold)' : 'var(--success)';
   }
   let logoBase64 = '';
 
