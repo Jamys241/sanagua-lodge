@@ -13,59 +13,90 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# ── JSONBin.io — contador + historial + productos ─────────────────────────────
+# ── GitHub como base de datos ────────────────────────────────────────────────
 # Variables de entorno en Render:
-#   JSONBIN_API_KEY  → tu Master Key de jsonbin.io
-#   JSONBIN_BIN_ID   → bin para el contador  {"count": 1}
-#   JSONBIN_HIST_ID  → bin para el historial {"quotes": []}
-#   JSONBIN_PROD_ID  → bin para los productos {"products": []}
-JSONBIN_API_KEY = os.environ.get('JSONBIN_API_KEY', '')
-JSONBIN_BIN_ID  = os.environ.get('JSONBIN_BIN_ID', '')
-JSONBIN_HIST_ID = os.environ.get('JSONBIN_HIST_ID', '')
-JSONBIN_PROD_ID = os.environ.get('JSONBIN_PROD_ID', '')
-JSONBIN_LOGO_ID   = os.environ.get('JSONBIN_LOGO_ID', '')
-JSONBIN_EMP_ID    = os.environ.get('JSONBIN_EMP_ID', '')
-JSONBIN_EVENTS_ID = os.environ.get('JSONBIN_EVENTS_ID', '')
-JSONBIN_BASE    = 'https://api.jsonbin.io/v3/b'
+#   GH_TOKEN  → GitHub Personal Access Token (repo scope)
+#   GH_REPO   → usuario/repositorio  ej: sanagua/datos
+#   GH_BRANCH → rama donde se guardan los datos (default: main)
+#
+# Los datos se guardan como archivos JSON en el repo:
+#   data/counter.json   data/history.json   data/products.json
+#   data/logo.json      data/empresa.json   data/events.json
 
-HEADERS_R = {'X-Master-Key': JSONBIN_API_KEY}
-HEADERS_W = {'X-Master-Key': JSONBIN_API_KEY, 'Content-Type': 'application/json'}
+GH_TOKEN  = os.environ.get('GH_TOKEN', '')
+GH_REPO   = os.environ.get('GH_REPO', '')
+GH_BRANCH = os.environ.get('GH_BRANCH', 'main')
+GH_BASE   = 'https://api.github.com'
+
+def gh_headers():
+    return {
+        'Authorization': f'token {GH_TOKEN}',
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+    }
+
+def gh_read(filename):
+    """Lee un archivo JSON del repo de GitHub en Data/json/."""
+    if not GH_TOKEN or not GH_REPO:
+        return None
+    try:
+        url = f'{GH_BASE}/repos/{GH_REPO}/contents/Data/json/{filename}?ref={GH_BRANCH}'
+        r = req_lib.get(url, headers=gh_headers(), timeout=8)
+        if r.status_code == 404:
+            return None
+        d = r.json()
+        import base64 as b64mod
+        content = b64mod.b64decode(d['content']).decode('utf-8')
+        return json.loads(content), d['sha']
+    except:
+        return None
+
+def gh_write(filename, data, sha=None):
+    """Escribe un archivo JSON en el repo de GitHub en Data/json/."""
+    if not GH_TOKEN or not GH_REPO:
+        return False
+    try:
+        import base64 as b64mod
+        content = b64mod.b64encode(json.dumps(data, ensure_ascii=False, indent=2).encode()).decode()
+        payload = {
+            'message': f'update {filename}',
+            'content': content,
+            'branch': GH_BRANCH,
+        }
+        if sha:
+            payload['sha'] = sha
+        url = f'{GH_BASE}/repos/{GH_REPO}/contents/Data/json/{filename}'
+        r = req_lib.put(url, headers=gh_headers(), json=payload, timeout=10)
+        return r.status_code in (200, 201)
+    except:
+        return False
+
+def _load(filename, default):
+    result = gh_read(filename)
+    if result is None:
+        return default, None
+    data, sha = result
+    return data, sha
 
 # ── Contador ───────────────────────────────────────────────────────────────────
 def load_counter():
-    if not JSONBIN_API_KEY or not JSONBIN_BIN_ID:
-        return 1
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_BIN_ID}/latest', headers=HEADERS_R, timeout=5)
-        return r.json().get('record', {}).get('count', 1)
-    except:
-        return 1
+    data, _ = _load('counter.json', {'count': 1})
+    return data.get('count', 1)
 
 def save_counter(n):
-    if not JSONBIN_API_KEY or not JSONBIN_BIN_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_BIN_ID}', headers=HEADERS_W, json={'count': n}, timeout=5)
-    except:
-        pass
+    result = gh_read('counter.json')
+    sha = result[1] if result else None
+    gh_write('counter.json', {'count': n}, sha)
 
 # ── Historial ──────────────────────────────────────────────────────────────────
 def load_history():
-    if not JSONBIN_API_KEY or not JSONBIN_HIST_ID:
-        return []
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_HIST_ID}/latest', headers=HEADERS_R, timeout=5)
-        return r.json().get('record', {}).get('quotes', [])
-    except:
-        return []
+    data, _ = _load('history.json', {'quotes': []})
+    return data.get('quotes', [])
 
 def save_history(quotes):
-    if not JSONBIN_API_KEY or not JSONBIN_HIST_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_HIST_ID}', headers=HEADERS_W, json={'quotes': quotes}, timeout=5)
-    except:
-        pass
+    result = gh_read('history.json')
+    sha = result[1] if result else None
+    gh_write('history.json', {'quotes': quotes}, sha)
 
 # ── Productos ──────────────────────────────────────────────────────────────────
 PRODUCTOS_DEFAULT = [
@@ -76,40 +107,24 @@ PRODUCTOS_DEFAULT = [
 ]
 
 def load_products():
-    if not JSONBIN_API_KEY or not JSONBIN_PROD_ID:
-        return PRODUCTOS_DEFAULT
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_PROD_ID}/latest', headers=HEADERS_R, timeout=5)
-        prods = r.json().get('record', {}).get('products', [])
-        return prods if prods else PRODUCTOS_DEFAULT
-    except:
-        return PRODUCTOS_DEFAULT
+    data, _ = _load('products.json', {'products': []})
+    prods = data.get('products', [])
+    return prods if prods else PRODUCTOS_DEFAULT
 
 def save_products(products):
-    if not JSONBIN_API_KEY or not JSONBIN_PROD_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_PROD_ID}', headers=HEADERS_W, json={'products': products}, timeout=5)
-    except:
-        pass
+    result = gh_read('products.json')
+    sha = result[1] if result else None
+    gh_write('products.json', {'products': products}, sha)
 
 # ── Logo ───────────────────────────────────────────────────────────────────────
 def load_logo():
-    if not JSONBIN_API_KEY or not JSONBIN_LOGO_ID:
-        return ''
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_LOGO_ID}/latest', headers=HEADERS_R, timeout=5)
-        return r.json().get('record', {}).get('logo', '')
-    except:
-        return ''
+    data, _ = _load('logo.json', {'logo': ''})
+    return data.get('logo', '')
 
 def save_logo(logo_b64):
-    if not JSONBIN_API_KEY or not JSONBIN_LOGO_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_LOGO_ID}', headers=HEADERS_W, json={'logo': logo_b64}, timeout=10)
-    except:
-        pass
+    result = gh_read('logo.json')
+    sha = result[1] if result else None
+    gh_write('logo.json', {'logo': logo_b64}, sha)
 
 # ── Rutas ──────────────────────────────────────────────────────────────────────
 @app.route('/')
@@ -118,14 +133,11 @@ def index():
 
 @app.route('/debug')
 def debug():
-    """Muestra qué variables de entorno están configuradas (sin exponer los valores)."""
     return jsonify({
-        'JSONBIN_API_KEY':  '✅ configurada' if JSONBIN_API_KEY  else '❌ FALTA',
-        'JSONBIN_BIN_ID':   '✅ configurada' if JSONBIN_BIN_ID   else '❌ FALTA',
-        'JSONBIN_HIST_ID':  '✅ configurada' if JSONBIN_HIST_ID  else '❌ FALTA',
-        'JSONBIN_PROD_ID':  '✅ configurada' if JSONBIN_PROD_ID  else '❌ FALTA',
-        'JSONBIN_LOGO_ID':  '✅ configurada' if JSONBIN_LOGO_ID  else '❌ FALTA',
-        'JSONBIN_EMP_ID':   '✅ configurada' if JSONBIN_EMP_ID   else '❌ FALTA',
+        'GH_TOKEN':  '✅ configurado' if GH_TOKEN  else '❌ FALTA',
+        'GH_REPO':   GH_REPO  or '❌ FALTA',
+        'GH_BRANCH': GH_BRANCH,
+        'storage':   'GitHub API',
     })
 
 @app.route('/counter')
@@ -283,41 +295,23 @@ EMPRESA_DEFAULT = {
 }
 
 def load_empresa():
-    if not JSONBIN_API_KEY or not JSONBIN_EMP_ID:
-        return EMPRESA_DEFAULT.copy()
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_EMP_ID}/latest', headers=HEADERS_R, timeout=5)
-        d = r.json().get('record', {})
-        return d if d.get('nombre') else EMPRESA_DEFAULT.copy()
-    except:
-        return EMPRESA_DEFAULT.copy()
+    data, _ = _load('empresa.json', EMPRESA_DEFAULT)
+    return data if data.get('nombre') else EMPRESA_DEFAULT.copy()
 
 def save_empresa(data):
-    if not JSONBIN_API_KEY or not JSONBIN_EMP_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_EMP_ID}', headers=HEADERS_W, json=data, timeout=5)
-    except:
-        pass
+    result = gh_read('empresa.json')
+    sha = result[1] if result else None
+    gh_write('empresa.json', data, sha)
 
 # ── Eventos manuales ───────────────────────────────────────────────────────────
 def load_events():
-    if not JSONBIN_API_KEY or not JSONBIN_EVENTS_ID:
-        return []
-    try:
-        r = req_lib.get(f'{JSONBIN_BASE}/{JSONBIN_EVENTS_ID}/latest', headers=HEADERS_R, timeout=5)
-        return r.json().get('record', {}).get('events', [])
-    except:
-        return []
+    data, _ = _load('events.json', {'events': []})
+    return data.get('events', [])
 
 def save_events(events):
-    if not JSONBIN_API_KEY or not JSONBIN_EVENTS_ID:
-        return
-    try:
-        req_lib.put(f'{JSONBIN_BASE}/{JSONBIN_EVENTS_ID}', headers=HEADERS_W,
-                    json={'events': events}, timeout=5)
-    except:
-        pass
+    result = gh_read('events.json')
+    sha = result[1] if result else None
+    gh_write('events.json', {'events': events}, sha)
 
 # ── HELPERS COMPARTIDOS ────────────────────────────────────────────────────────
 # Los datos de empresa vienen del payload (editables desde la UI)
