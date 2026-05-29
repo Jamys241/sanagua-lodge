@@ -2246,37 +2246,95 @@
 
     // ── En confirmación: mostrar notas internas ───────────────────────────
     if (tipo === 'confirmacion') {
-      // Resumen de pagos
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...dark);
-      doc.text('Resumen de Pagos', margin, y); y += 6;
-      doc.setFont('helvetica','normal'); doc.setFontSize(9);
-      const total = data.total||0;
-      const abono = data.abono_pagado||0;
-      const cancel = data.cancelacion_pagada||0;
-      const recibido = abono+cancel;
-      const saldo = Math.max(0, total-recibido);
-      const rows = [
-        ['Total de la reserva', `$${total.toFixed(2)}`],
-        ['Abono requerido (50%)', `$${(total*.5).toFixed(2)}`],
-        ['Abono recibido', `$${abono.toFixed(2)}`],
-        ['Cancelación recibida', `$${cancel.toFixed(2)}`],
-        ['Total recibido', `$${recibido.toFixed(2)}`],
-        ['Saldo pendiente', `$${saldo.toFixed(2)}`],
-      ];
-      rows.forEach(([lbl,val],i) => {
-        doc.setTextColor(...(i===rows.length-1?accent:muted));
-        doc.text(lbl, margin+4, y);
-        doc.setFont('helvetica','bold');
-        doc.text(val, W-margin-4, y, {align:'right'});
-        doc.setFont('helvetica','normal');
+      // ── Banner de confirmación ─────────────────────────────────────────
+      doc.setFillColor(...success);
+      doc.roundedRect(margin, y, cW, 10, 2, 2, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
+      doc.text(`✓ Reserva Confirmada — Estado: ${data.estado||'Confirmada'}`, margin+4, y+6.5);
+      y += 14;
+
+      // ── Ítems reservados ──────────────────────────────────────────────
+      const items = data.items || [];
+      if (items.length) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...dark);
+        doc.text('Servicios reservados:', margin, y); y += 5;
+        doc.setFillColor(...dark); doc.rect(margin, y, cW, 6, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+        doc.text('Descripción', margin+3, y+4.2);
+        doc.text('Cant.', margin+cW*0.55, y+4.2);
+        doc.text('Precio', margin+cW*0.66, y+4.2);
+        doc.text('Total', margin+cW*0.85, y+4.2);
         y += 6;
+        items.forEach((it,i) => {
+          const bg = i%2===0 ? [255,255,255] : [245,243,238];
+          doc.setFillColor(...bg); doc.rect(margin, y, cW, 5.5, 'F');
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...dark);
+          doc.text(String(it.desc||'').substring(0,38), margin+3, y+3.8);
+          doc.text(String(it.qty||1), margin+cW*0.55, y+3.8);
+          doc.text(`$${Number(it.price||0).toFixed(2)}`, margin+cW*0.66, y+3.8);
+          doc.text(`$${Number(it.line_total||0).toFixed(2)}`, margin+cW*0.85, y+3.8);
+          y += 5.5;
+          if (y > 245) { doc.addPage(); y = 20; }
+        });
+        y += 5;
+      }
+
+      // ── Resumen financiero ────────────────────────────────────────────
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...dark);
+      doc.text('Resumen de pagos:', margin, y); y += 5;
+
+      const total    = data.total||0;
+      const abono50  = data.abono_50 || total*.5;
+      const abono    = data.abono_pagado||0;
+      const cancel   = data.cancelacion_pagada||0;
+      const recibido = abono + cancel;
+      const saldo    = Math.max(0, total - recibido);
+      const pct      = total > 0 ? Math.round(recibido/total*100) : 0;
+
+      doc.setFillColor(232,240,250);
+      doc.roundedRect(margin, y, cW, 40, 2, 2, 'F');
+
+      const rows = [
+        ['Total de la reserva',    `$${total.toFixed(2)}`,    dark],
+        ['Abono requerido (50%)',  `$${abono50.toFixed(2)}`,  muted],
+        ['Abono recibido',         `$${abono.toFixed(2)}`,    success],
+        ['Cancelación recibida',   `$${cancel.toFixed(2)}`,   success],
+        ['Total recibido',         `$${recibido.toFixed(2)}`, success],
+        ['Saldo pendiente',        `$${saldo.toFixed(2)}`,    saldo===0?success:accent],
+      ];
+      let ry = y + 5;
+      rows.forEach(([lbl,val,col]) => {
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+        doc.text(lbl, margin+4, ry);
+        doc.setFont('helvetica','bold'); doc.setTextColor(...col);
+        doc.text(val, W-margin-4, ry, {align:'right'});
+        ry += 6;
       });
+      y += 42;
+
+      // Barra de progreso de pago
+      doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, cW, 4, 2, 2, 'D');
+      const barW = Math.min(cW, cW * pct/100);
+      if (barW > 0) {
+        doc.setFillColor(...(pct>=100?success:pct>=50?[26,95,168]:accent));
+        doc.roundedRect(margin, y, barW, 4, 2, 2, 'F');
+      }
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+      doc.text(`${pct}% pagado`, W-margin-4, y+3, {align:'right'});
+      y += 9;
+
+      // ── Notas internas / observaciones ───────────────────────────────
       if (data.notas_internas) {
         y += 4;
-        doc.setFont('helvetica','bold'); doc.setTextColor(...dark); doc.text('Observaciones:', margin, y); y += 6;
-        doc.setFont('helvetica','normal'); doc.setTextColor(...muted);
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...dark);
+        doc.text('Observaciones:', margin, y); y += 5;
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
         const lines = doc.splitTextToSize(data.notas_internas, cW);
-        doc.text(lines, margin, y); y += lines.length*5+4;
+        lines.forEach(line => {
+          doc.text(line, margin, y); y += 5;
+          if (y > 250) { doc.addPage(); y = 20; }
+        });
       }
     } else {
       // ── Tabla de ítems (cotización) ────────────────────────────────────
