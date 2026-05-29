@@ -2244,13 +2244,18 @@
     }
     y += 34;
 
-    // ── En confirmación: mostrar notas internas ───────────────────────────
+    // ── En confirmación ───────────────────────────────────────────────────
     if (tipo === 'confirmacion') {
-      // ── Banner de confirmación ─────────────────────────────────────────
-      doc.setFillColor(...success);
+      // Banner — color según estado
+      const estado = (data.estado || 'Confirmada');
+      const bannerColor = estado==='Completada' ? success
+                        : estado==='Cancelada'  ? [192,57,43]
+                        : estado==='Aplazada'   ? [176,131,0]
+                        : success; // Confirmada y resto en verde
+      doc.setFillColor(...bannerColor);
       doc.roundedRect(margin, y, cW, 10, 2, 2, 'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
-      doc.text(`✓ Reserva Confirmada — Estado: ${data.estado||'Confirmada'}`, margin+4, y+6.5);
+      doc.text(`RESERVA ${estado.toUpperCase()} - #${quoteNum}`, margin+4, y+6.5);
       y += 14;
 
       // ── Ítems reservados ──────────────────────────────────────────────
