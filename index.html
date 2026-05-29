@@ -2079,10 +2079,6 @@
       abono_50: total * .5,
     };
 
-    // Validar conflicto de cabaña antes de guardar
-    const conflict = checkCabanaConflict(updates, currentQuote.quote_num);
-    if (conflict) { alert(conflict); return; }
-
     showLoading(true);
     try {
       const idx = allHistory.findIndex(q=>q.quote_num===currentQuote.quote_num);
@@ -2983,16 +2979,6 @@
     const total    = parseFloat(document.getElementById('ev-total').value)||0;
     const abono    = parseFloat(document.getElementById('ev-abono').value)||0;
     const cancel   = parseFloat(document.getElementById('ev-cancelacion').value)||0;
-
-    // Validar conflicto de cabaña
-    const evUpdates = {
-      categoria:  document.getElementById('ev-categoria').value,
-      estado:     document.getElementById('ev-estado').value,
-      visit_date: document.getElementById('ev-visit-date').value,
-      visit_date_end: document.getElementById('ev-visit-date-end').value,
-    };
-    const evConflict = checkCabanaConflict(evUpdates, editingEvent?.id || '__new__');
-    if (evConflict) { alert(evConflict); return; }
 
     const ev = {
       id:         editingEvent ? editingEvent.id : `ev_${Date.now()}`,
