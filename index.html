@@ -1970,30 +1970,56 @@
     document.getElementById('rf-pct').textContent        = `${pct}% pagado${pct >= 100 ? ' ✅' : ''}`;
   }
 
-  const CABANAS = ['Cabaña Yaguarundi','Cabaña Ocelot','Cabaña Motmot'];
+  // Categorías que bloquean por noches (el día de salida queda libre)
+  const CABANAS  = ['Cabaña Yaguarundi','Cabaña Ocelot','Cabaña Motmot'];
+  const CAMPINGS = ['Camping Propio','Camping Suministro'];
+  const BLOQUEA_NOCHES = [...CABANAS, ...CAMPINGS];
+  // Pasadías bloquean solo el día de inicio (sin fecha fin)
+  const PASADIAS = ['Pasadia Sencilla','Pasadia Completa'];
+  const BLOQUEA_DIA    = [...PASADIAS];
 
-  // Verifica si dos rangos de fechas se solapan
-  // Rango = [start, end-1] (end es día de salida, no cuenta)
-  function rangesOverlap(startA, endA, startB, endB) {
-    // Si no hay end, el rango es de un solo día
-    const a1 = startA;
-    const a2 = endA || startA;
-    const b1 = startB;
-    const b2 = endB || startB;
-    // Se solapan si a1 <= b2 y b1 <= a2
-    return a1 <= b2 && b1 <= a2;
+  // Convierte una fecha string a número de días desde epoch para comparar
+  function toDay(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T12:00:00');
+    return Math.floor(d.getTime() / 86400000);
+  }
+
+  // Devuelve el rango de días OCUPADOS [firstDay, lastDay] inclusive
+  // Para noches: ocupa desde start hasta end-1 (salida libre)
+  // Para pasadías: ocupa solo start
+  function occupiedRange(item) {
+    const start = toDay(item.visit_date);
+    if (start === null) return null;
+    const cat = item.categoria || '';
+    if (BLOQUEA_NOCHES.includes(cat)) {
+      // Si hay fecha fin, el último día ocupado es end-1
+      const end = item.visit_date_end ? toDay(item.visit_date_end) - 1 : start;
+      return { first: start, last: Math.max(start, end) };
+    }
+    // Pasadías y sin categoría: solo el día de inicio
+    return { first: start, last: start };
+  }
+
+  function rangesOverlap(rangeA, rangeB) {
+    if (!rangeA || !rangeB) return false;
+    return rangeA.first <= rangeB.last && rangeB.first <= rangeA.last;
   }
 
   function checkCabanaConflict(updates, currentId) {
     const cat = updates.categoria;
-    if (!CABANAS.includes(cat)) return null;
+    // Solo aplica a categorías que bloquean
+    if (![...BLOQUEA_NOCHES, ...BLOQUEA_DIA].includes(cat)) return null;
     if (updates.estado !== 'Confirmada') return null;
+    if (!updates.visit_date) return null;
 
-    const newStart = updates.visit_date;
-    const newEnd   = updates.visit_date_end || newStart;
-    if (!newStart) return null;
+    const newRange = occupiedRange({
+      visit_date:     updates.visit_date,
+      visit_date_end: updates.visit_date_end,
+      categoria:      cat,
+    });
+    if (!newRange) return null;
 
-    // Buscar conflicto en historial + eventos, excluyendo el item actual
     const allItems = [
       ...allHistory.filter(q => String(q.quote_num) !== String(currentId)),
       ...allEvents.filter(e => String(e.id) !== String(currentId)),
@@ -2002,10 +2028,8 @@
     const conflict = allItems.find(q => {
       if ((q.estado || 'Pendiente') !== 'Confirmada') return false;
       if ((q.categoria || '') !== cat) return false;
-      const qStart = q.visit_date;
-      const qEnd   = q.visit_date_end || qStart;
-      if (!qStart) return false;
-      return rangesOverlap(newStart, newEnd, qStart, qEnd);
+      const qRange = occupiedRange(q);
+      return rangesOverlap(newRange, qRange);
     });
 
     if (conflict) {
@@ -2013,7 +2037,9 @@
       const num   = conflict.quote_num ? `#${conflict.quote_num}` : '(evento manual)';
       const desde = fmtDateShort(conflict.visit_date);
       const hasta = conflict.visit_date_end ? ` → ${fmtDateShort(conflict.visit_date_end)}` : '';
-      return `⚠️ ${cat} ya está confirmada\n\nCliente: ${name} ${num}\nFechas: ${desde}${hasta}\n\nNo es posible confirmar otra reserva en las mismas fechas.`;
+      const nights = calcNights(conflict.visit_date, conflict.visit_date_end);
+      const duracion = nights > 0 ? ` (${nightsText(nights)})` : ' (pasadía)';
+      return `${cat} ya esta confirmada\n\nCliente: ${name} ${num}\nFechas: ${desde}${hasta}${duracion}\n\nNo es posible confirmar otra reserva en los mismos dias.`;
     }
     return null;
   }
@@ -3114,10 +3140,21 @@
         if (item.type === 'event') console.log('Evento sin visit_date:', item.client?.name, item.id);
         return;
       }
-      dateRange(item.visit_date, item.visit_date_end).forEach(ds => {
+      // Usar occupiedRange para respetar la lógica de cada categoría
+      const range = occupiedRange(item);
+      if (!range) return;
+      // Generar array de fechas ocupadas desde first hasta last
+      const cur = new Date(item.visit_date + 'T12:00:00');
+      const last = new Date(cur); last.setDate(cur.getDate() + (range.last - range.first));
+      let safety = 0;
+      const tmp = new Date(cur);
+      while (tmp <= last && safety < 60) {
+        const ds = localDateStr(tmp);
         if (!_calIndex[ds]) _calIndex[ds] = [];
         _calIndex[ds].push(item);
-      });
+        tmp.setDate(tmp.getDate() + 1);
+        safety++;
+      }
     });
     console.log('buildCalIndex: fechas indexadas =', Object.keys(_calIndex).length);
   }
