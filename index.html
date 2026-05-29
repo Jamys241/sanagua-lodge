@@ -1753,6 +1753,7 @@
       if (item._type==='event') return `
         <div class="hist-actions">
           <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')">🗑 Eliminar</button>
         </div>`;
       const qnum = item.quote_num;
       return `
@@ -1835,6 +1836,7 @@
             <div class="hist-card-actions">
               ${isEv ? `
                 <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')">🗑 Eliminar</button>
               ` : `
                 <button class="btn btn-outline btn-sm" onclick="openEditByNum('${item.quote_num}')">✏️ Editar</button>
                 <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${item.quote_num}')">📄 PDF</button>
@@ -3025,13 +3027,42 @@
   }
 
   async function deleteEvent() {
-    if (!editingEvent) return;
+    if (!editingEvent) {
+      showToast('❌ No hay evento seleccionado.', 'error');
+      return;
+    }
     if (!confirm(`¿Eliminar el evento de "${editingEvent.client?.name}"?`)) return;
-    allEvents = allEvents.filter(e => e.id !== editingEvent.id);
+    const evId = editingEvent.id;
+    const before = allEvents.length;
+    allEvents = allEvents.filter(e => e.id !== evId);
+    console.log('deleteEvent: eliminando', evId, '| antes:', before, '| después:', allEvents.length);
     showLoading(true);
     try {
-      await saveEventToServer();
+      const ok = await ghReadWrite('events.json', {events: allEvents});
+      if (!ok) throw new Error('GitHub write failed');
       closeEventModal();
+      renderCalendario();
+      renderHistory(allHistory);
+      showToast('Evento eliminado.', 'success');
+    } catch(e) {
+      console.error('deleteEvent error:', e);
+      // Revertir si falla
+      showToast('❌ Error al eliminar. Intenta nuevamente.', 'error');
+    }
+    finally { hideLoading(); }
+  }
+
+  // Eliminar evento directamente por ID (desde historial sin abrir modal)
+  async function deleteEventById(evId) {
+    const ev = allEvents.find(e => e.id === evId);
+    if (!ev) { showToast('Evento no encontrado.', 'error'); return; }
+    if (!confirm(`¿Eliminar el evento de "${ev.client?.name}"?`)) return;
+    allEvents = allEvents.filter(e => e.id !== evId);
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('events.json', {events: allEvents});
+      if (!ok) throw new Error();
+      renderHistory(allHistory);
       renderCalendario();
       showToast('Evento eliminado.', 'success');
     } catch { showToast('❌ Error al eliminar.', 'error'); }
