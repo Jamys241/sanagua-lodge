@@ -44,6 +44,33 @@
     .side-menu nav button:hover { background:rgba(255,255,255,.06); color:white; }
     .side-menu nav button.active { color:white; background:rgba(255,255,255,.08); border-left-color:var(--accent); }
     .side-menu-divider { height:1px; background:rgba(255,255,255,.08); margin:8px 16px; }
+    /* ── LOGIN ── */
+    .login-overlay { position:fixed; inset:0; background:var(--ink); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .login-box { background:var(--surface); border-radius:14px; padding:36px 40px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.4); text-align:center; }
+    .login-logo { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--accent); margin-bottom:6px; }
+    .login-sub { font-size:.85rem; color:var(--muted); margin-bottom:28px; }
+    .login-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; text-align:left; }
+    .login-field label { font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+    .login-field input { padding:11px 14px; border:1.5px solid var(--border); border-radius:7px; font-size:.95rem; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); outline:none; }
+    .login-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,84,26,.1); }
+    .login-error { color:var(--red); font-size:.82rem; margin-bottom:10px; min-height:18px; }
+    .login-btn { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:4px; }
+    .login-btn:hover { background:#b34816; }
+    /* ── ROL BADGE ── */
+    .rol-badge { font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+    .rol-admin { background:var(--accent-light); color:var(--accent); }
+    .rol-viewer { background:var(--blue-lt); color:var(--blue); }
+    /* ── PERMISOS ── */
+    .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
+    .perm-row:last-child { border-bottom:none; }
+    .perm-info { font-size:.9rem; font-weight:500; }
+    .perm-desc { font-size:.75rem; color:var(--muted); margin-top:2px; }
+    .toggle-sw { position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+    .toggle-sw input { opacity:0; width:0; height:0; }
+    .toggle-sw .slider { position:absolute; inset:0; background:#ccc; border-radius:24px; cursor:pointer; transition:.3s; }
+    .toggle-sw .slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+    .toggle-sw input:checked + .slider { background:var(--accent); }
+    .toggle-sw input:checked + .slider::before { transform:translateX(18px); }
 
     /* ── LAYOUT ── */
     .container { max-width:1020px; margin:0 auto; padding:32px 20px; }
@@ -293,10 +320,33 @@
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════════════ LOGIN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🌿 Sanagua Lodge</div>
+    <div class="login-sub">Sistema de Cotizaciones</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div style="margin-top:16px;font-size:.75rem;color:var(--muted);">
+      Primera vez: configura las credenciales en<br>
+      <code>Data/json/auth.json</code> en tu repositorio
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="header-left">
     <h1>🌿 Sanagua Lodge</h1>
     <span class="counter" id="quote-counter">Cargando...</span>
+    <span id="rol-badge" class="rol-badge" style="display:none"></span>
   </div>
   <button class="hamburger" id="hamburger-btn" onclick="toggleMenu()" aria-label="Menú">
     <span></span><span></span><span></span>
@@ -314,7 +364,11 @@
     <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
     <div class="side-menu-divider"></div>
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
+    <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos de usuario</button>
+    <div class="side-menu-divider"></div>
+    <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
   </nav>
+  <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ NUEVA COTIZACIÓN -->
@@ -560,6 +614,26 @@
 </div>
 
 </div><!-- /container -->
+
+<!-- ═══════════════ MODAL PERMISOS (solo admin) ═══════════════════════════════ -->
+<div class="modal-overlay" id="permisos-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-head">
+      <h2>🔐 Permisos del usuario</h2>
+      <button class="modal-close" onclick="closePermisosModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:18px;">
+        Controla qué puede hacer el usuario <strong id="perm-viewer-name"></strong> en la aplicación.
+      </p>
+      <div id="permisos-lista"></div>
+      <div class="actions-bar" style="margin-top:20px;">
+        <button class="btn btn-outline" onclick="closePermisosModal()">Cancelar</button>
+        <button class="btn btn-accent" onclick="savePermisos()">💾 Guardar permisos</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════ MODAL NUEVO EVENTO ═══════════════════════════════════════ -->
 <div class="modal-overlay" id="event-modal">
@@ -978,6 +1052,33 @@
     </div>
   </div>
 
+  <!-- Credenciales de usuarios -->
+  <div class="card" id="card-credenciales">
+    <div class="card-title">Credenciales de acceso</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
+      Cambia los usuarios y contraseñas. Se guardan en tu repositorio privado.<br>
+      <strong>Solo visible para el administrador.</strong>
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:10px;">👑 Administrador</div>
+        <div class="form-group"><label>Usuario</label><input type="text" id="cred-admin-user" placeholder="admin"></div>
+        <div class="form-group"><label>Contraseña</label><input type="password" id="cred-admin-pass" placeholder="••••••••"></div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:10px;">👁 Usuario visor</div>
+        <div class="form-group"><label>Usuario</label><input type="text" id="cred-viewer-user" placeholder="viewer"></div>
+        <div class="form-group"><label>Contraseña</label><input type="password" id="cred-viewer-pass" placeholder="••••••••"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
+    </div>
+    <div style="margin-top:12px;font-size:.78rem;color:var(--muted);background:var(--bg);padding:10px 14px;border-radius:6px;">
+      ⚠️ Después de cambiar las credenciales, todos los dispositivos necesitarán iniciar sesión nuevamente con las nuevas contraseñas.
+    </div>
+  </div>
+
 </div>
 </div><!-- /tab-config -->
 
@@ -988,6 +1089,187 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ══════════════════════════════════════════════════════════════════════
+  // AUTENTICACIÓN Y PERMISOS
+  // ══════════════════════════════════════════════════════════════════════
+  let currentUser = null;
+  let authData    = null;
+
+  const PERMISOS_DEFAULT = {
+    ver_historial:       true,
+    ver_resumen:         true,
+    ver_calendario:      true,
+    crear_cotizacion:    false,
+    editar_cotizacion:   false,
+    eliminar_cotizacion: false,
+    crear_evento:        false,
+    editar_evento:       false,
+    eliminar_evento:     false,
+    exportar_pdf:        false,
+  };
+
+  const PERMISOS_LABELS = {
+    ver_historial:       { label:'Ver historial',           desc:'Puede ver la lista de cotizaciones y eventos' },
+    ver_resumen:         { label:'Ver resumen',             desc:'Puede ver estadísticas y totales' },
+    ver_calendario:      { label:'Ver calendario',          desc:'Puede ver el calendario de reservas' },
+    crear_cotizacion:    { label:'Crear cotizaciones',      desc:'Puede generar nuevas cotizaciones' },
+    editar_cotizacion:   { label:'Editar cotizaciones',     desc:'Puede modificar estado, abono y datos del cliente' },
+    eliminar_cotizacion: { label:'Eliminar cotizaciones',   desc:'Puede eliminar cotizaciones del historial' },
+    crear_evento:        { label:'Crear eventos manuales',  desc:'Puede añadir eventos en el calendario' },
+    editar_evento:       { label:'Editar eventos manuales', desc:'Puede modificar eventos existentes' },
+    eliminar_evento:     { label:'Eliminar eventos',        desc:'Puede eliminar eventos del calendario' },
+    exportar_pdf:        { label:'Exportar PDF',            desc:'Puede descargar cotizaciones y confirmaciones' },
+  };
+
+  async function loadAuth() {
+    try {
+      const res = await ghRead('auth.json');
+      authData = res?.data || null;
+    } catch { authData = null; }
+    if (!authData) {
+      authData = {
+        admin:    { username:'admin',  password:'admin123'  },
+        viewer:   { username:'viewer', password:'viewer123' },
+        permisos: { ...PERMISOS_DEFAULT },
+      };
+    }
+  }
+
+  async function doLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    const err  = document.getElementById('login-error');
+    err.textContent = '';
+    if (!user || !pass) { err.textContent = 'Ingresa usuario y contraseña.'; return; }
+    if (!authData) {
+      err.textContent = 'Cargando...';
+      await loadAuth();
+    }
+    if (user === authData.admin?.username && pass === authData.admin?.password) {
+      currentUser = { username: user, role:'admin' };
+      iniciarSesion(); return;
+    }
+    if (user === authData.viewer?.username && pass === authData.viewer?.password) {
+      currentUser = { username: user, role:'viewer' };
+      iniciarSesion(); return;
+    }
+    err.textContent = '❌ Usuario o contraseña incorrectos.';
+  }
+
+  function iniciarSesion() {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    const badge = document.getElementById('rol-badge');
+    badge.textContent = currentUser.role==='admin' ? '👑 Admin' : '👁 Viewer';
+    badge.className = `rol-badge ${currentUser.role==='admin'?'rol-admin':'rol-viewer'}`;
+    badge.style.display = 'inline-block';
+    document.getElementById('menu-user-info').textContent =
+      `${currentUser.username} · ${currentUser.role==='admin'?'Administrador':'Visor'}`;
+    document.getElementById('btn-permisos').style.display =
+      currentUser.role==='admin' ? 'block' : 'none';
+    aplicarPermisos();
+  }
+
+  function cerrarSesion() {
+    if (!confirm('¿Cerrar sesión?')) return;
+    currentUser = null;
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('rol-badge').style.display = 'none';
+    document.getElementById('menu-user-info').textContent = '';
+    closeMenu();
+  }
+
+  function getPermisos() {
+    if (currentUser?.role === 'admin')
+      return Object.fromEntries(Object.keys(PERMISOS_DEFAULT).map(k=>[k,true]));
+    return { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
+  }
+
+  function aplicarPermisos() {
+    const p = getPermisos();
+    const isAdmin = currentUser?.role==='admin';
+    document.querySelectorAll('.side-menu nav button').forEach(btn => {
+      const t = btn.textContent;
+      if (t.includes('Historial'))       btn.style.display = p.ver_historial    ||isAdmin?'':'none';
+      if (t.includes('Resumen'))         btn.style.display = p.ver_resumen      ||isAdmin?'':'none';
+      if (t.includes('Calendario'))      btn.style.display = p.ver_calendario   ||isAdmin?'':'none';
+      if (t.includes('Nueva Cotización'))btn.style.display = p.crear_cotizacion ||isAdmin?'':'none';
+    });
+    // Ocultar botón generar PDF si no puede crear
+    const bGen = document.querySelector('[onclick="generatePDF()"]');
+    if (bGen) bGen.style.display = p.crear_cotizacion||isAdmin?'':'none';
+    // Ocultar botón nuevo evento en calendario
+    const bEv = document.querySelector('[onclick="openNewEvent()"]');
+    if (bEv) bEv.style.display = p.crear_evento||isAdmin?'':'none';
+  }
+
+  function aplicarPermisosHistorial() {
+    if (currentUser?.role==='admin') return;
+    const p = getPermisos();
+    if (!p.editar_cotizacion)   document.querySelectorAll('[onclick^="openEditByNum"]').forEach(b=>b.style.display='none');
+    if (!p.editar_evento)       document.querySelectorAll('[onclick^="openEditEvent"]').forEach(b=>b.style.display='none');
+    if (!p.eliminar_cotizacion) document.querySelectorAll('[onclick^="deleteQuote"]').forEach(b=>b.style.display='none');
+    if (!p.eliminar_evento)     document.querySelectorAll('[onclick^="deleteEventById"]').forEach(b=>b.style.display='none');
+    if (!p.exportar_pdf) {
+      document.querySelectorAll('[onclick^="reGeneratePDF"]').forEach(b=>b.style.display='none');
+      document.querySelectorAll('[onclick^="quickExportConf"]').forEach(b=>b.style.display='none');
+    }
+  }
+
+  function openPermisosModal() {
+    if (currentUser?.role!=='admin') { showToast('Solo el administrador puede cambiar permisos.','error'); return; }
+    const permisos = { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
+    document.getElementById('perm-viewer-name').textContent = authData?.viewer?.username||'viewer';
+    document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS).map(([key,info])=>`
+      <div class="perm-row">
+        <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
+        <label class="toggle-sw">
+          <input type="checkbox" id="perm-${key}" ${permisos[key]?'checked':''}>
+          <span class="slider"></span>
+        </label>
+      </div>`).join('');
+    document.getElementById('permisos-modal').classList.add('open');
+  }
+
+  function closePermisosModal() {
+    document.getElementById('permisos-modal').classList.remove('open');
+  }
+
+  async function savePermisos() {
+    const permisos = {};
+    Object.keys(PERMISOS_LABELS).forEach(key => {
+      permisos[key] = document.getElementById('perm-'+key)?.checked||false;
+    });
+    authData.permisos = permisos;
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('auth.json', authData);
+      if (!ok) throw new Error();
+      closePermisosModal();
+      showToast('✅ Permisos guardados.','success');
+    } catch { showToast('❌ Error al guardar permisos.','error'); }
+    finally { showLoading(false); }
+  }
+
+  async function saveCreds() {
+    if (currentUser?.role!=='admin') { showToast('Solo el admin puede cambiar credenciales.','error'); return; }
+    const aU = document.getElementById('cred-admin-user').value.trim();
+    const aP = document.getElementById('cred-admin-pass').value.trim();
+    const vU = document.getElementById('cred-viewer-user').value.trim();
+    const vP = document.getElementById('cred-viewer-pass').value.trim();
+    if (!aU||!aP||!vU||!vP) { showToast('Completa todos los campos.','error'); return; }
+    authData.admin  = { username:aU, password:aP };
+    authData.viewer = { username:vU, password:vP };
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('auth.json', authData);
+      if (!ok) throw new Error();
+      showToast('✅ Credenciales actualizadas.','success');
+    } catch { showToast('❌ Error al guardar.','error'); }
+    finally { showLoading(false); }
+  }
+
   // ── Configuración GitHub (sin Render) ───────────────────────────────────────
   // GH_TOKEN y GH_REPO se configuran en la pestaña ⚙️ Configuración
   // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
@@ -1120,8 +1402,15 @@
     const _valid = new Date(_today); _valid.setDate(_valid.getDate()+30);
     document.getElementById('quote-valid').value = localDateStr(_valid);
 
-    // Cargar datos y mostrar calendario
+    // Cargar datos y mostrar login
     (async () => {
+      // Primero cargar auth (no necesita token GH para mostrar el login)
+      try { await loadAuth(); } catch(e) { console.warn('Auth load error:', e); }
+
+      // Mostrar pantalla de login — los datos se cargan DESPUÉS de autenticar
+      // (el login overlay ya está visible por CSS por defecto)
+
+      // Cargar el resto de datos en background para que estén listos cuando el usuario ingrese
       try {
         await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
       } catch(e) { console.warn('Init partial error:', e); }
@@ -1412,7 +1701,19 @@
     if (name === 'historial') loadHistory();
     if (name === 'resumen')   loadHistory().then(() => renderResumen());
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
-    if (name === 'config')    _loadGHConfigUI();
+    if (name === 'config') {
+      _loadGHConfigUI();
+      // Solo el admin ve la sección de credenciales
+      const cardCred = document.getElementById('card-credenciales');
+      if (cardCred) cardCred.style.display = currentUser?.role==='admin' ? '' : 'none';
+      // Poblar campos de credenciales si es admin
+      if (currentUser?.role==='admin' && authData) {
+        document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
+        document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
+        document.getElementById('cred-viewer-user').value = authData.viewer?.username || '';
+        document.getElementById('cred-viewer-pass').value = authData.viewer?.password || '';
+      }
+    }
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -1848,6 +2149,8 @@
       </div>`;
 
     el.innerHTML = tableHTML + cardsHTML;
+    // Aplicar permisos de viewer después de renderizar
+    setTimeout(() => aplicarPermisosHistorial(), 0);
   }
 
   // ── MODAL EDICIÓN ────────────────────────────────────────────────────────────
