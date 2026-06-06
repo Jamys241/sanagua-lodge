@@ -187,27 +187,11 @@
         </div>
       </div>
 
-      <!-- Calendario de disponibilidad -->
-      <div class="card">
-        <div class="cal-header">
-          <div class="cal-month" id="cal-month">—</div>
-          <div class="cal-nav">
-            <button class="cal-btn" onclick="calNav(-1)">‹</button>
-            <button class="cal-btn" onclick="calNav(1)">›</button>
-          </div>
-        </div>
-        <table class="cal-grid">
-          <thead><tr>
-            <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
-          </tr></thead>
-          <tbody id="cal-body"></tbody>
-        </table>
-        <div class="cal-legend">
-          <div class="leg-item"><div class="leg-dot" style="background:#f0f0f0;border:1px solid #ddd"></div> Ocupado</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--sage)"></div> Hoy</div>
-          <div class="leg-item"><div class="leg-dot" style="background:#fff;border:1px solid #e0e0e0"></div> Disponible</div>
-        </div>
-        <p style="font-size:.72rem;color:#bbb;margin-top:10px;">* Disponibilidad basada en reservas confirmadas en el sistema.</p>
+      <!-- Disponibilidad siempre abierta -->
+      <div class="card" style="background:var(--cream);border:none;text-align:center;padding:24px;">
+        <div style="font-size:1.5rem;margin-bottom:8px;">✅</div>
+        <div style="font-weight:700;color:var(--forest);margin-bottom:4px;">Siempre disponible</div>
+        <p style="font-size:.84rem;color:#7a8a74;">Las pasadías no requieren disponibilidad limitada.<br>¡Reserva con anticipación para garantizar tu lugar!</p>
       </div>
     </div>
 
@@ -224,6 +208,14 @@
         <div class="label">Tarifas</div>
         <div id="tarifas-list">
           <div class="tarifa-row"><span class="tarifa-label">Cargando...</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;background:#f0f7ee;border-color:#c0ddb8;">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--forest);margin-bottom:6px;">☀️ ¿Sencilla o Completa?</div>
+        <div style="font-size:.82rem;color:#5a7a54;line-height:1.6">
+          <strong>Sencilla:</strong> Acceso a piscinas, senderos y áreas de descanso.<br>
+          <strong>Completa:</strong> Todo lo anterior más actividades, entretenimiento y acceso a zonas premium.
         </div>
       </div>
 
@@ -251,6 +243,24 @@
       <div class="form-group">
         <label class="form-label">Fecha de visita</label>
         <input type="date" class="form-input" id="fecha-visita">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo de pasadía</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="modalidad-selector">
+          <div class="persona-item" id="mod-sencilla" onclick="selectModalidad('sencilla')"
+            style="cursor:pointer;border-color:var(--sage);background:#f0f7ee;">
+            <div class="persona-label">☀️ Sencilla</div>
+            <div class="persona-precio" id="mod-sencilla-precio">Desde $0.00</div>
+            <div style="font-size:.7rem;color:var(--sage);font-weight:600;margin-top:4px;">✓ Seleccionada</div>
+          </div>
+          <div class="persona-item" id="mod-completa" onclick="selectModalidad('completa')"
+            style="cursor:pointer;">
+            <div class="persona-label">🌟 Completa</div>
+            <div class="persona-precio" id="mod-completa-precio">Desde $0.00</div>
+            <div style="font-size:.7rem;color:#ccc;margin-top:4px;">Seleccionar</div>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -314,7 +324,6 @@
   let precios    = null;
   let historial  = [];
   let eventos    = [];
-  let calDate    = new Date();
   let contadores = {}; // { adulto:0, nino:0, ... }
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -333,35 +342,39 @@
 
     if (precios?.[SERVICIO]) {
       const s = precios[SERVICIO];
-      // Hero
       document.getElementById('hero-desc').textContent = s.descripcion;
-      // Incluye
       if (s.incluye?.length) {
         document.getElementById('includes-list').innerHTML =
           s.incluye.map(i => `<div class="include-item">${i}</div>`).join('');
       }
-      // Precio desde
-      const tarifas = Object.values(s.tarifas || {});
-      const precios_vals = tarifas.filter(t => t.precio > 0).map(t => t.precio);
-      const desde = precios_vals.length ? Math.min(...precios_vals) : 0;
       const itbms = s.itbms || 7;
-      const desdeConITBMS = desde * (1 + itbms/100);
-      document.getElementById('price-main').textContent = `$${desdeConITBMS.toFixed(2)}`;
-      // Tarifas
-      document.getElementById('tarifas-list').innerHTML =
-        tarifas.map(t => `
-          <div class="tarifa-row">
-            <span class="tarifa-label">${t.label}</span>
-            <span class="tarifa-precio">
-              ${t.precio === 0 ? 'Gratis' : `$${(t.precio*(1+itbms/100)).toFixed(2)}`}
-              ${t.precio > 0 ? `<span class="tarifa-itbms">ITBMS inc.</span>` : ''}
-            </span>
-          </div>`).join('');
-      // Contadores
-      contadores = Object.fromEntries(Object.keys(s.tarifas).map(k => [k, 0]));
+      // Precios desde para cada modalidad
+      if (s.modalidades) {
+        const mods = s.modalidades;
+        Object.entries(mods).forEach(([key,mod]) => {
+          const vals = Object.values(mod.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio*(1+itbms/100));
+          const desde = vals.length ? Math.min(...vals) : 0;
+          const el = document.getElementById(`mod-${key}-precio`);
+          if (el) el.textContent = `Desde $${desde.toFixed(2)}`;
+        });
+        // Precio general desde (el más bajo de todas las modalidades)
+        const allVals = Object.values(mods).flatMap(m=>Object.values(m.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio*(1+itbms/100)));
+        const desdeTotal = allVals.length ? Math.min(...allVals) : 0;
+        document.getElementById('price-main').textContent = `$${desdeTotal.toFixed(2)}`;
+        // Tarifas — mostrar las dos modalidades
+        document.getElementById('tarifas-list').innerHTML = Object.values(mods).map(mod=>`
+          <div style="font-size:.72rem;font-weight:700;color:var(--earth);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.08em">${mod.label}</div>
+          ${Object.values(mod.tarifas||{}).map(t=>`
+            <div class="tarifa-row">
+              <span class="tarifa-label">${t.label}</span>
+              <span class="tarifa-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span class="tarifa-itbms">ITBMS inc.</span>`}</span>
+            </div>`).join('')}`).join('');
+        // Iniciar con sencilla
+        modalidadActual = 'sencilla';
+        contadores = Object.fromEntries(Object.keys(mods.sencilla?.tarifas||{}).map(k=>[k,0]));
+      }
     }
 
-    renderCalendario();
     renderPersonasGrid();
     // Fecha por defecto: mañana
     const manana = new Date(); manana.setDate(manana.getDate()+1);
@@ -371,61 +384,11 @@
 
   // ── Calendario ────────────────────────────────────────────────────────
   // Días ocupados por PASADÍAS confirmadas
-  function diasOcupados() {
-    const ocupados = {};
-    const categorias = ['Pasadia Sencilla','Pasadia Completa'];
-    [...historial, ...eventos].forEach(item => {
-      if (!['Confirmada'].includes(item.estado||'')) return;
-      if (!categorias.includes(item.categoria||'')) return;
-      if (!item.visit_date) return;
-      const ds = item.visit_date.slice(0,10);
-      if (!ocupados[ds]) ocupados[ds] = [];
-      ocupados[ds].push(item.client?.name || item.categoria || 'Reservado');
-    });
-    return ocupados;
-  }
 
-  function calNav(dir) {
-    calDate = new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
-    renderCalendario();
-  }
 
-  function renderCalendario() {
-    const y = calDate.getFullYear(), m = calDate.getMonth();
-    document.getElementById('cal-month').textContent = `${MESES[m]} ${y}`;
-    const todayStr = localDateStr(new Date());
-    const ocupados = diasOcupados();
-    const firstDow = new Date(y,m,1).getDay();
-    const daysInM  = new Date(y,m+1,0).getDate();
-    const daysInP  = new Date(y,m,0).getDate();
 
-    let html = '<tr>';
-    let cell = 0;
-    for (let i=firstDow-1;i>=0;i--) {
-      html+=`<td><div class="cal-day other-month">${daysInP-i}</div></td>`;cell++;
-    }
-    for (let d=1;d<=daysInM;d++) {
-      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const isToday=ds===todayStr;
-      const ocp=ocupados[ds];
-      if (ocp) {
-        const nombre = ocp[0].length>8?ocp[0].slice(0,7)+'…':ocp[0];
-        html+=`<td><div class="cal-day ocupado" title="${ocp.join(', ')}">
-          <span class="ocp-num">${d}</span>
-          <span class="ocp-label">Ocupado</span>
-        </div></td>`;
-      } else {
-        const cls = isToday?'today':'disponible';
-        html+=`<td><div class="cal-day ${cls}">${d}</div></td>`;
-      }
-      cell++;
-      if(cell%7===0&&d<daysInM)html+='</tr><tr>';
-    }
-    const rem=(7-cell%7)%7;
-    for(let d=1;d<=rem;d++) html+=`<td><div class="cal-day other-month">${d}</div></td>`;
-    html+='</tr>';
-    document.getElementById('cal-body').innerHTML=html;
-  }
+
+
 
   // ── Modal ─────────────────────────────────────────────────────────────
   function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
@@ -434,9 +397,31 @@
     if(e.target===document.getElementById('modal-overlay'))closeModal();
   });
 
+  function selectModalidad(key) {
+    if (!precios?.[SERVICIO]?.modalidades?.[key]) return;
+    modalidadActual = key;
+    // Estilos visuales
+    ['sencilla','completa'].forEach(k => {
+      const el = document.getElementById(`mod-${k}`);
+      const lbl = el?.querySelector('div:last-child');
+      if (k === key) {
+        el.style.borderColor = 'var(--sage)'; el.style.background = '#f0f7ee';
+        if (lbl) { lbl.textContent = '✓ Seleccionada'; lbl.style.color = 'var(--sage)'; }
+      } else {
+        el.style.borderColor = '#e8e8e8'; el.style.background = '#fafafa';
+        if (lbl) { lbl.textContent = 'Seleccionar'; lbl.style.color = '#ccc'; }
+      }
+    });
+    const s = precios[SERVICIO];
+    const mod = s.modalidades[key];
+    contadores = Object.fromEntries(Object.keys(mod.tarifas||{}).map(k=>[k,0]));
+    renderPersonasGrid();
+  }
+
   function renderPersonasGrid() {
-    if (!precios?.[SERVICIO]?.tarifas) return;
-    const tarifas = precios[SERVICIO].tarifas;
+    if (!precios?.[SERVICIO]?.modalidades?.[modalidadActual]) return;
+    const mod    = precios[SERVICIO].modalidades[modalidadActual];
+    const tarifas = mod.tarifas;
     const itbms   = precios[SERVICIO].itbms || 7;
     document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
       <div class="persona-item">
@@ -459,7 +444,8 @@
 
   function actualizarResumen() {
     if (!precios?.[SERVICIO]) return;
-    const tarifas = precios[SERVICIO].tarifas;
+    const mod     = precios[SERVICIO].modalidades?.[modalidadActual] || precios[SERVICIO];
+    const tarifas = mod.tarifas || {};
     const itbms   = precios[SERVICIO].itbms || 7;
     let subtotal = 0;
     const lineas = [];
@@ -501,8 +487,9 @@
       .filter(([,q])=>q>0)
       .map(([k,q])=>`${precios[SERVICIO].tarifas[k].label}: ${q}`)
       .join(', ');
+    const modalidadLabel = precios?.[SERVICIO]?.modalidades?.[modalidadActual]?.label || modalidadActual;
     const msg = encodeURIComponent(
-      `Hola Sanagua Lodge! Quiero reservar una Pasadía.\n\n`+
+      `Hola Sanagua Lodge! Quiero reservar una Pasadía ${modalidadLabel}.\n\n`+
       `📅 Fecha: ${fecha}\n👥 Personas: ${detalle}\n`+
       `👤 Nombre: ${nombre}\n📧 ${email||'Sin correo'}`
     );
