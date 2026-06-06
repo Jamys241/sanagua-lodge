@@ -56,11 +56,6 @@
     .login-error { color:var(--red); font-size:.82rem; margin-bottom:10px; min-height:18px; }
     .login-btn { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:4px; }
     .login-btn:hover { background:#b34816; }
-    /* ── ROL BADGE ── */
-    .rol-badge { font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; }
-    .rol-super  { background:#fff8e1; color:#b45309; }
-    .rol-admin  { background:var(--accent-light); color:var(--accent); }
-    .rol-viewer { background:var(--blue-lt); color:var(--blue); }
     /* ── PERMISOS ── */
     .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
     .perm-row:last-child { border-bottom:none; }
@@ -72,6 +67,12 @@
     .toggle-sw .slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
     .toggle-sw input:checked + .slider { background:var(--accent); }
     .toggle-sw input:checked + .slider::before { transform:translateX(18px); }
+    /* ── ROL BADGE ── */
+    .rol-badge { font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+    .rol-super  { background:#fff8e1; color:#b45309; }
+    .rol-admin  { background:var(--accent-light); color:var(--accent); }
+    .rol-viewer { background:var(--blue-lt); color:var(--blue); }
+
 
     /* ── LAYOUT ── */
     .container { max-width:1020px; margin:0 auto; padding:32px 20px; }
@@ -365,8 +366,9 @@
     <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
     <div class="side-menu-divider"></div>
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
-    <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos de usuario</button>
+
     <div class="side-menu-divider"></div>
+    <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
@@ -616,16 +618,16 @@
 
 </div><!-- /container -->
 
-<!-- ═══════════════ MODAL PERMISOS (solo admin) ═══════════════════════════════ -->
+<!-- ═══════════════ MODAL PERMISOS (solo superadmin) ════════════════════════ -->
 <div class="modal-overlay" id="permisos-modal">
   <div class="modal" style="max-width:500px;">
     <div class="modal-head">
-      <h2>🔐 Permisos del usuario</h2>
+      <h2>🔐 Permisos del Admin</h2>
       <button class="modal-close" onclick="closePermisosModal()">×</button>
     </div>
     <div class="modal-body">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:18px;">
-        Controla qué puede hacer el usuario <strong id="perm-viewer-name"></strong> en la aplicación.
+        Controla qué puede hacer el administrador <strong id="perm-admin-name"></strong>.
       </p>
       <div id="permisos-lista"></div>
       <div class="actions-bar" style="margin-top:20px;">
@@ -1060,7 +1062,7 @@
       Cambia los usuarios y contraseñas. Se guardan en tu repositorio privado.<br>
       <strong>Solo visible para el administrador.</strong>
     </p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
       <div>
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b45309;margin-bottom:10px;">⭐ Super Administrador</div>
         <div class="form-group"><label>Usuario</label><input type="text" id="cred-super-user" placeholder="superadmin"></div>
@@ -1071,13 +1073,7 @@
         <div class="form-group"><label>Usuario</label><input type="text" id="cred-admin-user" placeholder="admin"></div>
         <div class="form-group"><label>Contraseña</label><input type="password" id="cred-admin-pass" placeholder="••••••••"></div>
       </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:10px;">👁 Usuario visor</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>Usuario</label><input type="text" id="cred-viewer-user" placeholder="viewer"></div>
-          <div class="form-group"><label>Contraseña</label><input type="password" id="cred-viewer-pass" placeholder="••••••••"></div>
-        </div>
-      </div>
+
     </div>
     <div style="margin-top:14px;">
       <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
@@ -1103,17 +1099,19 @@
   let currentUser = null;
   let authData    = null;
 
+
+
   const PERMISOS_DEFAULT = {
     ver_historial:       true,
     ver_resumen:         true,
     ver_calendario:      true,
-    crear_cotizacion:    false,
-    editar_cotizacion:   false,
-    eliminar_cotizacion: false,
-    crear_evento:        false,
-    editar_evento:       false,
-    eliminar_evento:     false,
-    exportar_pdf:        false,
+    crear_cotizacion:    true,
+    editar_cotizacion:   true,
+    eliminar_cotizacion: true,
+    crear_evento:        true,
+    editar_evento:       true,
+    eliminar_evento:     true,
+    exportar_pdf:        true,
   };
 
   const PERMISOS_LABELS = {
@@ -1136,9 +1134,8 @@
     } catch { authData = null; }
     if (!authData) {
       authData = {
-        superadmin: { username:'superadmin', password:'super123'  },
-        admin:      { username:'admin',      password:'admin123'  },
-        viewer:     { username:'viewer',     password:'viewer123' },
+        superadmin: { username:'superadmin', password:'super123' },
+        admin:      { username:'admin',      password:'admin123' },
         permisos:   { ...PERMISOS_DEFAULT },
       };
     }
@@ -1162,10 +1159,7 @@
       currentUser = { username: user, role:'admin' };
       iniciarSesion(); return;
     }
-    if (user === authData.viewer?.username && pass === authData.viewer?.password) {
-      currentUser = { username: user, role:'viewer' };
-      iniciarSesion(); return;
-    }
+
     err.textContent = '❌ Usuario o contraseña incorrectos.';
   }
 
@@ -1174,17 +1168,18 @@
     document.getElementById('login-user').value = '';
     document.getElementById('login-pass').value = '';
     const badge = document.getElementById('rol-badge');
-    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin', viewer:'👁 Viewer' };
-    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador', viewer:'Visor' };
-    const roleCls    = { superadmin:'rol-super', admin:'rol-admin', viewer:'rol-viewer' };
+    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin' };
+    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador' };
+    const roleCls    = { superadmin:'rol-super', admin:'rol-admin' };
     badge.textContent = roleLabels[currentUser.role] || currentUser.role;
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-viewer'}`;
     badge.style.display = 'inline-block';
+    document.getElementById('btn-permisos').style.display =
+      currentUser.role === 'superadmin' ? 'block' : 'none';
     document.getElementById('menu-user-info').textContent =
       `${currentUser.username} · ${roleNames[currentUser.role]||currentUser.role}`;
     // Solo superadmin y admin pueden ver el botón de permisos
-    document.getElementById('btn-permisos').style.display =
-      ['superadmin','admin'].includes(currentUser.role) ? 'block' : 'none';
+
     aplicarPermisos();
   }
 
@@ -1193,36 +1188,38 @@
     currentUser = null;
     document.getElementById('login-overlay').style.display = 'flex';
     document.getElementById('rol-badge').style.display = 'none';
+    document.getElementById('btn-permisos').style.display =
+      currentUser.role === 'superadmin' ? 'block' : 'none';
     document.getElementById('menu-user-info').textContent = '';
     closeMenu();
   }
 
+
+
   function getPermisos() {
-    if (['superadmin','admin'].includes(currentUser?.role))
+    if (currentUser?.role === 'superadmin')
       return Object.fromEntries(Object.keys(PERMISOS_DEFAULT).map(k=>[k,true]));
     return { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
   }
 
   function aplicarPermisos() {
     const p = getPermisos();
-    const isAdmin = ['superadmin','admin'].includes(currentUser?.role);
+    const isSuper = currentUser?.role === 'superadmin';
     document.querySelectorAll('.side-menu nav button').forEach(btn => {
       const t = btn.textContent;
-      if (t.includes('Historial'))       btn.style.display = p.ver_historial    ||isAdmin?'':'none';
-      if (t.includes('Resumen'))         btn.style.display = p.ver_resumen      ||isAdmin?'':'none';
-      if (t.includes('Calendario'))      btn.style.display = p.ver_calendario   ||isAdmin?'':'none';
-      if (t.includes('Nueva Cotización'))btn.style.display = p.crear_cotizacion ||isAdmin?'':'none';
+      if (t.includes('Historial'))        btn.style.display = isSuper||p.ver_historial    ? '' : 'none';
+      if (t.includes('Resumen'))          btn.style.display = isSuper||p.ver_resumen      ? '' : 'none';
+      if (t.includes('Calendario'))       btn.style.display = isSuper||p.ver_calendario   ? '' : 'none';
+      if (t.includes('Nueva Cotización')) btn.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
     });
-    // Ocultar botón generar PDF si no puede crear
     const bGen = document.querySelector('[onclick="generatePDF()"]');
-    if (bGen) bGen.style.display = p.crear_cotizacion||isAdmin?'':'none';
-    // Ocultar botón nuevo evento en calendario
+    if (bGen) bGen.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
     const bEv = document.querySelector('[onclick="openNewEvent()"]');
-    if (bEv) bEv.style.display = p.crear_evento||isAdmin?'':'none';
+    if (bEv) bEv.style.display = isSuper||p.crear_evento ? '' : 'none';
   }
 
   function aplicarPermisosHistorial() {
-    if (['superadmin','admin'].includes(currentUser?.role)) return;
+    if (currentUser?.role === 'superadmin') return;
     const p = getPermisos();
     if (!p.editar_cotizacion)   document.querySelectorAll('[onclick^="openEditByNum"]').forEach(b=>b.style.display='none');
     if (!p.editar_evento)       document.querySelectorAll('[onclick^="openEditEvent"]').forEach(b=>b.style.display='none');
@@ -1234,40 +1231,7 @@
     }
   }
 
-  function openPermisosModal() {
-    if (!['superadmin','admin'].includes(currentUser?.role)) { showToast('Solo el administrador puede cambiar permisos.','error'); return; }
-    const permisos = { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
-    document.getElementById('perm-viewer-name').textContent = authData?.viewer?.username||'viewer';
-    document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS).map(([key,info])=>`
-      <div class="perm-row">
-        <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
-        <label class="toggle-sw">
-          <input type="checkbox" id="perm-${key}" ${permisos[key]?'checked':''}>
-          <span class="slider"></span>
-        </label>
-      </div>`).join('');
-    document.getElementById('permisos-modal').classList.add('open');
-  }
 
-  function closePermisosModal() {
-    document.getElementById('permisos-modal').classList.remove('open');
-  }
-
-  async function savePermisos() {
-    const permisos = {};
-    Object.keys(PERMISOS_LABELS).forEach(key => {
-      permisos[key] = document.getElementById('perm-'+key)?.checked||false;
-    });
-    authData.permisos = permisos;
-    showLoading(true);
-    try {
-      const ok = await ghReadWrite('auth.json', authData);
-      if (!ok) throw new Error();
-      closePermisosModal();
-      showToast('✅ Permisos guardados.','success');
-    } catch { showToast('❌ Error al guardar permisos.','error'); }
-    finally { showLoading(false); }
-  }
 
   async function saveCreds() {
     if (currentUser?.role!=='superadmin') { showToast('Solo el super administrador puede cambiar credenciales.','error'); return; }
@@ -1275,12 +1239,9 @@
     const sP = document.getElementById('cred-super-pass').value.trim();
     const aU = document.getElementById('cred-admin-user').value.trim();
     const aP = document.getElementById('cred-admin-pass').value.trim();
-    const vU = document.getElementById('cred-viewer-user').value.trim();
-    const vP = document.getElementById('cred-viewer-pass').value.trim();
-    if (!sU||!sP||!aU||!aP||!vU||!vP) { showToast('Completa todos los campos.','error'); return; }
+    if (!sU||!sP||!aU||!aP) { showToast('Completa todos los campos.','error'); return; }
     authData.superadmin = { username:sU, password:sP };
     authData.admin      = { username:aU, password:aP };
-    authData.viewer     = { username:vU, password:vP };
     showLoading(true);
     try {
       const ok = await ghReadWrite('auth.json', authData);
@@ -1625,6 +1586,41 @@
     status.innerHTML = msg;
     status.style.color = missing.length ? 'var(--gold)' : 'var(--success)';
   }
+  function openPermisosModal() {
+    if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede configurar permisos.','error'); return; }
+    const permisos = { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
+    document.getElementById('perm-admin-name').textContent = authData?.admin?.username || 'admin';
+    document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS).map(([key,info])=>`
+      <div class="perm-row">
+        <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
+        <label class="toggle-sw">
+          <input type="checkbox" id="perm-${key}" ${permisos[key]?'checked':''}>
+          <span class="slider"></span>
+        </label>
+      </div>`).join('');
+    document.getElementById('permisos-modal').classList.add('open');
+  }
+
+  function closePermisosModal() {
+    document.getElementById('permisos-modal').classList.remove('open');
+  }
+
+  async function savePermisos() {
+    const permisos = {};
+    Object.keys(PERMISOS_LABELS).forEach(key => {
+      permisos[key] = document.getElementById('perm-'+key)?.checked || false;
+    });
+    authData.permisos = permisos;
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('auth.json', authData);
+      if (!ok) throw new Error();
+      closePermisosModal();
+      showToast('✅ Permisos del admin guardados.', 'success');
+    } catch { showToast('❌ Error al guardar permisos.', 'error'); }
+    finally { showLoading(false); }
+  }
+
   let logoBase64 = '';
 
   async function loadLogo() {
@@ -1732,8 +1728,7 @@
         document.getElementById('cred-super-pass').value  = authData.superadmin?.password || '';
         document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
         document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
-        document.getElementById('cred-viewer-user').value = authData.viewer?.username || '';
-        document.getElementById('cred-viewer-pass').value = authData.viewer?.password || '';
+
       }
     }
   }
@@ -3342,8 +3337,7 @@
       await saveEventToServer();
       closeEventModal();
       // Forzar rebuild del índice antes de renderizar
-      console.log('allEvents después de guardar:', allEvents.length, 'eventos');
-      console.log('Último evento:', JSON.stringify(allEvents[allEvents.length-1]));
+
       renderCalendario();
       renderHistory(allHistory);
       showToast(`✅ Evento "${name}" guardado`, 'success');
@@ -3360,7 +3354,6 @@
     const evId = editingEvent.id;
     const before = allEvents.length;
     allEvents = allEvents.filter(e => e.id !== evId);
-    console.log('deleteEvent: eliminando', evId, '| antes:', before, '| después:', allEvents.length);
     showLoading(true);
     try {
       const ok = await ghReadWrite('events.json', {events: allEvents});
@@ -3476,10 +3469,10 @@
       ...allHistory.filter(passFilter),
       ...allEvents.filter(passFilter),
     ];
-    console.log('buildCalIndex: total items =', all.length, '| eventos =', allEvents.length, '| filtros =', f);
+
     all.forEach(item => {
       if (!item.visit_date) {
-        if (item.type === 'event') console.log('Evento sin visit_date:', item.client?.name, item.id);
+  
         return;
       }
       // Usar occupiedRange para respetar la lógica de cada categoría
@@ -3498,7 +3491,7 @@
         safety++;
       }
     });
-    console.log('buildCalIndex: fechas indexadas =', Object.keys(_calIndex).length);
+
   }
 
   // Ahora simplemente consulta el índice — O(1) por celda
