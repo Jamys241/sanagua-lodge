@@ -625,7 +625,7 @@
     </div>
     <div class="modal-body">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:18px;">
-        Controla qué puede hacer el usuario <strong id="perm-viewer-name"></strong> en la aplicación.
+        Controla qué puede hacer el administrador <strong id="perm-viewer-name"></strong> en la aplicación.
       </p>
       <div id="permisos-lista"></div>
       <div class="actions-bar" style="margin-top:20px;">
@@ -1060,7 +1060,7 @@
       Cambia los usuarios y contraseñas. Se guardan en tu repositorio privado.<br>
       <strong>Solo visible para el administrador.</strong>
     </p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
       <div>
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b45309;margin-bottom:10px;">⭐ Super Administrador</div>
         <div class="form-group"><label>Usuario</label><input type="text" id="cred-super-user" placeholder="superadmin"></div>
@@ -1071,13 +1071,7 @@
         <div class="form-group"><label>Usuario</label><input type="text" id="cred-admin-user" placeholder="admin"></div>
         <div class="form-group"><label>Contraseña</label><input type="password" id="cred-admin-pass" placeholder="••••••••"></div>
       </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:10px;">👁 Usuario visor</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label>Usuario</label><input type="text" id="cred-viewer-user" placeholder="viewer"></div>
-          <div class="form-group"><label>Contraseña</label><input type="password" id="cred-viewer-pass" placeholder="••••••••"></div>
-        </div>
-      </div>
+
     </div>
     <div style="margin-top:14px;">
       <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
@@ -1107,13 +1101,13 @@
     ver_historial:       true,
     ver_resumen:         true,
     ver_calendario:      true,
-    crear_cotizacion:    false,
-    editar_cotizacion:   false,
-    eliminar_cotizacion: false,
-    crear_evento:        false,
-    editar_evento:       false,
-    eliminar_evento:     false,
-    exportar_pdf:        false,
+    crear_cotizacion:    true,
+    editar_cotizacion:   true,
+    eliminar_cotizacion: true,
+    crear_evento:        true,
+    editar_evento:       true,
+    eliminar_evento:     true,
+    exportar_pdf:        true,
   };
 
   const PERMISOS_LABELS = {
@@ -1136,9 +1130,8 @@
     } catch { authData = null; }
     if (!authData) {
       authData = {
-        superadmin: { username:'superadmin', password:'super123'  },
-        admin:      { username:'admin',      password:'admin123'  },
-        viewer:     { username:'viewer',     password:'viewer123' },
+        superadmin: { username:'superadmin', password:'super123' },
+        admin:      { username:'admin',      password:'admin123' },
         permisos:   { ...PERMISOS_DEFAULT },
       };
     }
@@ -1162,10 +1155,7 @@
       currentUser = { username: user, role:'admin' };
       iniciarSesion(); return;
     }
-    if (user === authData.viewer?.username && pass === authData.viewer?.password) {
-      currentUser = { username: user, role:'viewer' };
-      iniciarSesion(); return;
-    }
+
     err.textContent = '❌ Usuario o contraseña incorrectos.';
   }
 
@@ -1174,9 +1164,9 @@
     document.getElementById('login-user').value = '';
     document.getElementById('login-pass').value = '';
     const badge = document.getElementById('rol-badge');
-    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin', viewer:'👁 Viewer' };
-    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador', viewer:'Visor' };
-    const roleCls    = { superadmin:'rol-super', admin:'rol-admin', viewer:'rol-viewer' };
+    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin' };
+    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador' };
+    const roleCls    = { superadmin:'rol-super', admin:'rol-admin' };
     badge.textContent = roleLabels[currentUser.role] || currentUser.role;
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-viewer'}`;
     badge.style.display = 'inline-block';
@@ -1184,7 +1174,7 @@
       `${currentUser.username} · ${roleNames[currentUser.role]||currentUser.role}`;
     // Solo superadmin y admin pueden ver el botón de permisos
     document.getElementById('btn-permisos').style.display =
-      ['superadmin','admin'].includes(currentUser.role) ? 'block' : 'none';
+      currentUser.role === 'superadmin' ? 'block' : 'none';
     aplicarPermisos();
   }
 
@@ -1198,14 +1188,15 @@
   }
 
   function getPermisos() {
-    if (['superadmin','admin'].includes(currentUser?.role))
+    if (currentUser?.role === 'superadmin')
       return Object.fromEntries(Object.keys(PERMISOS_DEFAULT).map(k=>[k,true]));
+    // admin tiene los permisos que el superadmin le configuró
     return { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
   }
 
   function aplicarPermisos() {
     const p = getPermisos();
-    const isAdmin = ['superadmin','admin'].includes(currentUser?.role);
+    const isAdmin = currentUser?.role === 'superadmin';
     document.querySelectorAll('.side-menu nav button').forEach(btn => {
       const t = btn.textContent;
       if (t.includes('Historial'))       btn.style.display = p.ver_historial    ||isAdmin?'':'none';
@@ -1222,7 +1213,7 @@
   }
 
   function aplicarPermisosHistorial() {
-    if (['superadmin','admin'].includes(currentUser?.role)) return;
+    if (currentUser?.role === 'superadmin') return;
     const p = getPermisos();
     if (!p.editar_cotizacion)   document.querySelectorAll('[onclick^="openEditByNum"]').forEach(b=>b.style.display='none');
     if (!p.editar_evento)       document.querySelectorAll('[onclick^="openEditEvent"]').forEach(b=>b.style.display='none');
@@ -1235,9 +1226,9 @@
   }
 
   function openPermisosModal() {
-    if (!['superadmin','admin'].includes(currentUser?.role)) { showToast('Solo el administrador puede cambiar permisos.','error'); return; }
+    if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede configurar permisos.','error'); return; }
     const permisos = { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
-    document.getElementById('perm-viewer-name').textContent = authData?.viewer?.username||'viewer';
+    document.getElementById('perm-viewer-name').textContent = authData?.admin?.username||'admin';
     document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS).map(([key,info])=>`
       <div class="perm-row">
         <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
@@ -1275,12 +1266,9 @@
     const sP = document.getElementById('cred-super-pass').value.trim();
     const aU = document.getElementById('cred-admin-user').value.trim();
     const aP = document.getElementById('cred-admin-pass').value.trim();
-    const vU = document.getElementById('cred-viewer-user').value.trim();
-    const vP = document.getElementById('cred-viewer-pass').value.trim();
-    if (!sU||!sP||!aU||!aP||!vU||!vP) { showToast('Completa todos los campos.','error'); return; }
+    if (!sU||!sP||!aU||!aP) { showToast('Completa todos los campos.','error'); return; }
     authData.superadmin = { username:sU, password:sP };
     authData.admin      = { username:aU, password:aP };
-    authData.viewer     = { username:vU, password:vP };
     showLoading(true);
     try {
       const ok = await ghReadWrite('auth.json', authData);
@@ -1732,8 +1720,7 @@
         document.getElementById('cred-super-pass').value  = authData.superadmin?.password || '';
         document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
         document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
-        document.getElementById('cred-viewer-user').value = authData.viewer?.username || '';
-        document.getElementById('cred-viewer-pass').value = authData.viewer?.password || '';
+
       }
     }
   }
