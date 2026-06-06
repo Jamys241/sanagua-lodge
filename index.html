@@ -1242,9 +1242,14 @@
       return;
     }
 
-    // Usuario público normal
+    // Usuario público normal — acepta usuario o correo
     const isEmail = input.includes('@');
-    if (!isEmail) { errEl.textContent = 'Ingresa tu correo electrónico o usuario válido.'; return; }
+    if (!isEmail) {
+      // Si no es email y no es admin, puede ser un usuario registrado sin @
+      // Por ahora mostramos mensaje amigable
+      errEl.textContent = 'Ingresa tu correo electrónico para acceder como usuario.';
+      return;
+    }
     const name = input.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
     publicUser = { name, email: input, puntos: 240 };
     aplicarUsuarioPublico();
