@@ -44,18 +44,7 @@
     .side-menu nav button:hover { background:rgba(255,255,255,.06); color:white; }
     .side-menu nav button.active { color:white; background:rgba(255,255,255,.08); border-left-color:var(--accent); }
     .side-menu-divider { height:1px; background:rgba(255,255,255,.08); margin:8px 16px; }
-    /* ── LOGIN ── */
-    .login-overlay { position:fixed; inset:0; background:var(--ink); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
-    .login-box { background:var(--surface); border-radius:14px; padding:36px 40px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.4); text-align:center; }
-    .login-logo { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--accent); margin-bottom:6px; }
-    .login-sub { font-size:.85rem; color:var(--muted); margin-bottom:28px; }
-    .login-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; text-align:left; }
-    .login-field label { font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-    .login-field input { padding:11px 14px; border:1.5px solid var(--border); border-radius:7px; font-size:.95rem; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); outline:none; }
-    .login-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,84,26,.1); }
-    .login-error { color:var(--red); font-size:.82rem; margin-bottom:10px; min-height:18px; }
-    .login-btn { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:4px; }
-    .login-btn:hover { background:#b34816; }
+
     /* ── PERMISOS ── */
     .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
     .perm-row:last-child { border-bottom:none; }
@@ -321,28 +310,6 @@
   </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════════════════════════════════════ LOGIN -->
-<div class="login-overlay" id="login-overlay">
-  <div class="login-box">
-    <div class="login-logo">🌿 Sanagua Lodge</div>
-    <div class="login-sub">Sistema de Cotizaciones</div>
-    <div class="login-field">
-      <label>Usuario</label>
-      <input type="text" id="login-user" placeholder="usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div class="login-field">
-      <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div class="login-error" id="login-error"></div>
-    <button class="login-btn" onclick="doLogin()">Ingresar</button>
-    <div style="margin-top:16px;font-size:.75rem;color:var(--muted);">
-      Primera vez: configura las credenciales en<br>
-      <code>Data/json/auth.json</code> en tu repositorio
-    </div>
-  </div>
-</div>
 
 <header>
   <div class="header-left">
@@ -1141,57 +1108,41 @@
     }
   }
 
-  async function doLogin() {
-    const user = document.getElementById('login-user').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    const err  = document.getElementById('login-error');
-    err.textContent = '';
-    if (!user || !pass) { err.textContent = 'Ingresa usuario y contraseña.'; return; }
-    if (!authData) {
-      err.textContent = 'Cargando...';
-      await loadAuth();
-    }
-    if (user === authData.superadmin?.username && pass === authData.superadmin?.password) {
-      currentUser = { username: user, role:'superadmin' };
-      iniciarSesion(); return;
-    }
-    if (user === authData.admin?.username && pass === authData.admin?.password) {
-      currentUser = { username: user, role:'admin' };
-      iniciarSesion(); return;
-    }
-
-    err.textContent = '❌ Usuario o contraseña incorrectos.';
+  function verificarSesion() {
+    const raw = sessionStorage.getItem('sl_session');
+    if (!raw) { window.location.href = '../index.html'; return false; }
+    try {
+      const s = JSON.parse(raw);
+      // Sesión válida por 8 horas
+      if (!s.role || !s.username || (Date.now() - s.ts) > 8 * 3600 * 1000) {
+        sessionStorage.removeItem('sl_session');
+        window.location.href = '../index.html';
+        return false;
+      }
+      currentUser = { username: s.username, role: s.role };
+      return true;
+    } catch { window.location.href = '../index.html'; return false; }
   }
 
   function iniciarSesion() {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('login-user').value = '';
-    document.getElementById('login-pass').value = '';
     const badge = document.getElementById('rol-badge');
     const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin' };
     const roleNames  = { superadmin:'Super Administrador', admin:'Administrador' };
     const roleCls    = { superadmin:'rol-super', admin:'rol-admin' };
     badge.textContent = roleLabels[currentUser.role] || currentUser.role;
-    badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-viewer'}`;
+    badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-admin'}`;
     badge.style.display = 'inline-block';
     document.getElementById('btn-permisos').style.display =
       currentUser.role === 'superadmin' ? 'block' : 'none';
     document.getElementById('menu-user-info').textContent =
       `${currentUser.username} · ${roleNames[currentUser.role]||currentUser.role}`;
-    // Solo superadmin y admin pueden ver el botón de permisos
-
     aplicarPermisos();
   }
 
   function cerrarSesion() {
     if (!confirm('¿Cerrar sesión?')) return;
-    currentUser = null;
-    document.getElementById('login-overlay').style.display = 'flex';
-    document.getElementById('rol-badge').style.display = 'none';
-    document.getElementById('btn-permisos').style.display =
-      currentUser.role === 'superadmin' ? 'block' : 'none';
-    document.getElementById('menu-user-info').textContent = '';
-    closeMenu();
+    sessionStorage.removeItem('sl_session');
+    window.location.href = '../index.html';
   }
 
 
@@ -1383,21 +1334,19 @@
     const _valid = new Date(_today); _valid.setDate(_valid.getDate()+30);
     document.getElementById('quote-valid').value = localDateStr(_valid);
 
-    // Cargar datos y mostrar login
+    // Verificar sesión — si no hay sesión válida redirige al sitio web
+    if (!verificarSesion()) return;
+
+    // Mostrar el sistema con la sesión activa
+    iniciarSesion();
+
+    // Cargar datos
     (async () => {
-      // Primero cargar auth (no necesita token GH para mostrar el login)
       try { await loadAuth(); } catch(e) { console.warn('Auth load error:', e); }
-
-      // Mostrar pantalla de login — los datos se cargan DESPUÉS de autenticar
-      // (el login overlay ya está visible por CSS por defecto)
-
-      // Cargar el resto de datos en background para que estén listos cuando el usuario ingrese
       try {
         await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
       } catch(e) { console.warn('Init partial error:', e); }
-      try {
-        await loadHistory();
-      } catch(e) { console.warn('History load error:', e); }
+      try { await loadHistory(); } catch(e) { console.warn('History load error:', e); }
       renderCalendario();
       startPolling();
     })();
