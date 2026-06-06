@@ -1179,13 +1179,14 @@
   // ── Modal auth ────────────────────────────────────────────────────────
   function openAuth(tab) {
     if (publicUser) {
-      // Si ya está logueado, mostrar panel de usuario
       document.getElementById('panel-auth').style.display = 'none';
       document.getElementById('panel-user').style.display = 'block';
     } else {
       document.getElementById('panel-auth').style.display = 'block';
       document.getElementById('panel-user').style.display = 'none';
       switchAuthTab(tab || 'login');
+      // Cargar credenciales admin en background al abrir el login
+      if (!webAuthData) loadWebAuth();
     }
     document.getElementById('auth-overlay').classList.add('open');
   }
@@ -1216,12 +1217,36 @@
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/index.html';
 
-  // Credenciales de administradores — se verifican contra el auth.json del repo
-  // Para simplificar en el sitio web usamos las mismas que en el sistema
-  const ADMIN_CREDS = [
-    { user: 'superadmin', pass: 'super123', role: 'superadmin', label: '⭐ Super Administrador', url: SISTEMA_URL },
-    { user: 'admin',      pass: 'admin123', role: 'admin',      label: '👑 Administrador',       url: SISTEMA_URL },
-  ];
+  // ── Configuración GitHub (repo privado de datos) ─────────────────────
+  // El sitio web lee las credenciales admin del mismo auth.json del sistema
+  const WEB_GH_TOKEN  = localStorage.getItem('gh_token')  || '';
+  const WEB_GH_REPO   = localStorage.getItem('gh_repo')   || '';
+  const WEB_GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
+
+  let webAuthData = null; // se carga al abrir el modal de login
+
+  async function loadWebAuth() {
+    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return;
+    try {
+      const url = `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/auth.json?ref=${WEB_GH_BRANCH}`;
+      const r = await fetch(url, {
+        headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
+      webAuthData = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    } catch { webAuthData = null; }
+  }
+
+  function getAdminCreds() {
+    // Si se cargó el auth.json usa esas credenciales, si no usa las de respaldo
+    const src = webAuthData || {};
+    return [
+      { user: src.superadmin?.username || 'superadmin', pass: src.superadmin?.password || 'super123', role: 'superadmin', label: '⭐ Super Administrador', url: SISTEMA_URL },
+      { user: src.admin?.username      || 'admin',      pass: src.admin?.password      || 'admin123', role: 'admin',      label: '👑 Administrador',       url: SISTEMA_URL },
+    ];
+  }
 
   // ── Login ─────────────────────────────────────────────────────────────
   function doPublicLogin() {
@@ -1231,23 +1256,20 @@
     errEl.textContent = '';
     if (!input || !pass) { errEl.textContent = 'Completa todos los campos.'; return; }
 
-    // Verificar si es un administrador
-    const adminMatch = ADMIN_CREDS.find(a =>
+    // Verificar si es un administrador usando credenciales del auth.json
+    const adminMatch = getAdminCreds().find(a =>
       (a.user === input || a.user === input.split('@')[0]) && a.pass === pass
     );
     if (adminMatch) {
       closeAuth();
-      // Mostrar aviso y redirigir al sistema de cotizaciones
       showAdminRedirect(adminMatch);
       return;
     }
 
-    // Usuario público normal — acepta usuario o correo
+    // Usuario público normal
     const isEmail = input.includes('@');
     if (!isEmail) {
-      // Si no es email y no es admin, puede ser un usuario registrado sin @
-      // Por ahora mostramos mensaje amigable
-      errEl.textContent = 'Ingresa tu correo electrónico para acceder como usuario.';
+      errEl.textContent = 'Usuario o contraseña incorrectos.';
       return;
     }
     const name = input.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
