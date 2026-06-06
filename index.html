@@ -1034,21 +1034,42 @@
       <div class="auth-body">
         <!-- Login -->
         <div class="auth-panel active" id="panel-login">
-          <div class="auth-field">
-            <label>Correo electrónico o usuario</label>
-            <input type="text" id="login-email" placeholder="usuario o correo" onkeydown="if(event.key==='Enter')doPublicLogin()">
+
+          <!-- Paso 1: correo -->
+          <div id="login-step-1">
+            <div class="auth-field">
+              <label>Correo electrónico</label>
+              <input type="text" id="login-email" placeholder="tu@correo.com"
+                onkeydown="if(event.key==='Enter')checkEmail()">
+            </div>
+            <div id="login-email-feedback" style="font-size:.82rem;min-height:20px;margin-bottom:8px;"></div>
+            <button class="auth-btn" onclick="checkEmail()">Continuar</button>
           </div>
-          <div class="auth-field">
-            <label>Contraseña</label>
-            <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doPublicLogin()">
+
+          <!-- Paso 2: nombre + contraseña (oculto hasta verificar correo) -->
+          <div id="login-step-2" style="display:none;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px 14px;background:#f8f8f8;border-radius:8px;">
+              <div style="width:38px;height:38px;border-radius:50%;background:var(--moss);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem;flex-shrink:0;">👤</div>
+              <div>
+                <div id="login-user-name" style="font-weight:600;font-size:.95rem;color:var(--ink);">—</div>
+                <div id="login-user-email" style="font-size:.76rem;color:#aaa;"></div>
+              </div>
+              <button onclick="backToStep1()" style="margin-left:auto;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;text-decoration:underline;">Cambiar</button>
+            </div>
+            <div class="auth-field">
+              <label>Contraseña</label>
+              <input type="password" id="login-password" placeholder="••••••••"
+                onkeydown="if(event.key==='Enter')doPublicLogin()">
+            </div>
+            <div id="login-error-pub" style="color:#c0392b;font-size:.8rem;min-height:18px;margin-bottom:6px;"></div>
+            <button class="auth-btn" onclick="doPublicLogin()">Ingresar</button>
           </div>
-          <div id="login-error-pub" style="color:#c0392b;font-size:.8rem;min-height:18px;margin-bottom:6px;"></div>
-          <button class="auth-btn" onclick="doPublicLogin()">Ingresar</button>
+
           <p style="text-align:center;margin-top:16px;font-size:.78rem;color:#aaa;">
             ¿No tienes cuenta? <a href="#" onclick="switchAuthTab('register')" style="color:var(--earth);">Regístrate gratis</a>
           </p>
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;text-align:center;font-size:.75rem;color:#bbb;">
-            Administradores: usa tus credenciales de acceso al sistema
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0f0f0;text-align:center;font-size:.73rem;color:#ccc;">
+            Administradores: usa tus credenciales de acceso
           </div>
         </div>
 
@@ -1180,11 +1201,72 @@
     if (e.target === document.getElementById('auth-overlay')) closeAuth();
   });
 
+  // ── Login en dos pasos ────────────────────────────────────────────────
+  let _cachedUsers = null; // caché para no leer GitHub dos veces
+
+  async function checkEmail() {
+    const input   = document.getElementById('login-email').value.trim();
+    const feedEl  = document.getElementById('login-email-feedback');
+    const btn     = document.querySelector('#login-step-1 .auth-btn');
+    feedEl.textContent = '';
+    if (!input) { feedEl.style.color='#c0392b'; feedEl.textContent='Ingresa tu correo.'; return; }
+
+    // Verificar si es admin (sin necesidad de consultar users.json)
+    const isAdminUser = getAdminCreds().some(a => a.user === input || a.user === input.split('@')[0]);
+    if (isAdminUser) {
+      // Admin — ir directo al paso 2 sin mostrar nombre
+      document.getElementById('login-user-name').textContent  = 'Administrador';
+      document.getElementById('login-user-email').textContent = input;
+      showLoginStep2();
+      return;
+    }
+
+    if (!input.includes('@')) {
+      feedEl.style.color = '#c0392b';
+      feedEl.textContent = 'El usuario no existe. ¿Quieres registrarte?';
+      return;
+    }
+
+    btn.textContent = 'Verificando...'; btn.disabled = true;
+    feedEl.textContent = '';
+    try {
+      _cachedUsers = await loadUsers();
+      const found = _cachedUsers.find(u => u.email === input);
+      if (found) {
+        document.getElementById('login-user-name').textContent  = found.name;
+        document.getElementById('login-user-email').textContent = found.email;
+        showLoginStep2();
+      } else {
+        feedEl.style.color = '#c0392b';
+        feedEl.innerHTML = `Este correo no está registrado. <a href="#" onclick="switchAuthTab('register')" style="color:var(--earth);">Regístrate aquí</a>`;
+      }
+    } catch {
+      feedEl.style.color = '#c0392b';
+      feedEl.textContent = 'Error de conexión. Intenta nuevamente.';
+    } finally { btn.textContent = 'Continuar'; btn.disabled = false; }
+  }
+
+  function showLoginStep2() {
+    document.getElementById('login-step-1').style.display = 'none';
+    document.getElementById('login-step-2').style.display = 'block';
+    document.getElementById('login-error-pub').textContent = '';
+    document.getElementById('login-password').value = '';
+    setTimeout(() => document.getElementById('login-password').focus(), 100);
+  }
+
+  function backToStep1() {
+    document.getElementById('login-step-2').style.display = 'none';
+    document.getElementById('login-step-1').style.display = 'block';
+    document.getElementById('login-email-feedback').textContent = '';
+  }
+
   function switchAuthTab(tab) {
     document.getElementById('tab-login').classList.toggle('active', tab==='login');
     document.getElementById('tab-register').classList.toggle('active', tab==='register');
     document.getElementById('panel-login').classList.toggle('active', tab==='login');
     document.getElementById('panel-register').classList.toggle('active', tab==='register');
+    // Resetear al paso 1 al cambiar de tab
+    if (tab === 'login') backToStep1();
   }
 
   function switchUserTab(tab, btn) {
@@ -1198,26 +1280,61 @@
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/index.html';
 
-  // ── Configuración GitHub (repo privado de datos) ─────────────────────
-  // El sitio web lee las credenciales admin del mismo auth.json del sistema
+  // ── GitHub — mismo repo privado que el sistema ───────────────────────
   const WEB_GH_TOKEN  = localStorage.getItem('gh_token')  || '';
   const WEB_GH_REPO   = localStorage.getItem('gh_repo')   || '';
   const WEB_GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
 
-  let webAuthData = null; // se carga al abrir el modal de login
+  let webAuthData = null;
 
-  async function loadWebAuth() {
-    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return;
+  async function webGhRead(filename) {
+    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return null;
     try {
-      const url = `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/auth.json?ref=${WEB_GH_BRANCH}`;
-      const r = await fetch(url, {
-        headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-      });
-      if (!r.ok) return;
+      const r = await fetch(
+        `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/${filename}?ref=${WEB_GH_BRANCH}`,
+        { headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      if (!r.ok) return null;
       const d = await r.json();
       const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
-      webAuthData = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    } catch { webAuthData = null; }
+      return { data: JSON.parse(new TextDecoder('utf-8').decode(bytes)), sha: d.sha };
+    } catch { return null; }
+  }
+
+  async function webGhWrite(filename, data, sha) {
+    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return false;
+    try {
+      const json    = JSON.stringify(data, null, 2);
+      const bytes   = new TextEncoder().encode(json);
+      let binary = ''; bytes.forEach(b => binary += String.fromCharCode(b));
+      const content = btoa(binary);
+      const payload = { message: `update ${filename}`, content, branch: WEB_GH_BRANCH };
+      if (sha) payload.sha = sha;
+      const r = await fetch(
+        `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/${filename}`,
+        { method: 'PUT', headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+      );
+      return r.ok;
+    } catch { return false; }
+  }
+
+  // ── Usuarios públicos ─────────────────────────────────────────────────
+  // Se guardan en Data/json/users.json en el repo privado
+  // Estructura: { "users": [ { email, name, phone, password, puntos, created_at, reservas:[] } ] }
+
+  async function loadUsers() {
+    const res = await webGhRead('users.json');
+    return res?.data?.users || [];
+  }
+
+  async function saveUsers(users) {
+    const existing = await webGhRead('users.json');
+    return webGhWrite('users.json', { users }, existing?.sha || null);
+  }
+
+  async function loadWebAuth() {
+    const res = await webGhRead('auth.json');
+    if (res?.data) webAuthData = res.data;
   }
 
   function getAdminCreds() {
@@ -1230,33 +1347,74 @@
   }
 
   // ── Login ─────────────────────────────────────────────────────────────
-  function doPublicLogin() {
+  async function doPublicLogin() {
     const input = document.getElementById('login-email').value.trim();
     const pass  = document.getElementById('login-password').value;
     const errEl = document.getElementById('login-error-pub');
+    const btn   = document.querySelector('#login-step-2 .auth-btn');
     errEl.textContent = '';
-    if (!input || !pass) { errEl.textContent = 'Completa todos los campos.'; return; }
+    if (!pass) { errEl.textContent = 'Ingresa tu contraseña.'; return; }
 
-    // Verificar si es un administrador usando credenciales del auth.json
+    // 1. Verificar si es administrador
     const adminMatch = getAdminCreds().find(a =>
       (a.user === input || a.user === input.split('@')[0]) && a.pass === pass
     );
-    if (adminMatch) {
-      closeAuth();
-      showAdminRedirect(adminMatch);
-      return;
-    }
+    if (adminMatch) { closeAuth(); showAdminRedirect(adminMatch); return; }
 
-    // Usuario público normal
-    const isEmail = input.includes('@');
-    if (!isEmail) {
-      errEl.textContent = 'Usuario o contraseña incorrectos.';
-      return;
-    }
-    const name = input.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
-    publicUser = { name, email: input, puntos: 0 };
-    aplicarUsuarioPublico();
-    closeAuth();
+    // 2. Verificar usuario público — usar caché del paso 1
+    btn.textContent = 'Ingresando...'; btn.disabled = true;
+    try {
+      const users = _cachedUsers || await loadUsers();
+      const found = users.find(u => u.email === input && u.password === pass);
+      if (found) {
+        publicUser = { name: found.name, email: found.email, puntos: found.puntos || 0, reservas: found.reservas || [] };
+        aplicarUsuarioPublico();
+        closeAuth();
+      } else {
+        errEl.textContent = 'Contraseña incorrecta.';
+      }
+    } catch { errEl.textContent = 'Error de conexión. Intenta nuevamente.'; }
+    finally { btn.textContent = 'Ingresar'; btn.disabled = false; }
+  }
+
+  async function doRegister() {
+    const name  = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass  = document.getElementById('reg-password').value;
+    const phone = document.getElementById('reg-phone').value.trim();
+    const errEl = document.getElementById('login-error-pub');
+    const btn   = document.querySelector('#panel-register .auth-btn');
+    errEl.textContent = '';
+
+    if (!name || !email || !pass) { errEl.textContent = 'Completa los campos obligatorios.'; return; }
+    if (!email.includes('@')) { errEl.textContent = 'Ingresa un correo válido.'; return; }
+    if (pass.length < 6) { errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+
+    btn.textContent = 'Creando cuenta...'; btn.disabled = true;
+    try {
+      const users = await loadUsers();
+      if (users.find(u => u.email === email)) {
+        errEl.textContent = 'Este correo ya está registrado.'; return;
+      }
+      const newUser = { email, name, phone, password: pass, puntos: 0, created_at: new Date().toISOString(), reservas: [] };
+      users.push(newUser);
+      const ok = await saveUsers(users);
+      if (ok) {
+        publicUser = { name, email, puntos: 0, reservas: [] };
+        aplicarUsuarioPublico();
+        closeAuth();
+        setTimeout(() => {
+          const t = document.createElement('div');
+          t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--moss);color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
+          t.textContent = `¡Bienvenido/a, ${name.split(' ')[0]}! Tu cuenta ha sido creada.`;
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 4000);
+        }, 400);
+      } else {
+        errEl.textContent = 'Error al guardar. Verifica la conexión e intenta nuevamente.';
+      }
+    } catch { errEl.textContent = 'Error de conexión. Intenta nuevamente.'; }
+    finally { btn.textContent = 'Crear cuenta'; btn.disabled = false; }
   }
 
   function showAdminRedirect(admin) {
@@ -1281,18 +1439,6 @@
     setTimeout(() => {
       window.location.href = admin.url;
     }, 1500);
-  }
-
-  function doRegister() {
-    const name  = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const pass  = document.getElementById('reg-password').value;
-    if (!name || !email || !pass) { alert('Completa todos los campos requeridos.'); return; }
-    if (pass.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return; }
-
-    publicUser = { name, email, puntos: 0 };
-    aplicarUsuarioPublico();
-    closeAuth();
   }
 
   function aplicarUsuarioPublico() {
