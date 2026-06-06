@@ -333,6 +333,7 @@
     <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
     <div class="side-menu-divider"></div>
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
+    <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
 
     <div class="side-menu-divider"></div>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
@@ -1053,6 +1054,74 @@
 </div>
 </div><!-- /tab-config -->
 
+<!-- ══════════════════════ TAB PRECIOS ══════════════════════════════════ -->
+<div id="tab-precios" class="tab-panel">
+<div class="container">
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">💰 Precios de servicios</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="loadPrecios()">🔄 Recargar</button>
+        <button class="btn btn-accent" onclick="savePrecios()">💾 Guardar cambios</button>
+      </div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Estos precios se muestran en las páginas públicas de servicios. Los cambios aplican de inmediato en la web.
+    </p>
+
+    <!-- Tabs de categoría -->
+    <div style="display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-accent btn-sm" id="ptab-pasadia"    onclick="showPrecioTab('pasadia')">☀️ Pasadías</button>
+      <button class="btn btn-outline btn-sm" id="ptab-camping"   onclick="showPrecioTab('camping')">⛺ Camping</button>
+      <button class="btn btn-outline btn-sm" id="ptab-cabanas"   onclick="showPrecioTab('cabanas')">🏡 Cabañas</button>
+      <button class="btn btn-outline btn-sm" id="ptab-restaurante" onclick="showPrecioTab('restaurante')">🍽️ Restaurante</button>
+    </div>
+
+    <!-- Panel Pasadías -->
+    <div id="ppanel-pasadia">
+      <div class="form-grid">
+        <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-pasadia-itbms" min="0" max="20" step="1" value="7"></div>
+        <div class="form-group"><label>Horario</label><input type="text" id="p-pasadia-horario" value="8:00 AM – 6:00 PM"></div>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Tarifas por persona</div>
+      <div class="form-grid" id="p-pasadia-tarifas"></div>
+    </div>
+
+    <!-- Panel Camping -->
+    <div id="ppanel-camping" style="display:none;">
+      <div class="form-grid">
+        <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-camping-itbms" min="0" max="20" step="1" value="7"></div>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Propio</div>
+      <div class="form-grid" id="p-camping-propio"></div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Suministro</div>
+      <div class="form-grid" id="p-camping-suministro"></div>
+    </div>
+
+    <!-- Panel Cabañas -->
+    <div id="ppanel-cabanas" style="display:none;">
+      <div class="form-grid">
+        <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-cabanas-itbms" min="0" max="20" step="1" value="7"></div>
+      </div>
+      <div id="p-cabanas-lista"></div>
+    </div>
+
+    <!-- Panel Restaurante -->
+    <div id="ppanel-restaurante" style="display:none;">
+      <div class="form-grid">
+        <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-restaurante-itbms" min="0" max="20" step="1" value="7"></div>
+        <div class="form-group"><label>Horario</label><input type="text" id="p-restaurante-horario" value="7:00 AM – 9:00 PM"></div>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Servicios (precio desde)</div>
+      <div class="form-grid" id="p-restaurante-servicios"></div>
+    </div>
+
+  </div>
+
+</div>
+</div><!-- /tab-precios -->
+
 <!-- Loading & Toast -->
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
@@ -1668,18 +1737,16 @@
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
     if (name === 'config') {
       _loadGHConfigUI();
-      // Solo el admin ve la sección de credenciales
       const cardCred = document.getElementById('card-credenciales');
-      if (cardCred) cardCred.style.display = currentUser?.role==='admin' ? '' : 'none';
-      // Poblar campos de credenciales si es admin
-      if (currentUser?.role==='admin' && authData) {
+      if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
+      if (currentUser?.role==='superadmin' && authData) {
         document.getElementById('cred-super-user').value  = authData.superadmin?.username || '';
         document.getElementById('cred-super-pass').value  = authData.superadmin?.password || '';
         document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
         document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
-
       }
     }
+    if (name === 'precios') loadPrecios();
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -3463,6 +3530,140 @@
     const idx = allHistory.indexOf(item);
     return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openEdit(${idx})"
       title="${label}">${label}</div>`;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // MÓDULO DE PRECIOS
+  // ══════════════════════════════════════════════════════════════════════
+  let preciosData = null;
+  let precioTab   = 'pasadia';
+
+  function showPrecioTab(tab) {
+    precioTab = tab;
+    ['pasadia','camping','cabanas','restaurante'].forEach(t => {
+      document.getElementById(`ppanel-${t}`).style.display = t===tab?'':'none';
+      const btn = document.getElementById(`ptab-${t}`);
+      if (btn) { btn.className = t===tab ? 'btn btn-accent btn-sm' : 'btn btn-outline btn-sm'; }
+    });
+  }
+
+  async function loadPrecios() {
+    showToast('Cargando precios...','success');
+    const res = await ghRead('precios.json');
+    if (!res?.data) { showToast('No se encontró precios.json en el repositorio.','error'); return; }
+    preciosData = res.data;
+    renderPreciosUI();
+    showToast('✅ Precios cargados','success');
+  }
+
+  function renderPreciosUI() {
+    if (!preciosData) return;
+    const p = preciosData;
+
+    // ── PASADÍAS ──
+    if (p.pasadia) {
+      document.getElementById('p-pasadia-itbms').value   = p.pasadia.itbms||7;
+      document.getElementById('p-pasadia-horario').value = p.pasadia.horario||'';
+      document.getElementById('p-pasadia-tarifas').innerHTML =
+        Object.entries(p.pasadia.tarifas||{}).map(([k,t])=>`
+          <div class="form-group">
+            <label>${t.label}</label>
+            <input type="number" step="0.01" min="0" value="${t.precio}" id="p-pas-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+          </div>`).join('');
+    }
+
+    // ── CAMPING ──
+    if (p.camping?.modalidades) {
+      document.getElementById('p-camping-itbms').value = p.camping.itbms||7;
+      ['propio','suministro'].forEach(mod => {
+        const m = p.camping.modalidades[mod];
+        if (!m) return;
+        document.getElementById(`p-camping-${mod}`).innerHTML =
+          Object.entries(m.tarifas||{}).map(([k,t])=>`
+            <div class="form-group">
+              <label>${t.label}</label>
+              <input type="number" step="0.01" min="0" value="${t.precio}" id="p-camp-${mod}-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+            </div>`).join('');
+      });
+    }
+
+    // ── CABAÑAS ──
+    if (p.cabanas?.cabanas) {
+      document.getElementById('p-cabanas-itbms').value = p.cabanas.itbms||7;
+      document.getElementById('p-cabanas-lista').innerHTML =
+        Object.entries(p.cabanas.cabanas).map(([k,cab])=>`
+          <div style="margin-bottom:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:10px;">${cab.label}</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px;">Capacidad máx: ${cab.capacidad} personas</div>
+            <div class="form-grid">
+              ${Object.entries(cab.tarifas||{}).map(([tk,t])=>`
+                <div class="form-group">
+                  <label>${t.label}</label>
+                  <input type="number" step="0.01" min="0" value="${t.precio}" id="p-cab-${k}-${tk}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+                </div>`).join('')}
+            </div>
+          </div>`).join('');
+    }
+
+    // ── RESTAURANTE ──
+    if (p.restaurante) {
+      document.getElementById('p-restaurante-itbms').value   = p.restaurante.itbms||7;
+      document.getElementById('p-restaurante-horario').value = p.restaurante.horario||'';
+      document.getElementById('p-restaurante-servicios').innerHTML =
+        Object.entries(p.restaurante.servicios||{}).map(([k,s])=>`
+          <div class="form-group">
+            <label>${s.label}</label>
+            <input type="number" step="0.01" min="0" value="${s.precio_desde}" id="p-rest-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+          </div>`).join('');
+    }
+  }
+
+  async function savePrecios() {
+    if (!preciosData) { showToast('Carga los precios primero.','error'); return; }
+    const p = JSON.parse(JSON.stringify(preciosData)); // copia profunda
+
+    // Leer pasadías
+    p.pasadia.itbms   = parseFloat(document.getElementById('p-pasadia-itbms').value)||7;
+    p.pasadia.horario = document.getElementById('p-pasadia-horario').value;
+    Object.keys(p.pasadia.tarifas||{}).forEach(k => {
+      const el = document.getElementById(`p-pas-${k}`);
+      if (el) p.pasadia.tarifas[k].precio = parseFloat(el.value)||0;
+    });
+
+    // Leer camping
+    p.camping.itbms = parseFloat(document.getElementById('p-camping-itbms').value)||7;
+    ['propio','suministro'].forEach(mod => {
+      Object.keys(p.camping.modalidades?.[mod]?.tarifas||{}).forEach(k => {
+        const el = document.getElementById(`p-camp-${mod}-${k}`);
+        if (el) p.camping.modalidades[mod].tarifas[k].precio = parseFloat(el.value)||0;
+      });
+    });
+
+    // Leer cabañas
+    p.cabanas.itbms = parseFloat(document.getElementById('p-cabanas-itbms').value)||7;
+    Object.keys(p.cabanas.cabanas||{}).forEach(cabKey => {
+      Object.keys(p.cabanas.cabanas[cabKey].tarifas||{}).forEach(tk => {
+        const el = document.getElementById(`p-cab-${cabKey}-${tk}`);
+        if (el) p.cabanas.cabanas[cabKey].tarifas[tk].precio = parseFloat(el.value)||0;
+      });
+    });
+
+    // Leer restaurante
+    p.restaurante.itbms   = parseFloat(document.getElementById('p-restaurante-itbms').value)||7;
+    p.restaurante.horario = document.getElementById('p-restaurante-horario').value;
+    Object.keys(p.restaurante.servicios||{}).forEach(k => {
+      const el = document.getElementById(`p-rest-${k}`);
+      if (el) p.restaurante.servicios[k].precio_desde = parseFloat(el.value)||0;
+    });
+
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('precios.json', p);
+      if (!ok) throw new Error();
+      preciosData = p;
+      showToast('✅ Precios guardados correctamente','success');
+    } catch { showToast('❌ Error al guardar precios.','error'); }
+    finally { showLoading(false); }
   }
 
 </script>
