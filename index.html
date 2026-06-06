@@ -1096,37 +1096,18 @@
       <div class="user-body">
         <!-- Reservas activas -->
         <div class="user-panel-content active" id="ucontent-activas">
-          <div class="reserva-card">
-            <div class="reserva-card-top">
-              <div class="reserva-tipo">🏡 Cabaña Ocelot</div>
-              <span class="reserva-badge r-conf">Confirmada</span>
-            </div>
-            <div class="reserva-fecha">📅 15 ene 2025 → 17 ene 2025</div>
-            <div class="reserva-monto">Total: $240.00 · Abono: $120.00</div>
-          </div>
-          <div style="text-align:center;padding:20px;color:#aaa;font-size:.85rem;" id="no-reservas" style="display:none;">
-            No tienes reservas activas.<br>
-            <a href="#servicios" onclick="closeAuth()" style="color:var(--earth);">Ver servicios disponibles →</a>
+          <div style="text-align:center;padding:32px 20px;color:#aaa;">
+            <div style="font-size:2rem;margin-bottom:10px;">📭</div>
+            <div style="font-size:.9rem;font-weight:500;color:#888;margin-bottom:6px;">No tienes reservas activas</div>
+            <a href="#servicios" onclick="closeAuth()" style="font-size:.82rem;color:var(--earth);text-decoration:none;">Ver servicios disponibles →</a>
           </div>
         </div>
 
         <!-- Historial -->
         <div class="user-panel-content" id="ucontent-historial">
-          <div class="reserva-card">
-            <div class="reserva-card-top">
-              <div class="reserva-tipo">☀️ Pasadía Completa</div>
-              <span class="reserva-badge r-conf">Completada</span>
-            </div>
-            <div class="reserva-fecha">📅 20 dic 2024</div>
-            <div class="reserva-monto">Total: $65.00</div>
-          </div>
-          <div class="reserva-card">
-            <div class="reserva-card-top">
-              <div class="reserva-tipo">⛺ Camping Suministro</div>
-              <span class="reserva-badge r-conf">Completada</span>
-            </div>
-            <div class="reserva-fecha">📅 5 nov 2024</div>
-            <div class="reserva-monto">Total: $80.00</div>
+          <div style="text-align:center;padding:32px 20px;color:#aaa;">
+            <div style="font-size:2rem;margin-bottom:10px;">🗂️</div>
+            <div style="font-size:.9rem;font-weight:500;color:#888;">Aún no tienes reservas anteriores</div>
           </div>
         </div>
 
@@ -1273,7 +1254,7 @@
       return;
     }
     const name = input.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
-    publicUser = { name, email: input, puntos: 240 };
+    publicUser = { name, email: input, puntos: 0 };
     aplicarUsuarioPublico();
     closeAuth();
   }
@@ -1310,7 +1291,6 @@
     if (pass.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return; }
 
     publicUser = { name, email, puntos: 0 };
-    alert(`¡Bienvenido, ${name}! Tu cuenta ha sido creada. En la versión final recibirás un correo de confirmación.`);
     aplicarUsuarioPublico();
     closeAuth();
   }
