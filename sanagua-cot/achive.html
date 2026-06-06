@@ -1070,6 +1070,12 @@
       Estos precios se muestran en las páginas públicas de servicios. Los cambios aplican de inmediato en la web.
     </p>
 
+    <div id="precios-create-btn" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:18px;">
+      <div style="font-size:.88rem;font-weight:600;margin-bottom:6px;">⚠️ No se encontró <code>Data/json/precios.json</code></div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">El archivo de precios no existe en el repositorio. Puedes crearlo ahora con valores de ejemplo.</p>
+      <button class="btn btn-accent" onclick="crearPreciosDefault()">✨ Crear precios.json con valores por defecto</button>
+    </div>
+
     <!-- Tabs de categoría -->
     <div style="display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;">
       <button class="btn btn-accent btn-sm" id="ptab-pasadia"    onclick="showPrecioTab('pasadia')">☀️ Pasadías</button>
@@ -3550,10 +3556,77 @@
   async function loadPrecios() {
     showToast('Cargando precios...','success');
     const res = await ghRead('precios.json');
-    if (!res?.data) { showToast('No se encontró precios.json en el repositorio.','error'); return; }
+    if (!res?.data) {
+      // Mostrar opción de crear el archivo
+      document.getElementById('precios-create-btn').style.display = 'block';
+      showToast('No se encontró precios.json — usa el botón para crearlo.','error');
+      return;
+    }
+    document.getElementById('precios-create-btn').style.display = 'none';
     preciosData = res.data;
     renderPreciosUI();
     showToast('✅ Precios cargados','success');
+  }
+
+  async function crearPreciosDefault() {
+    const defaultPrecios = {
+      pasadia: {
+        nombre:'Pasadía', horario:'8:00 AM – 6:00 PM', itbms:7,
+        tarifas:{
+          adulto:  {label:'Adulto',precio:25.00},
+          nino:    {label:'Niño (3-11 años)',precio:15.00},
+          menor3:  {label:'Menor de 3 años',precio:0.00},
+          jubilado:{label:'Jubilado',precio:18.00}
+        },
+        incluye:['Acceso a piscinas naturales','Área de picnic','Senderos','Estacionamiento'],
+        descripcion:'Disfruta un día completo en contacto con la naturaleza.'
+      },
+      camping: {
+        nombre:'Camping', itbms:7,
+        modalidades:{
+          propio:{label:'Camping Propio',descripcion:'Traes tu propio equipo',
+            tarifas:{adulto:{label:'Adulto',precio:15.00},nino:{label:'Niño (3-11 años)',precio:10.00},menor3:{label:'Menor de 3 años',precio:0.00},jubilado:{label:'Jubilado',precio:12.00}}},
+          suministro:{label:'Camping Suministro',descripcion:'Incluye carpa y equipo',
+            tarifas:{adulto:{label:'Adulto',precio:35.00},nino:{label:'Niño (3-11 años)',precio:25.00},menor3:{label:'Menor de 3 años',precio:0.00},jubilado:{label:'Jubilado',precio:28.00}}}
+        },
+        incluye:['Área de fogata','Sanitarios','Duchas','Estacionamiento'],
+        descripcion:'Duerme bajo las estrellas en nuestra zona de camping.'
+      },
+      cabanas: {
+        nombre:'Cabañas', itbms:7,
+        cabanas:{
+          yaguarundi:{label:'Cabaña Yaguarundi',capacidad:4,
+            tarifas:{semana:{label:'Lunes – Jueves',precio:120.00},finsemana:{label:'Viernes – Domingo',precio:150.00},adicional:{label:'Persona adicional',precio:20.00}},
+            descripcion:'Cabaña íntima para parejas o familias pequeñas.',incluye:['Cama doble','Baño privado','Aire acondicionado','Terraza']},
+          ocelot:{label:'Cabaña Ocelot',capacidad:6,
+            tarifas:{semana:{label:'Lunes – Jueves',precio:160.00},finsemana:{label:'Viernes – Domingo',precio:200.00},adicional:{label:'Persona adicional',precio:25.00}},
+            descripcion:'Espaciosa cabaña con vista al río.',incluye:['2 camas dobles','Baño privado','Cocina','Terraza']},
+          motmot:{label:'Cabaña Motmot',capacidad:8,
+            tarifas:{semana:{label:'Lunes – Jueves',precio:200.00},finsemana:{label:'Viernes – Domingo',precio:250.00},adicional:{label:'Persona adicional',precio:30.00}},
+            descripcion:'La más grande, perfecta para grupos.',incluye:['3 camas dobles','2 baños','Cocina','Terraza panorámica']}
+        }
+      },
+      restaurante: {
+        nombre:'Restaurante', horario:'7:00 AM – 9:00 PM', itbms:7,
+        servicios:{
+          desayuno:{label:'Desayuno',precio_desde:8.00},
+          almuerzo:{label:'Almuerzo',precio_desde:12.00},
+          cena:    {label:'Cena',precio_desde:15.00},
+          paquete: {label:'Paquete día completo',precio_desde:28.00}
+        },
+        descripcion:'Gastronomía local con ingredientes frescos.'
+      }
+    };
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('precios.json', defaultPrecios);
+      if (!ok) throw new Error();
+      preciosData = defaultPrecios;
+      document.getElementById('precios-create-btn').style.display = 'none';
+      renderPreciosUI();
+      showToast('✅ precios.json creado con valores por defecto.','success');
+    } catch { showToast('❌ Error al crear precios.json.','error'); }
+    finally { showLoading(false); }
   }
 
   function renderPreciosUI() {
@@ -3564,12 +3637,24 @@
     if (p.pasadia) {
       document.getElementById('p-pasadia-itbms').value   = p.pasadia.itbms||7;
       document.getElementById('p-pasadia-horario').value = p.pasadia.horario||'';
-      document.getElementById('p-pasadia-tarifas').innerHTML =
-        Object.entries(p.pasadia.tarifas||{}).map(([k,t])=>`
-          <div class="form-group">
-            <label>${t.label}</label>
-            <input type="number" step="0.01" min="0" value="${t.precio}" id="p-pas-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
-          </div>`).join('');
+      // Pasadías usa modalidades (sencilla / completa)
+      if (p.pasadia.modalidades) {
+        document.getElementById('p-pasadia-tarifas').innerHTML =
+          Object.entries(p.pasadia.modalidades).map(([modKey,mod])=>`
+            <div style="grid-column:1/-1;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:8px;">${mod.label}</div>
+            ${Object.entries(mod.tarifas||{}).map(([k,t])=>`
+              <div class="form-group">
+                <label>${t.label}</label>
+                <input type="number" step="0.01" min="0" value="${t.precio}" id="p-pas-${modKey}-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+              </div>`).join('')}`).join('');
+      } else {
+        document.getElementById('p-pasadia-tarifas').innerHTML =
+          Object.entries(p.pasadia.tarifas||{}).map(([k,t])=>`
+            <div class="form-group">
+              <label>${t.label}</label>
+              <input type="number" step="0.01" min="0" value="${t.precio}" id="p-pas-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
+            </div>`).join('');
+      }
     }
 
     // ── CAMPING ──
@@ -3625,10 +3710,19 @@
     // Leer pasadías
     p.pasadia.itbms   = parseFloat(document.getElementById('p-pasadia-itbms').value)||7;
     p.pasadia.horario = document.getElementById('p-pasadia-horario').value;
-    Object.keys(p.pasadia.tarifas||{}).forEach(k => {
-      const el = document.getElementById(`p-pas-${k}`);
-      if (el) p.pasadia.tarifas[k].precio = parseFloat(el.value)||0;
-    });
+    if (p.pasadia.modalidades) {
+      Object.entries(p.pasadia.modalidades).forEach(([modKey,mod]) => {
+        Object.keys(mod.tarifas||{}).forEach(k => {
+          const el = document.getElementById(`p-pas-${modKey}-${k}`);
+          if (el) p.pasadia.modalidades[modKey].tarifas[k].precio = parseFloat(el.value)||0;
+        });
+      });
+    } else {
+      Object.keys(p.pasadia.tarifas||{}).forEach(k => {
+        const el = document.getElementById(`p-pas-${k}`);
+        if (el) p.pasadia.tarifas[k].precio = parseFloat(el.value)||0;
+      });
+    }
 
     // Leer camping
     p.camping.itbms = parseFloat(document.getElementById('p-camping-itbms').value)||7;
