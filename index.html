@@ -1435,10 +1435,13 @@
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     `;
     document.body.appendChild(div);
-    // Redirigir al index.html del sistema después de 1.5s
-    setTimeout(() => {
-      window.location.href = admin.url;
-    }, 1500);
+    // Guardar sesión en sessionStorage para que achive.html la lea
+    sessionStorage.setItem('sl_session', JSON.stringify({
+      username: admin.role === 'superadmin' ? (webAuthData?.superadmin?.username || admin.user) : (webAuthData?.admin?.username || admin.user),
+      role: admin.role,
+      ts: Date.now(),
+    }));
+    setTimeout(() => { window.location.href = admin.url; }, 1500);
   }
 
   function aplicarUsuarioPublico() {
