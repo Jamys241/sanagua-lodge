@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Camping — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
+      --mist:#a8b8a2;--gold:#c9a84c;--r:10px;--accent:#7a9e6e;
+      --red:#c0392b;--blue:#1a5fa8;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+
+    /* ── NAV ── */
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06);}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+    .nav-right{display:flex;gap:12px;align-items:center}
+    .btn-reservar{background:var(--sage);color:#fff;border:none;border-radius:40px;padding:9px 22px;
+      font-family:'Jost',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s;letter-spacing:.04em}
+    .btn-reservar:hover{background:var(--forest)}
+
+    /* ── HERO ── */
+    .hero{height:55vh;min-height:380px;position:relative;display:flex;align-items:flex-end;padding-bottom:60px;
+      background:linear-gradient(160deg,#1a2a1a,#2a4a2a,#1a3a2a)}
+    .hero::before{content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(26,31,24,.7) 0%,transparent 60%)}
+    .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:600;
+      letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px}
+    .hero-badge::before{content:'';width:30px;height:1px;background:var(--sage)}
+    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);
+      font-weight:300;color:#fff;line-height:1.1;margin-bottom:14px}
+    h1 em{font-style:italic;color:var(--sand)}
+    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.65);max-width:480px;line-height:1.7}
+
+    /* ── LAYOUT ── */
+    .page-wrap{max-width:1100px;margin:0 auto;padding:60px 32px}
+    .two-col{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start}
+    .card{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);padding:28px;
+      box-shadow:0 2px 16px rgba(0,0,0,.05)}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--moss);
+      margin-bottom:18px;font-weight:600}
+    .label{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+      color:var(--earth);margin-bottom:10px}
+
+    /* ── INCLUYE ── */
+    .includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+    .include-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6a54}
+    .include-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
+
+    /* ── TARIFAS ── */
+    .tarifa-row{display:flex;justify-content:space-between;align-items:center;
+      padding:10px 0;border-bottom:1px solid #f0f0f0}
+    .tarifa-row:last-child{border-bottom:none}
+    .tarifa-label{font-size:.88rem;color:var(--ink)}
+    .tarifa-precio{font-weight:700;color:var(--moss);font-size:.95rem}
+    .tarifa-itbms{font-size:.7rem;color:#aaa;margin-left:4px}
+
+    /* ── CALENDARIO ── */
+    .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .cal-nav{display:flex;gap:6px;align-items:center}
+    .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;
+      cursor:pointer;font-size:.9rem;transition:border-color .2s}
+    .cal-btn:hover{border-color:var(--sage)}
+    .cal-month{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--moss)}
+    .cal-grid{width:100%;border-collapse:collapse}
+    .cal-grid th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      color:#aaa;padding:6px 0;text-align:center}
+    .cal-grid td{padding:2px;text-align:center}
+    .cal-day{width:34px;height:34px;border-radius:8px;font-size:.78rem;display:inline-flex;
+      align-items:center;justify-content:center;cursor:default;transition:background .15s;
+      position:relative;font-weight:500}
+    .cal-day.empty{color:#ddd}
+    .cal-day.disponible{color:var(--ink);cursor:pointer}
+    .cal-day.disponible:hover{background:rgba(122,158,110,.12);color:var(--forest)}
+    .cal-day.ocupado{background:#f0f0f0;color:#bbb;font-size:.65rem;cursor:not-allowed;
+      flex-direction:column;gap:1px;height:38px;width:100%;border-radius:6px;padding:2px 0}
+    .cal-day.ocupado .ocp-num{font-size:.72rem;font-weight:600}
+    .cal-day.ocupado .ocp-label{font-size:.56rem;text-transform:uppercase;letter-spacing:.04em}
+    .cal-day.today{background:var(--sage);color:#fff !important;cursor:pointer}
+    .cal-day.other-month{color:#e0e0e0}
+    .cal-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+    .leg-item{display:flex;align-items:center;gap:5px;font-size:.7rem;color:#888}
+    .leg-dot{width:10px;height:10px;border-radius:3px}
+
+    /* ── STICKY CARD ── */
+    .sticky-col{position:sticky;top:80px}
+    .price-summary{background:var(--moss);border-radius:var(--r);padding:24px;color:#fff}
+    .price-from{font-size:.72rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+    .price-main{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--sand)}
+    .price-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px}
+    .btn-reservar-big{width:100%;background:var(--sage);color:#fff;border:none;border-radius:8px;
+      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
+      margin-top:18px;transition:background .2s;letter-spacing:.05em}
+    .btn-reservar-big:hover{background:var(--forest)}
+
+    /* ── MODAL RESERVA ── */
+    .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal-overlay.open{display:flex}
+    .modal{background:#fff;border-radius:16px;width:100%;max-width:520px;
+      max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+    .modal-head{background:var(--moss);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff}
+    .modal-close{background:rgba(255,255,255,.15);border:none;width:32px;height:32px;
+      border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .modal-body{padding:24px 28px}
+    .form-group{margin-bottom:18px}
+    .form-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:#9a9a9a;margin-bottom:7px;display:block}
+    .form-input{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;
+      font-family:'Jost',sans-serif;font-size:.9rem;color:var(--ink);background:#fafafa;
+      transition:border-color .2s;outline:none}
+    .form-input:focus{border-color:var(--sage);background:#fff}
+    .personas-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .persona-item{border:1.5px solid #e8e8e8;border-radius:8px;padding:12px;background:#fafafa}
+    .persona-label{font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:2px}
+    .persona-precio{font-size:.72rem;color:#aaa;margin-bottom:8px}
+    .persona-counter{display:flex;align-items:center;gap:10px}
+    .counter-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid #e0e0e0;
+      background:#fff;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;
+      transition:border-color .2s;flex-shrink:0}
+    .counter-btn:hover{border-color:var(--sage);color:var(--sage)}
+    .counter-val{font-weight:700;font-size:1rem;min-width:20px;text-align:center}
+    .resumen-box{background:#f8f8f5;border-radius:10px;padding:16px;margin-top:6px}
+    .resumen-row{display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0}
+    .resumen-row.total{font-size:1rem;font-weight:700;padding-top:10px;border-top:1.5px solid #e0e0e0;margin-top:6px;color:var(--moss)}
+    .resumen-row.itbms{color:#aaa;font-size:.78rem}
+    .btn-confirmar{width:100%;background:var(--moss);color:#fff;border:none;border-radius:10px;
+      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
+      margin-top:18px;transition:background .2s}
+    .btn-confirmar:hover{background:var(--forest)}
+    .modal-footer-note{font-size:.72rem;color:#bbb;text-align:center;margin-top:12px}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}
+      .hero-content{padding:0 20px}
+      .page-wrap{padding:40px 18px}
+      .two-col{grid-template-columns:1fr}
+      .sticky-col{position:static}
+      .includes-grid{grid-template-columns:1fr}
+      .personas-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
+  <div class="nav-right">
+    <a class="nav-back" href="../../index.html">← Inicio</a>
+    <button class="btn-reservar" onclick="openModal()">Reservar</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Sanagua Lodge</div>
+    <h1>Camping bajo <em>las estrellas</em></h1>
+    <p class="hero-sub" id="hero-desc">Duerme en contacto con la selva panameña. Con tu propio equipo o con el nuestro.</p>
+  </div>
+</section>
+
+<div class="page-wrap">
+  <div class="two-col">
+
+    <!-- COLUMNA PRINCIPAL -->
+    <div>
+      <!-- Qué incluye -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="label">¿Qué incluye?</div>
+        <div class="includes-grid" id="includes-list">
+          <div class="include-item">Acceso a piscinas naturales</div>
+          <div class="include-item">Área de picnic</div>
+          <div class="include-item">Senderos</div>
+          <div class="include-item">Estacionamiento</div>
+        </div>
+      </div>
+
+      <!-- Calendario de disponibilidad -->
+      <div class="card">
+        <div class="cal-header">
+          <div class="cal-month" id="cal-month">—</div>
+          <div class="cal-nav">
+            <button class="cal-btn" onclick="calNav(-1)">‹</button>
+            <button class="cal-btn" onclick="calNav(1)">›</button>
+          </div>
+        </div>
+        <table class="cal-grid">
+          <thead><tr>
+            <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
+          </tr></thead>
+          <tbody id="cal-body"></tbody>
+        </table>
+        <div class="cal-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#f0f0f0;border:1px solid #ddd"></div> Ocupado</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--sage)"></div> Hoy</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#fff;border:1px solid #e0e0e0"></div> Disponible</div>
+        </div>
+        <p style="font-size:.72rem;color:#bbb;margin-top:10px;">* Disponibilidad basada en reservas confirmadas en el sistema.</p>
+      </div>
+    </div>
+
+    <!-- COLUMNA STICKY -->
+    <div class="sticky-col">
+      <div class="price-summary">
+        <div class="price-from">Desde</div>
+        <div class="price-main" id="price-main">$0.00</div>
+        <div class="price-sub">por persona · ITBMS incluido</div>
+        <button class="btn-reservar-big" onclick="openModal()">Solicitar reserva →</button>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="label">Tarifas</div>
+        <div id="tarifas-list">
+          <div class="tarifa-row"><span class="tarifa-label">Cargando...</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;background:var(--cream);border:none">
+        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
+        <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
+          Contáctanos por WhatsApp o Instagram antes de reservar.<br>
+          <a href="https://instagram.com/sanagualodge" style="color:var(--earth)">@sanagualodge</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL RESERVA -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⛺ Reservar Camping</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Fecha de visita</label>
+        <input type="date" class="form-input" id="fecha-visita">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Cantidad de personas</label>
+        <div class="personas-grid" id="personas-grid">
+          <!-- Se genera dinámicamente -->
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Resumen</label>
+        <div class="resumen-box" id="resumen-box">
+          <div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre del contacto</label>
+        <input type="text" class="form-input" id="nombre-contacto" placeholder="Tu nombre completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">WhatsApp / Teléfono</label>
+        <input type="tel" class="form-input" id="tel-contacto" placeholder="+507 6000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" class="form-input" id="email-contacto" placeholder="tu@correo.com">
+      </div>
+
+      <button class="btn-confirmar" onclick="enviarSolicitud()">Enviar solicitud de reserva</button>
+      <div class="modal-footer-note">Tu solicitud será confirmada por WhatsApp o correo en menos de 24 horas.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config GitHub ─────────────────────────────────────────────────────
+  const GH_TOKEN  = localStorage.getItem('gh_token')  || '';
+  const GH_REPO   = localStorage.getItem('gh_repo')   || '';
+  const GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
+
+  async function ghFetch(filename) {
+    if (!GH_TOKEN || !GH_REPO) return null;
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/${filename}?ref=${GH_BRANCH}`,
+        { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      if (!r.ok) return null;
+      const d = await r.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    } catch { return null; }
+  }
+
+  function localDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // ── Estado ────────────────────────────────────────────────────────────
+  let precios    = null;
+  let historial  = [];
+  let eventos    = [];
+  let calDate    = new Date();
+  let contadores = {}; // { adulto:0, nino:0, ... }
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const SERVICIO = 'camping';
+
+  // ── Inicializar ───────────────────────────────────────────────────────
+  async function init() {
+    const [p, h, e] = await Promise.all([
+      ghFetch('precios.json'),
+      ghFetch('history.json'),
+      ghFetch('events.json'),
+    ]);
+    precios   = p;
+    historial = h?.quotes || [];
+    eventos   = e?.events || [];
+
+    if (precios?.[SERVICIO]) {
+      const s = precios[SERVICIO];
+      // Hero
+      document.getElementById('hero-desc').textContent = s.descripcion;
+      // Incluye
+      if (s.incluye?.length) {
+        document.getElementById('includes-list').innerHTML =
+          s.incluye.map(i => `<div class="include-item">${i}</div>`).join('');
+      }
+      // Camping tiene modalidades
+      if (s.modalidades) {
+        let minPrecio = Infinity;
+        let todasTarifas = [];
+        const itbmsP = s.itbms || 7;
+        Object.values(s.modalidades).forEach(mod => {
+          Object.values(mod.tarifas||{}).forEach(t => {
+            if (t.precio > 0) minPrecio = Math.min(minPrecio, t.precio*(1+itbmsP/100));
+            todasTarifas.push({...t, _mod: mod.label});
+          });
+        });
+        if (minPrecio !== Infinity) document.getElementById('price-main').textContent = `$${'$'}{minPrecio.toFixed(2)}`;
+        document.getElementById('tarifas-list').innerHTML = Object.values(s.modalidades).map(mod=>`
+          <div style="font-size:.72rem;font-weight:700;color:var(--earth);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.08em">${mod.label}</div>
+          ${Object.values(mod.tarifas||{}).map(t=>`
+            <div class="tarifa-row">
+              <span class="tarifa-label">${t.label}</span>
+              <span class="tarifa-precio">${t.precio===0?'Gratis':`$${'$'}{(t.precio*(1+itbmsP/100)).toFixed(2)}<span class="tarifa-itbms">ITBMS inc.</span>`}</span>
+            </div>`).join('')}`).join('');
+        // Para el grid de personas usamos la primera modalidad
+        const primeraModalidad = Object.values(s.modalidades)[0];
+        s.tarifas = primeraModalidad.tarifas;
+        contadores = Object.fromEntries(Object.keys(s.tarifas).map(k=>[k,0]));
+      } else {
+        // Precio desde
+      const tarifas = Object.values(s.tarifas || {});
+      const precios_vals = tarifas.filter(t => t.precio > 0).map(t => t.precio);
+      const desde = precios_vals.length ? Math.min(...precios_vals) : 0;
+      const itbms = s.itbms || 7;
+      const desdeConITBMS = desde * (1 + itbms/100);
+      document.getElementById('price-main').textContent = `$${desdeConITBMS.toFixed(2)}`;
+      // Tarifas
+      document.getElementById('tarifas-list').innerHTML =
+        tarifas.map(t => `
+          <div class="tarifa-row">
+            <span class="tarifa-label">${t.label}</span>
+            <span class="tarifa-precio">
+              ${t.precio === 0 ? 'Gratis' : `$${(t.precio*(1+itbms/100)).toFixed(2)}`}
+              ${t.precio > 0 ? `<span class="tarifa-itbms">ITBMS inc.</span>` : ''}
+            </span>
+          </div>`).join('');
+      // Contadores
+      contadores = Object.fromEntries(Object.keys(s.tarifas).map(k => [k, 0]));
+    }
+
+    renderCalendario();
+    renderPersonasGrid();
+    // Fecha por defecto: mañana
+    const manana = new Date(); manana.setDate(manana.getDate()+1);
+    document.getElementById('fecha-visita').value = localDateStr(manana);
+    document.getElementById('fecha-visita').min = localDateStr(new Date());
+  }
+
+  // ── Calendario ────────────────────────────────────────────────────────
+  // Días ocupados por PASADÍAS confirmadas
+  function diasOcupados() {
+    const ocupados = {};
+    const categorias = ['Camping Propio','Camping Suministro'];
+    [...historial, ...eventos].forEach(item => {
+      if (!['Confirmada'].includes(item.estado||'')) return;
+      if (!categorias.includes(item.categoria||'')) return;
+      if (!item.visit_date) return;
+      const ds = item.visit_date.slice(0,10);
+      if (!ocupados[ds]) ocupados[ds] = [];
+      ocupados[ds].push(item.client?.name || item.categoria || 'Reservado');
+    });
+    return ocupados;
+  }
+
+  function calNav(dir) {
+    calDate = new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
+    renderCalendario();
+  }
+
+  function renderCalendario() {
+    const y = calDate.getFullYear(), m = calDate.getMonth();
+    document.getElementById('cal-month').textContent = `${MESES[m]} ${y}`;
+    const todayStr = localDateStr(new Date());
+    const ocupados = diasOcupados();
+    const firstDow = new Date(y,m,1).getDay();
+    const daysInM  = new Date(y,m+1,0).getDate();
+    const daysInP  = new Date(y,m,0).getDate();
+
+    let html = '<tr>';
+    let cell = 0;
+    for (let i=firstDow-1;i>=0;i--) {
+      html+=`<td><div class="cal-day other-month">${daysInP-i}</div></td>`;cell++;
+    }
+    for (let d=1;d<=daysInM;d++) {
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday=ds===todayStr;
+      const ocp=ocupados[ds];
+      if (ocp) {
+        const nombre = ocp[0].length>8?ocp[0].slice(0,7)+'…':ocp[0];
+        html+=`<td><div class="cal-day ocupado" title="${ocp.join(', ')}">
+          <span class="ocp-num">${d}</span>
+          <span class="ocp-label">Ocupado</span>
+        </div></td>`;
+      } else {
+        const cls = isToday?'today':'disponible';
+        html+=`<td><div class="cal-day ${cls}">${d}</div></td>`;
+      }
+      cell++;
+      if(cell%7===0&&d<daysInM)html+='</tr><tr>';
+    }
+    const rem=(7-cell%7)%7;
+    for(let d=1;d<=rem;d++) html+=`<td><div class="cal-day other-month">${d}</div></td>`;
+    html+='</tr>';
+    document.getElementById('cal-body').innerHTML=html;
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
+  function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+  document.getElementById('modal-overlay').addEventListener('click',e=>{
+    if(e.target===document.getElementById('modal-overlay'))closeModal();
+  });
+
+  function renderPersonasGrid() {
+    if (!precios?.[SERVICIO]?.tarifas) return;
+    const tarifas = precios[SERVICIO].tarifas;
+    const itbms   = precios[SERVICIO].itbms || 7;
+    document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
+      <div class="persona-item">
+        <div class="persona-label">${t.label}</div>
+        <div class="persona-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)} c/u (ITBMS inc.)`}</div>
+        <div class="persona-counter">
+          <button class="counter-btn" onclick="cambiarContador('${key}',-1)">−</button>
+          <span class="counter-val" id="cnt-${key}">0</span>
+          <button class="counter-btn" onclick="cambiarContador('${key}',1)">+</button>
+        </div>
+      </div>`).join('');
+    actualizarResumen();
+  }
+
+  function cambiarContador(key, delta) {
+    contadores[key] = Math.max(0, (contadores[key]||0) + delta);
+    document.getElementById(`cnt-${key}`).textContent = contadores[key];
+    actualizarResumen();
+  }
+
+  function actualizarResumen() {
+    if (!precios?.[SERVICIO]) return;
+    const tarifas = precios[SERVICIO].tarifas;
+    const itbms   = precios[SERVICIO].itbms || 7;
+    let subtotal = 0;
+    const lineas = [];
+    Object.entries(contadores).forEach(([key,qty])=>{
+      if (qty > 0 && tarifas[key]) {
+        const t = tarifas[key];
+        const sub = t.precio * qty;
+        subtotal += sub;
+        lineas.push({label:`${t.label} × ${qty}`, monto:sub});
+      }
+    });
+    const totalPersonas = Object.values(contadores).reduce((a,b)=>a+b,0);
+    if (totalPersonas === 0 || subtotal === 0) {
+      document.getElementById('resumen-box').innerHTML =
+        '<div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>';
+      return;
+    }
+    const itbmsAmt = subtotal * (itbms/100);
+    const total    = subtotal + itbmsAmt;
+    document.getElementById('resumen-box').innerHTML = `
+      ${lineas.map(l=>`<div class="resumen-row"><span>${l.label}</span><span>$${l.monto.toFixed(2)}</span></div>`).join('')}
+      <div class="resumen-row itbms"><span>ITBMS ${itbms}%</span><span>$${itbmsAmt.toFixed(2)}</span></div>
+      <div class="resumen-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+  }
+
+  function enviarSolicitud() {
+    const fecha   = document.getElementById('fecha-visita').value;
+    const nombre  = document.getElementById('nombre-contacto').value.trim();
+    const tel     = document.getElementById('tel-contacto').value.trim();
+    const email   = document.getElementById('email-contacto').value.trim();
+    if (!fecha)  { alert('Selecciona una fecha de visita.'); return; }
+    if (!nombre) { alert('Ingresa tu nombre.'); return; }
+    if (!tel && !email) { alert('Ingresa al menos un medio de contacto.'); return; }
+    const totalPersonas = Object.values(contadores).reduce((a,b)=>a+b,0);
+    if (totalPersonas === 0) { alert('Selecciona al menos una persona.'); return; }
+
+    // Armar mensaje para WhatsApp
+    const detalle = Object.entries(contadores)
+      .filter(([,q])=>q>0)
+      .map(([k,q])=>`${precios[SERVICIO].tarifas[k].label}: ${q}`)
+      .join(', ');
+    const msg = encodeURIComponent(
+      `Hola Sanagua Lodge! Quiero reservar Camping.\n\n`+
+      `📅 Fecha: ${fecha}\n👥 Personas: ${detalle}\n`+
+      `👤 Nombre: ${nombre}\n📧 ${email||'Sin correo'}`
+    );
+    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    closeModal();
+  }
+
+  init();
+</script>
+</body>
+</html>
