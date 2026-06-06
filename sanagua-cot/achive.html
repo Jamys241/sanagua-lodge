@@ -1099,10 +1099,17 @@
       <div class="form-grid">
         <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-camping-itbms" min="0" max="20" step="1" value="7"></div>
       </div>
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Propio</div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Propio — Tarifas de entrada</div>
       <div class="form-grid" id="p-camping-propio"></div>
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Suministro</div>
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Suministro — Tarifas de entrada</div>
       <div class="form-grid" id="p-camping-suministro"></div>
+
+      <!-- Stock y precios de carpas -->
+      <div style="margin-top:20px;padding:18px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px;">⛺ Carpas disponibles — Camping Suministro</div>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Edita el precio y el stock de cada carpa. El stock se muestra en tiempo real a los usuarios.</p>
+        <div id="p-carpas-lista"></div>
+      </div>
     </div>
 
     <!-- Panel Cabañas -->
@@ -3670,6 +3677,27 @@
               <input type="number" step="0.01" min="0" value="${t.precio}" id="p-camp-${mod}-${k}" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;">
             </div>`).join('');
       });
+      // Carpas de suministro
+      const carpas = p.camping.modalidades.suministro?.carpas;
+      if (carpas) {
+        document.getElementById('p-carpas-lista').innerHTML =
+          Object.entries(carpas).map(([k,c])=>`
+            <div style="display:grid;grid-template-columns:1fr 120px 120px;gap:10px;align-items:end;margin-bottom:10px;padding:12px;background:#fff;border-radius:7px;border:1px solid var(--border);">
+              <div>
+                <div style="font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:2px;">⛺ ${c.label}</div>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:.68rem;color:var(--muted);">Precio/noche ($)</label>
+                <input type="number" step="0.01" min="0" value="${c.precio}" id="p-carpa-precio-${k}"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.88rem;">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label style="font-size:.68rem;color:var(--muted);">Stock (unidades)</label>
+                <input type="number" step="1" min="0" value="${c.stock}" id="p-carpa-stock-${k}"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.88rem;">
+              </div>
+            </div>`).join('');
+      }
     }
 
     // ── CABAÑAS ──
@@ -3731,6 +3759,13 @@
         const el = document.getElementById(`p-camp-${mod}-${k}`);
         if (el) p.camping.modalidades[mod].tarifas[k].precio = parseFloat(el.value)||0;
       });
+    });
+    // Leer stock y precio de carpas
+    Object.keys(p.camping.modalidades?.suministro?.carpas||{}).forEach(k => {
+      const elP = document.getElementById(`p-carpa-precio-${k}`);
+      const elS = document.getElementById(`p-carpa-stock-${k}`);
+      if (elP) p.camping.modalidades.suministro.carpas[k].precio = parseFloat(elP.value)||0;
+      if (elS) p.camping.modalidades.suministro.carpas[k].stock  = parseInt(elS.value)||0;
     });
 
     // Leer cabañas
