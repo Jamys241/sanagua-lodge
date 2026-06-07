@@ -46,6 +46,7 @@
       flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
     .cday.cerrado .cn{font-size:.72rem;font-weight:600;color:#bbb}
     .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
+    .cday.pasado{color:#d0d0d0;cursor:not-allowed;background:#fafafa}
     .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
     .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
       padding:12px 16px;font-size:.84rem;color:#7a4a10;line-height:1.5;margin-top:10px;
@@ -266,6 +267,37 @@
 
   let P=null, H=[],E=[],calD=new Date(), CNT={}, MOD='propio', CARPA=null, TOTAL_ESP=10;
 
+  // ── Horarios ──────────────────────────────────────────────────────────
+  let DIAS_CERRADOS_PUB    = [2, 3];
+  let EXCEPCIONES_ABIERTAS_PUB = [];
+
+  async function loadHorariosPub() {
+    const h = await ghF('horarios.json');
+    if (h) {
+      DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
+    }
+  }
+
+  function esDiaCerradoPub(ds) {
+    if (EXCEPCIONES_ABIERTAS_PUB.includes(ds)) return false;
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    return DIAS_CERRADOS_PUB.includes(dow);
+  }
+
+  const DOW_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  function mensajeDiaCerrado(ds) {
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    const dia = DOW_ES[dow];
+    const msgs = [
+      `🌿 Los ${dia}s estamos descansando para atenderte mejor. ¡Elige otro día!`,
+      `😊 Sanagua Lodge cierra los ${dia}s. Selecciona otra fecha y estaremos encantados de recibirte.`,
+      `🦋 Los ${dia}s no abrimos, pero tenemos días increíbles disponibles. ¡Prueba con otra fecha!`,
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+
   async function init(){
     const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
     await loadHorariosPub();
@@ -349,13 +381,15 @@
     for(let i=fd-1;i>=0;i--){h+=`<td><div class="cday oth">${dp-i}</div></td>`;c++;}
     for(let d=1;d<=dm;d++){
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const cerrado=esDiaCerradoPub(ds);
+      const esPasadoC=ds<ts;
+      const cerrado=!esPasadoC&&esDiaCerradoPub(ds);
       const usados=ocp[ds]||0;
       const libres=Math.max(0, TOTAL_ESP-usados);
       const lleno=libres===0;
       const poco=libres>0&&libres<=3;
-      if(cerrado){
-        // Día cerrado
+      if(esPasadoC){
+        h+=`<td><div class="cday pasado">${d}</div></td>`;
+      } else if(cerrado){
         h+=`<td><div class="cday cerrado" onclick="mostrarAvisoCerradoCamp('${ds}')"><span class="cn">${d}</span><span class="cl">Cerrado</span></div></td>`;
       } else if(ds===ts){
         h+=`<td><div class="cday tod" style="flex-direction:column;height:42px;width:100%;border-radius:6px;font-size:.7rem">

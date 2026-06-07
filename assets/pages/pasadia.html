@@ -76,6 +76,7 @@
       flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
     .cday.cerrado .cn{font-size:.72rem;font-weight:600;color:#bbb}
     .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
+    .cday.pasado{color:#d0d0d0;cursor:not-allowed;background:#fafafa}
     .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
     .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
       padding:12px 16px;font-size:.84rem;color:#7a4a10;line-height:1.5;margin-top:10px;
@@ -210,11 +211,6 @@
         <table class="cal-grid"><thead><tr>
           <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
         </tr></thead><tbody id="cal-body"></tbody></table>
-        <div class="cal-leg">
-          <div class="leg-i"><div class="leg-d" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 6px);border:1px solid #ddd"></div>Cerrado</div>
-          <div class="leg-i"><div class="leg-d" style="background:#f0f7ee;border:1px solid #c0ddb8"></div>Disponible</div>
-          <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
-        </div>
         <div id="aviso-cerrado-cal" class="aviso-cerrado"></div>
       </div>
     </div>
@@ -439,6 +435,7 @@
     const manana = new Date(); manana.setDate(manana.getDate()+1);
     document.getElementById('fecha-visita').value = localDateStr(manana);
     document.getElementById('fecha-visita').min = localDateStr(new Date());
+    document.getElementById('fecha-visita').max = (() => { const d=new Date(); d.setFullYear(d.getFullYear()+2); return localDateStr(d); })();
   }
 
   // ── Calendario ────────────────────────────────────────────────────────
@@ -453,12 +450,16 @@
     for(let i=fd-1;i>=0;i--){ h+=`<td><div class="cday oth">${dp-i}</div></td>`; cel++; }
     for(let d=1;d<=dm;d++){
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const cerrado=esDiaCerradoPub(ds);
-      if(cerrado){
+      const esPasado = ds < ts;
+      const cerrado  = !esPasado && esDiaCerradoPub(ds);
+      if(esPasado){
+        h+=`<td><div class="cday pasado">${d}</div></td>`;
+      } else if(ds===ts){
+        h+=`<td><div class="cday tod">${d}</div></td>`;
+      } else if(cerrado){
         h+=`<td><div class="cday cerrado" onclick="mostrarAvisoCerradoCal('${ds}')"><span class="cn">${d}</span><span class="cl">Cerrado</span></div></td>`;
       } else {
-        const cls=ds===ts?'tod':'disp';
-        h+=`<td><div class="cday ${cls}">${d}</div></td>`;
+        h+=`<td><div class="cday disp">${d}</div></td>`;
       }
       cel++; if(cel%7===0&&d<dm) h+='</tr><tr>';
     }
@@ -563,6 +564,8 @@
 
   function enviarSolicitud() {
     const fecha   = document.getElementById('fecha-visita').value;
+    const hoyStr=localDateStr(new Date());
+    if(fecha && fecha<hoyStr){alert('Esta fecha ya pasó. Por favor selecciona una fecha futura.');return;}
     if(fecha && esDiaCerradoPub(fecha)){alert(mensajeDiaCerrado(fecha));return;}
     const nombre  = document.getElementById('nombre-contacto').value.trim();
     const tel     = document.getElementById('tel-contacto').value.trim();
