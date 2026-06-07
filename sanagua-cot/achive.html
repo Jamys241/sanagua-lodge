@@ -247,6 +247,15 @@
     .cal-grid td:hover { background:#faf9f7; }
     .cal-grid td.cal-other-month { background:#fafaf8; cursor:default; }
     .cal-grid td.cal-other-month:hover { background:#fafaf8; }
+    .cal-grid td.cal-cerrado { background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,.03) 5px,rgba(0,0,0,.03) 10px); cursor:default; }
+    .cal-grid td.cal-cerrado:hover { background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,.04) 5px,rgba(0,0,0,.04) 10px); }
+    .cal-grid td.cal-excepcion { outline:2px dashed var(--accent); outline-offset:-2px; }
+    .cal-cerrado-label { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); opacity:.6; padding:0 4px 2px; }
+    /* Botones selector de día de cierre */
+    .cal-dow-btn { padding:6px 14px; border:1.5px solid var(--border); border-radius:6px;
+      font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer;
+      background:var(--surface); color:var(--muted); transition:all .2s; }
+    .cal-dow-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
     .cal-day-num { font-size:.76rem; font-weight:600; padding:4px 6px; color:var(--muted); display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin:3px; border-radius:50%; }
     .cal-day-num.is-today { background:var(--accent); color:#fff; }
     .cal-other-month .cal-day-num { color:#ccc; }
@@ -995,6 +1004,31 @@
     </div>
     <div id="gh-config-current" style="margin-top:10px;font-size:.78rem;color:var(--ink-muted);"></div>
   </div>
+
+  <!-- Días de cierre y excepciones -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0;">🗓️ Días de cierre</div>
+      <button class="btn btn-accent" onclick="guardarHorarios()">💾 Guardar horarios</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Los días marcados aparecen con patrón rayado en el calendario. Puedes habilitar fechas específicas aunque caigan en día de cierre.
+    </p>
+    <div class="form-group">
+      <label>Días cerrados regularmente</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="dias-cerrados-btns"></div>
+      <small style="font-size:.72rem;color:var(--muted);margin-top:6px;display:block">Los resaltados en naranja se marcan como Cerrado en el calendario.</small>
+    </div>
+    <div class="form-group" style="margin-top:18px">
+      <label>Fechas de excepción — días cerrados que estarán abiertos</label>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="excepcion-fecha" class="form-input" style="max-width:200px">
+        <button class="btn btn-outline btn-sm" onclick="addExcepcion()">+ Añadir fecha</button>
+      </div>
+      <div id="excepcion-lista" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+  </div>
+
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0;">Datos de la empresa en PDF</div>
@@ -1541,6 +1575,7 @@
     // Cargar datos
     (async () => {
       try { await loadAuth(); } catch(e) { console.warn('Auth load error:', e); }
+      try { await loadHorarios(); } catch(e) { console.warn('Horarios load error:', e); }
       try {
         await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
       } catch(e) { console.warn('Init partial error:', e); }
@@ -1874,6 +1909,8 @@
         document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
         document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
       }
+      renderDowBtns();
+      renderExcepcionLista();
     }
     if (name === 'precios') loadPrecios();
     if (name === 'popular') loadPopulares();
@@ -3257,10 +3294,15 @@
     }
     for (let d = 1; d <= daysInM; d++) {
       const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const isT = ds === todayStr;
-      const evts = allItemsForDate(ds);
-      html += `<td onclick="calGoDay('${ds}')">`;
+      const isT    = ds === todayStr;
+      const cerrado = esDiaCerrado(ds);
+      const esExcep = EXCEPCIONES_ABIERTAS.includes(ds);
+      const evts   = allItemsForDate(ds);
+      const tdCls  = cerrado ? 'cal-cerrado' : (esExcep ? 'cal-excepcion' : '');
+      html += `<td class="${tdCls}" onclick="calGoDay('${ds}')">`;
       html += `<span class="cal-day-num${isT?' is-today':''}">${d}</span>`;
+      if (cerrado) html += `<div class="cal-cerrado-label">Cerrado</div>`;
+      if (esExcep) html += `<div class="cal-cerrado-label" style="color:var(--accent);opacity:1">✓ Abierto</div>`;
       evts.forEach(q => { html += itemEventHTML(q); });
       html += `</td>`;
       cell++;
@@ -3298,8 +3340,13 @@
       const d  = new Date(sun); d.setDate(sun.getDate() + i);
       const ds = localDateStr(d);
       const isT = ds === todayStr;
-      const evts = allItemsForDate(ds);
-      html += `<td class="${isT?'is-today-col':''}">`;
+      const evts   = allItemsForDate(ds);
+      const cerrado = esDiaCerrado(ds);
+      const esExcep = EXCEPCIONES_ABIERTAS.includes(ds);
+      const tdCls   = [isT?'is-today-col':'', cerrado?'cal-cerrado':'', esExcep?'cal-excepcion':''].filter(Boolean).join(' ');
+      html += `<td class="${tdCls}">`;
+      if (cerrado) html += `<div class="cal-cerrado-label">Cerrado</div>`;
+      if (esExcep) html += `<div class="cal-cerrado-label" style="color:var(--accent);opacity:1">✓ Abierto</div>`;
       evts.forEach(q => { html += itemEventHTML(q); });
       html += `</td>`;
     }
@@ -3602,6 +3649,37 @@
 
   // ── Índice de fecha → ítems (se recalcula una vez por render) ──────────────
   let _calIndex = {}; // { 'YYYY-MM-DD': [item, ...] }
+
+  // ── Días cerrados ─────────────────────────────────────────────────────
+  // DOW: 0=Dom 1=Lun 2=Mar 3=Mie 4=Jue 5=Vie 6=Sab
+  let DIAS_CERRADOS    = [2, 3]; // Martes y Miércoles por defecto
+  let EXCEPCIONES_ABIERTAS = []; // Fechas específicas habilitadas aunque sean día cerrado
+  // Se guardan en Data/json/horarios.json
+
+  function esDiaCerrado(ds) {
+    if (EXCEPCIONES_ABIERTAS.includes(ds)) return false; // excepción abierta
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    return DIAS_CERRADOS.includes(dow);
+  }
+
+  async function loadHorarios() {
+    try {
+      const res = await ghRead('horarios.json');
+      if (res?.data) {
+        DIAS_CERRADOS        = res.data.dias_cerrados       || [2, 3];
+        EXCEPCIONES_ABIERTAS = res.data.excepciones_abiertas || [];
+      }
+    } catch { /* usar defaults */ }
+  }
+
+  async function saveHorarios() {
+    const ok = await ghReadWrite('horarios.json', {
+      dias_cerrados:        DIAS_CERRADOS,
+      excepciones_abiertas: EXCEPCIONES_ABIERTAS,
+    });
+    if (ok) showToast('✅ Horarios guardados correctamente.', 'success');
+    else    showToast('❌ Error al guardar horarios.', 'error');
+  }
 
   function buildCalIndex() {
     const f = getCalFilters();
@@ -3954,6 +4032,64 @@
       showToast(`✅ ${lista.length} servicio${lista.length===1?'':'s'} marcado${lista.length===1?'':'s'} como popular${lista.length===1?'':'es'}.`, 'success');
     } catch { showToast('❌ Error al guardar.', 'error'); }
     finally { showLoading(false); }
+  }
+  // ── Horarios UI ──────────────────────────────────────────────────────────
+  const DOW_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  function renderDowBtns() {
+    document.getElementById('dias-cerrados-btns').innerHTML =
+      DOW_LABELS.map((lbl,i) => `
+        <button class="cal-dow-btn${DIAS_CERRADOS.includes(i)?' active':''}"
+          data-dow="${i}" onclick="toggleDow(${i})">${lbl}</button>`).join('');
+  }
+
+  function toggleDow(dow) {
+    if (DIAS_CERRADOS.includes(dow)) {
+      DIAS_CERRADOS = DIAS_CERRADOS.filter(d => d !== dow);
+    } else {
+      DIAS_CERRADOS = [...DIAS_CERRADOS, dow].sort();
+    }
+    renderDowBtns();
+    renderCalendario();
+  }
+
+  function renderExcepcionLista() {
+    const el = document.getElementById('excepcion-lista');
+    if (!el) return;
+    if (!EXCEPCIONES_ABIERTAS.length) {
+      el.innerHTML = '<span style="font-size:.8rem;color:var(--muted)">Sin excepciones añadidas.</span>';
+      return;
+    }
+    el.innerHTML = [...EXCEPCIONES_ABIERTAS].sort().map(ds => `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(200,84,26,.08);
+        border:1px solid rgba(200,84,26,.2);border-radius:6px;padding:4px 10px;font-size:.8rem;">
+        <span style="color:var(--accent);font-weight:600">${fmtDateShort(ds)}</span>
+        <button onclick="removeExcepcion('${ds}')"
+          style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;line-height:1;padding:0">×</button>
+      </div>`).join('');
+  }
+
+  function addExcepcion() {
+    const fecha = document.getElementById('excepcion-fecha').value;
+    if (!fecha) { showToast('Selecciona una fecha.', 'error'); return; }
+    if (EXCEPCIONES_ABIERTAS.includes(fecha)) { showToast('Esa fecha ya está en la lista.', 'error'); return; }
+    EXCEPCIONES_ABIERTAS.push(fecha);
+    document.getElementById('excepcion-fecha').value = '';
+    renderExcepcionLista();
+    renderCalendario();
+  }
+
+  function removeExcepcion(ds) {
+    EXCEPCIONES_ABIERTAS = EXCEPCIONES_ABIERTAS.filter(d => d !== ds);
+    renderExcepcionLista();
+    renderCalendario();
+  }
+
+  async function guardarHorarios() {
+    showLoading(true);
+    try {
+      await saveHorarios();
+    } finally { showLoading(false); }
   }
 
 </script>
