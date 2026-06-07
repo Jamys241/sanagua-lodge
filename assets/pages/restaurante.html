@@ -4,151 +4,125 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Restaurante — Sanagua Lodge</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
-      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
-      --mist:#a8b8a2;--gold:#c9a84c;--r:10px;--accent:#7a9e6e;
-      --red:#c0392b;--blue:#1a5fa8;
+      --ink:#1a1410;--cream:#faf6f0;--warm:#f5ede0;--earth:#8b5e3c;
+      --sage:#6b8f6b;--gold:#c9923a;--rust:#c45a2a;--mist:#b8a898;
+      --surface:#fff;--r:12px;
     }
     html{scroll-behavior:smooth}
-    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
 
     /* ── NAV ── */
-    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
-      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.06);}
-    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
-    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s}
-    .nav-back:hover{color:var(--sage)}
-    .nav-right{display:flex;gap:12px;align-items:center}
-    .btn-reservar{background:var(--sage);color:#fff;border:none;border-radius:40px;padding:9px 22px;
-      font-family:'Jost',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s;letter-spacing:.04em}
-    .btn-reservar:hover{background:var(--forest)}
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,20,16,.96);backdrop-filter:blur(12px);
+      padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.1rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-back{color:rgba(255,255,255,.55);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--gold)}
+
+    /* ── DISPONIBILIDAD BANNER ── */
+    .disponibilidad-banner{
+      background:linear-gradient(90deg,var(--sage),#4a7a4a,var(--sage));
+      background-size:200% 100%;animation:shimmer 4s linear infinite;
+      padding:10px 0;text-align:center;position:relative;overflow:hidden}
+    @keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+    .disponibilidad-banner::before{content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,.04) 40px,rgba(255,255,255,.04) 80px)}
+    .disp-inner{display:flex;align-items:center;justify-content:center;gap:12px;
+      flex-wrap:wrap;position:relative;z-index:1}
+    .disp-dot{width:8px;height:8px;border-radius:50%;background:#7fffa0;
+      box-shadow:0 0 8px #7fffa0;animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+    .disp-text{font-size:.82rem;font-weight:600;color:#fff;letter-spacing:.08em}
+    .disp-horas{font-size:.78rem;color:rgba(255,255,255,.8);
+      background:rgba(0,0,0,.15);padding:3px 12px;border-radius:20px}
 
     /* ── HERO ── */
-    .hero{height:55vh;min-height:380px;position:relative;display:flex;align-items:flex-end;padding-bottom:60px;
-      background:linear-gradient(160deg,#2a1510,#4a2a1a,#3a3020)}
+    .hero{height:52vh;min-height:360px;position:relative;display:flex;align-items:flex-end;
+      padding-bottom:56px;background:linear-gradient(160deg,#2a1a10,#3a2a18,#2a1a08)}
     .hero::before{content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(26,31,24,.7) 0%,transparent 60%)}
-    .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
-    .hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:600;
-      letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px}
-    .hero-badge::before{content:'';width:30px;height:1px;background:var(--sage)}
-    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);
-      font-weight:300;color:#fff;line-height:1.1;margin-bottom:14px}
-    h1 em{font-style:italic;color:var(--sand)}
-    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.65);max-width:480px;line-height:1.7}
+      background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(201,146,58,.12) 0%,transparent 70%)}
+    .hero-content{position:relative;z-index:2;max-width:960px;margin:0 auto;padding:0 40px;width:100%}
+    .hero-badge{font-size:.7rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .hero-badge::before{content:'';width:28px;height:1px;background:var(--gold)}
+    h1{font-family:'Playfair Display',serif;font-size:clamp(2.4rem,5vw,4rem);
+      font-weight:400;color:#fff;line-height:1.1;margin-bottom:12px}
+    h1 em{font-style:italic;color:var(--gold)}
+    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.55);max-width:440px;line-height:1.7}
 
-    /* ── LAYOUT ── */
-    .page-wrap{max-width:1100px;margin:0 auto;padding:60px 32px}
-    .two-col{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start}
-    .card{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);padding:28px;
-      box-shadow:0 2px 16px rgba(0,0,0,.05)}
-    .section-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--moss);
-      margin-bottom:18px;font-weight:600}
-    .label{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
-      color:var(--earth);margin-bottom:10px}
+    /* ── GALERÍA POR CATEGORÍA ── */
+    .pw{max-width:1100px;margin:0 auto;padding:64px 32px}
+    .cat-label{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--earth);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    .cat-label::after{content:'';flex:1;height:1px;background:var(--gold);opacity:.3;max-width:60px}
+    .cat-title{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3vw,2.4rem);
+      font-weight:400;color:var(--ink);margin-bottom:28px}
+    .cat-title em{font-style:italic;color:var(--earth)}
 
-    /* ── INCLUYE ── */
-    .includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-    .include-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6a54}
-    .include-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
+    /* Grid de platos */
+    .platos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:60px}
+    .plato-card{background:var(--surface);border-radius:var(--r);overflow:hidden;
+      box-shadow:0 2px 16px rgba(0,0,0,.06);transition:transform .3s,box-shadow .3s}
+    .plato-card:hover{transform:translateY(-4px);box-shadow:0 10px 32px rgba(0,0,0,.12)}
+    .plato-img{height:200px;background:var(--warm);position:relative;overflow:hidden;
+      display:flex;align-items:center;justify-content:center}
+    .plato-img img,.plato-img video{width:100%;height:100%;object-fit:cover;display:block}
+    .plato-img .plato-emoji{font-size:3.5rem;opacity:.4}
+    .plato-img .plato-overlay{position:absolute;inset:0;
+      background:linear-gradient(to bottom,transparent 50%,rgba(26,20,16,.5))}
+    .plato-body{padding:18px 20px}
+    .plato-name{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;
+      color:var(--ink);margin-bottom:6px}
+    .plato-desc{font-size:.82rem;color:#7a6a5a;line-height:1.6}
+    .plato-precio{font-size:.88rem;font-weight:600;color:var(--earth);margin-top:10px}
 
-    /* ── TARIFAS ── */
-    .tarifa-row{display:flex;justify-content:space-between;align-items:center;
-      padding:10px 0;border-bottom:1px solid #f0f0f0}
-    .tarifa-row:last-child{border-bottom:none}
-    .tarifa-label{font-size:.88rem;color:var(--ink)}
-    .tarifa-precio{font-weight:700;color:var(--moss);font-size:.95rem}
-    .tarifa-itbms{font-size:.7rem;color:#aaa;margin-left:4px}
+    /* Divisor decorativo */
+    .divider{display:flex;align-items:center;gap:16px;margin:48px 0 40px}
+    .divider-line{flex:1;height:1px;background:linear-gradient(to right,transparent,var(--mist),transparent)}
+    .divider-icon{font-size:1.2rem;color:var(--mist);flex-shrink:0}
 
-    /* ── CALENDARIO ── */
-    .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .cal-nav{display:flex;gap:6px;align-items:center}
-    .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;
-      cursor:pointer;font-size:.9rem;transition:border-color .2s}
-    .cal-btn:hover{border-color:var(--sage)}
-    .cal-month{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--moss)}
-    .cal-grid{width:100%;border-collapse:collapse}
-    .cal-grid th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-      color:#aaa;padding:6px 0;text-align:center}
-    .cal-grid td{padding:2px;text-align:center}
-    .cal-day{width:34px;height:34px;border-radius:8px;font-size:.78rem;display:inline-flex;
-      align-items:center;justify-content:center;cursor:default;transition:background .15s;
-      position:relative;font-weight:500}
-    .cal-day.empty{color:#ddd}
-    .cal-day.disponible{color:var(--ink);cursor:pointer}
-    .cal-day.disponible:hover{background:rgba(122,158,110,.12);color:var(--forest)}
-    .cal-day.ocupado{background:#f0f0f0;color:#bbb;font-size:.65rem;cursor:not-allowed;
-      flex-direction:column;gap:1px;height:38px;width:100%;border-radius:6px;padding:2px 0}
-    .cal-day.ocupado .ocp-num{font-size:.72rem;font-weight:600}
-    .cal-day.ocupado .ocp-label{font-size:.56rem;text-transform:uppercase;letter-spacing:.04em}
-    .cal-day.today{background:var(--sage);color:#fff !important;cursor:pointer}
-    .cal-day.other-month{color:#e0e0e0}
-    .cal-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
-    .leg-item{display:flex;align-items:center;gap:5px;font-size:.7rem;color:#888}
-    .leg-dot{width:10px;height:10px;border-radius:3px}
+    /* ── BANNER TABLAS DE PICNIC ── */
+    .picnic-banner{
+      background:linear-gradient(135deg,#2a1a08 0%,#3d2a14 40%,#2a3a1a 100%);
+      border-radius:16px;overflow:hidden;position:relative;
+      margin:16px 0 64px;cursor:pointer;text-decoration:none;display:block;
+      transition:transform .3s,box-shadow .3s}
+    .picnic-banner:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.25)}
+    .picnic-banner::before{content:'';position:absolute;inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+    .picnic-inner{display:grid;grid-template-columns:1fr auto;align-items:center;
+      gap:32px;padding:40px 48px;position:relative;z-index:1}
+    .picnic-left{}
+    .picnic-tag{font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .picnic-tag::before{content:'';width:20px;height:1px;background:var(--gold)}
+    .picnic-titulo{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3vw,2.2rem);
+      font-weight:400;color:#fff;line-height:1.2;margin-bottom:12px}
+    .picnic-titulo em{font-style:italic;color:var(--gold)}
+    .picnic-desc{font-size:.88rem;color:rgba(255,255,255,.6);line-height:1.7;max-width:480px}
+    .picnic-items{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+    .picnic-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+      border-radius:20px;padding:4px 14px;font-size:.75rem;color:rgba(255,255,255,.7)}
+    .picnic-cta{display:inline-flex;align-items:center;gap:8px;background:var(--gold);
+      color:#fff;font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:14px 28px;border-radius:40px;white-space:nowrap;flex-shrink:0;
+      transition:background .2s}
+    .picnic-banner:hover .picnic-cta{background:#b07a28}
+    .picnic-img-wrap{position:absolute;right:0;top:0;bottom:0;width:280px;overflow:hidden;opacity:.3}
+    .picnic-img-wrap img{width:100%;height:100%;object-fit:cover}
 
-    /* ── STICKY CARD ── */
-    .sticky-col{position:sticky;top:80px}
-    .price-summary{background:var(--moss);border-radius:var(--r);padding:24px;color:#fff}
-    .price-from{font-size:.72rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
-    .price-main{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--sand)}
-    .price-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px}
-    .btn-reservar-big{width:100%;background:var(--sage);color:#fff;border:none;border-radius:8px;
-      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
-      margin-top:18px;transition:background .2s;letter-spacing:.05em}
-    .btn-reservar-big:hover{background:var(--forest)}
-
-    /* ── MODAL RESERVA ── */
-    .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);
-      backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
-    .modal-overlay.open{display:flex}
-    .modal{background:#fff;border-radius:16px;width:100%;max-width:520px;
-      max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}
-    .modal-head{background:var(--moss);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-    .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff}
-    .modal-close{background:rgba(255,255,255,.15);border:none;width:32px;height:32px;
-      border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .modal-body{padding:24px 28px}
-    .form-group{margin-bottom:18px}
-    .form-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-      color:#9a9a9a;margin-bottom:7px;display:block}
-    .form-input{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;
-      font-family:'Jost',sans-serif;font-size:.9rem;color:var(--ink);background:#fafafa;
-      transition:border-color .2s;outline:none}
-    .form-input:focus{border-color:var(--sage);background:#fff}
-    .personas-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .persona-item{border:1.5px solid #e8e8e8;border-radius:8px;padding:12px;background:#fafafa}
-    .persona-label{font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:2px}
-    .persona-precio{font-size:.72rem;color:#aaa;margin-bottom:8px}
-    .persona-counter{display:flex;align-items:center;gap:10px}
-    .counter-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid #e0e0e0;
-      background:#fff;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;
-      transition:border-color .2s;flex-shrink:0}
-    .counter-btn:hover{border-color:var(--sage);color:var(--sage)}
-    .counter-val{font-weight:700;font-size:1rem;min-width:20px;text-align:center}
-    .resumen-box{background:#f8f8f5;border-radius:10px;padding:16px;margin-top:6px}
-    .resumen-row{display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0}
-    .resumen-row.total{font-size:1rem;font-weight:700;padding-top:10px;border-top:1.5px solid #e0e0e0;margin-top:6px;color:var(--moss)}
-    .resumen-row.itbms{color:#aaa;font-size:.78rem}
-    .btn-confirmar{width:100%;background:var(--moss);color:#fff;border:none;border-radius:10px;
-      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
-      margin-top:18px;transition:background .2s}
-    .btn-confirmar:hover{background:var(--forest)}
-    .modal-footer-note{font-size:.72rem;color:#bbb;text-align:center;margin-top:12px}
+    /* ── ITBMS NOTE ── */
+    .itbms-note{font-size:.75rem;color:var(--mist);text-align:center;padding:0 0 48px;font-style:italic}
 
     @media(max-width:768px){
-      nav{padding:0 18px}
-      .hero-content{padding:0 20px}
-      .page-wrap{padding:40px 18px}
-      .two-col{grid-template-columns:1fr}
-      .sticky-col{position:static}
-      .includes-grid{grid-template-columns:1fr}
-      .personas-grid{grid-template-columns:1fr}
+      nav{padding:0 18px}.hero-content{padding:0 20px}.pw{padding:40px 18px}
+      .picnic-inner{grid-template-columns:1fr;gap:20px;padding:28px 24px}
+      .picnic-cta{align-self:flex-start}
+      .picnic-img-wrap{display:none}
     }
   </style>
 </head>
@@ -156,361 +130,125 @@
 
 <nav>
   <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
-  <div class="nav-right">
-    <a class="nav-back" href="../../index.html">← Inicio</a>
-    <button class="btn-reservar" onclick="openModal()">Reservar</button>
-  </div>
+  <a class="nav-back" href="../../index.html">← Inicio</a>
 </nav>
 
-<!-- HERO -->
+<!-- Banner de disponibilidad -->
+<div class="disponibilidad-banner">
+  <div class="disp-inner">
+    <div class="disp-dot"></div>
+    <span class="disp-text">Restaurante abierto</span>
+    <span class="disp-horas">🕗 8:00 AM — 7:00 PM · Todos los días disponibles</span>
+  </div>
+</div>
+
+<!-- Hero -->
 <section class="hero">
   <div class="hero-content">
     <div class="hero-badge">Sanagua Lodge</div>
-    <h1>Restaurante <em>Sanagua</em></h1>
-    <p class="hero-sub" id="hero-desc">Gastronomía panameña auténtica con ingredientes frescos. De 7:00 AM a 9:00 PM.</p>
+    <h1>Sabores de <em>Panamá</em></h1>
+    <p class="hero-sub">Gastronomía local con ingredientes frescos del campo. Cada plato, una experiencia auténtica en el corazón de la naturaleza.</p>
   </div>
 </section>
 
-<div class="page-wrap">
-  <div class="two-col">
+<div class="pw">
 
-    <!-- COLUMNA PRINCIPAL -->
-    <div>
-      <!-- Qué incluye -->
-      <div class="card" style="margin-bottom:24px">
-        <div class="label">¿Qué incluye?</div>
-        <div class="includes-grid" id="includes-list">
-          <div class="include-item">Acceso a piscinas naturales</div>
-          <div class="include-item">Área de picnic</div>
-          <div class="include-item">Senderos</div>
-          <div class="include-item">Estacionamiento</div>
-        </div>
-      </div>
-
-      <!-- Calendario de disponibilidad -->
-      <div class="card">
-        <div class="cal-header">
-          <div class="cal-month" id="cal-month">—</div>
-          <div class="cal-nav">
-            <button class="cal-btn" onclick="calNav(-1)">‹</button>
-            <button class="cal-btn" onclick="calNav(1)">›</button>
-          </div>
-        </div>
-        <table class="cal-grid">
-          <thead><tr>
-            <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
-          </tr></thead>
-          <tbody id="cal-body"></tbody>
-        </table>
-        <div class="cal-legend">
-          <div class="leg-item"><div class="leg-dot" style="background:#f0f0f0;border:1px solid #ddd"></div> Ocupado</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--sage)"></div> Hoy</div>
-          <div class="leg-item"><div class="leg-dot" style="background:#fff;border:1px solid #e0e0e0"></div> Disponible</div>
-        </div>
-        <p style="font-size:.72rem;color:#bbb;margin-top:10px;">* Disponibilidad basada en reservas confirmadas en el sistema.</p>
-      </div>
-    </div>
-
-    <!-- COLUMNA STICKY -->
-    <div class="sticky-col">
-      <div class="price-summary">
-        <div class="price-from">Desde</div>
-        <div class="price-main" id="price-main">$0.00</div>
-        <div class="price-sub">por persona · ITBMS incluido</div>
-        <button class="btn-reservar-big" onclick="openModal()">Solicitar reserva →</button>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="label">Tarifas</div>
-        <div id="tarifas-list">
-          <div class="tarifa-row"><span class="tarifa-label">Cargando...</span></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:16px;background:var(--cream);border:none">
-        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
-        <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
-          Contáctanos por WhatsApp o Instagram antes de reservar.<br>
-          <a href="https://instagram.com/sanagualodge" style="color:var(--earth)">@sanagualodge</a>
-        </div>
-      </div>
-    </div>
-
+  <!-- ── DESAYUNOS ── -->
+  <div class="cat-label">Para comenzar el día</div>
+  <h2 class="cat-title">🌅 Desayunos</h2>
+  <div class="platos-grid" id="grid-desayunos">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍳</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Desayuno Panameño</div><div class="plato-desc">Huevos al gusto, tortillas, carimañolas, café y jugo natural</div><div class="plato-precio">Desde $8.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥞</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Pancakes con frutas</div><div class="plato-desc">Pancakes esponjosos con frutas tropicales de temporada y miel</div><div class="plato-precio">Desde $9.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥗</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Bowl saludable</div><div class="plato-desc">Granola artesanal, yogurt, frutas frescas y semillas</div><div class="plato-precio">Desde $7.50</div></div></div>
   </div>
-</div>
 
-<!-- MODAL RESERVA -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title">🍽️ Reservar mesa</div>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <div class="modal-body">
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">🍃</div><div class="divider-line"></div></div>
 
-      <div class="form-group">
-        <label class="form-label">Fecha de visita</label>
-        <input type="date" class="form-input" id="fecha-visita">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Cantidad de personas</label>
-        <div class="personas-grid" id="personas-grid">
-          <!-- Se genera dinámicamente -->
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Resumen</label>
-        <div class="resumen-box" id="resumen-box">
-          <div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Nombre del contacto</label>
-        <input type="text" class="form-input" id="nombre-contacto" placeholder="Tu nombre completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">WhatsApp / Teléfono</label>
-        <input type="tel" class="form-input" id="tel-contacto" placeholder="+507 6000-0000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Correo electrónico</label>
-        <input type="email" class="form-input" id="email-contacto" placeholder="tu@correo.com">
-      </div>
-
-      <button class="btn-confirmar" onclick="enviarSolicitud()">Enviar solicitud de reserva</button>
-      <div class="modal-footer-note">Tu solicitud será confirmada por WhatsApp o correo en menos de 24 horas.</div>
-    </div>
+  <!-- ── ENTRADAS ── -->
+  <div class="cat-label">Para abrir el apetito</div>
+  <h2 class="cat-title">🥗 Platos de <em>entrada</em></h2>
+  <div class="platos-grid" id="grid-entradas">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥟</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Carimañolas</div><div class="plato-desc">Masa de yuca rellena, fritas hasta quedar doradas y crujientes</div><div class="plato-precio">Desde $6.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🫕</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Ceviche de corvina</div><div class="plato-desc">Corvina fresca marinada en limón con cebolla y culantro</div><div class="plato-precio">Desde $9.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥙</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Patacones con todo</div><div class="plato-desc">Patacones crujientes con guacamole, pico de gallo y chicharrón</div><div class="plato-precio">Desde $7.00</div></div></div>
   </div>
-</div>
 
-<script>
-  // ── Config GitHub ─────────────────────────────────────────────────────
-  const GH_TOKEN  = localStorage.getItem('gh_token')  || '';
-  const GH_REPO   = localStorage.getItem('gh_repo')   || '';
-  const GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">🍃</div><div class="divider-line"></div></div>
 
-  async function ghFetch(filename) {
-    if (!GH_TOKEN || !GH_REPO) return null;
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/${filename}?ref=${GH_BRANCH}`,
-        { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      if (!r.ok) return null;
-      const d = await r.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
-      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    } catch { return null; }
-  }
+  <!-- ── PLATOS FUERTES ── -->
+  <div class="cat-label">Lo mejor de nuestra cocina</div>
+  <h2 class="cat-title">🍽️ Platos <em>fuertes</em></h2>
+  <div class="platos-grid" id="grid-fuertes">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍲</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Sancocho de gallina</div><div class="plato-desc">El clásico panameño. Gallina criolla, ñame, otoe y culantro</div><div class="plato-precio">Desde $12.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🐟</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Corvina a la plancha</div><div class="plato-desc">Filete de corvina fresca con arroz, ensalada y patacones</div><div class="plato-precio">Desde $14.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥩</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Pollo a la brasa</div><div class="plato-desc">Pollo marinado en especias locales, asado lentamente al carbón</div><div class="plato-precio">Desde $13.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🫘</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Arroz con pollo</div><div class="plato-desc">Clásico panameño con pollo, vegetales y especias de la casa</div><div class="plato-precio">Desde $11.00</div></div></div>
+  </div>
 
-  function localDateStr(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">🍃</div><div class="divider-line"></div></div>
 
-  // ── Estado ────────────────────────────────────────────────────────────
-  let precios    = null;
-  let historial  = [];
-  let eventos    = [];
-  let calDate    = new Date();
-  let contadores = {}; // { adulto:0, nino:0, ... }
+  <!-- ── POSTRES ── -->
+  <div class="cat-label">El dulce final</div>
+  <h2 class="cat-title">🍮 Postres</h2>
+  <div class="platos-grid" id="grid-postres">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍮</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Flan de coco</div><div class="plato-desc">Flan artesanal de leche de coco con caramelo dorado</div><div class="plato-precio">Desde $5.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍌</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Bienmesabe</div><div class="plato-desc">Postre tradicional de coco rallado, canela y vainilla</div><div class="plato-precio">Desde $4.50</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍓</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Frutas tropicales</div><div class="plato-desc">Selección de frutas frescas de temporada con crema de coco</div><div class="plato-precio">Desde $5.00</div></div></div>
+  </div>
 
-  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const SERVICIO = 'restaurante';
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">☕</div><div class="divider-line"></div></div>
 
-  // ── Inicializar ───────────────────────────────────────────────────────
-  async function init() {
-    const [p, h, e] = await Promise.all([
-      ghFetch('precios.json'),
-      ghFetch('history.json'),
-      ghFetch('events.json'),
-    ]);
-    precios   = p;
-    historial = h?.quotes || [];
-    eventos   = e?.events || [];
+  <!-- ── BEBIDAS CALIENTES ── -->
+  <div class="cat-label">Para reconfortar</div>
+  <h2 class="cat-title">☕ Bebidas <em>calientes</em></h2>
+  <div class="platos-grid" id="grid-calientes">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">☕</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Café de altura</div><div class="plato-desc">Café panameño de origen, preparado en chemex o french press</div><div class="plato-precio">Desde $3.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍵</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Té de hierbas</div><div class="plato-desc">Mezclas artesanales de hierbas locales: jengibre, menta y limoncillo</div><div class="plato-precio">Desde $2.50</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥛</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Chocolate caliente</div><div class="plato-desc">Cacao panameño con leche entera y un toque de canela</div><div class="plato-precio">Desde $3.50</div></div></div>
+  </div>
 
-    if (precios?.[SERVICIO]) {
-      const s = precios[SERVICIO];
-      // Hero
-      document.getElementById('hero-desc').textContent = s.descripcion;
-      // Incluye
-      if (s.incluye?.length) {
-        document.getElementById('includes-list').innerHTML =
-          s.incluye.map(i => `<div class="include-item">${i}</div>`).join('');
-      }
-      // Precio desde
-      const tarifas = Object.values(s.tarifas || {});
-      const precios_vals = tarifas.filter(t => t.precio > 0).map(t => t.precio);
-      const desde = precios_vals.length ? Math.min(...precios_vals) : 0;
-      const itbms = s.itbms || 7;
-      const desdeConITBMS = desde * (1 + itbms/100);
-      document.getElementById('price-main').textContent = `$${desdeConITBMS.toFixed(2)}`;
-      // Tarifas
-      document.getElementById('tarifas-list').innerHTML =
-        tarifas.map(t => `
-          <div class="tarifa-row">
-            <span class="tarifa-label">${t.label}</span>
-            <span class="tarifa-precio">
-              ${t.precio === 0 ? 'Gratis' : `$${(t.precio*(1+itbms/100)).toFixed(2)}`}
-              ${t.precio > 0 ? `<span class="tarifa-itbms">ITBMS inc.</span>` : ''}
-            </span>
-          </div>`).join('');
-      // Contadores
-      contadores = Object.fromEntries(Object.keys(s.tarifas).map(k => [k, 0]));
-    }
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">🧊</div><div class="divider-line"></div></div>
 
-    renderCalendario();
-    renderPersonasGrid();
-    // Fecha por defecto: mañana
-    const manana = new Date(); manana.setDate(manana.getDate()+1);
-    document.getElementById('fecha-visita').value = localDateStr(manana);
-    document.getElementById('fecha-visita').min = localDateStr(new Date());
-  }
+  <!-- ── BEBIDAS FRÍAS ── -->
+  <div class="cat-label">Para refrescarse</div>
+  <h2 class="cat-title">🥤 Bebidas <em>frías</em></h2>
+  <div class="platos-grid" id="grid-frias">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍹</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Chicha de maracuyá</div><div class="plato-desc">Refrescante bebida natural de maracuyá, sin conservantes</div><div class="plato-precio">Desde $3.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥥</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Agua de coco</div><div class="plato-desc">Coco fresco cortado en el momento. 100% natural</div><div class="plato-precio">Desde $3.50</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍊</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Jugo natural</div><div class="plato-desc">Jugos de temporada: naranja, sandía, piña, mango o guanábana</div><div class="plato-precio">Desde $3.00</div></div></div>
+  </div>
 
-  // ── Calendario ────────────────────────────────────────────────────────
-  // Días ocupados por PASADÍAS confirmadas
-  function diasOcupados() {
-    const ocupados = {};
-    const categorias = [];
-    [...historial, ...eventos].forEach(item => {
-      if (!['Confirmada'].includes(item.estado||'')) return;
-      if (!categorias.includes(item.categoria||'')) return;
-      if (!item.visit_date) return;
-      const ds = item.visit_date.slice(0,10);
-      if (!ocupados[ds]) ocupados[ds] = [];
-      ocupados[ds].push(item.client?.name || item.categoria || 'Reservado');
-    });
-    return ocupados;
-  }
+  <div class="divider"><div class="divider-line"></div><div class="divider-icon">🍸</div><div class="divider-line"></div></div>
 
-  function calNav(dir) {
-    calDate = new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
-    renderCalendario();
-  }
+  <!-- ── CÓCTELES ── -->
+  <div class="cat-label">Para celebrar</div>
+  <h2 class="cat-title">🍸 Cócteles</h2>
+  <div class="platos-grid" id="grid-cocteles">
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🍸</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Seco Herrerano sour</div><div class="plato-desc">El clásico panameño: seco, limón, azúcar y clara de huevo</div><div class="plato-precio">Desde $9.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🌴</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Sanagua Sunset</div><div class="plato-desc">Ron blanco, maracuyá, naranja, grenadina y tónica</div><div class="plato-precio">Desde $10.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🌿</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Mojito tropical</div><div class="plato-desc">Ron, menta fresca, limón, azúcar de caña y agua con gas</div><div class="plato-precio">Desde $9.00</div></div></div>
+    <div class="plato-card"><div class="plato-img"><div class="plato-emoji">🥭</div><div class="plato-overlay"></div></div><div class="plato-body"><div class="plato-name">Mango Spicy</div><div class="plato-desc">Tequila, mango fresco, chile, sal y jugo de limón</div><div class="plato-precio">Desde $10.00</div></div></div>
+  </div>
 
-  function renderCalendario() {
-    const y = calDate.getFullYear(), m = calDate.getMonth();
-    document.getElementById('cal-month').textContent = `${MESES[m]} ${y}`;
-    const todayStr = localDateStr(new Date());
-    const ocupados = diasOcupados();
-    const firstDow = new Date(y,m,1).getDay();
-    const daysInM  = new Date(y,m+1,0).getDate();
-    const daysInP  = new Date(y,m,0).getDate();
-
-    let html = '<tr>';
-    let cell = 0;
-    for (let i=firstDow-1;i>=0;i--) {
-      html+=`<td><div class="cal-day other-month">${daysInP-i}</div></td>`;cell++;
-    }
-    for (let d=1;d<=daysInM;d++) {
-      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const isToday=ds===todayStr;
-      const ocp=ocupados[ds];
-      if (ocp) {
-        const nombre = ocp[0].length>8?ocp[0].slice(0,7)+'…':ocp[0];
-        html+=`<td><div class="cal-day ocupado" title="${ocp.join(', ')}">
-          <span class="ocp-num">${d}</span>
-          <span class="ocp-label">Ocupado</span>
-        </div></td>`;
-      } else {
-        const cls = isToday?'today':'disponible';
-        html+=`<td><div class="cal-day ${cls}">${d}</div></td>`;
-      }
-      cell++;
-      if(cell%7===0&&d<daysInM)html+='</tr><tr>';
-    }
-    const rem=(7-cell%7)%7;
-    for(let d=1;d<=rem;d++) html+=`<td><div class="cal-day other-month">${d}</div></td>`;
-    html+='</tr>';
-    document.getElementById('cal-body').innerHTML=html;
-  }
-
-  // ── Modal ─────────────────────────────────────────────────────────────
-  function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
-  function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
-  document.getElementById('modal-overlay').addEventListener('click',e=>{
-    if(e.target===document.getElementById('modal-overlay'))closeModal();
-  });
-
-  function renderPersonasGrid() {
-    if (!precios?.[SERVICIO]?.tarifas) return;
-    const tarifas = precios[SERVICIO].tarifas;
-    const itbms   = precios[SERVICIO].itbms || 7;
-    document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
-      <div class="persona-item">
-        <div class="persona-label">${t.label}</div>
-        <div class="persona-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)} c/u (ITBMS inc.)`}</div>
-        <div class="persona-counter">
-          <button class="counter-btn" onclick="cambiarContador('${key}',-1)">−</button>
-          <span class="counter-val" id="cnt-${key}">0</span>
-          <button class="counter-btn" onclick="cambiarContador('${key}',1)">+</button>
+  <!-- ── BANNER TABLAS DE PICNIC ── -->
+  <a class="picnic-banner" href="picnic/index.html">
+    <div class="picnic-inner">
+      <div class="picnic-left">
+        <div class="picnic-tag">Nuevo en Sanagua</div>
+        <div class="picnic-titulo">Tablas de <em>Picnic</em><br>en la naturaleza</div>
+        <div class="picnic-desc">Una experiencia gastronómica única: disfruta una selección curada de quesos, charcutería, frutas y acompañamientos en medio del paisaje natural de Sanagua Lodge.</div>
+        <div class="picnic-items">
+          <span class="picnic-chip">🧀 Tabla Pequeña</span>
+          <span class="picnic-chip">🍇 Tabla Mediana</span>
+          <span class="picnic-chip">🥂 Tabla Grande</span>
         </div>
-      </div>`).join('');
-    actualizarResumen();
-  }
+      </div>
+      <div class="picnic-cta">Ver opciones →</div>
+    </div>
+  </a>
 
-  function cambiarContador(key, delta) {
-    contadores[key] = Math.max(0, (contadores[key]||0) + delta);
-    document.getElementById(`cnt-${key}`).textContent = contadores[key];
-    actualizarResumen();
-  }
+  <p class="itbms-note">Todos los precios incluyen ITBMS 7% · Menú sujeto a disponibilidad de temporada</p>
 
-  function actualizarResumen() {
-    if (!precios?.[SERVICIO]) return;
-    const tarifas = precios[SERVICIO].tarifas;
-    const itbms   = precios[SERVICIO].itbms || 7;
-    let subtotal = 0;
-    const lineas = [];
-    Object.entries(contadores).forEach(([key,qty])=>{
-      if (qty > 0 && tarifas[key]) {
-        const t = tarifas[key];
-        const sub = t.precio * qty;
-        subtotal += sub;
-        lineas.push({label:`${t.label} × ${qty}`, monto:sub});
-      }
-    });
-    const totalPersonas = Object.values(contadores).reduce((a,b)=>a+b,0);
-    if (totalPersonas === 0 || subtotal === 0) {
-      document.getElementById('resumen-box').innerHTML =
-        '<div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>';
-      return;
-    }
-    const itbmsAmt = subtotal * (itbms/100);
-    const total    = subtotal + itbmsAmt;
-    document.getElementById('resumen-box').innerHTML = `
-      ${lineas.map(l=>`<div class="resumen-row"><span>${l.label}</span><span>$${l.monto.toFixed(2)}</span></div>`).join('')}
-      <div class="resumen-row itbms"><span>ITBMS ${itbms}%</span><span>$${itbmsAmt.toFixed(2)}</span></div>
-      <div class="resumen-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
-  }
-
-  function enviarSolicitud() {
-    const fecha   = document.getElementById('fecha-visita').value;
-    const nombre  = document.getElementById('nombre-contacto').value.trim();
-    const tel     = document.getElementById('tel-contacto').value.trim();
-    const email   = document.getElementById('email-contacto').value.trim();
-    if (!fecha)  { alert('Selecciona una fecha de visita.'); return; }
-    if (!nombre) { alert('Ingresa tu nombre.'); return; }
-    if (!tel && !email) { alert('Ingresa al menos un medio de contacto.'); return; }
-    const totalPersonas = Object.values(contadores).reduce((a,b)=>a+b,0);
-    if (totalPersonas === 0) { alert('Selecciona al menos una persona.'); return; }
-
-    // Armar mensaje para WhatsApp
-    const detalle = Object.entries(contadores)
-      .filter(([,q])=>q>0)
-      .map(([k,q])=>`${precios[SERVICIO].tarifas[k].label}: ${q}`)
-      .join(', ');
-    const msg = encodeURIComponent(
-      `Hola Sanagua Lodge! Quiero reservar en el restaurante.\n\n`+
-      `📅 Fecha: ${fecha}\n👥 Personas: ${detalle}\n`+
-      `👤 Nombre: ${nombre}\n📧 ${email||'Sin correo'}`
-    );
-    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
-    closeModal();
-  }
-
-  init();
-</script>
+</div>
 </body>
 </html>
