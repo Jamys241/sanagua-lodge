@@ -261,6 +261,7 @@
         <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="calcRes()"></div>
       </div>
       <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
+      <div id="aviso-cerrado-modal" class="aviso-cerrado"></div>
       <div id="conflicto-badge" style="display:none;background:#fff5f5;border:1px solid #f0c0c0;border-radius:7px;padding:10px 14px;font-size:.82rem;color:var(--red);margin-bottom:14px"></div>
       <div class="fg">
         <label class="fl">Personas adicionales <span style="color:#aaa;font-weight:400">(más allá de la capacidad base)</span></label>
@@ -301,6 +302,38 @@
   const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
   // ── Estado ────────────────────────────────────────────────────────────
+
+  // ── Horarios ──────────────────────────────────────────────────────────
+  let DIAS_CERRADOS_PUB    = [2, 3];
+  let EXCEPCIONES_ABIERTAS_PUB = [];
+
+  async function loadHorariosPub() {
+    const h = await ghF('horarios.json');
+    if (h) {
+      DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
+    }
+  }
+
+  function esDiaCerradoPub(ds) {
+    if (EXCEPCIONES_ABIERTAS_PUB.includes(ds)) return false;
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    return DIAS_CERRADOS_PUB.includes(dow);
+  }
+
+  const DOW_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  function mensajeDiaCerrado(ds) {
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    const dia = DOW_ES[dow];
+    const msgs = [
+      `🌿 Los ${dia}s estamos descansando para atenderte mejor. ¡Elige otro día y con gusto te recibimos!`,
+      `😊 Sanagua Lodge cierra los ${dia}s. Selecciona otra fecha y estaremos encantados de recibirte.`,
+      `🦋 Los ${dia}s no abrimos, pero tenemos días increíbles disponibles. ¡Prueba con otra fecha!`,
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+
   let P=null, H=[], E=[], calD=new Date(), adPersonas=0, cabData=null;
 
   // ── Slider ────────────────────────────────────────────────────────────
@@ -324,6 +357,7 @@
   // ── Init ──────────────────────────────────────────────────────────────
   async function init(){
     initSlider();
+    await loadHorariosPub();
     const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
     P=p; H=h?.quotes||[]; E=e?.events||[];
     cabData=P?.cabanas?.cabanas?.[CABANA_KEY];
@@ -374,6 +408,15 @@
     return o;
   }
 
+  function mostrarAvisoCerrado(ds) {
+    const el = document.getElementById('cal-msg');
+    if (!el) return;
+    const msg = mensajeDiaCerrado(ds);
+    el.className = 'cal-msg ocupado show';
+    el.innerHTML = `<span style="font-size:1.1rem;flex-shrink:0">${msg.slice(0,2)}</span><span>${msg.slice(2)}</span>`;
+    clearTimeout(el._timeout); el._timeout = setTimeout(() => { el.className = 'cal-msg'; }, 5000);
+  }
+
   const MSGS_OCP = [
     '🌿 Esta fecha ya tiene una reserva confirmada. ¡No te preocupes, hay muchas otras fechas disponibles para ti!',
     '😊 Esta fecha está reservada, pero estaremos encantados de recibirte en otro momento. ¡Elige otra fecha!',
@@ -422,12 +465,12 @@
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const o=ocp[ds];
       let cls='cd ', cont=`${d}`;
+      const cerradoCab=esDiaCerradoPub(ds);
       if(ds===ts){ cls+='tod'; }
-      else if(o){
-        if(o.esInicio||o.esFin){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
-        else { cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
-      } else { cls+='disp'; }
-      h+=`<td><div class="${cls}" onclick="calDayClick('${ds}','${!!o}')">${cont}</div></td>`;
+      else if(o){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
+      else if(cerradoCab){ cls+='cerrado'; cont=`<span class="cn">${d}</span><span class="cl">Cerrado</span>`; }
+      else { cls+='disp'; }
+      h+=`<td><div class="${cls}" onclick="${cerradoCab?`mostrarAvisoCerrado('${ds}')`:o?`calDayClick('${ds}','true')`:`calDayClick('${ds}','false')`}">${cont}</div></td>`;
       c++;if(c%7===0&&d<dm)h+='</tr><tr>';
     }
     const r=(7-c%7)%7; for(let d=1;d<=r;d++)h+=`<td><div class="cd oth">${d}</div></td>`;
@@ -464,6 +507,15 @@
     if(noches<=0){nb.style.display='block';nb.style.background='#fff5f5';nb.style.borderColor='#f0c0c0';nb.style.color='var(--red)';nb.textContent='⚠️ La fecha de salida debe ser posterior a la de entrada';document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Fechas inválidas</div>';return;}
     nb.style.display='block';nb.style.background='#f0f7ee';nb.style.borderColor='#c0ddb8';nb.style.color='var(--forest)';
     nb.textContent=`🌙 ${noches} noche${noches===1?'':'s'} · ${ent} → ${sal}`;
+    // Aviso si la entrada cae en día cerrado
+    const avCab=document.getElementById('aviso-cerrado-modal');
+    if(avCab){
+      if(esDiaCerradoPub(ent)){
+        const msg=mensajeDiaCerrado(ent);
+        avCab.className='aviso-cerrado show';
+        avCab.innerHTML=`<span style="font-size:1.1rem;flex-shrink:0">${msg.slice(0,2)}</span><span>${msg.slice(2)}</span>`;
+      } else { avCab.className='aviso-cerrado'; }
+    }
     // Verificar conflicto
     const conf=verificarConflicto(ent,sal);
     if(conf){cb.style.display='block';cb.innerHTML='🌿 Estas fechas ya están reservadas. ¡No te preocupes! Hay muchas otras fechas disponibles para ti. Por favor elige otras fechas.';}
@@ -495,6 +547,7 @@
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
     if(!nom){alert('Ingresa tu nombre.');return;}
     if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
+    if(esDiaCerradoPub(ent)){alert(mensajeDiaCerrado(ent));return;}
     if(verificarConflicto(ent,sal)){alert('🌿 Estas fechas ya están reservadas. Por favor elige otras fechas disponibles.');return;}
     const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
     const ad=adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';

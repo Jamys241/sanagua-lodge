@@ -41,6 +41,17 @@
     .cal-nav{display:flex;gap:6px}
     .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.9rem;transition:border-color .2s}
     .cal-btn:hover{border-color:var(--sage)}
+    .cday.cerrado{background:repeating-linear-gradient(45deg,transparent,transparent 4px,
+      rgba(0,0,0,.05) 4px,rgba(0,0,0,.05) 8px);color:#ccc;cursor:not-allowed;
+      flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
+    .cday.cerrado .cn{font-size:.72rem;font-weight:600;color:#bbb}
+    .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
+    .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
+    .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
+      padding:12px 16px;font-size:.84rem;color:#7a4a10;line-height:1.5;margin-top:10px;
+      animation:fadeInMsg .3s ease}
+    .aviso-cerrado.show{display:flex;align-items:flex-start;gap:10px}
+    @keyframes fadeInMsg{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
     .cal-mo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--moss)}
     .cal-grid{width:100%;border-collapse:collapse}
     .cal-grid th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;padding:6px 0;text-align:center}
@@ -215,6 +226,7 @@
         <div class="fg"><label class="fl">Fecha salida</label><input type="date" class="fi" id="f-sal" onchange="calcN()"></div>
       </div>
       <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:16px"></div>
+      <div id="aviso-cerrado-modal" class="aviso-cerrado"></div>
       <div class="fg" id="carpa-wrap" style="display:none">
         <label class="fl">Selecciona tu carpa</label>
         <div class="cs" id="carpa-sel"></div>
@@ -255,6 +267,7 @@
 
   async function init(){
     const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
+    await loadHorariosPub();
     P=p; H=h?.quotes||[]; E=e?.events||[];
     TOTAL_ESP=P?.camping?.espacios_totales||10;
     const lbl=document.getElementById('total-esp-lbl');
@@ -430,6 +443,14 @@
     if(!ent||!sal){b.style.display='none';actRes(0);return 0;}
     const n=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
     if(n<=0){b.style.display='block';b.style.background='#fff5f5';b.style.borderColor='#f0c0c0';b.style.color='var(--red)';b.textContent='⚠️ La fecha de salida debe ser posterior';actRes(0);return 0;}
+    // Verificar días cerrados
+    const avM=document.getElementById('aviso-cerrado-modal');
+    if(avM){avM.className='aviso-cerrado';}
+    const entD=document.getElementById('f-ent').value, salD=document.getElementById('f-sal').value;
+    if(entD&&esDiaCerradoPub(entD)){
+      if(avM){const msg=mensajeDiaCerrado(entD);avM.className='aviso-cerrado show';avM.innerHTML=`<span style="font-size:1.1rem;flex-shrink:0">${msg.slice(0,2)}</span><span>${msg.slice(2)}</span>`;}
+      actRes(0);return 0;
+    }
     b.style.display='block';b.style.background='#f0f7ee';b.style.borderColor='#c0ddb8';b.style.color='var(--forest)';
     b.textContent=`🌙 ${n} noche${n===1?'':'s'} · Entrada: ${ent} · Salida: ${sal}`;
     actRes(n);return n;
@@ -457,6 +478,7 @@
     const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
     const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
+    if(esDiaCerradoPub(ent)){alert(mensajeDiaCerrado(ent));return;}
     if(!nom){alert('Ingresa tu nombre.');return;}
     if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
     if(Object.values(CNT).reduce((a,b)=>a+b,0)===0){alert('Selecciona al menos una persona.');return;}

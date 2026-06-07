@@ -71,6 +71,17 @@
     .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;
       cursor:pointer;font-size:.9rem;transition:border-color .2s}
     .cal-btn:hover{border-color:var(--sage)}
+    .cday.cerrado{background:repeating-linear-gradient(45deg,transparent,transparent 4px,
+      rgba(0,0,0,.05) 4px,rgba(0,0,0,.05) 8px);color:#ccc;cursor:not-allowed;
+      flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
+    .cday.cerrado .cn{font-size:.72rem;font-weight:600;color:#bbb}
+    .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
+    .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
+    .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
+      padding:12px 16px;font-size:.84rem;color:#7a4a10;line-height:1.5;margin-top:10px;
+      animation:fadeInMsg .3s ease}
+    .aviso-cerrado.show{display:flex;align-items:flex-start;gap:10px}
+    @keyframes fadeInMsg{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
     .cal-month{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--moss)}
     .cal-grid{width:100%;border-collapse:collapse}
     .cal-grid th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
@@ -187,11 +198,24 @@
         </div>
       </div>
 
-      <!-- Disponibilidad siempre abierta -->
-      <div class="card" style="background:var(--cream);border:none;text-align:center;padding:24px;">
-        <div style="font-size:1.5rem;margin-bottom:8px;">✅</div>
-        <div style="font-weight:700;color:var(--forest);margin-bottom:4px;">Siempre disponible</div>
-        <p style="font-size:.84rem;color:#7a8a74;">Las pasadías no requieren disponibilidad limitada.<br>¡Reserva con anticipación para garantizar tu lugar!</p>
+      <!-- Calendario de disponibilidad pasadía -->
+      <div class="card">
+        <div class="cal-hdr">
+          <div class="cal-mo" id="cal-mo">—</div>
+          <div class="cal-nav">
+            <button class="cal-btn" onclick="calNav(-1)">‹</button>
+            <button class="cal-btn" onclick="calNav(1)">›</button>
+          </div>
+        </div>
+        <table class="cal-grid"><thead><tr>
+          <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
+        </tr></thead><tbody id="cal-body"></tbody></table>
+        <div class="cal-leg">
+          <div class="leg-i"><div class="leg-d" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 6px);border:1px solid #ddd"></div>Cerrado</div>
+          <div class="leg-i"><div class="leg-d" style="background:#f0f7ee;border:1px solid #c0ddb8"></div>Disponible</div>
+          <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
+        </div>
+        <div id="aviso-cerrado-cal" class="aviso-cerrado"></div>
       </div>
     </div>
 
@@ -327,7 +351,40 @@
   let contadores = {}; // { adulto:0, nino:0, ... }
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const SERVICIO = 'pasadia'; // clave en precios.json
+  const SERVICIO = 'pasadia';
+  let calDate = new Date();
+
+
+  // ── Horarios ──────────────────────────────────────────────────────────
+  let DIAS_CERRADOS_PUB    = [2, 3]; // martes y miércoles por defecto
+  let EXCEPCIONES_ABIERTAS_PUB = [];
+
+  async function loadHorariosPub() {
+    const h = await ghFetch('horarios.json');
+    if (h) {
+      DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
+    }
+  }
+
+  function esDiaCerradoPub(ds) {
+    if (EXCEPCIONES_ABIERTAS_PUB.includes(ds)) return false;
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    return DIAS_CERRADOS_PUB.includes(dow);
+  }
+
+  const DOW_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  function mensajeDiaCerrado(ds) {
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    const dia = DOW_ES[dow];
+    const msgs = [
+      `🌿 Los ${dia}s estamos descansando para atenderte mejor. ¡Elige otro día y con gusto te recibimos!`,
+      `😊 Sanagua Lodge cierra los ${dia}s. Selecciona otra fecha y estaremos encantados de recibirte.`,
+      `🦋 Los ${dia}s no abrimos, pero tenemos días increíbles disponibles cerca. ¡Prueba con otra fecha!`,
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
 
   // ── Inicializar ───────────────────────────────────────────────────────
   async function init() {
@@ -473,6 +530,7 @@
 
   function enviarSolicitud() {
     const fecha   = document.getElementById('fecha-visita').value;
+    if(fecha && esDiaCerradoPub(fecha)){alert(mensajeDiaCerrado(fecha));return;}
     const nombre  = document.getElementById('nombre-contacto').value.trim();
     const tel     = document.getElementById('tel-contacto').value.trim();
     const email   = document.getElementById('email-contacto').value.trim();
