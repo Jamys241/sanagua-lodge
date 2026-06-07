@@ -27,14 +27,12 @@
 
     /* SLIDER */
     .slider{position:relative;height:65vh;min-height:420px;overflow:hidden;background:var(--hero1)}
-    .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-size:6rem;opacity:0;transition:opacity .7s ease;background:var(--hero1)}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity .7s ease}
     .slide.active{opacity:1}
-    .slide:nth-child(2){background:linear-gradient(135deg,var(--hero1),var(--hero2))}
-    .slide:nth-child(3){background:var(--hero2)}
-    .slide:nth-child(4){background:linear-gradient(220deg,var(--hero2),var(--hero1))}
-    .slide::after{content:'';position:absolute;inset:0;
-      background:linear-gradient(to bottom,transparent 40%,rgba(26,31,24,.7) 100%)}
+    .slide-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+      background-color:var(--hero1)}
+    .slide-bg::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.55) 100%)}
     .slide-content{position:absolute;bottom:48px;left:48px;z-index:2}
     .slide-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
       color:var(--sage);margin-bottom:10px;display:flex;align-items:center;gap:10px}
@@ -152,28 +150,28 @@
 <!-- SLIDER -->
 <div class="slider" id="slider">
   <div class="slide active">
-    <span>🦜</span>
+    <div class="slide-bg" style="background-image:url('../images/cabana/motmot/foto1.jpg')"></div>
     <div class="slide-content">
       <div class="slide-badge">Sanagua Lodge</div>
       <div class="slide-title">Cabaña <em>Motmot</em></div>
     </div>
   </div>
   <div class="slide">
-    <span>🏡</span>
+    <div class="slide-bg" style="background-image:url('../images/cabana/motmot/foto2.jpg')"></div>
     <div class="slide-content">
       <div class="slide-badge">Interiores</div>
       <div class="slide-title">Comodidad <em>natural</em></div>
     </div>
   </div>
   <div class="slide">
-    <span>🌙</span>
+    <div class="slide-bg" style="background-image:url('../images/cabana/motmot/foto3.jpg')"></div>
     <div class="slide-content">
       <div class="slide-badge">Entorno</div>
       <div class="slide-title">Rodeado de <em>naturaleza</em></div>
     </div>
   </div>
   <div class="slide">
-    <span>⭐</span>
+    <div class="slide-bg" style="background-image:url('../images/cabana/motmot/foto4.jpg')"></div>
     <div class="slide-content">
       <div class="slide-badge">Experiencia</div>
       <div class="slide-title">Tu refugio <em>privado</em></div>
