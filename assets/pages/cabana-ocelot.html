@@ -78,10 +78,17 @@
     .cal-g th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;padding:6px 0;text-align:center}
     .cal-g td{padding:2px;text-align:center}
     .cd{border-radius:8px;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center;font-weight:500;transition:background .15s;width:34px;height:34px}
-    .cd.disp{cursor:default;color:var(--ink)}.cd.disp:hover{background:rgba(122,158,110,.1)}
-    .cd.ocp{background:#f0f0f0;color:#999;flex-direction:column;height:40px;width:100%;border-radius:6px;padding:2px;font-size:.62rem}
+    .cd.disp{cursor:pointer;color:var(--ink)}.cd.disp:hover{background:rgba(122,158,110,.15);color:var(--forest)}
+    .cd.ocp{background:#f0f0f0;color:#999;flex-direction:column;height:40px;width:100%;border-radius:6px;padding:2px;font-size:.62rem;cursor:pointer;transition:background .15s}.cd.ocp:hover{background:#e4e4e4}
     .cd.ocp .cn{font-size:.72rem;font-weight:700;color:#888}.cd.ocp .cl{font-size:.54rem;text-transform:uppercase;letter-spacing:.04em;color:#aaa}
     .cd.tod{background:var(--sage);color:#fff}.cd.oth{color:#e0e0e0}
+    /* Mensaje amigable al hacer clic en día ocupado */
+    .cal-msg{display:none;margin-top:12px;padding:12px 16px;border-radius:8px;
+      font-size:.84rem;line-height:1.5;animation:fadeIn .3s ease}
+    .cal-msg.show{display:flex;align-items:flex-start;gap:10px}
+    .cal-msg.ocupado{background:#fff8f0;border:1px solid #f0d0a0;color:#7a4a10}
+    .cal-msg.libre{background:#f0f7ee;border:1px solid #c0ddb8;color:#2d5a20}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
     .cd.ini{background:#c0ddb8;color:var(--forest);border-radius:8px 0 0 8px}
     .cd.rng{background:#e8f4e4;color:var(--forest)}
     .cd.fin{background:#c0ddb8;color:var(--forest);border-radius:0 8px 8px 0}
@@ -212,6 +219,7 @@
           <div class="leg-i"><div class="leg-d" style="background:#e8f4e4"></div>Reservado</div>
           <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
         </div>
+        <div id="cal-msg" class="cal-msg"></div>
         <p style="font-size:.72rem;color:#bbb;margin-top:8px">* Disponibilidad basada en reservas confirmadas.</p>
       </div>
     </div>
@@ -366,6 +374,42 @@
     return o;
   }
 
+  const MSGS_OCP = [
+    '🌿 Esta fecha ya tiene una reserva confirmada. ¡No te preocupes, hay muchas otras fechas disponibles para ti!',
+    '😊 Esta fecha está reservada, pero estaremos encantados de recibirte en otro momento. ¡Elige otra fecha!',
+    '🌺 Lo sentimos, alguien ya reservó este día. Prueba con fechas cercanas — seguro encontramos el momento perfecto.',
+    '🦋 Este día está ocupado. ¡Tenemos días preciosos disponibles cerca de esta fecha!',
+  ];
+  let _msgIdx = 0;
+
+  function calDayClick(ds, nombre, ocupado) {
+    const el = document.getElementById('cal-msg');
+    if (!el) return;
+    if (ocupado === 'true') {
+      const msg = MSGS_OCP[_msgIdx % MSGS_OCP.length];
+      _msgIdx++;
+      el.className = 'cal-msg ocupado show';
+      el.innerHTML = `<span style="font-size:1.1rem;flex-shrink:0">${msg.slice(0,2)}</span><span>${msg.slice(2)}</span>`;
+      // Auto-ocultar después de 5 segundos
+      clearTimeout(el._timeout);
+      el._timeout = setTimeout(() => { el.className = 'cal-msg'; }, 5000);
+    } else {
+      el.className = 'cal-msg libre show';
+      el.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">✅</span><span>¡Este día está disponible! Puedes seleccionarlo para tu reserva.</span>';
+      clearTimeout(el._timeout);
+      el._timeout = setTimeout(() => { el.className = 'cal-msg'; }, 3000);
+      // Pre-llenar la fecha de entrada en el modal
+      const input = document.getElementById('f-ent');
+      if (input && ds >= new Date().toISOString().slice(0,10)) {
+        input.value = ds;
+        const sal = new Date(ds+'T12:00:00');
+        sal.setDate(sal.getDate()+1);
+        document.getElementById('f-sal').value = lds(sal);
+        calcRes();
+      }
+    }
+  }
+
   function calNav(dir){calD=new Date(calD.getFullYear(),calD.getMonth()+dir,1);renderCal();}
   function renderCal(){
     const y=calD.getFullYear(),m=calD.getMonth();
@@ -383,7 +427,7 @@
         if(o.esInicio||o.esFin){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
         else { cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
       } else { cls+='disp'; }
-      h+=`<td><div class="${cls}" title="${o?.nombre||''}">${cont}</div></td>`;
+      h+=`<td><div class="${cls}" title="${o?.nombre||''}" onclick="calDayClick('${ds}','${o?.nombre||''}','${!!o}')">${cont}</div></td>`;
       c++;if(c%7===0&&d<dm)h+='</tr><tr>';
     }
     const r=(7-c%7)%7; for(let d=1;d<=r;d++)h+=`<td><div class="cd oth">${d}</div></td>`;
