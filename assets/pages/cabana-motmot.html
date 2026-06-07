@@ -382,7 +382,7 @@
   ];
   let _msgIdx = 0;
 
-  function calDayClick(ds, nombre, ocupado) {
+  function calDayClick(ds, ocupado) {
     const el = document.getElementById('cal-msg');
     if (!el) return;
     if (ocupado === 'true') {
@@ -427,7 +427,7 @@
         if(o.esInicio||o.esFin){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
         else { cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
       } else { cls+='disp'; }
-      h+=`<td><div class="${cls}" title="${o?.nombre||''}" onclick="calDayClick('${ds}','${o?.nombre||''}','${!!o}')">${cont}</div></td>`;
+      h+=`<td><div class="${cls}" onclick="calDayClick('${ds}','${!!o}')">${cont}</div></td>`;
       c++;if(c%7===0&&d<dm)h+='</tr><tr>';
     }
     const r=(7-c%7)%7; for(let d=1;d<=r;d++)h+=`<td><div class="cd oth">${d}</div></td>`;
