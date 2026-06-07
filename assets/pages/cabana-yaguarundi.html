@@ -257,8 +257,8 @@
     </div>
     <div class="mb">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="calcRes()"></div>
-        <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="calcRes()"></div>
+        <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="onEntradaChange()"></div>
+        <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="onSalidaChange()"></div>
       </div>
       <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
       <div id="aviso-cerrado-modal" class="aviso-cerrado"></div>
@@ -381,6 +381,7 @@
     document.getElementById('f-ent').value=lds(m);
     document.getElementById('f-sal').value=lds(s2);
     document.getElementById('f-ent').min=lds(new Date());
+    document.getElementById('f-sal').min=lds(s2);
     calcRes();
   }
 
@@ -465,12 +466,15 @@
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const o=ocp[ds];
       let cls='cd ', cont=`${d}`;
-      const cerradoCab=esDiaCerradoPub(ds);
-      if(ds===ts){ cls+='tod'; }
+      const esPasadoCab=ds<ts;
+      const cerradoCab=!esPasadoCab&&esDiaCerradoPub(ds);
+      if(esPasadoCab){ cls+='pasado'; }
+      else if(ds===ts){ cls+='tod'; }
       else if(o){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
       else if(cerradoCab){ cls+='cerrado'; cont=`<span class="cn">${d}</span><span class="cl">Cerrado</span>`; }
       else { cls+='disp'; }
-      h+=`<td><div class="${cls}" onclick="${cerradoCab?`mostrarAvisoCerrado('${ds}')`:o?`calDayClick('${ds}','true')`:`calDayClick('${ds}','false')`}">${cont}</div></td>`;
+      const clickFn=esPasadoCab?'':cerradoCab?`mostrarAvisoCerrado('${ds}')`:o?`calDayClick('${ds}','true')`:`calDayClick('${ds}','false')`;
+      h+=`<td><div class="${cls}" ${clickFn?`onclick="${clickFn}"`:''}>${cont}</div></td>`;
       c++;if(c%7===0&&d<dm)h+='</tr><tr>';
     }
     const r=(7-c%7)%7; for(let d=1;d<=r;d++)h+=`<td><div class="cd oth">${d}</div></td>`;
@@ -496,6 +500,34 @@
       cur.setDate(cur.getDate()+1);
     }
     return null;
+  }
+
+  function onEntradaChange(){
+    const ent = document.getElementById('f-ent').value;
+    if(!ent) return;
+    // Bloquear si es día cerrado
+    if(esDiaCerradoPub(ent)){
+      document.getElementById('f-ent').value = '';
+      const nb=document.getElementById('n-badge');
+      nb.style.display='block';nb.style.background='#fff8f0';nb.style.borderColor='#f0d0a0';nb.style.color='#7a4a10';
+      nb.textContent=mensajeDiaCerrado(ent);
+      clearTimeout(nb._t);nb._t=setTimeout(()=>nb.style.display='none',5000);
+      return;
+    }
+    // Ajustar salida a 1 noche después
+    const entD = new Date(ent+'T12:00:00');
+    entD.setDate(entD.getDate()+1);
+    const sal = lds(entD);
+    document.getElementById('f-sal').value = sal;
+    document.getElementById('f-sal').min   = sal;
+    calcRes();
+  }
+
+  function onSalidaChange(){
+    const sal = document.getElementById('f-sal').value;
+    const ent = document.getElementById('f-ent').value;
+    if(!sal || !ent) return;
+    calcRes();
   }
 
   function calcRes(){
