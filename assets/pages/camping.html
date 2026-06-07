@@ -160,10 +160,12 @@
           <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
         </tr></thead><tbody id="cal-body"></tbody></table>
         <div class="cal-leg">
-          <div class="leg-i"><div class="leg-d" style="background:#f0f0f0;border:1px solid #ddd"></div>Ocupado</div>
+          <div class="leg-i"><div class="leg-d" style="background:#f0f0f0"></div>Sin espacios</div>
+          <div class="leg-i"><div class="leg-d" style="background:#fff8e1;border:1px solid #f0c060"></div>Pocos (≤3)</div>
+          <div class="leg-i"><div class="leg-d" style="background:#f0f7ee;border:1px solid #c0ddb8"></div>Disponible</div>
           <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
-          <div class="leg-i"><div class="leg-d" style="background:#fff;border:1px solid #e0e0e0"></div>Disponible</div>
         </div>
+        <p style="font-size:.72rem;color:#bbb;margin-top:8px;">Total: <strong id="total-esp-lbl">10</strong> espacios de camping</p>
       </div>
       <div class="card" id="stock-card" style="display:none">
         <div class="lbl">Stock de carpas — disponibilidad actual</div>
@@ -249,11 +251,14 @@
   function lds(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
   const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  let P=null, H=[],E=[],calD=new Date(), CNT={}, MOD='propio', CARPA=null;
+  let P=null, H=[],E=[],calD=new Date(), CNT={}, MOD='propio', CARPA=null, TOTAL_ESP=10;
 
   async function init(){
     const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
     P=p; H=h?.quotes||[]; E=e?.events||[];
+    TOTAL_ESP=P?.camping?.espacios_totales||10;
+    const lbl=document.getElementById('total-esp-lbl');
+    if(lbl)lbl.textContent=TOTAL_ESP;
     if(P?.camping){
       const s=P.camping, it=s.itbms||7, mods=s.modalidades||{};
       document.getElementById('hero-desc').textContent=s.descripcion;
@@ -301,6 +306,8 @@
   }
 
   function diasOcp(){
+    // Cuenta cuántos espacios están ocupados cada día
+    // Cada cotización/evento confirmado ocupa 1 espacio de camping
     const o={}, cats=['Camping Propio','Camping Suministro'];
     [...H,...E].forEach(it=>{
       if(!['Confirmada'].includes(it.estado||''))return;
@@ -308,8 +315,13 @@
       if(!it.visit_date)return;
       const s=new Date(it.visit_date+'T12:00:00');
       const e=it.visit_date_end?new Date(new Date(it.visit_date_end+'T12:00:00').getTime()-86400000):s;
-      const c=new Date(s);
-      while(c<=e){const d=lds(c);if(!o[d])o[d]=[];o[d].push(it.client?.name||'Reservado');c.setDate(c.getDate()+1);}
+      const cur=new Date(s);
+      while(cur<=e){
+        const d=lds(cur);
+        if(!o[d])o[d]=0;
+        o[d]++;
+        cur.setDate(cur.getDate()+1);
+      }
     });
     return o;
   }
@@ -323,9 +335,27 @@
     for(let i=fd-1;i>=0;i--){h+=`<td><div class="cday oth">${dp-i}</div></td>`;c++;}
     for(let d=1;d<=dm;d++){
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const o=ocp[ds];
-      h+=o?`<td><div class="cday ocp" title="${o.join(',')}"><span class="cn">${d}</span><span class="cl">Ocupado</span></div></td>`:
-           `<td><div class="cday ${ds===ts?'tod':'disp'}">${d}</div></td>`;
+      const usados=ocp[ds]||0;
+      const libres=Math.max(0, TOTAL_ESP-usados);
+      const lleno=libres===0;
+      const poco=libres>0&&libres<=3;
+      if(ds===ts){
+        // Hoy
+        h+=`<td><div class="cday tod" style="flex-direction:column;height:42px;width:100%;border-radius:6px;font-size:.7rem">
+          <span style="font-weight:700">${d}</span>
+          <span style="font-size:.58rem;opacity:.85">${libres} libre${libres===1?'':'s'}</span>
+        </div></td>`;
+      } else if(lleno){
+        h+=`<td><div class="cday ocp"><span class="cn">${d}</span><span class="cl">Sin esp.</span></div></td>`;
+      } else {
+        const color=poco?'#b45309':'var(--forest)';
+        const bg=poco?'#fff8e1':'#f0f7ee';
+        const txt=poco?`⚠️ ${libres}`:`${libres}`;
+        h+=`<td><div class="cday" style="flex-direction:column;height:42px;width:100%;border-radius:6px;background:${bg};cursor:default">
+          <span style="font-weight:600;font-size:.78rem;color:var(--ink)">${d}</span>
+          <span style="font-size:.6rem;font-weight:700;color:${color}">${txt} libre${libres===1?'':'s'}</span>
+        </div></td>`;
+      }
       c++;if(c%7===0&&d<dm)h+='</tr><tr>';
     }
     const r=(7-c%7)%7;for(let d=1;d<=r;d++)h+=`<td><div class="cday oth">${d}</div></td>`;
