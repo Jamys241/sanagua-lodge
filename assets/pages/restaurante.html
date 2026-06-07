@@ -206,3 +206,123 @@
   <div class="cat-label">Para celebrar</div>
   <h2 class="cat-title">🍸 Cócteles</h2>
   <div class="platos-grid" id="grid-cocteles"></div>
+
+  <!-- Banner Tablas de Picnic -->
+  <a class="picnic-banner" href="picnic/picnic.html">
+    <div class="picnic-inner">
+      <div class="picnic-left">
+        <div class="picnic-tag">Nuevo en Sanagua</div>
+        <div class="picnic-titulo">Tablas de <em>Picnic</em><br>en la naturaleza</div>
+        <div class="picnic-desc">Una experiencia gastronómica única: disfruta una selección curada de quesos, charcutería, frutas y acompañamientos en medio del paisaje natural de Sanagua Lodge.</div>
+        <div class="picnic-items">
+          <span class="picnic-chip">🧀 Tabla Pequeña</span>
+          <span class="picnic-chip">🍇 Tabla Mediana</span>
+          <span class="picnic-chip">🥂 Tabla Grande</span>
+        </div>
+      </div>
+      <div class="picnic-cta">Ver opciones →</div>
+    </div>
+  </a>
+
+  <p class="itbms-note">Todos los precios incluyen ITBMS 7% · Menú sujeto a disponibilidad de temporada</p>
+
+</div>
+
+<script>
+  const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
+
+  // Menú por defecto — se usa cuando no hay conexión a GitHub
+  const MENU_DEFAULT = {
+    categorias:[
+      {id:'desayunos',platos:[
+        {nombre:'Desayuno Panameño',descripcion:'Huevos al gusto, tortillas, carimañolas, café y jugo natural',precio:8.00,foto:''},
+        {nombre:'Pancakes con frutas',descripcion:'Pancakes esponjosos con frutas tropicales de temporada y miel',precio:9.00,foto:''},
+        {nombre:'Bowl saludable',descripcion:'Granola artesanal, yogurt, frutas frescas y semillas',precio:7.50,foto:''}
+      ]},
+      {id:'entradas',platos:[
+        {nombre:'Carimañolas',descripcion:'Masa de yuca rellena, fritas hasta quedar doradas y crujientes',precio:6.00,foto:''},
+        {nombre:'Ceviche de corvina',descripcion:'Corvina fresca marinada en limón con cebolla y culantro',precio:9.00,foto:''},
+        {nombre:'Patacones con todo',descripcion:'Patacones crujientes con guacamole, pico de gallo y chicharrón',precio:7.00,foto:''}
+      ]},
+      {id:'fuertes',platos:[
+        {nombre:'Sancocho de gallina',descripcion:'El clásico panameño. Gallina criolla, ñame, otoe y culantro',precio:12.00,foto:''},
+        {nombre:'Corvina a la plancha',descripcion:'Filete de corvina fresca con arroz, ensalada y patacones',precio:14.00,foto:''},
+        {nombre:'Pollo a la brasa',descripcion:'Pollo marinado en especias locales, asado lentamente al carbón',precio:13.00,foto:''},
+        {nombre:'Arroz con pollo',descripcion:'Clásico panameño con pollo, vegetales y especias de la casa',precio:11.00,foto:''}
+      ]},
+      {id:'postres',platos:[
+        {nombre:'Flan de coco',descripcion:'Flan artesanal de leche de coco con caramelo dorado',precio:5.00,foto:''},
+        {nombre:'Bienmesabe',descripcion:'Postre tradicional de coco rallado, canela y vainilla',precio:4.50,foto:''},
+        {nombre:'Frutas tropicales',descripcion:'Selección de frutas frescas de temporada con crema de coco',precio:5.00,foto:''}
+      ]},
+      {id:'calientes',platos:[
+        {nombre:'Café de altura',descripcion:'Café panameño de origen, preparado en chemex o french press',precio:3.00,foto:''},
+        {nombre:'Té de hierbas',descripcion:'Mezclas artesanales de hierbas locales: jengibre, menta y limoncillo',precio:2.50,foto:''},
+        {nombre:'Chocolate caliente',descripcion:'Cacao panameño con leche entera y un toque de canela',precio:3.50,foto:''}
+      ]},
+      {id:'frias',platos:[
+        {nombre:'Chicha de maracuyá',descripcion:'Refrescante bebida natural de maracuyá, sin conservantes',precio:3.00,foto:''},
+        {nombre:'Agua de coco',descripcion:'Coco fresco cortado en el momento. 100% natural',precio:3.50,foto:''},
+        {nombre:'Jugo natural',descripcion:'Jugos de temporada: naranja, sandía, piña, mango o guanábana',precio:3.00,foto:''}
+      ]},
+      {id:'cocteles',platos:[
+        {nombre:'Seco Herrerano sour',descripcion:'El clásico panameño: seco, limón, azúcar y clara de huevo',precio:9.00,foto:''},
+        {nombre:'Sanagua Sunset',descripcion:'Ron blanco, maracuyá, naranja, grenadina y tónica',precio:10.00,foto:''},
+        {nombre:'Mojito tropical',descripcion:'Ron, menta fresca, limón, azúcar de caña y agua con gas',precio:9.00,foto:''},
+        {nombre:'Mango Spicy',descripcion:'Tequila, mango fresco, chile, sal y jugo de limón',precio:10.00,foto:''}
+      ]}
+    ]
+  };
+
+  async function ghF(fn){
+    if(!GT||!GR)return null;
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,
+        {headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'}});
+      if(!r.ok)return null;
+      const d=await r.json();
+      const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(b));
+    }catch{return null;}
+  }
+
+  const PLACEHOLDER_SVG=`<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="30" r="14" stroke="#a09080" stroke-width="2.2" fill="none"/><line x1="32" y1="8" x2="32" y2="16" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="32" y1="44" x2="32" y2="52" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="30" x2="18" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="46" y1="30" x2="54" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+
+  function renderPlato(p){
+    const precio=p.precio?`<div class="plato-precio">Desde $${Number(p.precio).toFixed(2)}</div>`:'';
+    const hasImg=!!p.foto;
+    return`<div class="plato-card">
+      <div class="plato-img${hasImg?' has-img':''}">
+        <div class="plato-placeholder">${PLACEHOLDER_SVG}</div>
+        ${hasImg?`<img src="${p.foto}" alt="${p.nombre}">`:''}
+      </div>
+      <div class="plato-body">
+        <div class="plato-name">${p.nombre}</div>
+        <div class="plato-desc">${p.descripcion}</div>
+        ${precio}
+      </div>
+    </div>`;
+  }
+
+  function renderMenu(menu){
+    menu.categorias.forEach(cat=>{
+      const el=document.getElementById(`grid-${cat.id}`);
+      if(!el)return;
+      el.innerHTML=cat.platos.length
+        ?cat.platos.map(renderPlato).join('')
+        :'<div style="color:#aaa;font-size:.85rem;padding:20px 0">Sin platos en esta categoría.</div>';
+    });
+  }
+
+  async function init(){
+    // Mostrar platos por defecto de inmediato
+    renderMenu(MENU_DEFAULT);
+    // Intentar cargar desde GitHub (actualiza si hay datos más recientes)
+    const menu=await ghF('menu.json');
+    if(menu?.categorias) renderMenu(menu);
+  }
+
+  init();
+</script>
+</body>
+</html>
