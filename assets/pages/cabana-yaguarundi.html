@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cabaña Yaguarundi — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;--mist:#a8b8a2;
+      --red:#c0392b;--r:10px;--hero1:#2d4a1e;--hero2:#4a7a3a}
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-right{display:flex;align-items:center;gap:14px}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+    .btn-res{background:var(--sage);color:#fff;border:none;border-radius:40px;padding:9px 22px;
+      font-family:'Jost',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s}
+    .btn-res:hover{background:var(--forest)}
+
+    /* SLIDER */
+    .slider{position:relative;height:65vh;min-height:420px;overflow:hidden;background:var(--hero1)}
+    .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-size:6rem;opacity:0;transition:opacity .7s ease;background:var(--hero1)}
+    .slide.active{opacity:1}
+    .slide:nth-child(2){background:linear-gradient(135deg,var(--hero1),var(--hero2))}
+    .slide:nth-child(3){background:var(--hero2)}
+    .slide:nth-child(4){background:linear-gradient(220deg,var(--hero2),var(--hero1))}
+    .slide::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,transparent 40%,rgba(26,31,24,.7) 100%)}
+    .slide-content{position:absolute;bottom:48px;left:48px;z-index:2}
+    .slide-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--sage);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    .slide-badge::before{content:'';width:28px;height:1px;background:var(--sage)}
+    .slide-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,5vw,4.2rem);
+      font-weight:300;color:#fff;line-height:1.05}
+    .slide-title em{font-style:italic;color:var(--sand)}
+    /* Controles slider */
+    .sl-ctrl{position:absolute;bottom:24px;right:48px;z-index:10;display:flex;gap:8px}
+    .sl-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s}
+    .sl-dot.active{background:#fff;width:24px;border-radius:4px}
+    .sl-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:10;
+      background:rgba(0,0,0,.3);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);
+      color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.2rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .sl-arrow:hover{background:rgba(0,0,0,.5)}
+    .sl-arrow.prev{left:20px}.sl-arrow.next{right:20px}
+
+    /* LAYOUT */
+    .pw{max-width:1100px;margin:0 auto;padding:60px 32px}
+    .two-col{display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start}
+    .card{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);padding:26px 28px;
+      box-shadow:0 2px 14px rgba(0,0,0,.05);margin-bottom:20px}
+    .lbl{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+      color:var(--earth);margin-bottom:12px}
+    .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .inc-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6a54}
+    .inc-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
+
+    /* Descripción */
+    .desc-text{font-size:.92rem;color:#5a6a54;line-height:1.8;margin-bottom:18px}
+    .cap-badge{display:inline-flex;align-items:center;gap:8px;background:#f0f7ee;
+      border:1px solid #c0ddb8;border-radius:20px;padding:6px 14px;font-size:.8rem;
+      color:var(--forest);font-weight:600;margin-bottom:16px}
+
+    /* Calendario */
+    .cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .cal-nav{display:flex;gap:6px}
+    .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.9rem;transition:border-color .2s}
+    .cal-btn:hover{border-color:var(--sage)}
+    .cal-mo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--moss)}
+    .cal-g{width:100%;border-collapse:collapse}
+    .cal-g th{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;padding:6px 0;text-align:center}
+    .cal-g td{padding:2px;text-align:center}
+    .cd{border-radius:8px;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center;font-weight:500;transition:background .15s;width:34px;height:34px}
+    .cd.disp{cursor:default;color:var(--ink)}.cd.disp:hover{background:rgba(122,158,110,.1)}
+    .cd.ocp{background:#f0f0f0;color:#999;flex-direction:column;height:40px;width:100%;border-radius:6px;padding:2px;font-size:.62rem}
+    .cd.ocp .cn{font-size:.72rem;font-weight:700;color:#888}.cd.ocp .cl{font-size:.54rem;text-transform:uppercase;letter-spacing:.04em;color:#aaa}
+    .cd.tod{background:var(--sage);color:#fff}.cd.oth{color:#e0e0e0}
+    .cd.ini{background:#c0ddb8;color:var(--forest);border-radius:8px 0 0 8px}
+    .cd.rng{background:#e8f4e4;color:var(--forest)}
+    .cd.fin{background:#c0ddb8;color:var(--forest);border-radius:0 8px 8px 0}
+    .cal-leg{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+    .leg-i{display:flex;align-items:center;gap:5px;font-size:.7rem;color:#888}
+    .leg-d{width:10px;height:10px;border-radius:3px}
+
+    /* Sticky sidebar */
+    .sc{position:sticky;top:80px}
+    .ps{background:var(--moss);border-radius:var(--r);padding:24px;color:#fff}
+    .pf{font-size:.72rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+    .pm{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--sand)}
+    .psub{font-size:.76rem;color:rgba(255,255,255,.5);margin-top:2px}
+    .tarifa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .tar-item{background:rgba(255,255,255,.07);border-radius:7px;padding:10px 12px}
+    .tar-tipo{font-size:.68rem;color:var(--mist);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+    .tar-val{font-size:.9rem;font-weight:700;color:#fff}
+    .btn-rb{width:100%;background:var(--sage);color:#fff;border:none;border-radius:8px;
+      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
+      margin-top:18px;transition:background .2s;letter-spacing:.05em}
+    .btn-rb:hover{background:var(--forest)}
+
+    /* Modal */
+    .ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+      display:none;align-items:center;justify-content:center;padding:16px}
+    .ov.open{display:flex}
+    .mo{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;
+      box-shadow:0 30px 80px rgba(0,0,0,.3)}
+    .mh{background:var(--moss);padding:22px 28px;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:10}
+    .mt{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#fff}
+    .mc{background:rgba(255,255,255,.15);border:none;width:32px;height:32px;
+      border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .mb{padding:22px 28px}
+    .fg{margin-bottom:16px}
+    .fl{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:#9a9a9a;margin-bottom:7px;display:block}
+    .fi{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;
+      font-family:'Jost',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;background:#fafafa}
+    .fi:focus{border-color:var(--sage);background:#fff}
+    .rb{background:#f8f8f5;border-radius:10px;padding:16px;margin-top:4px}
+    .rr{display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0;color:#666}
+    .rr.tot{font-size:1rem;font-weight:700;padding-top:10px;border-top:1.5px solid #e0e0e0;margin-top:6px;color:var(--moss)}
+    .rr.itb{color:#aaa;font-size:.78rem}
+    .bc{width:100%;background:var(--moss);color:#fff;border:none;border-radius:10px;
+      padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:16px;transition:background .2s}
+    .bc:hover{background:var(--forest)}
+    .fn{font-size:.72rem;color:#bbb;text-align:center;margin-top:10px}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}.pw{padding:40px 18px}.two-col{grid-template-columns:1fr}.sc{position:static}
+      .slide-content{left:24px;bottom:32px}.sl-arrow{display:none}.inc-grid{grid-template-columns:1fr}
+      .tarifa-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
+  <div class="nav-right">
+    <a class="nav-back" href="cabanas.html">← Cabañas</a>
+    <button class="btn-res" onclick="openModal()">Reservar</button>
+  </div>
+</nav>
+
+<!-- SLIDER -->
+<div class="slider" id="slider">
+  <div class="slide active">
+    <span>🌿</span>
+    <div class="slide-content">
+      <div class="slide-badge">Sanagua Lodge</div>
+      <div class="slide-title">Cabaña <em>Yaguarundi</em></div>
+    </div>
+  </div>
+  <div class="slide">
+    <span>🛏️</span>
+    <div class="slide-content">
+      <div class="slide-badge">Interiores</div>
+      <div class="slide-title">Comodidad <em>natural</em></div>
+    </div>
+  </div>
+  <div class="slide">
+    <span>🌺</span>
+    <div class="slide-content">
+      <div class="slide-badge">Entorno</div>
+      <div class="slide-title">Rodeado de <em>naturaleza</em></div>
+    </div>
+  </div>
+  <div class="slide">
+    <span>🦋</span>
+    <div class="slide-content">
+      <div class="slide-badge">Experiencia</div>
+      <div class="slide-title">Tu refugio <em>privado</em></div>
+    </div>
+  </div>
+  <button class="sl-arrow prev" onclick="slNav(-1)">‹</button>
+  <button class="sl-arrow next" onclick="slNav(1)">›</button>
+  <div class="sl-ctrl" id="sl-dots"></div>
+</div>
+
+<div class="pw">
+  <div class="two-col">
+    <div>
+      <!-- Descripción -->
+      <div class="card">
+        <div class="cap-badge" id="cap-badge">👥 Hasta 4 personas</div>
+        <p class="desc-text" id="cab-desc">Nuestra cabaña más íntima, diseñada para el descanso y la reconexión. Rodeada de vegetación exuberante, perfecta para parejas o familias pequeñas que buscan privacidad y tranquilidad en medio de la naturaleza panameña.</p>
+        <div class="lbl">¿Qué incluye?</div>
+        <div class="inc-grid" id="inc-list"></div>
+      </div>
+
+      <!-- Calendario -->
+      <div class="card">
+        <div class="lbl">Disponibilidad — Cabaña Yaguarundi</div>
+        <div class="cal-hdr">
+          <div class="cal-mo" id="cal-mo">—</div>
+          <div class="cal-nav">
+            <button class="cal-btn" onclick="calNav(-1)">‹</button>
+            <button class="cal-btn" onclick="calNav(1)">›</button>
+          </div>
+        </div>
+        <table class="cal-g"><thead><tr>
+          <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
+        </tr></thead><tbody id="cal-body"></tbody></table>
+        <div class="cal-leg">
+          <div class="leg-i"><div class="leg-d" style="background:#f0f0f0"></div>Ocupado</div>
+          <div class="leg-i"><div class="leg-d" style="background:#c0ddb8"></div>Inicio/Fin</div>
+          <div class="leg-i"><div class="leg-d" style="background:#e8f4e4"></div>Reservado</div>
+          <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
+        </div>
+        <p style="font-size:.72rem;color:#bbb;margin-top:8px">* Disponibilidad basada en reservas confirmadas.</p>
+      </div>
+    </div>
+
+    <!-- Sidebar sticky -->
+    <div class="sc">
+      <div class="ps">
+        <div class="pf">Tarifas por noche</div>
+        <div class="pm" id="p-semana">$—</div>
+        <div class="psub">Lunes – Jueves · ITBMS incluido</div>
+        <div class="tarifa-grid">
+          <div class="tar-item"><div class="tar-tipo">Fin de semana</div><div class="tar-val" id="p-finsemana">$—</div></div>
+          <div class="tar-item"><div class="tar-tipo">Persona adicional</div><div class="tar-val" id="p-adicional">$—</div></div>
+        </div>
+        <button class="btn-rb" onclick="openModal()">Solicitar reserva →</button>
+      </div>
+
+      <div class="card" style="margin-top:16px;background:var(--cream);border:none">
+        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
+        <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
+          <a href="https://instagram.com/sanagualodge" style="color:var(--earth)">@sanagualodge</a><br>
+          +507 6166-0114
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESERVA -->
+<div class="ov" id="modal-ov">
+  <div class="mo">
+    <div class="mh">
+      <div class="mt">🏡 Reservar — Cabaña Yaguarundi</div>
+      <button class="mc" onclick="closeModal()">×</button>
+    </div>
+    <div class="mb">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="calcRes()"></div>
+        <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="calcRes()"></div>
+      </div>
+      <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
+      <div id="conflicto-badge" style="display:none;background:#fff5f5;border:1px solid #f0c0c0;border-radius:7px;padding:10px 14px;font-size:.82rem;color:var(--red);margin-bottom:14px"></div>
+      <div class="fg">
+        <label class="fl">Personas adicionales <span style="color:#aaa;font-weight:400">(más allá de la capacidad base)</span></label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button style="width:32px;height:32px;border-radius:50%;border:1.5px solid #e0e0e0;background:#fff;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center" onclick="chgAd(-1)">−</button>
+          <span id="cnt-ad" style="font-weight:700;font-size:1.1rem;min-width:24px;text-align:center">0</span>
+          <button style="width:32px;height:32px;border-radius:50%;border:1.5px solid #e0e0e0;background:#fff;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center" onclick="chgAd(1)">+</button>
+          <span style="font-size:.8rem;color:#aaa">$<span id="p-ad-unit">0</span>/noche c/u</span>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Resumen</label><div class="rb" id="res-box"><div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona las fechas</div></div></div>
+      <div class="fg"><label class="fl">Nombre</label><input type="text" class="fi" id="nom" placeholder="Tu nombre completo"></div>
+      <div class="fg"><label class="fl">WhatsApp</label><input type="tel" class="fi" id="tel" placeholder="+507 6000-0000"></div>
+      <div class="fg"><label class="fl">Correo</label><input type="email" class="fi" id="ema" placeholder="tu@correo.com"></div>
+      <button class="bc" onclick="enviar()">Enviar solicitud de reserva</button>
+      <div class="fn">Confirmación por WhatsApp o correo en menos de 24 horas.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config ────────────────────────────────────────────────────────────
+  const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
+  const CABANA_KEY = 'yaguarundi'; // clave en precios.json
+  const CABANA_CAT = 'Cabaña Yaguarundi'; // categoría en historial
+
+  async function ghF(fn){
+    if(!GT||!GR)return null;
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,{headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'}});
+      if(!r.ok)return null;
+      const d=await r.json();
+      const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(b));
+    }catch{return null;}
+  }
+  function lds(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // ── Estado ────────────────────────────────────────────────────────────
+  let P=null, H=[], E=[], calD=new Date(), adPersonas=0, cabData=null;
+
+  // ── Slider ────────────────────────────────────────────────────────────
+  let slIdx=0;
+  const slides=()=>document.querySelectorAll('.slide');
+  const dots=()=>document.querySelectorAll('.sl-dot');
+  function slGo(i){
+    const s=slides(), d=dots(), n=s.length;
+    slIdx=(i+n)%n;
+    s.forEach((el,j)=>el.classList.toggle('active',j===slIdx));
+    d.forEach((el,j)=>el.classList.toggle('active',j===slIdx));
+  }
+  function slNav(dir){slGo(slIdx+dir);}
+  function initSlider(){
+    const n=slides().length;
+    const dc=document.getElementById('sl-dots');
+    dc.innerHTML=[...Array(n)].map((_,i)=>`<div class="sl-dot${i===0?' active':''}" onclick="slGo(${i})"></div>`).join('');
+    setInterval(()=>slNav(1), 4000);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  async function init(){
+    initSlider();
+    const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
+    P=p; H=h?.quotes||[]; E=e?.events||[];
+    cabData=P?.cabanas?.cabanas?.[CABANA_KEY];
+    if(cabData){
+      const it=P.cabanas.itbms||7;
+      const t=cabData.tarifas||{};
+      // Precios en sidebar
+      const ps=t.semana?.precio||0, pf=t.finsemana?.precio||0, pa=t.adicional?.precio||0;
+      document.getElementById('p-semana').textContent=`$${(ps*(1+it/100)).toFixed(2)}`;
+      document.getElementById('p-finsemana').textContent=`$${(pf*(1+it/100)).toFixed(2)}`;
+      document.getElementById('p-adicional').textContent=`$${(pa*(1+it/100)).toFixed(2)}/noche`;
+      document.getElementById('p-ad-unit').textContent=(pa*(1+it/100)).toFixed(2);
+      // Descripción e incluye
+      if(cabData.descripcion) document.getElementById('cab-desc').textContent=cabData.descripcion;
+      if(cabData.incluye?.length) document.getElementById('inc-list').innerHTML=cabData.incluye.map(i=>`<div class="inc-item">${i}</div>`).join('');
+      if(cabData.capacidad) document.getElementById('cap-badge').textContent=`👥 Hasta ${cabData.capacidad} personas`;
+    }
+    renderCal();
+    const m=new Date(); m.setDate(m.getDate()+1);
+    const s2=new Date(); s2.setDate(s2.getDate()+2);
+    document.getElementById('f-ent').value=lds(m);
+    document.getElementById('f-sal').value=lds(s2);
+    document.getElementById('f-ent').min=lds(new Date());
+    calcRes();
+  }
+
+  // ── Calendario ────────────────────────────────────────────────────────
+  function diasOcp(){
+    // Devuelve objeto con fechas ocupadas: {ds: {nombre, esInicio, esFin, esRango}}
+    const o={};
+    [...H,...E].forEach(it=>{
+      if((it.estado||'')!=='Confirmada')return;
+      if((it.categoria||'')!==CABANA_CAT)return;
+      if(!it.visit_date)return;
+      const s=new Date(it.visit_date+'T12:00:00');
+      // El día de salida queda libre
+      const endDay=it.visit_date_end?new Date(new Date(it.visit_date_end+'T12:00:00').getTime()-86400000):s;
+      const nombre=it.client?.name||'Reservado';
+      const cur=new Date(s);
+      while(cur<=endDay){
+        const ds=lds(cur);
+        const esInicio=ds===lds(s);
+        const esFin=ds===lds(endDay);
+        o[ds]={nombre, esInicio, esFin, esRango:!esInicio&&!esFin};
+        cur.setDate(cur.getDate()+1);
+      }
+    });
+    return o;
+  }
+
+  function calNav(dir){calD=new Date(calD.getFullYear(),calD.getMonth()+dir,1);renderCal();}
+  function renderCal(){
+    const y=calD.getFullYear(),m=calD.getMonth();
+    document.getElementById('cal-mo').textContent=`${MESES[m]} ${y}`;
+    const ts=lds(new Date()), ocp=diasOcp();
+    const fd=new Date(y,m,1).getDay(), dm=new Date(y,m+1,0).getDate(), dp=new Date(y,m,0).getDate();
+    let h='<tr>',c=0;
+    for(let i=fd-1;i>=0;i--){h+=`<td><div class="cd oth">${dp-i}</div></td>`;c++;}
+    for(let d=1;d<=dm;d++){
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const o=ocp[ds];
+      let cls='cd ', cont=`${d}`;
+      if(ds===ts){ cls+='tod'; }
+      else if(o){
+        if(o.esInicio||o.esFin){ cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
+        else { cls+='ocp'; cont=`<span class="cn">${d}</span><span class="cl">Ocupado</span>`; }
+      } else { cls+='disp'; }
+      h+=`<td><div class="${cls}" title="${o?.nombre||''}">${cont}</div></td>`;
+      c++;if(c%7===0&&d<dm)h+='</tr><tr>';
+    }
+    const r=(7-c%7)%7; for(let d=1;d<=r;d++)h+=`<td><div class="cd oth">${d}</div></td>`;
+    h+='</tr>'; document.getElementById('cal-body').innerHTML=h;
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function openModal(){document.getElementById('modal-ov').classList.add('open');}
+  function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+  document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
+
+  function chgAd(d){adPersonas=Math.max(0,adPersonas+d);document.getElementById('cnt-ad').textContent=adPersonas;calcRes();}
+
+  function esDiaLaborable(ds){const dow=new Date(ds+'T12:00:00').getDay();return dow>=1&&dow<=4;}
+
+  function verificarConflicto(ent,sal){
+    const ocp=diasOcp();
+    const cur=new Date(ent+'T12:00:00');
+    const end=new Date(sal+'T12:00:00');
+    while(cur<end){
+      const ds=lds(cur);
+      if(ocp[ds])return ocp[ds].nombre;
+      cur.setDate(cur.getDate()+1);
+    }
+    return null;
+  }
+
+  function calcRes(){
+    const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
+    const nb=document.getElementById('n-badge'), cb=document.getElementById('conflicto-badge');
+    nb.style.display='none'; cb.style.display='none';
+    if(!ent||!sal){document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona las fechas</div>';return;}
+    const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
+    if(noches<=0){nb.style.display='block';nb.style.background='#fff5f5';nb.style.borderColor='#f0c0c0';nb.style.color='var(--red)';nb.textContent='⚠️ La fecha de salida debe ser posterior a la de entrada';document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Fechas inválidas</div>';return;}
+    nb.style.display='block';nb.style.background='#f0f7ee';nb.style.borderColor='#c0ddb8';nb.style.color='var(--forest)';
+    nb.textContent=`🌙 ${noches} noche${noches===1?'':'s'} · ${ent} → ${sal}`;
+    // Verificar conflicto
+    const conf=verificarConflicto(ent,sal);
+    if(conf){cb.style.display='block';cb.textContent=`⚠️ Las fechas seleccionadas se solapan con una reserva confirmada de ${conf}. Por favor elige otras fechas.`;}
+    if(!cabData)return;
+    const it=P.cabanas.itbms||7, t=cabData.tarifas||{};
+    // Calcular por noches según día semana/fin de semana
+    let subBase=0; const lineas=[];
+    const cur=new Date(ent+'T12:00:00');
+    const endD=new Date(sal+'T12:00:00');
+    let nSemana=0, nFin=0;
+    while(cur<endD){
+      if(esDiaLaborable(lds(cur)))nSemana++;else nFin++;
+      cur.setDate(cur.getDate()+1);
+    }
+    if(nSemana>0){const s=t.semana?.precio||0;const v=s*nSemana;subBase+=v;lineas.push({l:`Tarifa semana × ${nSemana} noche${nSemana===1?'':'s'}`,v});}
+    if(nFin>0){const s=t.finsemana?.precio||0;const v=s*nFin;subBase+=v;lineas.push({l:`Tarifa fin de semana × ${nFin} noche${nFin===1?'':'s'}`,v});}
+    if(adPersonas>0){const pa=t.adicional?.precio||0;const v=pa*adPersonas*noches;subBase+=v;lineas.push({l:`Persona adicional × ${adPersonas} × ${noches} noche${noches===1?'':'s'}`,v});}
+    const ia=subBase*(it/100), total=subBase+ia;
+    document.getElementById('res-box').innerHTML=`
+      ${lineas.map(l=>`<div class="rr"><span>${l.l}</span><span>$${l.v.toFixed(2)}</span></div>`).join('')}
+      <div style="height:1px;background:#e8e8e8;margin:6px 0"></div>
+      <div class="rr itb"><span>ITBMS ${it}%</span><span>$${ia.toFixed(2)}</span></div>
+      <div class="rr tot"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+  }
+
+  function enviar(){
+    const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
+    const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
+    if(!ent||!sal){alert('Selecciona las fechas.');return;}
+    if(!nom){alert('Ingresa tu nombre.');return;}
+    if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
+    if(verificarConflicto(ent,sal)){alert('Las fechas seleccionadas están ocupadas. Por favor elige otras fechas.');return;}
+    const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
+    const ad=adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';
+    const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar Cabaña Yaguarundi.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${noches} noche${noches===1?'':'s'})${ad}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
+    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    closeModal();
+  }
+
+  init();
+</script>
+</body>
+</html>
