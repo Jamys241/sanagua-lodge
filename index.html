@@ -319,6 +319,15 @@
       border-radius: 16px; overflow: hidden;
     }
 
+    /* ── Insignia popular */
+    .pop-badge{position:absolute;top:16px;right:16px;z-index:3;
+      background:linear-gradient(135deg,#c9a84c,#e8c870);
+      color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.08em;
+      text-transform:uppercase;padding:4px 12px;border-radius:20px;
+      box-shadow:0 2px 10px rgba(201,168,76,.45);
+      display:flex;align-items:center;gap:4px;white-space:nowrap;
+      pointer-events:none}
+
     .service-card {
       background: var(--linen);
       padding: 44px 40px;
@@ -812,7 +821,7 @@
 
     <div class="services-grid">
 
-      <a class="service-card" href="assets/pages/pasadia.html">
+      <a class="service-card" id="card-pasadia" href="assets/pages/pasadia.html">
         <div class="service-num">01</div>
         <div class="service-icon">☀️</div>
         <div class="service-name">Pasadías</div>
@@ -822,7 +831,7 @@
         <div class="service-link">Más información →</div>
       </a>
 
-      <a class="service-card" href="assets/pages/camping.html">
+      <a class="service-card" id="card-camping" href="assets/pages/camping.html">
         <div class="service-num">02</div>
         <div class="service-icon">⛺</div>
         <div class="service-name">Camping</div>
@@ -832,7 +841,7 @@
         <div class="service-link">Más información →</div>
       </a>
 
-      <a class="service-card" href="assets/pages/cabanas.html">
+      <a class="service-card" id="card-cabanas" href="assets/pages/cabanas.html">
         <div class="service-num">03</div>
         <div class="service-icon">🏡</div>
         <div class="service-name">Cabañas</div>
@@ -842,7 +851,7 @@
         <div class="service-link">Ver cabañas →</div>
       </a>
 
-      <a class="service-card" href="assets/pages/restaurante.html">
+      <a class="service-card" id="card-restaurante" href="assets/pages/restaurante.html">
         <div class="service-num">04</div>
         <div class="service-icon">🍽️</div>
         <div class="service-name">Restaurante</div>
@@ -1332,6 +1341,39 @@
     return webGhWrite('users.json', { users }, existing?.sha || null);
   }
 
+  // ── Populares ─────────────────────────────────────────────────────────
+  async function loadPopulares() {
+    const res = await webGhRead('populares.json');
+    const lista = res?.data?.populares || [];
+    // Mapa de id → tarjeta(s) que afecta
+    const MAP = {
+      'pasadia-sencilla':   ['card-pasadia'],
+      'pasadia-completa':   ['card-pasadia'],
+      'camping-propio':     ['card-camping'],
+      'camping-suministro': ['card-camping'],
+      'cabana-yaguarundi':  ['card-cabanas'],
+      'cabana-ocelot':      ['card-cabanas'],
+      'cabana-motmot':      ['card-cabanas'],
+      'restaurante':        ['card-restaurante'],
+    };
+    // Limpiar insignias previas
+    document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
+    lista.forEach(id => {
+      const targets = MAP[id] || [];
+      targets.forEach(cardId => {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        // Solo agregar una vez por tarjeta
+        if (card.querySelector('.pop-badge')) return;
+        const badge = document.createElement('div');
+        badge.className = 'pop-badge';
+        badge.innerHTML = '⭐ Más popular';
+        card.style.position = 'relative';
+        card.prepend(badge);
+      });
+    });
+  }
+
   async function loadWebAuth() {
     const res = await webGhRead('auth.json');
     if (res?.data) webAuthData = res.data;
@@ -1478,6 +1520,9 @@
   function openUserPanel() {
     if (publicUser) openAuth('user');
   }
+
+  // Cargar insignias de servicios populares al iniciar
+  window.addEventListener('DOMContentLoaded', () => loadPopulares());
 
   // ── Header transparente al hacer scroll ──────────────────────────────
   window.addEventListener('scroll', () => {
