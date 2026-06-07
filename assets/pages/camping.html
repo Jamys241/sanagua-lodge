@@ -41,6 +41,11 @@
     .cal-nav{display:flex;gap:6px}
     .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.9rem;transition:border-color .2s}
     .cal-btn:hover{border-color:var(--sage)}
+    .pop-badge{position:absolute;top:-8px;right:10px;z-index:3;
+      background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;
+      font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:3px 10px;border-radius:20px;box-shadow:0 2px 8px rgba(201,168,76,.45);
+      white-space:nowrap;pointer-events:none}
     .cday.cerrado{background:repeating-linear-gradient(45deg,transparent,transparent 4px,
       rgba(0,0,0,.05) 4px,rgba(0,0,0,.05) 8px);color:#ccc;cursor:not-allowed;
       flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
@@ -422,9 +427,35 @@
     clearTimeout(b._t);b._t=setTimeout(()=>{b.style.display='none';},5000);
   }
 
-  function openModal(){document.getElementById('modal-ov').classList.add('open');}
+  function openModal(){document.getElementById('modal-ov').classList.add('open');loadYMostrarPopularesCamp();}
   function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
   document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
+
+  async function loadYMostrarPopularesCamp(){
+    try {
+      const pop = await ghF('populares.json');
+      const lista = pop?.populares || [];
+      const mapMod = { propio:'camping-propio', suministro:'camping-suministro' };
+      document.querySelectorAll('.msc').forEach(el => {
+        el.querySelector('.pop-badge')?.remove();
+        el.style.position = '';
+      });
+      Object.entries(mapMod).forEach(([mod, pid]) => {
+        if (!lista.includes(pid)) return;
+        // Encontrar la card de esa modalidad
+        const cards = document.querySelectorAll('.msc');
+        cards.forEach(el => {
+          if (el.getAttribute('onclick')?.includes(`'${mod}'`)) {
+            el.style.position = 'relative';
+            const b = document.createElement('div');
+            b.className = 'pop-badge';
+            b.textContent = '⭐ Más popular';
+            el.prepend(b);
+          }
+        });
+      });
+    } catch {}
+  }
 
   function renderModSel(){
     if(!P?.camping?.modalidades)return;

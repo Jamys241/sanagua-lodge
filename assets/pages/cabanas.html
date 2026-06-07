@@ -165,7 +165,7 @@
     }catch{return null;}
   }
   async function init(){
-    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
+    const p = await ghF('precios.json');
 
     // Precios desde
     if(p?.cabanas?.cabanas){
@@ -180,25 +180,7 @@
       });
     }
 
-    // Insignias de popular
-    const populares = pop?.populares || [];
-    const cardMap = {
-      'cabana-yaguarundi': 'card-yaguarundi',
-      'cabana-ocelot':     'card-ocelot',
-      'cabana-motmot':     'card-motmot',
-    };
-    Object.entries(cardMap).forEach(([pid, cardId]) => {
-      const card = document.getElementById(cardId);
-      if (!card) return;
-      if (populares.includes(pid)) {
-        card.classList.add('popular');
-        const badge = document.createElement('div');
-        badge.className = 'pop-badge';
-        badge.innerHTML = '⭐ Más popular';
-        card.style.position = 'relative';
-        card.prepend(badge);
-      }
-    });
+    // Sin insignias en esta página
   }
   init();
 </script>

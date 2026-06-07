@@ -71,6 +71,11 @@
     .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;
       cursor:pointer;font-size:.9rem;transition:border-color .2s}
     .cal-btn:hover{border-color:var(--sage)}
+    .pop-badge{position:absolute;top:-8px;right:10px;z-index:3;
+      background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;
+      font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:3px 10px;border-radius:20px;box-shadow:0 2px 8px rgba(201,168,76,.45);
+      white-space:nowrap;pointer-events:none}
     .cday.cerrado{background:repeating-linear-gradient(45deg,transparent,transparent 4px,
       rgba(0,0,0,.05) 4px,rgba(0,0,0,.05) 8px);color:#ccc;cursor:not-allowed;
       flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
@@ -482,11 +487,31 @@
 
 
   // ── Modal ─────────────────────────────────────────────────────────────
-  function openModal(){ document.getElementById('modal-overlay').classList.add('open'); }
+  function openModal(){ document.getElementById('modal-overlay').classList.add('open'); loadYMostrarPopulares(); }
   function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
   document.getElementById('modal-overlay').addEventListener('click',e=>{
     if(e.target===document.getElementById('modal-overlay'))closeModal();
   });
+
+  async function loadYMostrarPopulares(){
+    try {
+      const pop = await ghFetch('populares.json');
+      const lista = pop?.populares || [];
+      ['sencilla','completa'].forEach(mod => {
+        const el = document.getElementById(`mod-${mod}`);
+        if (!el) return;
+        // Quitar badge previo
+        el.querySelector('.pop-badge')?.remove();
+        if (lista.includes(`pasadia-${mod}`)) {
+          el.style.position = 'relative';
+          const b = document.createElement('div');
+          b.className = 'pop-badge';
+          b.textContent = '⭐ Más popular';
+          el.prepend(b);
+        }
+      });
+    } catch {}
+  }
 
   function selectModalidad(key) {
     if (!precios?.[SERVICIO]?.modalidades?.[key]) return;
