@@ -1098,6 +1098,11 @@
     <div id="ppanel-camping" style="display:none;">
       <div class="form-grid">
         <div class="form-group"><label>ITBMS (%)</label><input type="number" id="p-camping-itbms" min="0" max="20" step="1" value="7"></div>
+        <div class="form-group">
+          <label>Espacios totales de camping</label>
+          <input type="number" id="p-camping-espacios" min="1" max="500" step="1" value="10">
+          <small style="font-size:.72rem;color:var(--muted)">Se muestra en el calendario de la página web</small>
+        </div>
       </div>
       <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 10px;">Camping Propio — Tarifas de entrada</div>
       <div class="form-grid" id="p-camping-propio"></div>
@@ -3666,7 +3671,8 @@
 
     // ── CAMPING ──
     if (p.camping?.modalidades) {
-      document.getElementById('p-camping-itbms').value = p.camping.itbms||7;
+      document.getElementById('p-camping-itbms').value    = p.camping.itbms||7;
+      document.getElementById('p-camping-espacios').value = p.camping.espacios_totales||10;
       ['propio','suministro'].forEach(mod => {
         const m = p.camping.modalidades[mod];
         if (!m) return;
@@ -3753,7 +3759,8 @@
     }
 
     // Leer camping
-    p.camping.itbms = parseFloat(document.getElementById('p-camping-itbms').value)||7;
+    p.camping.itbms           = parseFloat(document.getElementById('p-camping-itbms').value)||7;
+    p.camping.espacios_totales = parseInt(document.getElementById('p-camping-espacios').value)||10;
     ['propio','suministro'].forEach(mod => {
       Object.keys(p.camping.modalidades?.[mod]?.tarifas||{}).forEach(k => {
         const el = document.getElementById(`p-camp-${mod}-${k}`);
