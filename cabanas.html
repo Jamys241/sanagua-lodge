@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cabañas — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;--mist:#a8b8a2;--r:12px}
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+
+    .hero{height:50vh;min-height:340px;position:relative;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(160deg,#1a2a16,#2d4a24,#3a5a32)}
+    .hero::before{content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(74,124,71,.18) 0%,transparent 70%)}
+    .hero-content{position:relative;z-index:2;text-align:center;padding:0 24px}
+    .hero-badge{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:600;
+      letter-spacing:.2em;text-transform:uppercase;color:var(--sage);margin-bottom:16px}
+    .hero-badge::before,.hero-badge::after{content:'';width:30px;height:1px;background:var(--sage)}
+    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,6vw,5rem);
+      font-weight:300;color:#fff;line-height:1.05;margin-bottom:16px}
+    h1 em{font-style:italic;color:var(--sand)}
+    .hero-sub{font-size:.95rem;color:rgba(255,255,255,.6);max-width:500px;margin:0 auto;line-height:1.7}
+
+    .pw{max-width:1100px;margin:0 auto;padding:72px 32px}
+    .sec-label{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--earth);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--sand);opacity:.4;max-width:60px}
+    .sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);
+      font-weight:300;color:var(--moss);line-height:1.2;margin-bottom:48px}
+    .sec-title em{font-style:italic;color:var(--earth)}
+
+    /* Grid de cabañas */
+    .cabanas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px}
+    .cabana-card{background:#fff;border-radius:var(--r);overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);transition:transform .3s,box-shadow .3s;
+      text-decoration:none;display:block;color:var(--ink)}
+    .cabana-card:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(0,0,0,.14)}
+    .cabana-img{height:220px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:4rem}
+    .cabana-img.yaguarundi{background:linear-gradient(135deg,#2d4a1e,#4a7a3a)}
+    .cabana-img.ocelot{background:linear-gradient(135deg,#3a2a1a,#6a4a28)}
+    .cabana-img.motmot{background:linear-gradient(135deg,#1a2a3a,#2a4a5a)}
+    .cabana-num{position:absolute;top:16px;left:16px;font-family:'Cormorant Garamond',serif;
+      font-size:3rem;font-weight:300;color:rgba(255,255,255,.15);line-height:1}
+    .cabana-badge{position:absolute;bottom:16px;right:16px;background:rgba(0,0,0,.3);
+      backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:20px;
+      padding:4px 12px;font-size:.7rem;color:rgba(255,255,255,.85);font-weight:500}
+    .cabana-body{padding:24px 28px}
+    .cabana-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;
+      color:var(--moss);margin-bottom:8px}
+    .cabana-desc{font-size:.85rem;color:#6a7a64;line-height:1.65;margin-bottom:18px}
+    .cabana-details{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+    .det-item{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--mist);font-weight:500}
+    .cabana-desde{display:flex;align-items:baseline;gap:6px;margin-bottom:18px}
+    .desde-label{font-size:.72rem;color:#aaa;text-transform:uppercase;letter-spacing:.1em}
+    .desde-precio{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--moss);font-weight:600}
+    .cabana-link{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;
+      font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--earth);
+      transition:gap .2s}
+    .cabana-card:hover .cabana-link{gap:14px}
+    .pop-badge{position:absolute;top:16px;right:16px;z-index:3;
+      background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;
+      font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:5px 13px;border-radius:20px;box-shadow:0 3px 12px rgba(201,168,76,.5);
+      display:flex;align-items:center;gap:4px;white-space:nowrap;pointer-events:none;
+      animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+    .cabana-card.popular{box-shadow:0 4px 30px rgba(201,168,76,.3);border:2px solid rgba(201,168,76,.35)}
+
+    @media(max-width:768px){nav{padding:0 18px}.pw{padding:48px 18px}}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-back" href="../../index.html">← Inicio</a>
+</nav>
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Sanagua Lodge</div>
+    <h1>Nuestras <em>Cabañas</em></h1>
+    <p class="hero-sub">Tres refugios únicos en medio de la naturaleza panameña. Cada uno con su propio carácter, vistas y comodidades.</p>
+  </div>
+</section>
+<div class="pw">
+  <div class="sec-label">Alojamiento</div>
+  <h2 class="sec-title">Elige tu <em>refugio perfecto</em></h2>
+  <div class="cabanas-grid" id="cabanas-grid">
+    <!-- Se renderiza dinámicamente -->
+    <a class="cabana-card" id="card-yaguarundi" href="cabana-yaguarundi.html">
+      <div class="cabana-img yaguarundi">
+        <div class="cabana-num">01</div>
+        <span>🌿</span>
+        <div class="cabana-badge">Hasta 4 personas</div>
+      </div>
+      <div class="cabana-body">
+        <div class="cabana-name">Cabaña Yaguarundi</div>
+        <p class="cabana-desc">Cabaña íntima rodeada de vegetación, perfecta para parejas o familias pequeñas. Diseñada para el descanso y la conexión con la naturaleza.</p>
+        <div class="cabana-details">
+          <div class="det-item">🛏️ Cama doble + literas</div>
+          <div class="det-item">🚿 Baño privado</div>
+          <div class="det-item">❄️ Aire acondicionado</div>
+        </div>
+        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-yaguarundi">$120.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
+        <div class="cabana-link">Ver detalles y disponibilidad →</div>
+      </div>
+    </a>
+    <a class="cabana-card" id="card-ocelot" href="cabana-ocelot.html">
+      <div class="cabana-img ocelot">
+        <div class="cabana-num">02</div>
+        <span>🦌</span>
+        <div class="cabana-badge">Hasta 6 personas</div>
+      </div>
+      <div class="cabana-body">
+        <div class="cabana-name">Cabaña Ocelot</div>
+        <p class="cabana-desc">Espaciosa cabaña con vista al río, ideal para grupos familiares. Cocina equipada y amplia sala para momentos de encuentro.</p>
+        <div class="cabana-details">
+          <div class="det-item">🛏️ 2 camas dobles + literas</div>
+          <div class="det-item">🚿 Baño privado</div>
+          <div class="det-item">🍳 Cocina</div>
+        </div>
+        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-ocelot">$160.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
+        <div class="cabana-link">Ver detalles y disponibilidad →</div>
+      </div>
+    </a>
+    <a class="cabana-card" id="card-motmot" href="cabana-motmot.html">
+      <div class="cabana-img motmot">
+        <div class="cabana-num">03</div>
+        <span>🦜</span>
+        <div class="cabana-badge">Hasta 8 personas</div>
+      </div>
+      <div class="cabana-body">
+        <div class="cabana-name">Cabaña Motmot</div>
+        <p class="cabana-desc">La más grande de nuestras cabañas, perfecta para grupos y reuniones familiares. Terraza panorámica con vista al bosque.</p>
+        <div class="cabana-details">
+          <div class="det-item">🛏️ 3 camas dobles + literas</div>
+          <div class="det-item">🚿 2 baños</div>
+          <div class="det-item">🍳 Cocina equipada</div>
+        </div>
+        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-motmot">$200.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
+        <div class="cabana-link">Ver detalles y disponibilidad →</div>
+      </div>
+    </a>
+  </div>
+</div>
+<script>
+  const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
+  async function ghF(fn){
+    if(!GT||!GR)return null;
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,{headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'}});
+      if(!r.ok)return null;
+      const d=await r.json();
+      const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(b));
+    }catch{return null;}
+  }
+  async function init(){
+    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
+
+    // Precios desde
+    if(p?.cabanas?.cabanas){
+      const it=p.cabanas.itbms||7;
+      const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
+      Object.entries(p.cabanas.cabanas).forEach(([k,cab])=>{
+        const el=document.getElementById(map[k]);
+        if(!el)return;
+        const precios=Object.values(cab.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
+        const desde=precios.length?Math.min(...precios):0;
+        el.textContent=`$${desde.toFixed(2)}`;
+      });
+    }
+
+    // Insignias de popular
+    if(pop?.populares){
+      const cardMap={
+        'cabana-yaguarundi':'card-yaguarundi',
+        'cabana-ocelot':    'card-ocelot',
+        'cabana-motmot':    'card-motmot',
+      };
+      pop.populares.forEach(pid=>{
+        const card=document.getElementById(cardMap[pid]);
+        if(!card||card.querySelector('.pop-badge'))return;
+        card.classList.add('popular');
+        card.style.position='relative';
+        const b=document.createElement('div');
+        b.className='pop-badge';
+        b.innerHTML='⭐ Más popular';
+        card.prepend(b);
+      });
+    }
+  }
+  init();
+</script>
+</body>
+</html>
