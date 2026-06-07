@@ -1,5 +1,0 @@
-assets/images/picnic/
-├── slider1.jpg – slider6.jpg   (fotos o videos del ambiente)
-├── tabla-pequena.jpg
-├── tabla-mediana.jpg
-└── tabla-grande.jpg
