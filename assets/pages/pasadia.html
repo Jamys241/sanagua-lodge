@@ -433,6 +433,8 @@
     }
 
     renderPersonasGrid();
+    await loadHorariosPub();
+    renderCalPasadia();
     // Fecha por defecto: mañana
     const manana = new Date(); manana.setDate(manana.getDate()+1);
     document.getElementById('fecha-visita').value = localDateStr(manana);
@@ -440,7 +442,38 @@
   }
 
   // ── Calendario ────────────────────────────────────────────────────────
-  // Días ocupados por PASADÍAS confirmadas
+  function calNav(dir){ calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1); renderCalPasadia(); }
+
+  function renderCalPasadia(){
+    const y=calDate.getFullYear(), m=calDate.getMonth();
+    document.getElementById('cal-mo').textContent=`${MESES[m]} ${y}`;
+    const ts=localDateStr(new Date());
+    const fd=new Date(y,m,1).getDay(), dm=new Date(y,m+1,0).getDate(), dp=new Date(y,m,0).getDate();
+    let h='<tr>', cel=0;
+    for(let i=fd-1;i>=0;i--){ h+=`<td><div class="cday oth">${dp-i}</div></td>`; cel++; }
+    for(let d=1;d<=dm;d++){
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cerrado=esDiaCerradoPub(ds);
+      if(cerrado){
+        h+=`<td><div class="cday cerrado" onclick="mostrarAvisoCerradoCal('${ds}')"><span class="cn">${d}</span><span class="cl">Cerrado</span></div></td>`;
+      } else {
+        const cls=ds===ts?'tod':'disp';
+        h+=`<td><div class="cday ${cls}">${d}</div></td>`;
+      }
+      cel++; if(cel%7===0&&d<dm) h+='</tr><tr>';
+    }
+    const r=(7-cel%7)%7; for(let d=1;d<=r;d++) h+=`<td><div class="cday oth">${d}</div></td>`;
+    h+='</tr>'; document.getElementById('cal-body').innerHTML=h;
+  }
+
+  function mostrarAvisoCerradoCal(ds){
+    const el=document.getElementById('aviso-cerrado-cal');
+    if(!el) return;
+    const msg=mensajeDiaCerrado(ds);
+    el.className='aviso-cerrado show';
+    el.innerHTML=`<span style="font-size:1.1rem;flex-shrink:0">${msg.slice(0,2)}</span><span>${msg.slice(2)}</span>`;
+    clearTimeout(el._t); el._t=setTimeout(()=>el.className='aviso-cerrado',5000);
+  }
 
 
 

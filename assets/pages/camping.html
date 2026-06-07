@@ -171,6 +171,7 @@
           <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
         </tr></thead><tbody id="cal-body"></tbody></table>
         <div class="cal-leg">
+          <div class="leg-i"><div class="leg-d" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 6px);border:1px solid #ddd"></div>Cerrado</div>
           <div class="leg-i"><div class="leg-d" style="background:#f0f0f0"></div>Sin espacios</div>
           <div class="leg-i"><div class="leg-d" style="background:#fff8e1;border:1px solid #f0c060"></div>Pocos (≤3)</div>
           <div class="leg-i"><div class="leg-d" style="background:#f0f7ee;border:1px solid #c0ddb8"></div>Disponible</div>
@@ -348,12 +349,15 @@
     for(let i=fd-1;i>=0;i--){h+=`<td><div class="cday oth">${dp-i}</div></td>`;c++;}
     for(let d=1;d<=dm;d++){
       const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cerrado=esDiaCerradoPub(ds);
       const usados=ocp[ds]||0;
       const libres=Math.max(0, TOTAL_ESP-usados);
       const lleno=libres===0;
       const poco=libres>0&&libres<=3;
-      if(ds===ts){
-        // Hoy
+      if(cerrado){
+        // Día cerrado
+        h+=`<td><div class="cday cerrado" onclick="mostrarAvisoCerradoCamp('${ds}')"><span class="cn">${d}</span><span class="cl">Cerrado</span></div></td>`;
+      } else if(ds===ts){
         h+=`<td><div class="cday tod" style="flex-direction:column;height:42px;width:100%;border-radius:6px;font-size:.7rem">
           <span style="font-weight:700">${d}</span>
           <span style="font-size:.58rem;opacity:.85">${libres} libre${libres===1?'':'s'}</span>
@@ -373,6 +377,15 @@
     }
     const r=(7-c%7)%7;for(let d=1;d<=r;d++)h+=`<td><div class="cday oth">${d}</div></td>`;
     h+='</tr>';document.getElementById('cal-body').innerHTML=h;
+  }
+
+  function mostrarAvisoCerradoCamp(ds){
+    const b=document.getElementById('n-badge');
+    if(!b)return;
+    const msg=mensajeDiaCerrado(ds);
+    b.style.display='block';b.style.background='#fff8f0';b.style.borderColor='#f0d0a0';b.style.color='#7a4a10';
+    b.textContent=msg;
+    clearTimeout(b._t);b._t=setTimeout(()=>{b.style.display='none';},5000);
   }
 
   function openModal(){document.getElementById('modal-ov').classList.add('open');}
