@@ -466,7 +466,7 @@
     nb.textContent=`🌙 ${noches} noche${noches===1?'':'s'} · ${ent} → ${sal}`;
     // Verificar conflicto
     const conf=verificarConflicto(ent,sal);
-    if(conf){cb.style.display='block';cb.textContent=`⚠️ Las fechas seleccionadas se solapan con una reserva confirmada de ${conf}. Por favor elige otras fechas.`;}
+    if(conf){cb.style.display='block';cb.innerHTML='🌿 Estas fechas ya están reservadas. ¡No te preocupes! Hay muchas otras fechas disponibles para ti. Por favor elige otras fechas.';}
     if(!cabData)return;
     const it=P.cabanas.itbms||7, t=cabData.tarifas||{};
     // Calcular por noches según día semana/fin de semana
@@ -495,7 +495,7 @@
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
     if(!nom){alert('Ingresa tu nombre.');return;}
     if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
-    if(verificarConflicto(ent,sal)){alert('Las fechas seleccionadas están ocupadas. Por favor elige otras fechas.');return;}
+    if(verificarConflicto(ent,sal)){alert('🌿 Estas fechas ya están reservadas. Por favor elige otras fechas disponibles.');return;}
     const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
     const ad=adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';
     const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar Cabaña Motmot.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${noches} noche${noches===1?'':'s'})${ad}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
