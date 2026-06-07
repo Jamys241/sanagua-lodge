@@ -64,21 +64,28 @@
     .cat-title em{font-style:italic;color:var(--earth)}
 
     /* Grid de platos */
-    .platos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:60px}
-    .plato-card{background:var(--surface);border-radius:var(--r);overflow:hidden;
-      box-shadow:0 2px 16px rgba(0,0,0,.06);transition:transform .3s,box-shadow .3s}
-    .plato-card:hover{transform:translateY(-4px);box-shadow:0 10px 32px rgba(0,0,0,.12)}
-    .plato-img{height:200px;background:var(--warm);position:relative;overflow:hidden;
+    .platos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;margin-bottom:60px;align-items:start}
+    .plato-card{background:#fff;border-radius:14px;overflow:hidden;
+      box-shadow:0 1px 8px rgba(0,0,0,.07);transition:transform .3s,box-shadow .3s;
+      display:flex;flex-direction:column}
+    .plato-card:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,0,0,.12)}
+    /* Área de imagen — fondo degradado cálido con placeholder SVG */
+    .plato-img{height:190px;position:relative;overflow:hidden;flex-shrink:0;
+      background:linear-gradient(180deg,#ede8e0 0%,#cdc5ba 100%);
       display:flex;align-items:center;justify-content:center}
-    .plato-img img,.plato-img video{width:100%;height:100%;object-fit:cover;display:block}
-    .plato-img .plato-emoji{font-size:3.5rem;opacity:.4}
-    .plato-img .plato-overlay{position:absolute;inset:0;
-      background:linear-gradient(to bottom,transparent 50%,rgba(26,20,16,.5))}
-    .plato-body{padding:18px 20px}
-    .plato-name{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;
-      color:var(--ink);margin-bottom:6px}
-    .plato-desc{font-size:.82rem;color:#7a6a5a;line-height:1.6}
-    .plato-precio{font-size:.88rem;font-weight:600;color:var(--earth);margin-top:10px}
+    .plato-img img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+    .plato-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+    .plato-placeholder svg{width:52px;height:52px;opacity:.35}
+    /* Cuando hay imagen real, ocultar el placeholder */
+    .plato-img.has-img .plato-placeholder{display:none}
+    .plato-body{padding:16px 18px 20px;display:flex;flex-direction:column}
+    .plato-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;
+      color:#1a1410;margin-bottom:6px;line-height:1.3;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .plato-desc{font-size:.82rem;color:#7a6a5a;line-height:1.55;
+      display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+      min-height:3.8em}
+    .plato-precio{font-size:.88rem;font-weight:700;color:var(--earth);margin-top:12px}
 
     /* Divisor decorativo */
     .divider{display:flex;align-items:center;gap:16px;margin:48px 0 40px}
@@ -257,13 +264,25 @@
     }catch{return null;}
   }
 
+  const PLACEHOLDER_SVG = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="30" r="14" stroke="#a09080" stroke-width="2.2" fill="none"/>
+    <line x1="32" y1="8" x2="32" y2="16" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="32" y1="44" x2="32" y2="52" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="10" y1="30" x2="18" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="46" y1="30" x2="54" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="16" y1="14" x2="20" y2="22" stroke="#a09080" stroke-width="2" stroke-linecap="round"/>
+    <line x1="48" y1="14" x2="44" y2="22" stroke="#a09080" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+
   function renderPlato(p){
-    const precio=p.precio?`<div class="plato-precio">Desde $${Number(p.precio).toFixed(2)}</div>`:'';
-    const img=p.foto
-      ?`<img src="${p.foto}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover">`
-      :`<div class="plato-emoji">🍽️</div>`;
-    return`<div class="plato-card">
-      <div class="plato-img">${img}<div class="plato-overlay"></div></div>
+    const precio = p.precio ? `<div class="plato-precio">Desde \$${Number(p.precio).toFixed(2)}</div>` : '';
+    const hasImg = !!p.foto;
+    const imgTag = hasImg ? `<img src="${p.foto}" alt="${p.nombre}">` : '';
+    return `<div class="plato-card">
+      <div class="plato-img${hasImg?' has-img':''}">
+        <div class="plato-placeholder">${PLACEHOLDER_SVG}</div>
+        ${imgTag}
+      </div>
       <div class="plato-body">
         <div class="plato-name">${p.nombre}</div>
         <div class="plato-desc">${p.descripcion}</div>
