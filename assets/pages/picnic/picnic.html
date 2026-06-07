@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Tablas de Picnic — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#1a1410;--cream:#faf6f0;--warm:#f5ede0;--earth:#8b5e3c;
+      --sage:#6b8f6b;--gold:#c9923a;--rust:#c45a2a;--mist:#b8a898;--surface:#fff;--r:14px
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,20,16,.96);backdrop-filter:blur(12px);
+      padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.1rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+    .nav-right{display:flex;align-items:center;gap:14px}
+    .nav-back{color:rgba(255,255,255,.55);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--gold)}
+
+    /* SLIDER HERO */
+    .slider{position:relative;height:70vh;min-height:480px;overflow:hidden;background:#1a1410}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+    .slide.active{opacity:1}
+    .slide-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+      transform:scale(1.05);transition:transform 6s ease}
+    .slide.active .slide-bg{transform:scale(1)}
+    /* Gradientes de color para slides sin foto */
+    .slide:nth-child(1) .slide-bg{background-color:#2a1a08;background-image:radial-gradient(ellipse at 30% 50%,rgba(201,146,58,.3),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(107,143,107,.2),transparent 50%)}
+    .slide:nth-child(2) .slide-bg{background-color:#1a2a10;background-image:radial-gradient(ellipse at 60% 60%,rgba(107,143,107,.3),transparent 60%)}
+    .slide:nth-child(3) .slide-bg{background-color:#2a1810;background-image:radial-gradient(ellipse at 40% 40%,rgba(196,90,42,.25),transparent 55%)}
+    .slide:nth-child(4) .slide-bg{background-color:#1a1a20;background-image:radial-gradient(ellipse at 50% 70%,rgba(201,146,58,.2),transparent 60%)}
+    .slide:nth-child(5) .slide-bg{background-color:#200a0a;background-image:radial-gradient(ellipse at 70% 40%,rgba(196,90,42,.3),transparent 55%)}
+    .slide:nth-child(6) .slide-bg{background-color:#0a1a1a;background-image:radial-gradient(ellipse at 30% 60%,rgba(107,143,107,.25),transparent 55%)}
+    .slide-bg::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(26,20,16,.2) 0%,rgba(26,20,16,.7) 100%)}
+    .slide-content{position:absolute;bottom:72px;left:56px;z-index:2;max-width:600px}
+    .slide-badge{font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .slide-badge::before{content:'';width:24px;height:1px;background:var(--gold)}
+    .slide-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.8rem);
+      font-weight:400;color:#fff;line-height:1.1;margin-bottom:12px}
+    .slide-title em{font-style:italic;color:var(--gold)}
+    .slide-sub{font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.65;max-width:440px}
+
+    /* Controles slider */
+    .sl-arrows{position:absolute;top:50%;transform:translateY(-50%);width:100%;
+      display:flex;justify-content:space-between;padding:0 20px;z-index:10;pointer-events:none}
+    .sl-arrow{width:46px;height:46px;border-radius:50%;
+      background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1.2rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:all .2s;pointer-events:all}
+    .sl-arrow:hover{background:rgba(255,255,255,.25)}
+    .sl-dots{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+      display:flex;gap:8px;z-index:10}
+    .sl-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);
+      cursor:pointer;transition:all .3s}
+    .sl-dot.active{background:#fff;width:20px;border-radius:3px}
+
+    /* SECCIÓN PRINCIPAL */
+    .pw{max-width:1100px;margin:0 auto;padding:72px 32px}
+    .section-intro{text-align:center;max-width:640px;margin:0 auto 60px}
+    .section-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.22em;
+      text-transform:uppercase;color:var(--earth);margin-bottom:12px}
+    .section-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);
+      font-weight:400;color:var(--ink);line-height:1.2;margin-bottom:16px}
+    .section-title em{font-style:italic;color:var(--earth)}
+    .section-desc{font-size:.92rem;color:#7a6a5a;line-height:1.75}
+
+    /* CARDS DE TABLAS */
+    .tablas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
+    .tabla-card{background:var(--surface);border-radius:var(--r);overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);transition:transform .35s,box-shadow .35s;
+      display:flex;flex-direction:column}
+    .tabla-card:hover{transform:translateY(-8px);box-shadow:0 16px 48px rgba(0,0,0,.14)}
+
+    /* Imagen de la tabla */
+    .tabla-img{height:240px;position:relative;overflow:hidden;background:var(--warm);
+      display:flex;align-items:center;justify-content:center}
+    .tabla-img img{width:100%;height:100%;object-fit:cover;display:block;
+      transition:transform .5s ease}
+    .tabla-card:hover .tabla-img img{transform:scale(1.05)}
+    .tabla-img-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .tabla-emoji{font-size:4rem}
+    .tabla-placeholder-label{font-size:.72rem;font-weight:600;letter-spacing:.12em;
+      text-transform:uppercase;color:rgba(139,94,60,.4)}
+    .tabla-tag{position:absolute;top:16px;left:16px;
+      background:var(--ink);color:#fff;font-size:.65rem;font-weight:700;
+      letter-spacing:.1em;text-transform:uppercase;padding:5px 13px;border-radius:20px}
+    .tabla-tag.mediana{background:var(--earth)}
+    .tabla-tag.grande{background:var(--rust)}
+
+    /* Cuerpo de la card */
+    .tabla-body{padding:24px 28px;flex:1;display:flex;flex-direction:column}
+    .tabla-nombre{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;
+      color:var(--ink);margin-bottom:6px}
+    .tabla-personas{font-size:.75rem;font-weight:600;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--mist);margin-bottom:14px}
+    .tabla-desc{font-size:.85rem;color:#7a6a5a;line-height:1.7;margin-bottom:18px;flex:1}
+    .tabla-componentes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+    .comp-chip{background:var(--warm);border:1px solid rgba(139,94,60,.15);
+      border-radius:20px;padding:3px 12px;font-size:.72rem;color:var(--earth);font-weight:500}
+    .tabla-footer{display:flex;align-items:center;justify-content:space-between;
+      padding-top:16px;border-top:1px solid var(--warm)}
+    .tabla-precio{font-family:'Playfair Display',serif;font-size:1.5rem;
+      font-weight:600;color:var(--earth)}
+    .tabla-precio span{font-family:'DM Sans',sans-serif;font-size:.75rem;
+      font-weight:400;color:var(--mist);margin-left:4px}
+    .btn-tabla{background:var(--ink);color:#fff;border:none;border-radius:40px;
+      padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:.82rem;
+      font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.04em;
+      text-decoration:none;display:inline-block}
+    .btn-tabla:hover{background:var(--earth);transform:translateY(-1px)}
+
+    /* MODAL RESERVA */
+    .ov{position:fixed;inset:0;z-index:500;background:rgba(26,20,16,.75);
+      backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:16px}
+    .ov.open{display:flex}
+    .mo{background:#fff;border-radius:16px;width:100%;max-width:480px;
+      max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+    .mh{background:var(--ink);padding:24px 28px;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:16px 16px 0 0}
+    .mt{font-family:'Playfair Display',serif;font-size:1.2rem;color:#fff}
+    .mc{background:rgba(255,255,255,.12);border:none;width:32px;height:32px;
+      border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center}
+    .mb{padding:24px 28px}
+    .fg{margin-bottom:16px}
+    .fl{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:#9a9a9a;margin-bottom:7px;display:block}
+    .fi{width:100%;padding:10px 14px;border:1.5px solid #e8e8e8;border-radius:8px;
+      font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;
+      transition:border-color .2s;background:#fafafa}
+    .fi:focus{border-color:var(--earth);background:#fff}
+    .selected-tabla{background:var(--warm);border-radius:8px;padding:14px 16px;
+      margin-bottom:18px;display:flex;align-items:center;gap:12px}
+    .st-emoji{font-size:1.5rem}
+    .st-info{}
+    .st-nombre{font-weight:600;font-size:.9rem;color:var(--ink)}
+    .st-precio{font-size:.8rem;color:var(--earth)}
+    .btn-confirmar{width:100%;background:var(--earth);color:#fff;border:none;
+      border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif;
+      font-size:.95rem;font-weight:700;cursor:pointer;margin-top:16px;
+      transition:background .2s}
+    .btn-confirmar:hover{background:var(--rust)}
+    .fn{font-size:.72rem;color:#bbb;text-align:center;margin-top:10px;line-height:1.5}
+
+    /* NOTA */
+    .nota-final{text-align:center;max-width:560px;margin:48px auto 0;
+      padding:24px;background:rgba(139,94,60,.06);border-radius:12px;
+      border:1px solid rgba(139,94,60,.12)}
+    .nota-final p{font-size:.85rem;color:#7a6a5a;line-height:1.7}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}.pw{padding:48px 18px}
+      .slide-content{left:24px;bottom:56px}
+      .tablas-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../../../index.html">🌿 Sanagua Lodge</a>
+  <div class="nav-right">
+    <a class="nav-back" href="../restaurante.html">← Restaurante</a>
+  </div>
+</nav>
+
+<!-- SLIDER -->
+<div class="slider" id="slider">
+  <div class="slide active">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider1.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Sanagua Lodge</div>
+      <div class="slide-title">Tablas de <em>Picnic</em></div>
+      <div class="slide-sub">Una experiencia gastronómica única en medio de la naturaleza panameña</div>
+    </div>
+  </div>
+  <div class="slide">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider2.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Gastronomía</div>
+      <div class="slide-title">Sabores que <em>enamoran</em></div>
+      <div class="slide-sub">Quesos artesanales, charcutería, frutas tropicales y mucho más</div>
+    </div>
+  </div>
+  <div class="slide">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider3.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Experiencia</div>
+      <div class="slide-title">El picnic <em>perfecto</em></div>
+      <div class="slide-sub">Cada tabla, una obra de arte culinaria para compartir</div>
+    </div>
+  </div>
+  <div class="slide">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider4.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Naturaleza</div>
+      <div class="slide-title">Rodeados de <em>verde</em></div>
+      <div class="slide-sub">Disfruta tu tabla en los espacios más hermosos del lodge</div>
+    </div>
+  </div>
+  <div class="slide">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider5.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Momentos</div>
+      <div class="slide-title">Hecho para <em>recordar</em></div>
+      <div class="slide-sub">Ideal para parejas, familias y grupos especiales</div>
+    </div>
+  </div>
+  <div class="slide">
+    <div class="slide-bg" style="background-image:url('../../images/picnic/slider6.jpg')"></div>
+    <div class="slide-content">
+      <div class="slide-badge">Reserva ya</div>
+      <div class="slide-title">Tu mesa <em>te espera</em></div>
+      <div class="slide-sub">Disponible todos los días que estamos abiertos · Reserva con anticipación</div>
+    </div>
+  </div>
+  <div class="sl-arrows">
+    <button class="sl-arrow" onclick="slNav(-1)">‹</button>
+    <button class="sl-arrow" onclick="slNav(1)">›</button>
+  </div>
+  <div class="sl-dots" id="sl-dots"></div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="pw">
+  <div class="section-intro">
+    <div class="section-eyebrow">Para compartir</div>
+    <h2 class="section-title">Elige tu <em>tabla perfecta</em></h2>
+    <p class="section-desc">Cada tabla es preparada con ingredientes frescos y seleccionados. Perfectas para una experiencia única en los jardines de Sanagua Lodge.</p>
+  </div>
+
+  <div class="tablas-grid">
+
+    <!-- Tabla Pequeña -->
+    <div class="tabla-card">
+      <div class="tabla-img">
+        <img src="../../images/picnic/tabla-pequena.jpg" alt="Tabla Pequeña"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="tabla-img-placeholder" style="display:none">
+          <div class="tabla-emoji">🧀</div>
+          <div class="tabla-placeholder-label">Tabla Pequeña</div>
+        </div>
+        <div class="tabla-tag">Pequeña</div>
+      </div>
+      <div class="tabla-body">
+        <div class="tabla-nombre">Tabla de Picnic Pequeña</div>
+        <div class="tabla-personas">👥 Ideal para 2 personas</div>
+        <div class="tabla-desc">Una selección íntima y cuidada para dos. Perfecta para parejas o una tarde especial en la naturaleza. Incluye una combinación equilibrada de sabores dulces y salados.</div>
+        <div class="tabla-componentes">
+          <span class="comp-chip">🧀 2 quesos artesanales</span>
+          <span class="comp-chip">🥩 Charcutería selecta</span>
+          <span class="comp-chip">🍇 Frutas frescas</span>
+          <span class="comp-chip">🍯 Miel de abeja</span>
+          <span class="comp-chip">🥖 Pan artesanal</span>
+          <span class="comp-chip">🫒 Aceitunas</span>
+        </div>
+        <div class="tabla-footer">
+          <div class="tabla-precio">$28.00 <span>ITBMS inc.</span></div>
+          <button class="btn-tabla" onclick="openModal('pequeña','🧀','$28.00')">Reserva la tuya</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla Mediana -->
+    <div class="tabla-card">
+      <div class="tabla-img">
+        <img src="../../images/picnic/tabla-mediana.jpg" alt="Tabla Mediana"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="tabla-img-placeholder" style="display:none">
+          <div class="tabla-emoji">🍇</div>
+          <div class="tabla-placeholder-label">Tabla Mediana</div>
+        </div>
+        <div class="tabla-tag mediana">Mediana</div>
+      </div>
+      <div class="tabla-body">
+        <div class="tabla-nombre">Tabla de Picnic Mediana</div>
+        <div class="tabla-personas">👥 Ideal para 3–4 personas</div>
+        <div class="tabla-desc">La opción más completa para grupos pequeños o familias. Una experiencia gastronómica abundante con mayor variedad de quesos, carnes y acompañamientos tropicales.</div>
+        <div class="tabla-componentes">
+          <span class="comp-chip">🧀 4 quesos variados</span>
+          <span class="comp-chip">🥩 Charcutería premium</span>
+          <span class="comp-chip">🍓 Frutas tropicales</span>
+          <span class="comp-chip">🥜 Frutos secos</span>
+          <span class="comp-chip">🍯 Miel y mermeladas</span>
+          <span class="comp-chip">🥖 Pan y crackers</span>
+          <span class="comp-chip">🫒 Aceitunas y encurtidos</span>
+          <span class="comp-chip">🍫 Chocolate artesanal</span>
+        </div>
+        <div class="tabla-footer">
+          <div class="tabla-precio">$48.00 <span>ITBMS inc.</span></div>
+          <button class="btn-tabla" onclick="openModal('mediana','🍇','$48.00')">Reserva la tuya</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla Grande -->
+    <div class="tabla-card">
+      <div class="tabla-img">
+        <img src="../../images/picnic/tabla-grande.jpg" alt="Tabla Grande"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="tabla-img-placeholder" style="display:none">
+          <div class="tabla-emoji">🥂</div>
+          <div class="tabla-placeholder-label">Tabla Grande</div>
+        </div>
+        <div class="tabla-tag grande">Grande</div>
+      </div>
+      <div class="tabla-body">
+        <div class="tabla-nombre">Tabla de Picnic Grande</div>
+        <div class="tabla-personas">👥 Ideal para 5–8 personas</div>
+        <div class="tabla-desc">Nuestra experiencia más exclusiva. Una tabla espectacular para grupos, celebraciones especiales o cuando simplemente quieres lo mejor. Incluye una copa de cortesía por persona.</div>
+        <div class="tabla-componentes">
+          <span class="comp-chip">🧀 6 quesos artesanales</span>
+          <span class="comp-chip">🥩 Charcutería gourmet</span>
+          <span class="comp-chip">🍓 Variedad de frutas</span>
+          <span class="comp-chip">🥜 Frutos secos mixtos</span>
+          <span class="comp-chip">🍯 Miel, mermeladas y dips</span>
+          <span class="comp-chip">🥖 Panes y crackers surtidos</span>
+          <span class="comp-chip">🫒 Aceitunas y antipasto</span>
+          <span class="comp-chip">🍫 Chocolates artesanales</span>
+          <span class="comp-chip">🥂 Copa de cortesía</span>
+        </div>
+        <div class="tabla-footer">
+          <div class="tabla-precio">$78.00 <span>ITBMS inc.</span></div>
+          <button class="btn-tabla" onclick="openModal('grande','🥂','$78.00')">Reserva la tuya</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nota-final">
+    <p>🌿 Las tablas se preparan con ingredientes frescos del día. Te recomendamos reservar con al menos <strong>2 horas de anticipación</strong>. Disponibles durante el horario del restaurante: 8:00 AM – 7:00 PM.</p>
+  </div>
+</div>
+
+<!-- MODAL RESERVA -->
+<div class="ov" id="modal-ov">
+  <div class="mo">
+    <div class="mh">
+      <div class="mt">Reservar Tabla de Picnic</div>
+      <button class="mc" onclick="closeModal()">×</button>
+    </div>
+    <div class="mb">
+      <div class="selected-tabla" id="selected-tabla">
+        <div class="st-emoji" id="st-emoji">🧀</div>
+        <div class="st-info">
+          <div class="st-nombre" id="st-nombre">Tabla Pequeña</div>
+          <div class="st-precio" id="st-precio">$28.00 · ITBMS incluido</div>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Fecha de visita</label>
+        <input type="date" class="fi" id="f-fecha">
+      </div>
+      <div class="fg">
+        <label class="fl">Hora preferida</label>
+        <select class="fi" id="f-hora">
+          <option value="">Selecciona una hora</option>
+          <option>8:00 AM</option><option>9:00 AM</option><option>10:00 AM</option>
+          <option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option>
+          <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+          <option>5:00 PM</option><option>6:00 PM</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Nombre del contacto</label>
+        <input type="text" class="fi" id="f-nom" placeholder="Tu nombre completo">
+      </div>
+      <div class="fg">
+        <label class="fl">WhatsApp</label>
+        <input type="tel" class="fi" id="f-tel" placeholder="+507 6000-0000">
+      </div>
+      <div class="fg">
+        <label class="fl">Correo electrónico</label>
+        <input type="email" class="fi" id="f-ema" placeholder="tu@correo.com">
+      </div>
+      <div class="fg">
+        <label class="fl">Notas especiales (alergias, ocasión, etc.)</label>
+        <input type="text" class="fi" id="f-notas" placeholder="Ej: es un aniversario, sin nueces...">
+      </div>
+      <button class="btn-confirmar" onclick="enviar()">Enviar solicitud por WhatsApp</button>
+      <div class="fn">Tu solicitud será confirmada en menos de 2 horas.<br>Disponible de 8:00 AM a 7:00 PM · Todos los días abiertos.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── SLIDER ─────────────────────────────────────────────────────────────
+  let slIdx=0;
+  const TOTAL_SLIDES=6;
+
+  function initSlider(){
+    const dc=document.getElementById('sl-dots');
+    dc.innerHTML=[...Array(TOTAL_SLIDES)].map((_,i)=>
+      `<div class="sl-dot${i===0?' active':''}" onclick="slGo(${i})"></div>`
+    ).join('');
+    setInterval(()=>slNav(1), 5000);
+  }
+
+  function slGo(i){
+    const slides=document.querySelectorAll('.slide');
+    const dots=document.querySelectorAll('.sl-dot');
+    slIdx=(i+TOTAL_SLIDES)%TOTAL_SLIDES;
+    slides.forEach((s,j)=>s.classList.toggle('active',j===slIdx));
+    dots.forEach((d,j)=>d.classList.toggle('active',j===slIdx));
+  }
+  function slNav(dir){slGo(slIdx+dir);}
+
+  // ── MODAL ──────────────────────────────────────────────────────────────
+  let tablaActual='';
+
+  function openModal(tabla, emoji, precio){
+    tablaActual=tabla;
+    document.getElementById('st-emoji').textContent=emoji;
+    document.getElementById('st-nombre').textContent=`Tabla de Picnic ${tabla.charAt(0).toUpperCase()+tabla.slice(1)}`;
+    document.getElementById('st-precio').textContent=`${precio} · ITBMS incluido`;
+    // Fecha por defecto: mañana
+    const manana=new Date(); manana.setDate(manana.getDate()+1);
+    const min=`${manana.getFullYear()}-${String(manana.getMonth()+1).padStart(2,'0')}-${String(manana.getDate()).padStart(2,'0')}`;
+    document.getElementById('f-fecha').value=min;
+    document.getElementById('f-fecha').min=min;
+    document.getElementById('modal-ov').classList.add('open');
+  }
+
+  function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+  document.getElementById('modal-ov').addEventListener('click',e=>{
+    if(e.target===document.getElementById('modal-ov'))closeModal();
+  });
+
+  function enviar(){
+    const fecha=document.getElementById('f-fecha').value;
+    const hora=document.getElementById('f-hora').value;
+    const nom=document.getElementById('f-nom').value.trim();
+    const tel=document.getElementById('f-tel').value.trim();
+    const ema=document.getElementById('f-ema').value.trim();
+    const notas=document.getElementById('f-notas').value.trim();
+    if(!fecha||!hora){alert('Selecciona fecha y hora.');return;}
+    if(!nom){alert('Ingresa tu nombre.');return;}
+    if(!tel&&!ema){alert('Ingresa al menos un medio de contacto.');return;}
+    const nombreTabla=`Tabla de Picnic ${tablaActual.charAt(0).toUpperCase()+tablaActual.slice(1)}`;
+    const precio=document.getElementById('st-precio').textContent.split('·')[0].trim();
+    const msg=encodeURIComponent(
+      `Hola Sanagua Lodge! Quiero reservar una ${nombreTabla}.\n\n`+
+      `📅 Fecha: ${fecha}\n⏰ Hora: ${hora}\n💰 Precio: ${precio}\n`+
+      `👤 Nombre: ${nom}\n📧 ${ema||'Sin correo'}`+
+      `${notas?`\n📝 Notas: ${notas}`:''}`
+    );
+    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    closeModal();
+  }
+
+  document.addEventListener('DOMContentLoaded', initSlider);
+</script>
+</body>
+</html>
