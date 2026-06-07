@@ -334,6 +334,7 @@
     <div class="side-menu-divider"></div>
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
+    <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
 
     <div class="side-menu-divider"></div>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
@@ -1140,6 +1141,116 @@
 </div>
 </div><!-- /tab-precios -->
 
+<!-- ══════════════════════════════ TAB POPULAR ══════════════════════════════ -->
+<div id="tab-popular" class="tab-panel">
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">⭐ Servicios populares</div>
+      <button class="btn btn-accent" onclick="savePopulares()">💾 Guardar</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:24px;">
+      Marca los servicios que quieres destacar con la insignia <strong>"Más popular"</strong> en el sitio web. Se mostrará una cinta dorada en la tarjeta del servicio.
+    </p>
+
+    <div class="form-grid">
+
+      <!-- Pasadías -->
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px;">☀️ Pasadías</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" id="lbl-pop-pasadia-sencilla">
+            <input type="checkbox" id="pop-pasadia-sencilla" onchange="updatePopLabel('pasadia-sencilla')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Pasadía Sencilla</div>
+              <div style="font-size:.75rem;color:var(--muted)">Aparece en la tarjeta de Pasadías en el sitio web</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" id="lbl-pop-pasadia-completa">
+            <input type="checkbox" id="pop-pasadia-completa" onchange="updatePopLabel('pasadia-completa')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Pasadía Completa</div>
+              <div style="font-size:.75rem;color:var(--muted)">Aparece en la tarjeta de Pasadías en el sitio web</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Camping -->
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">⛺ Camping</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-camping-propio">
+            <input type="checkbox" id="pop-camping-propio" onchange="updatePopLabel('camping-propio')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Camping Propio</div>
+              <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta de Camping</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-camping-suministro">
+            <input type="checkbox" id="pop-camping-suministro" onchange="updatePopLabel('camping-suministro')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Camping con Suministro</div>
+              <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta de Camping</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Cabañas -->
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🏡 Cabañas</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-yaguarundi">
+            <input type="checkbox" id="pop-cabana-yaguarundi" onchange="updatePopLabel('cabana-yaguarundi')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Yaguarundi</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 4 personas</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-ocelot">
+            <input type="checkbox" id="pop-cabana-ocelot" onchange="updatePopLabel('cabana-ocelot')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Ocelot</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 6 personas</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-motmot">
+            <input type="checkbox" id="pop-cabana-motmot" onchange="updatePopLabel('cabana-motmot')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Motmot</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 8 personas</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Restaurante -->
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🍽️ Restaurante</div>
+        <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-restaurante">
+          <input type="checkbox" id="pop-restaurante" onchange="updatePopLabel('restaurante')" style="width:18px;height:18px;accent-color:var(--accent)">
+          <div>
+            <div style="font-weight:600;font-size:.9rem">Restaurante Sanagua</div>
+            <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta del restaurante</div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Preview -->
+    <div style="margin-top:24px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;">Vista previa de la insignia</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(201,168,76,.4)">
+        ⭐ Más popular
+      </div>
+      <span style="font-size:.8rem;color:var(--muted);margin-left:12px">Así se verá en las tarjetas del sitio web</span>
+    </div>
+  </div>
+</div>
+</div><!-- /tab-popular -->
+
 <!-- Loading & Toast -->
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
@@ -1765,6 +1876,7 @@
       }
     }
     if (name === 'precios') loadPrecios();
+    if (name === 'popular') loadPopulares();
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -3799,6 +3911,48 @@
       preciosData = p;
       showToast('✅ Precios guardados correctamente','success');
     } catch { showToast('❌ Error al guardar precios.','error'); }
+    finally { showLoading(false); }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // SERVICIOS POPULARES
+  // Se guardan en Data/json/populares.json
+  // Estructura: { "populares": ["pasadia-sencilla", "cabana-ocelot", ...] }
+  // ══════════════════════════════════════════════════════════════════════
+  const POPULARES_IDS = [
+    'pasadia-sencilla','pasadia-completa',
+    'camping-propio','camping-suministro',
+    'cabana-yaguarundi','cabana-ocelot','cabana-motmot',
+    'restaurante',
+  ];
+
+  async function loadPopulares() {
+    const res = await ghRead('populares.json');
+    const lista = res?.data?.populares || [];
+    POPULARES_IDS.forEach(id => {
+      const cb = document.getElementById(`pop-${id}`);
+      if (cb) cb.checked = lista.includes(id);
+      updatePopLabel(id);
+    });
+  }
+
+  function updatePopLabel(id) {
+    const cb  = document.getElementById(`pop-${id}`);
+    const lbl = document.getElementById(`lbl-pop-${id}`);
+    if (!cb || !lbl) return;
+    lbl.style.borderColor   = cb.checked ? 'var(--gold)'    : 'var(--border)';
+    lbl.style.background    = cb.checked ? '#fffbf0'        : '';
+    lbl.style.boxShadow     = cb.checked ? '0 0 0 3px rgba(201,168,76,.15)' : '';
+  }
+
+  async function savePopulares() {
+    const lista = POPULARES_IDS.filter(id => document.getElementById(`pop-${id}`)?.checked);
+    showLoading(true);
+    try {
+      const ok = await ghReadWrite('populares.json', { populares: lista });
+      if (!ok) throw new Error();
+      showToast(`✅ ${lista.length} servicio${lista.length===1?'':'s'} marcado${lista.length===1?'':'s'} como popular${lista.length===1?'':'es'}.`, 'success');
+    } catch { showToast('❌ Error al guardar.', 'error'); }
     finally { showLoading(false); }
   }
 
