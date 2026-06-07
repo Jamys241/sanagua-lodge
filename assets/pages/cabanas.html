@@ -67,6 +67,14 @@
       font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--earth);
       transition:gap .2s}
     .cabana-card:hover .cabana-link{gap:14px}
+    .pop-badge{position:absolute;top:16px;right:16px;z-index:3;
+      background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;
+      font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:5px 13px;border-radius:20px;box-shadow:0 3px 12px rgba(201,168,76,.5);
+      display:flex;align-items:center;gap:4px;white-space:nowrap;pointer-events:none;
+      animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+    .cabana-card.popular{box-shadow:0 4px 30px rgba(201,168,76,.3);border:2px solid rgba(201,168,76,.35)}
 
     @media(max-width:768px){nav{padding:0 18px}.pw{padding:48px 18px}}
   </style>
@@ -88,7 +96,7 @@
   <h2 class="sec-title">Elige tu <em>refugio perfecto</em></h2>
   <div class="cabanas-grid" id="cabanas-grid">
     <!-- Se renderiza dinámicamente -->
-    <a class="cabana-card" href="cabana-yaguarundi.html">
+    <a class="cabana-card" id="card-yaguarundi" href="cabana-yaguarundi.html">
       <div class="cabana-img yaguarundi">
         <div class="cabana-num">01</div>
         <span>🌿</span>
@@ -106,7 +114,7 @@
         <div class="cabana-link">Ver detalles y disponibilidad →</div>
       </div>
     </a>
-    <a class="cabana-card" href="cabana-ocelot.html">
+    <a class="cabana-card" id="card-ocelot" href="cabana-ocelot.html">
       <div class="cabana-img ocelot">
         <div class="cabana-num">02</div>
         <span>🦌</span>
@@ -124,7 +132,7 @@
         <div class="cabana-link">Ver detalles y disponibilidad →</div>
       </div>
     </a>
-    <a class="cabana-card" href="cabana-motmot.html">
+    <a class="cabana-card" id="card-motmot" href="cabana-motmot.html">
       <div class="cabana-img motmot">
         <div class="cabana-num">03</div>
         <span>🦜</span>
@@ -157,16 +165,39 @@
     }catch{return null;}
   }
   async function init(){
-    const p=await ghF('precios.json');
-    if(!p?.cabanas?.cabanas)return;
-    const it=p.cabanas.itbms||7;
-    const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-    Object.entries(p.cabanas.cabanas).forEach(([k,c])=>{
-      const el=document.getElementById(map[k]);
-      if(!el)return;
-      const precios=Object.values(c.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
-      const desde=precios.length?Math.min(...precios):0;
-      el.textContent=`$${desde.toFixed(2)}`;
+    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
+
+    // Precios desde
+    if(p?.cabanas?.cabanas){
+      const it=p.cabanas.itbms||7;
+      const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
+      Object.entries(p.cabanas.cabanas).forEach(([k,cab])=>{
+        const el=document.getElementById(map[k]);
+        if(!el)return;
+        const precios=Object.values(cab.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
+        const desde=precios.length?Math.min(...precios):0;
+        el.textContent=`$${desde.toFixed(2)}`;
+      });
+    }
+
+    // Insignias de popular
+    const populares = pop?.populares || [];
+    const cardMap = {
+      'cabana-yaguarundi': 'card-yaguarundi',
+      'cabana-ocelot':     'card-ocelot',
+      'cabana-motmot':     'card-motmot',
+    };
+    Object.entries(cardMap).forEach(([pid, cardId]) => {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      if (populares.includes(pid)) {
+        card.classList.add('popular');
+        const badge = document.createElement('div');
+        badge.className = 'pop-badge';
+        badge.innerHTML = '⭐ Más popular';
+        card.style.position = 'relative';
+        card.prepend(badge);
+      }
     });
   }
   init();
