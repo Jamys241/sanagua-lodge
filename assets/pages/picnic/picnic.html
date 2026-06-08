@@ -467,6 +467,44 @@
     ov.style.display = 'flex';
   }
 
+
+  // ── Guardar solicitud en GitHub ───────────────────────────────────────
+  const GT_P=localStorage.getItem('gh_token')||'', GR_P=localStorage.getItem('gh_repo')||'', GB_P=localStorage.getItem('gh_branch')||'main';
+
+  async function guardarSolicitud(datos) {
+    const sesion = getSesionPublica();
+    if (!sesion) return false;
+    const solicitud = {
+      id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      estado:     'pendiente',
+      created_at: new Date().toISOString(),
+      usuario:    { nombre: sesion.name||sesion.username||'Usuario', tipo: sesion.tipo },
+      ...datos
+    };
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GR_P}/contents/Data/json/solicitudes.json?ref=${GB_P}`,
+        { headers: { 'Authorization': `token ${GT_P}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      let lista=[], sha=null;
+      if (r.ok) {
+        const d=await r.json(); sha=d.sha;
+        const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+        lista=JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes||[];
+      }
+      lista.push(solicitud);
+      const json=JSON.stringify({solicitudes:lista},null,2);
+      let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+      const payload={message:`solicitud ${solicitud.id}`,content:btoa(bin),branch:GB_P};
+      if(sha)payload.sha=sha;
+      const wr=await fetch(
+        `https://api.github.com/repos/${GR_P}/contents/Data/json/solicitudes.json`,
+        {method:'PUT',headers:{'Authorization':`token ${GT_P}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)}
+      );
+      return wr.ok;
+    } catch { return false; }
+  }
+
   function openModal(tabla, emoji, precio){
     if (!getSesionPublica()) { mostrarAvisoLogin(); return; }
     tablaActual=tabla;
@@ -486,7 +524,7 @@
     if(e.target===document.getElementById('modal-ov'))closeModal();
   });
 
-  function enviar(){
+  async function enviar(){
     const fecha=document.getElementById('f-fecha').value;
     const hora=document.getElementById('f-hora').value;
     const nom=document.getElementById('f-nom').value.trim();
@@ -498,6 +536,16 @@
     if(!tel&&!ema){alert('Ingresa al menos un medio de contacto.');return;}
     const nombreTabla=`Tabla de Picnic ${tablaActual.charAt(0).toUpperCase()+tablaActual.slice(1)}`;
     const precio=document.getElementById('st-precio').textContent.split('·')[0].trim();
+    const datos = {
+      servicio:  'Picnic',
+      categoria: nombreTabla,
+      precio:    document.getElementById('st-precio').textContent,
+      fecha,
+      hora,
+      notas,
+      contacto:  { nombre: nom, telefono: tel, email: ema }
+    };
+    const guardado = await guardarSolicitud(datos);
     const msg=encodeURIComponent(
       `Hola Sanagua Lodge! Quiero reservar una ${nombreTabla}.\n\n`+
       `📅 Fecha: ${fecha}\n⏰ Hora: ${hora}\n💰 Precio: ${precio}\n`+
@@ -505,6 +553,7 @@
       `${notas?`\n📝 Notas: ${notas}`:''}`
     );
     window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1410;color:#fff;padding:12px 24px;border-radius:40px;font-family:DM Sans,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
     closeModal();
   }
 
