@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="assets/images/icon/icon.png">
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1657,17 +1657,47 @@
       const todas = JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes || [];
       // Filtrar por nombre del usuario
       const mias = todas.filter(s => s.usuario?.nombre === publicUser.name || s.usuario?.email === publicUser.email || s.contacto?.email === publicUser.email);
+
+      // Cruzar con history.json para detectar si ya fue confirmada en cotizaciones
+      try {
+        const rH = await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/history.json?ref=${GB}`,
+          { headers: { 'Authorization': `token ${GT}`, 'Accept': 'application/vnd.github.v3+json' } });
+        if (rH.ok) {
+          const dH = await rH.json();
+          const bH = Uint8Array.from(atob(dH.content.replace(/\s/g,'')), c => c.charCodeAt(0));
+          const hist = JSON.parse(new TextDecoder('utf-8').decode(bH)).quotes || [];
+          // Si la cotización asociada a la solicitud está Confirmada, actualizar estado
+          mias.forEach(s => {
+            if (s.estado === 'aprobada') {
+              const cot = hist.find(h => h.sol_id === s.id);
+              if (cot && cot.estado === 'Confirmada') s._estadoReal = 'confirmada';
+            }
+          });
+        }
+      } catch {}
+
       const activas   = mias.filter(s => s.estado === 'pendiente' || s.estado === 'aprobada');
       const historial = mias.filter(s => s.estado === 'rechazada');
 
       const ICONOS = { Pasadía:'☀️', Camping:'⛺', Cabaña:'🏡', Picnic:'🧀' };
-      const BADGE  = { pendiente:'⏳ Pendiente', aprobada:'✅ Confirmada', rechazada:'❌ Rechazada' };
-      const COLORES= { pendiente:'#b45309', aprobada:'#2d7a4f', rechazada:'#c0392b' };
+      const BADGE  = {
+        pendiente: '⏳ Pendiente',
+        aprobada:  '🔄 En Proceso',
+        rechazada: '❌ Rechazada',
+        confirmada:'✅ Confirmada',
+      };
+      const COLORES= {
+        pendiente: '#b45309',
+        aprobada:  '#6b6b6b',
+        rechazada: '#c0392b',
+        confirmada:'#2d7a4f',
+      };
 
       function renderCard(s) {
+        const estado = s._estadoReal || s.estado;
         const icon   = ICONOS[s.servicio] || '📋';
-        const badge  = BADGE[s.estado]  || s.estado;
-        const color  = COLORES[s.estado] || '#888';
+        const badge  = BADGE[estado]  || estado;
+        const color  = COLORES[estado] || '#888';
         const fecha  = s.fecha || s.fecha_entrada || '—';
         const cat    = s.categoria || s.servicio || '—';
         return `<div style="border:1.5px solid #e8e8e8;border-radius:8px;padding:12px 14px;margin-bottom:10px">
