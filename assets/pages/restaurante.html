@@ -119,6 +119,14 @@
       padding:14px 28px;border-radius:40px;white-space:nowrap;flex-shrink:0;
       transition:background .2s}
     .picnic-banner:hover .picnic-cta{background:#b07a28}
+    /* Cintillo rojo NUEVO */
+    .nuevo-badge{position:absolute;top:16px;right:16px;z-index:5;
+      background:#c0392b;color:#fff;font-size:.65rem;font-weight:800;
+      letter-spacing:.14em;text-transform:uppercase;padding:5px 14px;
+      border-radius:20px;box-shadow:0 2px 12px rgba(192,57,43,.5);
+      display:flex;align-items:center;gap:5px;animation:pulseBadge 2s ease-in-out infinite}
+    @keyframes pulseBadge{0%,100%{box-shadow:0 2px 12px rgba(192,57,43,.5)}
+      50%{box-shadow:0 2px 20px rgba(192,57,43,.8)}}
     .picnic-img-wrap{position:absolute;right:0;top:0;bottom:0;width:280px;overflow:hidden;opacity:.3}
     .picnic-img-wrap img{width:100%;height:100%;object-fit:cover}
 
@@ -168,6 +176,24 @@
 
 <div class="pw">
 
+  <!-- ── BANNER TABLAS DE PICNIC ── -->
+  <a class="picnic-banner" href="picnic/picnic.html" style="display:block;margin-bottom:40px">
+    <div class="nuevo-badge">🔴 Nuevo</div>
+    <div class="picnic-inner">
+      <div class="picnic-left">
+        <div class="picnic-tag">Nuevo en Sanagua</div>
+        <div class="picnic-titulo">Tablas de <em>Picnic</em><br>en la naturaleza</div>
+        <div class="picnic-desc">Una experiencia gastronómica única: disfruta una selección curada de quesos, charcutería, frutas y acompañamientos en medio del paisaje natural de Sanagua Lodge.</div>
+        <div class="picnic-items">
+          <span class="picnic-chip">🧀 Tabla Pequeña</span>
+          <span class="picnic-chip">🍇 Tabla Mediana</span>
+          <span class="picnic-chip">🥂 Tabla Grande</span>
+        </div>
+      </div>
+      <div class="picnic-cta">Ver opciones →</div>
+    </div>
+  </a>
+
   <!-- ── DESAYUNOS ── -->
   <div class="cat-label">Para comenzar el día</div>
   <h2 class="cat-title">🌅 Desayunos</h2>
@@ -214,23 +240,6 @@
   <div class="cat-label">Para celebrar</div>
   <h2 class="cat-title">🍸 Cócteles</h2>
   <div class="platos-grid" id="grid-cocteles"></div>
-
-  <!-- Banner Tablas de Picnic -->
-  <a class="picnic-banner" href="picnic/picnic.html">
-    <div class="picnic-inner">
-      <div class="picnic-left">
-        <div class="picnic-tag">Nuevo en Sanagua</div>
-        <div class="picnic-titulo">Tablas de <em>Picnic</em><br>en la naturaleza</div>
-        <div class="picnic-desc">Una experiencia gastronómica única: disfruta una selección curada de quesos, charcutería, frutas y acompañamientos en medio del paisaje natural de Sanagua Lodge.</div>
-        <div class="picnic-items">
-          <span class="picnic-chip">🧀 Tabla Pequeña</span>
-          <span class="picnic-chip">🍇 Tabla Mediana</span>
-          <span class="picnic-chip">🥂 Tabla Grande</span>
-        </div>
-      </div>
-      <div class="picnic-cta">Ver opciones →</div>
-    </div>
-  </a>
 
   <p class="itbms-note">Todos los precios incluyen ITBMS 7% · Menú sujeto a disponibilidad de temporada</p>
 
