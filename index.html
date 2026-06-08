@@ -1521,7 +1521,60 @@
 
   // Abrir panel de usuario si ya está logueado
   function openUserPanel() {
-    if (publicUser) openAuth('user');
+    if (publicUser) { openAuth('user'); loadReservasUsuario(); }
+  }
+
+  async function loadReservasUsuario() {
+    if (!publicUser) return;
+    const GT = localStorage.getItem('gh_token')||'', GR = localStorage.getItem('gh_repo')||'', GB = localStorage.getItem('gh_branch')||'main';
+    if (!GT||!GR) return;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/solicitudes.json?ref=${GB}`,
+        { headers: { 'Authorization': `token ${GT}`, 'Accept': 'application/vnd.github.v3+json' } });
+      if (!r.ok) return;
+      const d = await r.json();
+      const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
+      const todas = JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes || [];
+      // Filtrar por nombre del usuario
+      const mias = todas.filter(s => s.usuario?.nombre === publicUser.name);
+      const activas   = mias.filter(s => s.estado === 'pendiente' || s.estado === 'aprobada');
+      const historial = mias.filter(s => s.estado === 'rechazada');
+
+      const ICONOS = { Pasadía:'☀️', Camping:'⛺', Cabaña:'🏡', Picnic:'🧀' };
+      const BADGE  = { pendiente:'⏳ Pendiente', aprobada:'✅ Confirmada', rechazada:'❌ Rechazada' };
+      const COLORES= { pendiente:'#b45309', aprobada:'#2d7a4f', rechazada:'#c0392b' };
+
+      function renderCard(s) {
+        const icon   = ICONOS[s.servicio] || '📋';
+        const badge  = BADGE[s.estado]  || s.estado;
+        const color  = COLORES[s.estado] || '#888';
+        const fecha  = s.fecha || s.fecha_entrada || '—';
+        const cat    = s.categoria || s.servicio || '—';
+        return `<div style="border:1.5px solid #e8e8e8;border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.88rem;font-weight:600">${icon} ${s.servicio}</span>
+            <span style="font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:20px;background:${color}18;color:${color}">${badge}</span>
+          </div>
+          <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
+            <div>${cat}</div>
+            <div>📅 ${fecha}${s.fecha_salida?' → '+s.fecha_salida:''}</div>
+            ${s.noches?`<div>🌙 ${s.noches} noche${s.noches===1?'':'s'}</div>`:''}
+          </div>
+          <div style="font-size:.7rem;color:#bbb;margin-top:6px">${new Date(s.created_at).toLocaleDateString('es-PA',{day:'2-digit',month:'short',year:'numeric'})}</div>
+        </div>`;
+      }
+
+      const elAct = document.getElementById('ucontent-activas');
+      const elHis = document.getElementById('ucontent-historial');
+
+      elAct.innerHTML = activas.length
+        ? activas.map(renderCard).join('')
+        : '<div style="text-align:center;padding:20px 0"><div style="font-size:1.5rem;margin-bottom:6px">📭</div><div style="font-size:.85rem;color:#888">No tienes reservas activas</div></div>';
+
+      elHis.innerHTML = historial.length
+        ? historial.map(renderCard).join('')
+        : '<div style="font-size:.85rem;color:#888;text-align:center;padding:16px 0">Sin historial de reservas</div>';
+    } catch(e) { console.warn('loadReservasUsuario:', e); }
   }
 
   // ── Header transparente al hacer scroll ──────────────────────────────
