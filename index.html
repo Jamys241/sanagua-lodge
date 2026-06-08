@@ -1123,19 +1123,28 @@
       </div>
 
       <div class="user-tabs">
-        <button class="user-tab active" onclick="switchUserTab('activas',this)">Activas</button>
-        <button class="user-tab" onclick="switchUserTab('historial',this)">Historial</button>
-        <button class="user-tab" onclick="switchUserTab('puntos',this)">Puntos</button>
+        <button class="user-tab active" onclick="switchUserTab('activas',this)">⏳ Pendientes</button>
+        <button class="user-tab" onclick="switchUserTab('en-proceso',this)">🔄 En Proceso</button>
+        <button class="user-tab" onclick="switchUserTab('historial',this)">🗂️ Historial</button>
+        <button class="user-tab" onclick="switchUserTab('puntos',this)">⭐ Puntos</button>
         <button class="user-tab" onclick="switchUserTab('perfil',this);preLlenarPerfil()">✏️ Perfil</button>
       </div>
 
       <div class="user-body">
-        <!-- Reservas activas -->
+        <!-- Pendientes -->
         <div class="user-panel-content active" id="ucontent-activas">
           <div style="text-align:center;padding:32px 20px;color:#aaa;">
             <div style="font-size:2rem;margin-bottom:10px;">📭</div>
-            <div style="font-size:.9rem;font-weight:500;color:#888;margin-bottom:6px;">No tienes reservas activas</div>
+            <div style="font-size:.9rem;font-weight:500;color:#888;margin-bottom:6px;">No tienes solicitudes pendientes</div>
             <a href="#servicios" onclick="closeAuth()" style="font-size:.82rem;color:var(--earth);text-decoration:none;">Ver servicios disponibles →</a>
+          </div>
+        </div>
+
+        <!-- En Proceso -->
+        <div class="user-panel-content" id="ucontent-en-proceso">
+          <div style="text-align:center;padding:32px 20px;color:#aaa;">
+            <div style="font-size:2rem;margin-bottom:10px;">🔄</div>
+            <div style="font-size:.9rem;font-weight:500;color:#888;">No tienes reservas en proceso</div>
           </div>
         </div>
 
@@ -1676,8 +1685,9 @@
         }
       } catch {}
 
-      const activas   = mias.filter(s => s.estado === 'pendiente' || s.estado === 'aprobada');
-      const historial = mias.filter(s => s.estado === 'rechazada');
+      const activas    = mias.filter(s => s.estado === 'pendiente');
+      const enProceso  = mias.filter(s => s.estado === 'aprobada');
+      const historial  = mias.filter(s => s.estado === 'rechazada' || s._estadoReal === 'confirmada');
 
       const ICONOS = { Pasadía:'☀️', Camping:'⛺', Cabaña:'🏡', Picnic:'🧀' };
       const BADGE  = {
@@ -1715,11 +1725,16 @@
       }
 
       const elAct = document.getElementById('ucontent-activas');
+      const elPro = document.getElementById('ucontent-en-proceso');
       const elHis = document.getElementById('ucontent-historial');
 
       elAct.innerHTML = activas.length
         ? activas.map(renderCard).join('')
-        : '<div style="text-align:center;padding:20px 0"><div style="font-size:1.5rem;margin-bottom:6px">📭</div><div style="font-size:.85rem;color:#888">No tienes reservas activas</div></div>';
+        : '<div style="text-align:center;padding:24px 0"><div style="font-size:1.5rem;margin-bottom:6px">📭</div><div style="font-size:.85rem;color:#888;margin-bottom:6px">No tienes solicitudes pendientes</div><a href="#servicios" onclick="closeAuth()" style="font-size:.8rem;color:var(--earth);text-decoration:none">Ver servicios →</a></div>';
+
+      if (elPro) elPro.innerHTML = enProceso.length
+        ? enProceso.map(renderCard).join('')
+        : '<div style="text-align:center;padding:24px 0"><div style="font-size:1.5rem;margin-bottom:6px">🔄</div><div style="font-size:.85rem;color:#888">No tienes reservas en proceso</div></div>';
 
       elHis.innerHTML = historial.length
         ? historial.map(renderCard).join('')
