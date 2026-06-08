@@ -344,7 +344,7 @@
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
-    <button onclick="window.open('menu-editor.html','_blank');closeMenu()">🍽️ Editor de Menú</button>
+    <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
 
     <div class="side-menu-divider"></div>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
@@ -1312,6 +1312,9 @@
     editar_evento:       true,
     eliminar_evento:     true,
     exportar_pdf:        true,
+    ver_precios:         true,
+    ver_populares:       true,
+    ver_menu_editor:     true,
   };
 
   const PERMISOS_LABELS = {
@@ -1325,6 +1328,9 @@
     editar_evento:       { label:'Editar eventos manuales', desc:'Puede modificar eventos existentes' },
     eliminar_evento:     { label:'Eliminar eventos',        desc:'Puede eliminar eventos del calendario' },
     exportar_pdf:        { label:'Exportar PDF',            desc:'Puede descargar cotizaciones y confirmaciones' },
+    ver_precios:         { label:'Ver y editar precios',    desc:'Puede acceder al módulo de precios de servicios' },
+    ver_populares:       { label:'Ver servicios populares', desc:'Puede ver y cambiar los servicios destacados' },
+    ver_menu_editor:     { label:'Editor de menú',          desc:'Puede abrir y editar el menú del restaurante' },
   };
 
   async function loadAuth() {
@@ -1391,10 +1397,13 @@
     const isSuper = currentUser?.role === 'superadmin';
     document.querySelectorAll('.side-menu nav button').forEach(btn => {
       const t = btn.textContent;
-      if (t.includes('Historial'))        btn.style.display = isSuper||p.ver_historial    ? '' : 'none';
-      if (t.includes('Resumen'))          btn.style.display = isSuper||p.ver_resumen      ? '' : 'none';
-      if (t.includes('Calendario'))       btn.style.display = isSuper||p.ver_calendario   ? '' : 'none';
-      if (t.includes('Nueva Cotización')) btn.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
+      if (t.includes('Historial'))        btn.style.display = isSuper||p.ver_historial     ? '' : 'none';
+      if (t.includes('Resumen'))          btn.style.display = isSuper||p.ver_resumen       ? '' : 'none';
+      if (t.includes('Calendario'))       btn.style.display = isSuper||p.ver_calendario    ? '' : 'none';
+      if (t.includes('Nueva Cotización')) btn.style.display = isSuper||p.crear_cotizacion  ? '' : 'none';
+      if (t.includes('Precios'))          btn.style.display = isSuper||p.ver_precios       ? '' : 'none';
+      if (t.includes('Populares'))        btn.style.display = isSuper||p.ver_populares     ? '' : 'none';
+      if (t.includes('Editor de Menú'))   btn.style.display = isSuper||p.ver_menu_editor   ? '' : 'none';
     });
     const bGen = document.querySelector('[onclick="generatePDF()"]');
     if (bGen) bGen.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
@@ -1913,8 +1922,18 @@
       renderDowBtns();
       renderExcepcionLista();
     }
-    if (name === 'precios') loadPrecios();
-    if (name === 'popular') loadPopulares();
+    if (name === 'precios') {
+      if (currentUser?.role !== 'superadmin' && !getPermisos().ver_precios) {
+        showToast('No tienes permiso para acceder a esta sección.', 'error'); return;
+      }
+      loadPrecios();
+    }
+    if (name === 'popular') {
+      if (currentUser?.role !== 'superadmin' && !getPermisos().ver_populares) {
+        showToast('No tienes permiso para acceder a esta sección.', 'error'); return;
+      }
+      loadPopulares();
+    }
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -4091,6 +4110,12 @@
     try {
       await saveHorarios();
     } finally { showLoading(false); }
+  }
+  function abrirMenuEditor() {
+    if (currentUser?.role !== 'superadmin' && !getPermisos().ver_menu_editor) {
+      showToast('No tienes permiso para acceder al editor de menú.', 'error'); return;
+    }
+    window.open('menu-editor.html', '_blank');
   }
 
 </script>
