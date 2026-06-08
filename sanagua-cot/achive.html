@@ -4334,64 +4334,136 @@
       const ok = await actualizarEstadoSolicitud(id, 'aprobada');
       if (!ok) throw new Error('No se pudo actualizar solicitud');
 
-      // 2. Crear cotización completa en history.json
-      const histRes  = await ghRead('history.json');
-      const histLista = histRes?.data?.quotes || [];
-      const counterRes = await ghRead('counter.json');
-      const contadorActual = counterRes?.data?.count || histLista.length;
-      const nuevoNum = contadorActual + 1;
-      const quoteStr = String(nuevoNum).padStart(4, '0');
+      // 2. Obtener número #web correlativo
+      const webCntRes = await ghRead('web_counter.json');
+      const webN      = (webCntRes?.data?.count || 0) + 1;
+      const quoteStr  = `WEB${String(webN).padStart(2,'0')}`;
+      await ghReadWrite('web_counter.json', { count: webN });
 
-      const fechaEvento  = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
-      const categoria    = sol.categoria || sol.servicio || 'Reserva';
+      // 3. Obtener precios reales del servicio
+      const preciosRes  = await ghRead('precios.json');
+      const preciosData = preciosRes?.data || {};
+      let items = [];
+      let subtotal = 0;
 
-      // Armar items según servicio
-      const items = [];
-      if (sol.servicio === 'Pasadía' || sol.servicio === 'Camping') {
-        items.push({ description: categoria, quantity: 1, unit_price: 0, total: 0 });
-      } else if (sol.servicio === 'Cabaña') {
-        const noches = sol.noches || 1;
-        items.push({ description: `${categoria} × ${noches} noche${noches===1?'':'s'}`, quantity: noches, unit_price: 0, total: 0 });
-        if (sol.personas_adicionales > 0)
-          items.push({ description: 'Personas adicionales', quantity: sol.personas_adicionales, unit_price: 0, total: 0 });
-      } else if (sol.servicio === 'Picnic') {
-        items.push({ description: `${categoria}`, quantity: 1, unit_price: 0, total: 0 });
+      const servicio  = sol.servicio  || '';
+      const categoria = sol.categoria || '';
+      const itbms     = 7;
+
+      if (servicio === 'Pasadía') {
+        const mods = preciosData.pasadia?.modalidades || {};
+        const modKey = Object.keys(mods).find(k => mods[k].label === categoria) || Object.keys(mods)[0];
+        const mod = mods[modKey];
+        if (mod) {
+          // Parsear personas del string "Adulto: 2, Niño: 1"
+          (sol.personas||'').split(',').forEach(part => {
+            const [lbl, qty] = part.split(':').map(s=>s.trim());
+            const tarifa = Object.values(mod.tarifas||{}).find(t=>t.label===lbl);
+            if (tarifa && qty) {
+              const q = parseInt(qty)||1;
+              const p = tarifa.precio * q;
+              subtotal += p;
+              items.push({ description:`${lbl} × ${q}`, quantity:q, unit_price:tarifa.precio, total:p });
+            }
+          });
+        }
+      } else if (servicio === 'Camping') {
+        const mods = preciosData.camping?.modalidades || {};
+        const modKey = Object.keys(mods).find(k => mods[k].label === categoria) || Object.keys(mods)[0];
+        const mod = mods[modKey];
+        if (mod) {
+          (sol.personas||'').split(',').forEach(part => {
+            const [lbl, qty] = part.split(':').map(s=>s.trim());
+            const tarifa = Object.values(mod.tarifas||{}).find(t=>t.label===lbl);
+            if (tarifa && qty) {
+              const q = parseInt(qty)||1, noches = sol.noches||1;
+              const p = tarifa.precio * q * noches;
+              subtotal += p;
+              items.push({ description:`${lbl} × ${q} × ${noches} noche${noches===1?'':'s'}`, quantity:q, unit_price:tarifa.precio, total:p });
+            }
+          });
+          if (sol.carpa && mod.carpas) {
+            const carpaKey = Object.keys(mod.carpas).find(k=>mod.carpas[k].label===sol.carpa);
+            const carpa = carpaKey ? mod.carpas[carpaKey] : null;
+            if (carpa) {
+              const noches = sol.noches||1, p = carpa.precio * noches;
+              subtotal += p;
+              items.push({ description:`${carpa.label} × ${noches} noche${noches===1?'':'s'}`, quantity:noches, unit_price:carpa.precio, total:p });
+            }
+          }
+        }
+      } else if (servicio === 'Cabaña') {
+        const cabanas = preciosData.cabanas?.cabanas || {};
+        const cabKey  = Object.keys(cabanas).find(k=>cabanas[k].label===categoria);
+        const cab     = cabKey ? cabanas[cabKey] : null;
+        const itbmsCab = preciosData.cabanas?.itbms || 7;
+        if (cab) {
+          const noches = sol.noches || 1;
+          // Calcular semana/fin de semana
+          const entrada = new Date((sol.fecha_entrada||sol.fecha)+'T12:00:00');
+          let nSem=0, nFin=0;
+          for(let i=0;i<noches;i++){
+            const d=new Date(entrada); d.setDate(d.getDate()+i);
+            const dow=d.getDay();
+            if(dow>=1&&dow<=4) nSem++; else nFin++;
+          }
+          if(nSem>0&&cab.tarifas?.semana){const p=cab.tarifas.semana.precio*nSem;subtotal+=p;items.push({description:`Tarifa semana × ${nSem} noche${nSem===1?'':'s'}`,quantity:nSem,unit_price:cab.tarifas.semana.precio,total:p});}
+          if(nFin>0&&cab.tarifas?.finsemana){const p=cab.tarifas.finsemana.precio*nFin;subtotal+=p;items.push({description:`Tarifa fin de semana × ${nFin} noche${nFin===1?'':'s'}`,quantity:nFin,unit_price:cab.tarifas.finsemana.precio,total:p});}
+          if((sol.personas_adicionales||0)>0&&cab.tarifas?.adicional){const p=cab.tarifas.adicional.precio*(sol.personas_adicionales)*noches;subtotal+=p;items.push({description:`Personas adicionales × ${sol.personas_adicionales} × ${noches} noche${noches===1?'':'s'}`,quantity:sol.personas_adicionales,unit_price:cab.tarifas.adicional.precio,total:p});}
+        }
+      } else if (servicio === 'Picnic') {
+        // Extraer precio del string "$28.00 · ITBMS incluido"
+        const priceMatch = (sol.precio||'').match(/\$([\d.]+)/);
+        const precio = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        const precioBase = precio / (1 + itbms/100);
+        items.push({ description: categoria, quantity:1, unit_price:precioBase, total:precioBase });
+        subtotal = precioBase;
       }
 
+      if (!items.length) items.push({ description: categoria, quantity:1, unit_price:0, total:0 });
+      const itbmsAmt = Math.round(subtotal * itbms) / 100;
+      const total    = subtotal + itbmsAmt;
+
+      // 4. Crear cotización completa
+      const histRes   = await ghRead('history.json');
+      const histLista = histRes?.data?.quotes || [];
+
+      const fechaEvento = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
       const nuevaCotizacion = {
         quote_num:     quoteStr,
         id:            `hist_sol_${id}`,
         tipo:          'cotizacion',
+        plataforma:    'web',
         categoria,
         estado:        'Confirmada',
         created_at:    new Date().toISOString(),
         visit_date:    fechaEvento,
         visit_date_end: sol.fecha_salida || fechaEvento,
-        notes:         `Aprobada desde solicitud #${id.slice(-6)}. Precios pendientes de confirmar.${sol.notas ? ' | ' + sol.notas : ''}`,
+        notes:         `Solicitud web #${id.slice(-6)}${sol.notas ? ' | ' + sol.notas : ''}`,
         sol_id:        id,
         client: {
-          name:  sol.usuario?.nombre || '—',
-          phone: sol.contacto?.telefono || '',
-          email: sol.contacto?.email    || '',
+          name:   sol.usuario?.nombre || '—',
+          cedula: sol.usuario?.cedula || '',
+          phone:  sol.contacto?.telefono || '',
+          email:  sol.contacto?.email    || sol.usuario?.email || '',
         },
         items,
-        subtotal:  0,
-        itbms:     0,
-        total:     0,
+        subtotal:  Math.round(subtotal * 100) / 100,
+        itbms:     itbmsAmt,
+        total:     Math.round(total * 100) / 100,
         abono:     0,
-        pendiente: 0,
+        pendiente: Math.round(total * 100) / 100,
       };
 
       histLista.push(nuevaCotizacion);
       await ghReadWrite('history.json', { quotes: histLista });
-      await ghReadWrite('counter.json', { count: nuevoNum });
 
-      // 3. Recargar datos locales
+      // 5. Recargar datos locales
       allHistory = histLista;
       buildCalIndex();
       renderCalendario();
 
-      showToast(`✅ Solicitud aprobada — Cotización #${quoteStr} creada y visible en el calendario`, 'success');
+      showToast(`✅ Aprobada — Cotización #${quoteStr} creada con precios calculados`, 'success');
       renderSolicitudes();
     } catch(e) {
       console.error(e);
