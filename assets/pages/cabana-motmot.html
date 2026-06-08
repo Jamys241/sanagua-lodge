@@ -546,19 +546,18 @@
   function autorellenarDatos() {
     const sesion = getSesionPublica();
     if (!sesion) return;
-    const campos = {
-      'nombre-contacto': sesion.name  || sesion.username || '',
-      'tel-contacto':    sesion.phone || '',
-      'email-contacto':  sesion.email || '',
-      // Camping / Cabañas usan otros IDs
-      'nom': sesion.name  || sesion.username || '',
-      'tel': sesion.phone || '',
-      'ema': sesion.email || '',
-    };
-    Object.entries(campos).forEach(([id, val]) => {
+    // IDs usados en cabañas: nom, tel, ema
+    const fill = (id, val) => {
       const el = document.getElementById(id);
-      if (el && !el.value && val) el.value = val;
-    });
+      if (el && val) el.value = val;
+    };
+    fill('nom', sesion.name  || sesion.username || '');
+    fill('tel', sesion.phone || '');
+    fill('ema', sesion.email || '');
+    // También cubrir pasadía por si acaso
+    fill('nombre-contacto', sesion.name  || sesion.username || '');
+    fill('tel-contacto',    sesion.phone || '');
+    fill('email-contacto',  sesion.email || '');
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────
@@ -716,29 +715,57 @@
   }
 
   async function enviar(){
-    const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
-    const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
+    const ent = document.getElementById('f-ent').value;
+    const sal = document.getElementById('f-sal').value;
+    const nom = document.getElementById('nom').value.trim();
+    const tel = document.getElementById('tel').value.trim();
+    const ema = document.getElementById('ema').value.trim();
+
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
     if(!nom){alert('Ingresa tu nombre.');return;}
     if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
     if(esDiaCerradoPub(ent)){alert(mensajeDiaCerrado(ent));return;}
     if(verificarConflicto(ent,sal)){alert('🌿 Estas fechas ya están reservadas. Por favor elige otras fechas disponibles.');return;}
-    const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
-    const ad=adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';
+
+    const noches = Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
+    const ad = adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';
+
+    // 1. Guardar solicitud PRIMERO (antes de cerrar modal)
     const datos = {
       servicio:  'Cabaña',
       categoria: CABANA_CAT,
       fecha_entrada: ent,
       fecha_salida:  sal,
-      noches:    noches,
+      noches,
       personas_adicionales: adPersonas,
-      contacto:  { nombre: nom, telefono: tel, email: ema }
+      contacto: { nombre: nom, telefono: tel, email: ema }
     };
-    const guardado = await guardarSolicitud(datos);
-    const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar Cabaña Motmot.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${noches} noche${noches===1?'':'s'})${ad}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
+
+    let guardado = false;
+    try {
+      guardado = await guardarSolicitud(datos);
+    } catch(e) {
+      console.error('Error al guardar solicitud:', e);
+    }
+
+    // 2. Abrir WhatsApp
+    const msg = encodeURIComponent(
+      `Hola Sanagua Lodge! Quiero reservar Cabaña Motmot.\n\n`+
+      `📅 Entrada: ${ent} | Salida: ${sal} (${noches} noche${noches===1?'':'s'})${ad}\n`+
+      `👤 ${nom}\n📧 ${ema||'Sin correo'}`
+    );
     window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+
+    // 3. Cerrar modal y mostrar resultado
     closeModal();
-    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);color:#fff;';
+    t.style.background = guardado ? '#2d3e2a' : '#c0392b';
+    t.textContent = guardado
+      ? '✅ Solicitud enviada. Te contactaremos pronto.'
+      : '⚠️ WhatsApp enviado pero no se pudo guardar la solicitud. Contáctanos directamente.';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 5000);
   }
 
   init();
