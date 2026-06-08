@@ -4333,6 +4333,8 @@
   async function aprobarSolicitud(id) {
     const sol = solicitudesData.find(s => s.id === id);
     if (!sol) return;
+    // Pausar polling para evitar conflictos
+    clearInterval(_pollTimer);
     showLoading(true);
     try {
       // 1. Marcar solicitud como aprobada
@@ -4473,20 +4475,43 @@
     } catch(e) {
       console.error(e);
       showToast('❌ Error al aprobar. Intenta nuevamente.', 'error');
+    } finally {
+      showLoading(false);
+      // Recargar solicitudes para sincronizar SHA y reanudar polling
+      const resFinal = await ghRead('solicitudes.json');
+      if (resFinal) {
+        solicitudesData = resFinal.data?.solicitudes || [];
+        solicitudesSha  = resFinal.sha;
+        _lastHashSols   = simpleHash(solicitudesData);
+      }
+      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     }
-    finally { showLoading(false); }
   }
 
   async function rechazarSolicitud(id) {
     if (!confirm('¿Rechazar esta solicitud? El cliente no recibirá notificación automática.')) return;
+    // Pausar polling para evitar que sobreescriba el cambio
+    clearInterval(_pollTimer);
     showLoading(true);
     try {
       const ok = await actualizarEstadoSolicitud(id, 'rechazada');
       if (!ok) throw new Error();
-      showToast('Solicitud rechazada.', 'success');
+      // Recargar desde GitHub para sincronizar SHA y datos
+      const res = await ghRead('solicitudes.json');
+      if (res) {
+        solicitudesData = res.data?.solicitudes || [];
+        solicitudesSha  = res.sha;
+        _lastHashSols   = simpleHash(solicitudesData);
+      }
+      showToast('Solicitud rechazada correctamente.', 'success');
       renderSolicitudes();
-    } catch { showToast('❌ Error al rechazar.', 'error'); }
-    finally { showLoading(false); }
+    } catch {
+      showToast('❌ Error al rechazar. Intenta nuevamente.', 'error');
+    } finally {
+      showLoading(false);
+      // Reanudar polling
+      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+    }
   }
 
 </script>
