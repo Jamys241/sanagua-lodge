@@ -131,6 +131,14 @@
       .picnic-cta{align-self:flex-start}
       .picnic-img-wrap{display:none}
     }
+  
+    /* Toast de actualización */
+    .update-toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-80px);
+      z-index:200;background:var(--moss,#2d3e2a);color:#fff;font-size:.78rem;font-weight:600;
+      padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
+      display:flex;align-items:center;gap:8px;pointer-events:none}
+    .update-toast.show{transform:translateX(-50%) translateY(0)}
   </style>
 </head>
 <body>
@@ -324,16 +332,25 @@
 
   init();
 
-  // Auto-actualización cada 20 segundos
+
+  function mostrarToastActualizacion(msg) {
+    const t = document.getElementById('update-toast');
+    if (!t) return;
+    t.innerHTML = `<span style="font-size:.9rem">🔄</span> ${msg || 'Contenido actualizado'}`;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
   let _lastMenu = null;
   setInterval(async () => {
     const menu = await ghF('menu.json');
     if (!menu?.categorias) return;
-    // Solo re-renderizar si hubo cambios
     const hash = JSON.stringify(menu);
     if (hash === _lastMenu) return;
     _lastMenu = hash;
     renderMenu(menu);
+    mostrarToastActualizacion('Menú actualizado');
   }, 20000);
 </script>
 </body>

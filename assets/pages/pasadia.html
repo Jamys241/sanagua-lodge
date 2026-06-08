@@ -81,6 +81,13 @@
       flex-direction:column;height:38px;width:100%;border-radius:6px;padding:2px 0}
     .cday.cerrado .cn{font-size:.72rem;font-weight:600;color:#bbb}
     .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
+    /* Toast de actualización */
+    .update-toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-80px);
+      z-index:200;background:var(--moss,#2d3e2a);color:#fff;font-size:.78rem;font-weight:600;
+      padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
+      display:flex;align-items:center;gap:8px;pointer-events:none}
+    .update-toast.show{transform:translateX(-50%) translateY(0)}
     .cday.pasado{color:#d0d0d0;cursor:not-allowed;background:#fafafa}
     .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
     .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
@@ -753,7 +760,17 @@
 
   init();
 
-  // Auto-actualización cada 20 segundos (horarios de cierre)
+
+  function mostrarToastActualizacion(msg) {
+    const t = document.getElementById('update-toast');
+    if (!t) return;
+    t.innerHTML = `<span style="font-size:.9rem">🔄</span> ${msg || 'Contenido actualizado'}`;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Polling: 20 segundos, solo re-renderiza si hay cambios
   let _lastHorPas = null;
   setInterval(async () => {
     const h = await ghFetch('horarios.json');
@@ -764,6 +781,7 @@
     DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
     EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
     renderCalPasadia();
+    mostrarToastActualizacion('Horarios actualizados');
   }, 20000);
 </script>
 </body>
