@@ -251,6 +251,46 @@
     .cal-grid td.cal-cerrado:hover { background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,.04) 5px,rgba(0,0,0,.04) 10px); }
     .cal-grid td.cal-excepcion { outline:2px dashed var(--accent); outline-offset:-2px; }
     .cal-cerrado-label { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); opacity:.6; padding:0 4px 2px; }
+    /* Tarjetas de solicitudes */
+    .sol-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;
+      overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);transition:box-shadow .2s}
+    .sol-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.09)}
+    .sol-card-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--border)}
+    .sol-badge{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:3px 10px;border-radius:20px}
+    .sol-badge.pendiente{background:#fff8e1;color:#b45309}
+    .sol-badge.aprobada{background:#f0f7ee;color:var(--success)}
+    .sol-badge.rechazada{background:#fff5f5;color:var(--red)}
+    .sol-servicio{font-size:.8rem;font-weight:700;color:var(--ink)}
+    .sol-card-body{padding:14px 16px}
+    .sol-usuario{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+      padding-bottom:12px;border-bottom:1px solid var(--border)}
+    .sol-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);
+      color:#fff;display:flex;align-items:center;justify-content:center;font-size:.88rem;
+      font-weight:700;flex-shrink:0}
+    .sol-u-nombre{font-size:.88rem;font-weight:600;color:var(--ink)}
+    .sol-u-contacto{font-size:.75rem;color:var(--muted);margin-top:1px}
+    .sol-datos{display:flex;flex-direction:column;gap:5px}
+    .sol-dato{display:flex;gap:8px;font-size:.8rem}
+    .sol-dato-lbl{color:var(--muted);min-width:80px;flex-shrink:0}
+    .sol-dato-val{color:var(--ink);font-weight:500}
+    .sol-fecha{font-size:.68rem;color:var(--muted);margin-top:10px}
+    .sol-actions{padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--border);background:var(--bg)}
+    .btn-aprobar{flex:1;background:var(--success);color:#fff;border:none;border-radius:6px;
+      padding:9px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;
+      cursor:pointer;transition:background .2s}
+    .btn-aprobar:hover{background:#256940}
+    .btn-rechazar{flex:1;background:none;border:1.5px solid var(--red);color:var(--red);
+      border-radius:6px;padding:9px;font-family:'DM Sans',sans-serif;font-size:.8rem;
+      font-weight:700;cursor:pointer;transition:all .2s}
+    .btn-rechazar:hover{background:var(--red);color:#fff}
+    .btn-sol-done{width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);
+      border-radius:6px;padding:9px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:default}
+    .sol-stat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+      padding:12px 18px;text-align:center;min-width:80px}
+    .sol-stat-n{font-size:1.4rem;font-weight:700;color:var(--ink)}
+    .sol-stat-l{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
     /* Botones selector de día de cierre */
     .cal-dow-btn { padding:6px 14px; border:1.5px solid var(--border); border-radius:6px;
       font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer;
@@ -344,6 +384,7 @@
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
+    <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
     <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
 
     <div class="side-menu-divider"></div>
@@ -1286,6 +1327,33 @@
 </div>
 </div><!-- /tab-popular -->
 
+<!-- ══════════════════════════ TAB SOLICITUDES ══════════════════════════ -->
+<div id="tab-solicitudes" class="tab-panel">
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">📬 Solicitudes de reserva</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="sol-filtro" onchange="filtrarSolicitudes()" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface)">
+          <option value="todas">Todas</option>
+          <option value="pendiente">⏳ Pendientes</option>
+          <option value="aprobada">✅ Aprobadas</option>
+          <option value="rechazada">❌ Rechazadas</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="loadSolicitudes()">🔄 Recargar</button>
+      </div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px">
+      Solicitudes enviadas desde las páginas de servicios. Aprueba para añadir al calendario o rechaza para notificar al cliente.
+    </p>
+    <div id="sol-stats" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <div id="sol-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+      <div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando solicitudes...</div>
+    </div>
+  </div>
+</div>
+</div><!-- /tab-solicitudes -->
+
 <!-- Loading & Toast -->
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
@@ -1936,6 +2004,7 @@
       }
       loadPopulares();
     }
+    if (name === 'solicitudes') loadSolicitudes();
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
@@ -4118,6 +4187,170 @@
       showToast('No tienes permiso para acceder al editor de menú.', 'error'); return;
     }
     window.open('menu-editor.html', '_blank');
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // MÓDULO DE SOLICITUDES DE RESERVA
+  // ══════════════════════════════════════════════════════════════════════
+  let solicitudesData = [];
+  let solicitudesSha  = null;
+
+  async function loadSolicitudes() {
+    document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando...</div>';
+    const res = await ghRead('solicitudes.json');
+    if (!res) { document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">No se encontró solicitudes.json</div>'; return; }
+    solicitudesData = res.data?.solicitudes || [];
+    solicitudesSha  = res.sha;
+    renderSolicitudes();
+  }
+
+  function filtrarSolicitudes() { renderSolicitudes(); }
+
+  function renderSolicitudes() {
+    const filtro = document.getElementById('sol-filtro')?.value || 'todas';
+    const lista  = filtro === 'todas' ? solicitudesData : solicitudesData.filter(s => s.estado === filtro);
+
+    // Stats
+    const pend = solicitudesData.filter(s=>s.estado==='pendiente').length;
+    const apro = solicitudesData.filter(s=>s.estado==='aprobada').length;
+    const rech = solicitudesData.filter(s=>s.estado==='rechazada').length;
+    document.getElementById('sol-stats').innerHTML = `
+      <div class="sol-stat-card"><div class="sol-stat-n">${solicitudesData.length}</div><div class="sol-stat-l">Total</div></div>
+      <div class="sol-stat-card" style="border-color:#f0d060"><div class="sol-stat-n" style="color:#b45309">${pend}</div><div class="sol-stat-l">Pendientes</div></div>
+      <div class="sol-stat-card" style="border-color:#c0ddb8"><div class="sol-stat-n" style="color:var(--success)">${apro}</div><div class="sol-stat-l">Aprobadas</div></div>
+      <div class="sol-stat-card" style="border-color:#f0c0c0"><div class="sol-stat-n" style="color:var(--red)">${rech}</div><div class="sol-stat-l">Rechazadas</div></div>`;
+
+    if (!lista.length) {
+      document.getElementById('sol-lista').innerHTML = `<div style="color:var(--muted);font-size:.85rem;padding:40px 0;text-align:center;grid-column:1/-1">📭 No hay solicitudes ${filtro==='todas'?'':'con estado "'+filtro+'"'}</div>`;
+      return;
+    }
+
+    // Ordenar: pendientes primero, luego por fecha desc
+    const ordenadas = [...lista].sort((a,b) => {
+      if (a.estado==='pendiente' && b.estado!=='pendiente') return -1;
+      if (a.estado!=='pendiente' && b.estado==='pendiente') return 1;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    document.getElementById('sol-lista').innerHTML = ordenadas.map(sol => {
+      const emoji    = {Pasadía:'☀️',Camping:'⛺',Cabaña:'🏡',Picnic:'🧀'}[sol.servicio] || '📋';
+      const badgeCls = sol.estado;
+      const badgeTxt = {pendiente:'⏳ Pendiente',aprobada:'✅ Aprobada',rechazada:'❌ Rechazada'}[sol.estado] || sol.estado;
+      const inicial  = (sol.usuario?.nombre||'?').charAt(0).toUpperCase();
+      const fecha    = sol.created_at ? new Date(sol.created_at).toLocaleString('es-PA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+      const isPend   = sol.estado === 'pendiente';
+
+      // Datos de la solicitud
+      const rows = [];
+      if (sol.categoria)     rows.push(['Tipo',     sol.categoria]);
+      if (sol.fecha)         rows.push(['Fecha',     sol.fecha]);
+      if (sol.fecha_entrada) rows.push(['Entrada',   sol.fecha_entrada]);
+      if (sol.fecha_salida)  rows.push(['Salida',    sol.fecha_salida]);
+      if (sol.noches)        rows.push(['Noches',    sol.noches]);
+      if (sol.personas)      rows.push(['Personas',  sol.personas]);
+      if (sol.carpa)         rows.push(['Carpa',     sol.carpa]);
+      if (sol.precio)        rows.push(['Precio',    sol.precio]);
+      if (sol.hora)          rows.push(['Hora',      sol.hora]);
+      if (sol.notas)         rows.push(['Notas',     sol.notas]);
+
+      return `<div class="sol-card" id="sol-card-${sol.id}">
+        <div class="sol-card-head">
+          <div class="sol-servicio">${emoji} ${sol.servicio||'Reserva'}</div>
+          <span class="sol-badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        <div class="sol-card-body">
+          <div class="sol-usuario">
+            <div class="sol-avatar">${inicial}</div>
+            <div>
+              <div class="sol-u-nombre">${sol.usuario?.nombre||'—'}</div>
+              <div class="sol-u-contacto">
+                ${sol.contacto?.telefono?`📱 ${sol.contacto.telefono}`:''} 
+                ${sol.contacto?.email?`· ✉️ ${sol.contacto.email}`:''}
+              </div>
+            </div>
+          </div>
+          <div class="sol-datos">
+            ${rows.map(([l,v])=>`<div class="sol-dato"><span class="sol-dato-lbl">${l}</span><span class="sol-dato-val">${v}</span></div>`).join('')}
+          </div>
+          <div class="sol-fecha">Recibida: ${fecha}</div>
+        </div>
+        <div class="sol-actions">
+          ${isPend
+            ? `<button class="btn-aprobar" onclick="aprobarSolicitud('${sol.id}')">✅ Aprobar</button>
+               <button class="btn-rechazar" onclick="rechazarSolicitud('${sol.id}')">❌ Rechazar</button>`
+            : `<button class="btn-sol-done">${badgeTxt}</button>`
+          }
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function actualizarEstadoSolicitud(id, nuevoEstado) {
+    const idx = solicitudesData.findIndex(s => s.id === id);
+    if (idx < 0) return false;
+    solicitudesData[idx].estado = nuevoEstado;
+    solicitudesData[idx].updated_at = new Date().toISOString();
+    const ok = await ghReadWrite('solicitudes.json', { solicitudes: solicitudesData });
+    if (ok) {
+      const res = await ghRead('solicitudes.json');
+      if (res) solicitudesSha = res.sha;
+    }
+    return ok;
+  }
+
+  async function aprobarSolicitud(id) {
+    const sol = solicitudesData.find(s => s.id === id);
+    if (!sol) return;
+    showLoading(true);
+    try {
+      const ok = await actualizarEstadoSolicitud(id, 'aprobada');
+      if (!ok) throw new Error();
+
+      // Crear evento en el calendario
+      const fechaEvento = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
+      const categoria   = sol.categoria || sol.servicio || 'Reserva';
+      const nuevoEvento = {
+        id:            `ev_sol_${id}`,
+        tipo:          'evento',
+        categoria,
+        visit_date:    fechaEvento,
+        visit_date_end: sol.fecha_salida || fechaEvento,
+        estado:        'Confirmada',
+        created_at:    new Date().toISOString(),
+        notes:         `Aprobado desde solicitud #${id.slice(-6)}`,
+        client: {
+          name:  sol.usuario?.nombre || '—',
+          phone: sol.contacto?.telefono || '',
+          email: sol.contacto?.email    || '',
+        },
+      };
+
+      // Guardar evento
+      const evRes = await ghRead('events.json');
+      const evLista = evRes?.data?.events || [];
+      evLista.push(nuevoEvento);
+      await ghReadWrite('events.json', { events: evLista });
+      // Recargar eventos localmente
+      events = evLista;
+      buildCalIndex();
+      renderCalendario();
+
+      showToast(`✅ Solicitud aprobada y añadida al calendario como "${categoria}"`, 'success');
+      renderSolicitudes();
+    } catch { showToast('❌ Error al aprobar. Intenta nuevamente.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  async function rechazarSolicitud(id) {
+    if (!confirm('¿Rechazar esta solicitud? El cliente no recibirá notificación automática.')) return;
+    showLoading(true);
+    try {
+      const ok = await actualizarEstadoSolicitud(id, 'rechazada');
+      if (!ok) throw new Error();
+      showToast('Solicitud rechazada.', 'success');
+      renderSolicitudes();
+    } catch { showToast('❌ Error al rechazar.', 'error'); }
+    finally { showLoading(false); }
   }
 
 </script>
