@@ -4303,41 +4303,73 @@
     if (!sol) return;
     showLoading(true);
     try {
+      // 1. Marcar solicitud como aprobada
       const ok = await actualizarEstadoSolicitud(id, 'aprobada');
-      if (!ok) throw new Error();
+      if (!ok) throw new Error('No se pudo actualizar solicitud');
 
-      // Crear evento en el calendario
-      const fechaEvento = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
-      const categoria   = sol.categoria || sol.servicio || 'Reserva';
-      const nuevoEvento = {
-        id:            `ev_sol_${id}`,
-        tipo:          'evento',
+      // 2. Crear cotización completa en history.json
+      const histRes  = await ghRead('history.json');
+      const histLista = histRes?.data?.quotes || [];
+      const counterRes = await ghRead('counter.json');
+      const contadorActual = counterRes?.data?.count || histLista.length;
+      const nuevoNum = contadorActual + 1;
+      const quoteStr = String(nuevoNum).padStart(4, '0');
+
+      const fechaEvento  = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
+      const categoria    = sol.categoria || sol.servicio || 'Reserva';
+
+      // Armar items según servicio
+      const items = [];
+      if (sol.servicio === 'Pasadía' || sol.servicio === 'Camping') {
+        items.push({ description: categoria, quantity: 1, unit_price: 0, total: 0 });
+      } else if (sol.servicio === 'Cabaña') {
+        const noches = sol.noches || 1;
+        items.push({ description: `${categoria} × ${noches} noche${noches===1?'':'s'}`, quantity: noches, unit_price: 0, total: 0 });
+        if (sol.personas_adicionales > 0)
+          items.push({ description: 'Personas adicionales', quantity: sol.personas_adicionales, unit_price: 0, total: 0 });
+      } else if (sol.servicio === 'Picnic') {
+        items.push({ description: `${categoria}`, quantity: 1, unit_price: 0, total: 0 });
+      }
+
+      const nuevaCotizacion = {
+        quote_num:     quoteStr,
+        id:            `hist_sol_${id}`,
+        tipo:          'cotizacion',
         categoria,
-        visit_date:    fechaEvento,
-        visit_date_end: sol.fecha_salida || fechaEvento,
         estado:        'Confirmada',
         created_at:    new Date().toISOString(),
-        notes:         `Aprobado desde solicitud #${id.slice(-6)}`,
+        visit_date:    fechaEvento,
+        visit_date_end: sol.fecha_salida || fechaEvento,
+        notes:         `Aprobada desde solicitud #${id.slice(-6)}. Precios pendientes de confirmar.${sol.notas ? ' | ' + sol.notas : ''}`,
+        sol_id:        id,
         client: {
           name:  sol.usuario?.nombre || '—',
           phone: sol.contacto?.telefono || '',
           email: sol.contacto?.email    || '',
         },
+        items,
+        subtotal:  0,
+        itbms:     0,
+        total:     0,
+        abono:     0,
+        pendiente: 0,
       };
 
-      // Guardar evento
-      const evRes = await ghRead('events.json');
-      const evLista = evRes?.data?.events || [];
-      evLista.push(nuevoEvento);
-      await ghReadWrite('events.json', { events: evLista });
-      // Recargar eventos localmente
-      events = evLista;
+      histLista.push(nuevaCotizacion);
+      await ghReadWrite('history.json', { quotes: histLista });
+      await ghReadWrite('counter.json', { count: nuevoNum });
+
+      // 3. Recargar datos locales
+      allHistory = histLista;
       buildCalIndex();
       renderCalendario();
 
-      showToast(`✅ Solicitud aprobada y añadida al calendario como "${categoria}"`, 'success');
+      showToast(`✅ Solicitud aprobada — Cotización #${quoteStr} creada y visible en el calendario`, 'success');
       renderSolicitudes();
-    } catch { showToast('❌ Error al aprobar. Intenta nuevamente.', 'error'); }
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Error al aprobar. Intenta nuevamente.', 'error');
+    }
     finally { showLoading(false); }
   }
 
