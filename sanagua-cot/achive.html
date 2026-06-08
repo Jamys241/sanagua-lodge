@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="assets/images/icon/icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cotizaciones — Sanagua Lodge</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -386,6 +386,7 @@
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
     <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
+    <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
     <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
 
     <div class="side-menu-divider"></div>
@@ -1344,9 +1345,14 @@
         <button class="btn btn-outline btn-sm" onclick="loadSolicitudes()">🔄 Recargar</button>
       </div>
     </div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px">
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
       Solicitudes enviadas desde las páginas de servicios. Aprueba para añadir al calendario o rechaza para notificar al cliente.
     </p>
+    <div style="margin-bottom:16px">
+      <input type="text" id="sol-buscar" placeholder="🔍 Buscar por nombre o correo..." oninput="filtrarSolicitudes()"
+        style="width:100%;max-width:360px;padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;outline:none;transition:border-color .2s"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
     <div id="sol-stats" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div id="sol-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
       <div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando solicitudes...</div>
@@ -1354,6 +1360,51 @@
   </div>
 </div>
 </div><!-- /tab-solicitudes -->
+
+<!-- ════════════════════════ TAB USUARIOS ══════════════════════════════ -->
+<div id="tab-usuarios" class="tab-panel">
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">👥 Gestión de usuarios web</div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un usuario por correo para cambiarle la contraseña.</p>
+
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <input type="email" id="usr-buscar-email" placeholder="correo@ejemplo.com"
+        class="form-input" style="flex:1;min-width:220px"
+        onkeydown="if(event.key==='Enter')buscarUsuario()">
+      <button class="btn btn-accent" onclick="buscarUsuario()">🔍 Buscar</button>
+    </div>
+
+    <div id="usr-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div id="usr-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
+        <div>
+          <div id="usr-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
+          <div id="usr-email-display" style="font-size:.78rem;color:var(--muted)"></div>
+          <div id="usr-cedula-display" style="font-size:.78rem;color:var(--muted)"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nueva contraseña</label>
+        <input type="password" id="usr-nueva-pass" class="form-input" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="form-group">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="usr-confirmar-pass" class="form-input" placeholder="Repite la contraseña">
+      </div>
+      <div id="usr-msg" style="font-size:.8rem;min-height:18px;margin-bottom:10px"></div>
+      <button class="btn btn-accent" onclick="cambiarPasswordUsuario()">🔑 Cambiar contraseña</button>
+    </div>
+
+    <div id="usr-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
+      ❌ No se encontró ningún usuario con ese correo.
+    </div>
+  </div>
+</div>
+</div><!-- /tab-usuarios -->
 
 <!-- Loading & Toast -->
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
@@ -1385,23 +1436,25 @@
     ver_populares:       true,
     ver_menu_editor:     true,
     ver_solicitudes:     true,
+    gestionar_usuarios:  true,
   };
 
   const PERMISOS_LABELS = {
-    ver_historial:       { label:'Ver historial',           desc:'Puede ver la lista de cotizaciones y eventos' },
-    ver_resumen:         { label:'Ver resumen',             desc:'Puede ver estadísticas y totales' },
-    ver_calendario:      { label:'Ver calendario',          desc:'Puede ver el calendario de reservas' },
-    crear_cotizacion:    { label:'Crear cotizaciones',      desc:'Puede generar nuevas cotizaciones' },
-    editar_cotizacion:   { label:'Editar cotizaciones',     desc:'Puede modificar estado, abono y datos del cliente' },
-    eliminar_cotizacion: { label:'Eliminar cotizaciones',   desc:'Puede eliminar cotizaciones del historial' },
-    crear_evento:        { label:'Crear eventos manuales',  desc:'Puede añadir eventos en el calendario' },
-    editar_evento:       { label:'Editar eventos manuales', desc:'Puede modificar eventos existentes' },
-    eliminar_evento:     { label:'Eliminar eventos',        desc:'Puede eliminar eventos del calendario' },
-    exportar_pdf:        { label:'Exportar PDF',            desc:'Puede descargar cotizaciones y confirmaciones' },
-    ver_precios:         { label:'Ver y editar precios',    desc:'Puede acceder al módulo de precios de servicios' },
-    ver_populares:       { label:'Ver servicios populares', desc:'Puede ver y cambiar los servicios destacados' },
-    ver_menu_editor:     { label:'Editor de menú',          desc:'Puede abrir y editar el menú del restaurante' },
-    ver_solicitudes:     { label:'Ver solicitudes web',     desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
+    ver_historial:       { label:'Ver historial',             desc:'Puede ver la lista de cotizaciones y eventos' },
+    ver_resumen:         { label:'Ver resumen',               desc:'Puede ver estadísticas y totales' },
+    ver_calendario:      { label:'Ver calendario',            desc:'Puede ver el calendario de reservas' },
+    crear_cotizacion:    { label:'Crear cotizaciones',        desc:'Puede generar nuevas cotizaciones' },
+    editar_cotizacion:   { label:'Editar cotizaciones',       desc:'Puede modificar estado, abono y datos del cliente' },
+    eliminar_cotizacion: { label:'Eliminar cotizaciones',     desc:'Puede eliminar cotizaciones del historial' },
+    crear_evento:        { label:'Crear eventos manuales',    desc:'Puede añadir eventos en el calendario' },
+    editar_evento:       { label:'Editar eventos manuales',   desc:'Puede modificar eventos existentes' },
+    eliminar_evento:     { label:'Eliminar eventos',          desc:'Puede eliminar eventos del calendario' },
+    exportar_pdf:        { label:'Exportar PDF',              desc:'Puede descargar cotizaciones y confirmaciones' },
+    ver_precios:         { label:'Ver y editar precios',      desc:'Puede acceder al módulo de precios de servicios' },
+    ver_populares:       { label:'Ver servicios populares',   desc:'Puede ver y cambiar los servicios destacados' },
+    ver_menu_editor:     { label:'Editor de menú',            desc:'Puede abrir y editar el menú del restaurante' },
+    ver_solicitudes:     { label:'Ver solicitudes web',       desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
+    gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
   };
 
   async function loadAuth() {
@@ -1475,7 +1528,8 @@
       if (t.includes('Precios'))          btn.style.display = isSuper||p.ver_precios       ? '' : 'none';
       if (t.includes('Populares'))        btn.style.display = isSuper||p.ver_populares     ? '' : 'none';
       if (t.includes('Editor de Menú'))   btn.style.display = isSuper||p.ver_menu_editor   ? '' : 'none';
-      if (t.includes('Solicitudes'))        btn.style.display = isSuper||p.ver_solicitudes   ? '' : 'none';
+      if (t.includes('Solicitudes'))        btn.style.display = isSuper||p.ver_solicitudes      ? '' : 'none';
+      if (t.includes('Usuarios'))           btn.style.display = isSuper||p.gestionar_usuarios   ? '' : 'none';
     });
     const bGen = document.querySelector('[onclick="generatePDF()"]');
     if (bGen) bGen.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
@@ -2040,6 +2094,11 @@
         showToast('No tienes permiso para acceder a las solicitudes.', 'error'); return;
       }
       loadSolicitudes();
+    }
+    if (name === 'usuarios') {
+      if (currentUser?.role !== 'superadmin' && !getPermisos().gestionar_usuarios) {
+        showToast('No tienes permiso para gestionar usuarios.', 'error'); return;
+      }
     }
   }
 
@@ -4243,8 +4302,17 @@
   function filtrarSolicitudes() { renderSolicitudes(); }
 
   function renderSolicitudes() {
-    const filtro = document.getElementById('sol-filtro')?.value || 'todas';
-    const lista  = filtro === 'todas' ? solicitudesData : solicitudesData.filter(s => s.estado === filtro);
+    const filtro  = document.getElementById('sol-filtro')?.value || 'todas';
+    const buscar  = (document.getElementById('sol-buscar')?.value || '').toLowerCase().trim();
+    let lista = filtro === 'todas' ? solicitudesData : solicitudesData.filter(s => s.estado === filtro);
+    if (buscar) {
+      lista = lista.filter(s =>
+        (s.usuario?.nombre||'').toLowerCase().includes(buscar) ||
+        (s.usuario?.email||'').toLowerCase().includes(buscar)  ||
+        (s.contacto?.email||'').toLowerCase().includes(buscar) ||
+        (s.contacto?.nombre||'').toLowerCase().includes(buscar)
+      );
+    }
 
     // Stats
     const pend = solicitudesData.filter(s=>s.estado==='pendiente').length;
@@ -4451,7 +4519,7 @@
         tipo:          'cotizacion',
         plataforma:    'web',
         categoria,
-        estado:        'Confirmada',
+        estado:        'Pendiente',
         created_at:    new Date().toISOString(),
         visit_date:    fechaEvento,
         visit_date_end: sol.fecha_salida || fechaEvento,
@@ -4521,6 +4589,76 @@
       // Reanudar polling
       _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE USUARIOS WEB
+  // ══════════════════════════════════════════════════════════════════════
+  let _usuarioEncontrado = null;
+  let _usersCache = null;
+
+  async function buscarUsuario() {
+    const email = document.getElementById('usr-buscar-email').value.trim().toLowerCase();
+    if (!email) { showToast('Ingresa un correo para buscar.', 'error'); return; }
+
+    document.getElementById('usr-resultado').style.display      = 'none';
+    document.getElementById('usr-no-encontrado').style.display  = 'none';
+    document.getElementById('usr-msg').textContent              = '';
+    _usuarioEncontrado = null;
+
+    showLoading(true);
+    try {
+      const res = await ghRead('users.json');
+      const users = res?.data?.users || [];
+      _usersCache = { users, sha: res?.sha };
+      const user = users.find(u => (u.email||'').toLowerCase() === email);
+      if (!user) {
+        document.getElementById('usr-no-encontrado').style.display = 'block';
+        return;
+      }
+      _usuarioEncontrado = user;
+      document.getElementById('usr-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
+      document.getElementById('usr-nombre').textContent        = user.name || '—';
+      document.getElementById('usr-email-display').textContent = user.email || '—';
+      document.getElementById('usr-cedula-display').textContent= user.cedula ? `Cédula: ${user.cedula}` : '';
+      document.getElementById('usr-nueva-pass').value          = '';
+      document.getElementById('usr-confirmar-pass').value      = '';
+      document.getElementById('usr-resultado').style.display   = 'block';
+    } catch { showToast('Error al buscar. Verifica la conexión.', 'error'); }
+    finally  { showLoading(false); }
+  }
+
+  async function cambiarPasswordUsuario() {
+    const msgEl = document.getElementById('usr-msg');
+    msgEl.textContent = '';
+    if (!_usuarioEncontrado) return;
+    const nueva    = document.getElementById('usr-nueva-pass').value;
+    const confirma = document.getElementById('usr-confirmar-pass').value;
+    if (!nueva || nueva.length < 6) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return;
+    }
+    if (nueva !== confirma) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Las contraseñas no coinciden.'; return;
+    }
+    showLoading(true);
+    try {
+      // Leer users.json fresco para evitar conflicto de SHA
+      const res   = await ghRead('users.json');
+      const users = res?.data?.users || [];
+      const sha   = res?.sha;
+      const idx   = users.findIndex(u => u.email === _usuarioEncontrado.email);
+      if (idx < 0) throw new Error('Usuario no encontrado');
+      users[idx].password = nueva;
+      const ok = await ghWrite('users.json', { users }, sha);
+      if (!ok) throw new Error('Error al escribir');
+      msgEl.style.color  = 'var(--success)';
+      msgEl.textContent  = `✅ Contraseña de ${_usuarioEncontrado.name} actualizada correctamente.`;
+      document.getElementById('usr-nueva-pass').value    = '';
+      document.getElementById('usr-confirmar-pass').value = '';
+      showToast(`✅ Contraseña actualizada para ${_usuarioEncontrado.name}`, 'success');
+    } catch(e) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Error al guardar. Intenta nuevamente.';
+    } finally { showLoading(false); }
   }
 
 </script>
