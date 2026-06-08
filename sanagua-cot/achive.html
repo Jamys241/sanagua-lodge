@@ -4313,14 +4313,19 @@
   }
 
   async function actualizarEstadoSolicitud(id, nuevoEstado) {
-    const idx = solicitudesData.findIndex(s => s.id === id);
+    // Leer siempre la versión más reciente de GitHub para evitar conflictos de SHA
+    const res = await ghRead('solicitudes.json');
+    if (!res) return false;
+    const lista = res.data?.solicitudes || [];
+    const sha   = res.sha;
+    const idx   = lista.findIndex(s => s.id === id);
     if (idx < 0) return false;
-    solicitudesData[idx].estado = nuevoEstado;
-    solicitudesData[idx].updated_at = new Date().toISOString();
-    const ok = await ghReadWrite('solicitudes.json', { solicitudes: solicitudesData });
+    lista[idx].estado     = nuevoEstado;
+    lista[idx].updated_at = new Date().toISOString();
+    const ok = await ghWrite('solicitudes.json', { solicitudes: lista }, sha);
     if (ok) {
-      const res = await ghRead('solicitudes.json');
-      if (res) solicitudesSha = res.sha;
+      // Sincronizar memoria local
+      solicitudesData = lista;
     }
     return ok;
   }
