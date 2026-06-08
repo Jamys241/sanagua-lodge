@@ -1683,34 +1683,61 @@
 
   async function pollChanges() {
     try {
-      const [rH, rE] = await Promise.all([
+      const [rH, rE, rS] = await Promise.all([
         ghRead('history.json'),
         ghRead('events.json'),
+        ghRead('solicitudes.json'),
       ]);
-      const newHist = rH?.data?.quotes || [];
-      const newEvts = rE?.data?.events || [];
+      const newHist = rH?.data?.quotes      || [];
+      const newEvts = rE?.data?.events      || [];
+      const newSols = rS?.data?.solicitudes || [];
       const newHashH = simpleHash(newHist);
       const newHashE = simpleHash(newEvts);
+      const newHashS = simpleHash(newSols);
 
-      const histChanged  = newHashH !== _lastHashHist;
-      const evtsChanged  = newHashE !== _lastHashEvts;
+      const histChanged = newHashH !== _lastHashHist;
+      const evtsChanged = newHashE !== _lastHashEvts;
+      const solsChanged = newHashS !== (_lastHashSols||'');
 
-      if (histChanged || evtsChanged) {
-        if (histChanged) allHistory = newHist;
-        if (evtsChanged) allEvents  = newEvts;
+      if (histChanged || evtsChanged || solsChanged) {
+        if (histChanged) allHistory     = newHist;
+        if (evtsChanged) allEvents      = newEvts;
+        if (solsChanged) { solicitudesData = newSols; _lastHashSols = newHashS; }
         _lastHashHist = newHashH;
         _lastHashEvts = newHashE;
 
         // Refrescar la vista activa
         const activeTab = document.querySelector('.tab-panel.active')?.id;
-        if (activeTab === 'tab-calendario') renderCalendario();
-        if (activeTab === 'tab-historial')  renderHistory(allHistory);
-        if (activeTab === 'tab-resumen')    renderResumen();
+        if (activeTab === 'tab-calendario')   renderCalendario();
+        if (activeTab === 'tab-historial')    renderHistory(allHistory);
+        if (activeTab === 'tab-resumen')      renderResumen();
+        if (activeTab === 'tab-solicitudes')  renderSolicitudes();
 
-        // Indicador visual discreto
+        // Badge de solicitudes pendientes en el menú
+        const pend = newSols.filter(s=>s.estado==='pendiente').length;
+        actualizarBadgeSolicitudes(pend);
+
         showSyncDot();
       }
-    } catch { /* fallo silencioso — sin conexión */ }
+    } catch { /* fallo silencioso */ }
+  }
+
+  let _lastHashSols = '';
+
+  function actualizarBadgeSolicitudes(n) {
+    // Buscar el botón de solicitudes en el menú y añadir badge
+    document.querySelectorAll('.side-menu nav button').forEach(btn => {
+      if (!btn.textContent.includes('Solicitudes')) return;
+      // Quitar badge previo
+      btn.querySelectorAll('.notif-badge').forEach(b=>b.remove());
+      if (n > 0) {
+        const b = document.createElement('span');
+        b.className = 'notif-badge';
+        b.style.cssText = 'margin-left:auto;background:#c0392b;color:#fff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;min-width:18px;text-align:center';
+        b.textContent = n;
+        btn.appendChild(b);
+      }
+    });
   }
 
   function startPolling() {
