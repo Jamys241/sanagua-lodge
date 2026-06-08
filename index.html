@@ -1097,6 +1097,10 @@
             <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
           </div>
           <div class="auth-field">
+            <label>Cédula / Pasaporte</label>
+            <input type="text" id="reg-cedula" placeholder="8-888-8888">
+          </div>
+          <div class="auth-field">
             <label>Teléfono (opcional)</label>
             <input type="tel" id="reg-phone" placeholder="+507 6000-0000">
           </div>
@@ -1409,7 +1413,7 @@
       const users = _cachedUsers || await loadUsers();
       const found = users.find(u => u.email === input && u.password === pass);
       if (found) {
-        publicUser = { name: found.name, email: found.email, puntos: found.puntos || 0, reservas: found.reservas || [] };
+        publicUser = { name: found.name, email: found.email, cedula: found.cedula||'', phone: found.phone||'', puntos: found.puntos || 0, reservas: found.reservas || [] };
         aplicarUsuarioPublico();
         closeAuth();
       } else {
@@ -1420,10 +1424,11 @@
   }
 
   async function doRegister() {
-    const name  = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const pass  = document.getElementById('reg-password').value;
-    const phone = document.getElementById('reg-phone').value.trim();
+    const name   = document.getElementById('reg-name').value.trim();
+    const email  = document.getElementById('reg-email').value.trim();
+    const pass   = document.getElementById('reg-password').value;
+    const cedula = document.getElementById('reg-cedula').value.trim();
+    const phone  = document.getElementById('reg-phone').value.trim();
     const errEl = document.getElementById('login-error-pub');
     const btn   = document.querySelector('#panel-register .auth-btn');
     errEl.textContent = '';
@@ -1438,11 +1443,11 @@
       if (users.find(u => u.email === email)) {
         errEl.textContent = 'Este correo ya está registrado.'; return;
       }
-      const newUser = { email, name, phone, password: pass, puntos: 0, created_at: new Date().toISOString(), reservas: [] };
+      const newUser = { email, name, cedula, phone, password: pass, puntos: 0, created_at: new Date().toISOString(), reservas: [] };
       users.push(newUser);
       const ok = await saveUsers(users);
       if (ok) {
-        publicUser = { name, email, puntos: 0, reservas: [] };
+        publicUser = { name, email, cedula, phone, puntos: 0, reservas: [] };
         aplicarUsuarioPublico();
         closeAuth();
         setTimeout(() => {
@@ -1536,7 +1541,7 @@
       const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
       const todas = JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes || [];
       // Filtrar por nombre del usuario
-      const mias = todas.filter(s => s.usuario?.nombre === publicUser.name);
+      const mias = todas.filter(s => s.usuario?.nombre === publicUser.name || s.usuario?.email === publicUser.email || s.contacto?.email === publicUser.email);
       const activas   = mias.filter(s => s.estado === 'pendiente' || s.estado === 'aprobada');
       const historial = mias.filter(s => s.estado === 'rechazada');
 
