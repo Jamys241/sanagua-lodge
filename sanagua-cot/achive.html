@@ -1383,6 +1383,7 @@
     ver_precios:         true,
     ver_populares:       true,
     ver_menu_editor:     true,
+    ver_solicitudes:     true,
   };
 
   const PERMISOS_LABELS = {
@@ -1399,6 +1400,7 @@
     ver_precios:         { label:'Ver y editar precios',    desc:'Puede acceder al módulo de precios de servicios' },
     ver_populares:       { label:'Ver servicios populares', desc:'Puede ver y cambiar los servicios destacados' },
     ver_menu_editor:     { label:'Editor de menú',          desc:'Puede abrir y editar el menú del restaurante' },
+    ver_solicitudes:     { label:'Ver solicitudes web',     desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
   };
 
   async function loadAuth() {
@@ -1472,6 +1474,7 @@
       if (t.includes('Precios'))          btn.style.display = isSuper||p.ver_precios       ? '' : 'none';
       if (t.includes('Populares'))        btn.style.display = isSuper||p.ver_populares     ? '' : 'none';
       if (t.includes('Editor de Menú'))   btn.style.display = isSuper||p.ver_menu_editor   ? '' : 'none';
+      if (t.includes('Solicitudes'))        btn.style.display = isSuper||p.ver_solicitudes   ? '' : 'none';
     });
     const bGen = document.querySelector('[onclick="generatePDF()"]');
     if (bGen) bGen.style.display = isSuper||p.crear_cotizacion ? '' : 'none';
@@ -1670,7 +1673,7 @@
   let _pollTimer    = null;
   let _lastHashHist = '';
   let _lastHashEvts = '';
-  const POLL_INTERVAL = 10000; // 10 segundos
+  const POLL_INTERVAL = 20000; // 20 segundos
 
   function simpleHash(obj) {
     const s = JSON.stringify(obj);
@@ -2031,7 +2034,12 @@
       }
       loadPopulares();
     }
-    if (name === 'solicitudes') loadSolicitudes();
+    if (name === 'solicitudes') {
+      if (currentUser?.role !== 'superadmin' && !getPermisos().ver_solicitudes) {
+        showToast('No tienes permiso para acceder a las solicitudes.', 'error'); return;
+      }
+      loadSolicitudes();
+    }
   }
 
   // ── Productos ───────────────────────────────────────────────────────────────
