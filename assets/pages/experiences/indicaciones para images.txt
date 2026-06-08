@@ -1,0 +1,14 @@
+assets/images/experiences/
+├── senderismo/
+│   ├── hero.jpg          ← foto principal del héroe
+│   ├── pita1.jpg         ← galería Cerro La Pita (× 3)
+│   ├── pita2.jpg
+│   ├── pita3.jpg
+│   ├── torrijos1.jpg     ← galería Parque Omar Torrijos (× 2)
+│   └── torrijos2.jpg
+├── waterfalls/
+│   ├── hero.jpg
+│   └── cascada1.jpg … cascada8.jpg
+└── fogata/
+    ├── hero.jpg
+    └── fogata1.jpg … fogata8.jpg

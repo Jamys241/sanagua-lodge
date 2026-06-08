@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../../images/icon/icon.png">
+  <title>Cascadas — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;--mist:#a8b8a2;
+      --blue:#1a4a6a;--r:12px}
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+
+    .hero{height:65vh;min-height:420px;position:relative;overflow:hidden;
+      background:linear-gradient(160deg,#0a1a2a,#1a3a5a,#0a2a3a);
+      display:flex;align-items:flex-end;padding-bottom:60px}
+    .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+      background-image:url('../../images/experiences/waterfalls/hero.jpg')}
+    .hero-bg::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(10,26,42,.3) 0%,rgba(10,26,42,.8) 100%)}
+    .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
+    .hero-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+      color:#7ab8e8;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .hero-badge::before{content:'';width:28px;height:1px;background:#7ab8e8}
+    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);
+      font-weight:300;color:#fff;line-height:1.1;margin-bottom:12px}
+    h1 em{font-style:italic;color:#a8d8f8}
+    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.65);max-width:500px;line-height:1.7}
+
+    .pw{max-width:1000px;margin:0 auto;padding:72px 32px}
+    .intro{font-size:1rem;color:#5a6a74;line-height:1.85;margin-bottom:48px;
+      max-width:720px;border-left:3px solid #7ab8e8;padding-left:20px}
+
+    /* Galería principal — tipo masonry */
+    .gallery-masonry{display:grid;grid-template-columns:repeat(3,1fr);
+      grid-template-rows:auto;gap:10px;margin-bottom:48px;border-radius:var(--r);overflow:hidden}
+    .gm-1{grid-column:1/3;grid-row:1/3;min-height:360px}
+    .gm-2,.gm-3,.gm-4,.gm-5{min-height:170px}
+    .gallery-img{width:100%;height:100%;object-fit:cover;display:block}
+    .gallery-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      font-size:3rem;background:linear-gradient(135deg,#0a2a4a,#1a5a8a)}
+
+    /* Feature items */
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:48px}
+    .feat-card{background:#fff;border-radius:var(--r);padding:22px 24px;
+      border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 12px rgba(0,0,0,.04)}
+    .feat-icon{font-size:1.8rem;margin-bottom:10px}
+    .feat-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;
+      color:var(--moss);margin-bottom:6px}
+    .feat-desc{font-size:.83rem;color:#6a7a74;line-height:1.6}
+
+    /* Info práctica */
+    .info-practica{background:linear-gradient(135deg,#0a2a4a,#1a4a6a);border-radius:var(--r);
+      padding:32px;color:#fff;margin-bottom:48px}
+    .info-practica h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:20px;
+      color:#a8d8f8;font-weight:400}
+    .info-row{display:flex;gap:10px;margin-bottom:10px;font-size:.87rem;
+      align-items:flex-start;color:rgba(255,255,255,.85)}
+    .info-row .info-ico{flex-shrink:0;width:20px}
+
+    /* Galería secundaria */
+    .gallery-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+      border-radius:var(--r);overflow:hidden;margin-bottom:16px;height:200px}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}.hero-content{padding:0 20px}.pw{padding:48px 18px}
+      .gallery-masonry{grid-template-columns:1fr 1fr}.gm-1{grid-column:1/-1;grid-row:auto}
+      .gallery-row{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-back" href="../../../index.html">← Inicio</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Experiencias · Sanagua Lodge</div>
+    <h1>💧 Cascadas en <em>el corazón</em> de Coclé</h1>
+    <p class="hero-sub">Descubre el sonido del agua cayendo entre la vegetación panameña. Una experiencia refrescante e inolvidable a minutos de Sanagua Lodge.</p>
+  </div>
+</section>
+
+<div class="pw">
+
+  <p class="intro">
+    Las cascadas de la región de Coclé son uno de los tesoros naturales más espectaculares de Panamá. Rodeadas de bosque tropical y fauna silvestre, estas caídas de agua ofrecen no solo un espectáculo visual impresionante, sino también pozas naturales de agua fresca perfectas para refrescarse después de la caminata.
+  </p>
+
+  <!-- Galería masonry principal -->
+  <div class="gallery-masonry">
+    <div class="gm-1" style="border-radius:var(--r) 0 0 0;overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada1.jpg" alt="Cascada principal"
+        onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:var(--r) 0 0 0\'>💧</div>'">
+    </div>
+    <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada2.jpg" alt="Cascada"
+        onerror="this.outerHTML='<div class=\'gallery-ph\'>🌊</div>'">
+    </div>
+    <div style="overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada3.jpg" alt="Poza natural"
+        onerror="this.outerHTML='<div class=\'gallery-ph\'>🌿</div>'">
+    </div>
+    <div style="border-radius:0 0 0 var(--r);overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada4.jpg" alt="Vista"
+        onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 0 0 var(--r)\'>🦋</div>'">
+    </div>
+    <div style="border-radius:0 0 var(--r) 0;overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada5.jpg" alt="Sendero"
+        onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 0 var(--r) 0\'>🐦</div>'">
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feat-card">
+      <div class="feat-icon">🏊</div>
+      <div class="feat-title">Pozas naturales</div>
+      <p class="feat-desc">Refréscate en las cristalinas pozas de agua natural formadas al pie de las cascadas. El agua es fresca y de gran pureza.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🦜</div>
+      <div class="feat-title">Observación de aves</div>
+      <p class="feat-desc">El camino hacia las cascadas es ideal para avistar especies locales como el tucán, el garza y múltiples colibríes.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📸</div>
+      <div class="feat-title">Fotografía de naturaleza</div>
+      <p class="feat-desc">Un escenario espectacular para la fotografía. La luz de la mañana crea efectos de niebla y arcoíris entre la vegetación.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🧒</div>
+      <div class="feat-title">Apto para familias</div>
+      <p class="feat-desc">El recorrido es accesible para niños y personas de todas las edades, con áreas de descanso en el trayecto.</p>
+    </div>
+  </div>
+
+  <!-- Info práctica -->
+  <div class="info-practica">
+    <h3>💡 Información práctica</h3>
+    <div class="info-row"><span class="info-ico">🕐</span><span>Mejor hora para visitar: 7:00 AM – 11:00 AM para mayor caudal y luz natural</span></div>
+    <div class="info-row"><span class="info-ico">👟</span><span>Calzado: zapatos de agua o sandalia con agarre para las zonas resbalosas</span></div>
+    <div class="info-row"><span class="info-ico">🎒</span><span>Llevar: ropa de cambio, toalla, agua y snacks</span></div>
+    <div class="info-row"><span class="info-ico">📍</span><span>Acceso con guía local disponible desde Sanagua Lodge (consulta en recepción)</span></div>
+    <div class="info-row"><span class="info-ico">⚠️</span><span>Se recomienda no visitar durante lluvias intensas — el nivel del agua puede subir</span></div>
+    <div class="info-row"><span class="info-ico">🚗</span><span>Distancia desde el Lodge: consulta en recepción para rutas actualizadas</span></div>
+  </div>
+
+  <!-- Segunda galería -->
+  <div class="gallery-row">
+    <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada6.jpg" alt="Cascada"
+        onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:var(--r) 0 0 var(--r)\'>💦</div>'">
+    </div>
+    <div style="overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada7.jpg" alt="Naturaleza"
+        onerror="this.outerHTML='<div class=\'gallery-ph\'>🌺</div>'">
+    </div>
+    <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
+      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada8.jpg" alt="Poza"
+        onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 var(--r) var(--r) 0\'>🌈</div>'">
+    </div>
+  </div>
+  <p style="font-size:.75rem;color:#aaa;text-align:center;margin-bottom:48px">📸 Sube tus fotos con #SanaguaLodge y etiquétanos en Instagram</p>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../../images/icon/icon.png">
+  <title>Senderismo — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;--mist:#a8b8a2;--r:12px}
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+
+    /* Hero */
+    .hero{height:60vh;min-height:400px;position:relative;overflow:hidden;
+      background:linear-gradient(160deg,#1a2a14,#2a4a1a,#1e3a18);
+      display:flex;align-items:flex-end;padding-bottom:60px}
+    .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+      background-image:url('../../images/experiences/senderismo/hero.jpg')}
+    .hero-bg::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(26,31,24,.3) 0%,rgba(26,31,24,.75) 100%)}
+    .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
+    .hero-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--sage);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .hero-badge::before{content:'';width:28px;height:1px;background:var(--sage)}
+    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);
+      font-weight:300;color:#fff;line-height:1.1;margin-bottom:12px}
+    h1 em{font-style:italic;color:var(--sand)}
+    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.65);max-width:520px;line-height:1.7}
+
+    /* Layout */
+    .pw{max-width:1000px;margin:0 auto;padding:72px 32px}
+
+    /* Divider */
+    .exp-divider{display:flex;align-items:center;gap:16px;margin:64px 0 48px}
+    .exp-divider-line{flex:1;height:1px;background:linear-gradient(to right,transparent,var(--mist),transparent)}
+    .exp-divider-icon{font-size:1.4rem;flex-shrink:0}
+
+    /* Sección de experiencia */
+    .exp-section{margin-bottom:72px}
+    .exp-label{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--earth);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+    .exp-label::after{content:'';width:40px;height:1px;background:var(--sand);opacity:.5}
+    .exp-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);
+      font-weight:400;color:var(--moss);margin-bottom:20px;line-height:1.2}
+    .exp-title em{font-style:italic;color:var(--earth)}
+    .exp-desc{font-size:.92rem;color:#5a6a54;line-height:1.8;margin-bottom:28px}
+
+    /* Galería de imágenes */
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:32px;border-radius:var(--r);overflow:hidden}
+    .gallery-main{grid-column:1/3;grid-row:1/3}
+    .gallery img,.gallery-placeholder{width:100%;height:100%;object-fit:cover;display:block;min-height:180px}
+    .gallery-placeholder{background:linear-gradient(135deg,#2a4a1a,#3d6a2a);
+      display:flex;align-items:center;justify-content:center;font-size:3rem;opacity:.6}
+    .gallery-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px;border-radius:var(--r);overflow:hidden}
+    .gallery-2col img,.gallery-2col .gallery-placeholder{height:240px}
+
+    /* Senderos cards */
+    .senderos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:32px}
+    .sendero-card{background:#fff;border-radius:var(--r);padding:20px 22px;
+      border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 12px rgba(0,0,0,.05)}
+    .sendero-icon{font-size:1.8rem;margin-bottom:10px}
+    .sendero-name{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;
+      color:var(--moss);margin-bottom:6px}
+    .sendero-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .sendero-tag{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+      background:var(--cream);border:1px solid rgba(139,94,60,.15);
+      color:var(--earth);padding:3px 10px;border-radius:20px}
+    .sendero-desc{font-size:.84rem;color:#6a7a64;line-height:1.65}
+
+    /* Recomendaciones */
+    .rec-box{background:var(--cream);border-radius:var(--r);padding:24px 28px;margin-bottom:32px}
+    .rec-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--moss);
+      font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    .rec-item{display:flex;align-items:center;gap:8px;font-size:.84rem;color:#5a6a54}
+    .rec-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
+
+    /* Mapa / ubicación */
+    .ubicacion-box{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);overflow:hidden;
+      box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:32px}
+    .ubicacion-header{background:var(--moss);padding:16px 20px;display:flex;align-items:center;gap:10px}
+    .ubicacion-header span{font-size:.88rem;font-weight:600;color:#fff}
+    .ubicacion-body{padding:20px}
+    .ubicacion-desc{font-size:.85rem;color:#6a7a64;line-height:1.7;margin-bottom:16px}
+    .ubicacion-map{width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0}
+    .ubicacion-map iframe{width:100%;height:100%;border:none}
+
+    /* Info parque */
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+    .info-card{background:#fff;border-radius:8px;padding:14px 16px;border:1px solid rgba(0,0,0,.07);
+      text-align:center}
+    .info-num{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--moss)}
+    .info-lbl{font-size:.72rem;color:var(--mist);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}.hero-content{padding:0 20px}.pw{padding:48px 18px}
+      .gallery{grid-template-columns:1fr 1fr}.gallery-main{grid-column:1/-1;grid-row:auto}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-back" href="../../../index.html">← Inicio</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Experiencias · Sanagua Lodge</div>
+    <h1>🥾 Senderismo en <em>plena naturaleza</em></h1>
+    <p class="hero-sub">Explora los senderos más espectaculares de Coclé — desde el imponente Cerro La Pita hasta el bosque nuboso del Parque Nacional Omar Torrijos.</p>
+  </div>
+</section>
+
+<div class="pw">
+
+  <!-- ══ CERRO LA PITA ══════════════════════════════════════════════════ -->
+  <div class="exp-section">
+    <div class="exp-label">Experiencia local</div>
+    <h2 class="exp-title">Senderismo al <em>Cerro La Pita</em></h2>
+    <p class="exp-desc">
+      Una aventura imperdible a pocos kilómetros de Sanagua Lodge. El Cerro La Pita ofrece senderos rodeados de vegetación exuberante, vistas panorámicas de los valles de Coclé y la posibilidad de conectar profundamente con la flora y fauna nativa de la región. Un reto accesible para toda la familia, con niveles de dificultad para caminantes de diferentes experiencias.
+    </p>
+
+    <!-- Galería -->
+    <div class="gallery" style="margin-bottom:32px;height:320px">
+      <div class="gallery-main" style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
+        <img src="../../images/experiences/senderismo/pita1.jpg" alt="Cerro La Pita"
+          onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:var(--r) 0 0 var(--r)\'>⛰️</div>'">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="flex:1;border-radius:0 var(--r) 0 0;overflow:hidden">
+          <img src="../../images/experiences/senderismo/pita2.jpg" alt="Sendero"
+            onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 var(--r) 0 0;height:100%\'>🌿</div>'">
+        </div>
+        <div style="flex:1;border-radius:0 0 var(--r) 0;overflow:hidden">
+          <img src="../../images/experiences/senderismo/pita3.jpg" alt="Vista desde el cerro"
+            onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 0 var(--r) 0;height:100%\'>🦋</div>'">
+        </div>
+      </div>
+    </div>
+
+    <!-- Recomendaciones -->
+    <div class="rec-box">
+      <div class="rec-title">🎒 ¿Qué llevar?</div>
+      <div class="rec-grid">
+        <div class="rec-item">Zapatos de trekking</div>
+        <div class="rec-item">Agua suficiente (2L mínimo)</div>
+        <div class="rec-item">Protector solar</div>
+        <div class="rec-item">Repelente de insectos</div>
+        <div class="rec-item">Snacks energéticos</div>
+        <div class="rec-item">Ropa cómoda y fresca</div>
+        <div class="rec-item">Cámara o smartphone</div>
+        <div class="rec-item">Impermeable ligero</div>
+        <div class="rec-item">Bastones de senderismo</div>
+        <div class="rec-item">Botiquín básico</div>
+      </div>
+    </div>
+
+    <!-- Ubicación -->
+    <div class="ubicacion-box">
+      <div class="ubicacion-header">
+        <span>📍</span>
+        <span>Cómo llegar desde Sanagua Lodge</span>
+      </div>
+      <div class="ubicacion-body">
+        <p class="ubicacion-desc">
+          El acceso al Cerro La Pita se encuentra a pocos minutos de Sanagua Lodge. Pregunta en recepción por el guía local — ofrecemos salidas guiadas o indicaciones detalladas para quienes prefieren ir por cuenta propia. Se recomienda salir temprano en la mañana para aprovechar las mejores condiciones climáticas.
+        </p>
+        <div class="ubicacion-map">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126143.31!2d-80.5!3d8.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8faca6b2b2b2b2b3%3A0x1!2sCocl%C3%A9%2C%20Panam%C3%A1!5e0!3m2!1ses!2s!4v1" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="exp-divider">
+    <div class="exp-divider-line"></div>
+    <div class="exp-divider-icon">🌿</div>
+    <div class="exp-divider-line"></div>
+  </div>
+
+  <!-- ══ PARQUE NACIONAL OMAR TORRIJOS ══════════════════════════════════ -->
+  <div class="exp-section">
+    <div class="exp-label">Área protegida</div>
+    <h2 class="exp-title">Parque Nacional <em>Omar Torrijos</em></h2>
+    <p class="exp-desc">
+      Con 25.275 hectáreas de bosques primarios, este emblemático espacio montañoso forma parte del Sistema Nacional de Áreas Protegidas de Panamá. Se ubica en la Cordillera Central, al norte de El Copé, provincia de Coclé, y sus límites recorren la cordillera que divide las aguas entre el Mar Caribe y el océano Pacífico. Un paraíso para los amantes del ecoturismo y la observación de aves, incluyendo al majestuoso quetzal.
+    </p>
+
+    <!-- Datos del parque -->
+    <div class="info-grid">
+      <div class="info-card"><div class="info-num">25.275</div><div class="info-lbl">Hectáreas protegidas</div></div>
+      <div class="info-card"><div class="info-num">1986</div><div class="info-lbl">Año de creación</div></div>
+      <div class="info-card"><div class="info-num">3</div><div class="info-lbl">Senderos principales</div></div>
+      <div class="info-card"><div class="info-num">$4</div><div class="info-lbl">Entrada nacionales</div></div>
+    </div>
+
+    <!-- Galería parque -->
+    <div class="gallery-2col" style="margin-bottom:32px">
+      <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
+        <img src="../../images/experiences/senderismo/torrijos1.jpg" alt="Parque Omar Torrijos"
+          onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:var(--r) 0 0 var(--r);height:240px\'>🦜</div>'">
+      </div>
+      <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
+        <img src="../../images/experiences/senderismo/torrijos2.jpg" alt="Bosque nuboso"
+          onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 var(--r) var(--r) 0;height:240px\'>🌫️</div>'">
+      </div>
+    </div>
+
+    <!-- Senderos -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--moss);margin-bottom:20px;font-weight:400">
+      🗺️ Senderos del parque
+    </h3>
+    <div class="senderos-grid">
+      <div class="sendero-card">
+        <div class="sendero-icon">🐸</div>
+        <div class="sendero-name">Sendero La Rana Dorada</div>
+        <div class="sendero-meta">
+          <span class="sendero-tag">2 km</span>
+          <span class="sendero-tag">Moderado</span>
+        </div>
+        <p class="sendero-desc">Este sendero fue nombrado para promover la conservación de esta especie anfibia en peligro de extinción. Posee cantidades de árboles maderables y medicinales que enmarcan el recorrido. Una experiencia única para los amantes de la biodiversidad.</p>
+      </div>
+      <div class="sendero-card">
+        <div class="sendero-icon">🌿</div>
+        <div class="sendero-name">Sendero Los Helechos</div>
+        <div class="sendero-meta">
+          <span class="sendero-tag">800 m</span>
+          <span class="sendero-tag">Fácil</span>
+        </div>
+        <p class="sendero-desc">El sendero más corto del parque, ideal para familias y principiantes. Sus principales atractivos incluyen el bosque nuboso y una impresionante variedad de helechos arborescentes, bromelias y orquídeas. Perfecto para observación de aves.</p>
+      </div>
+      <div class="sendero-card">
+        <div class="sendero-icon">🥾</div>
+        <div class="sendero-name">Sendero Cuerpo de Paz</div>
+        <div class="sendero-meta">
+          <span class="sendero-tag">+2 km</span>
+          <span class="sendero-tag">Difícil</span>
+        </div>
+        <p class="sendero-desc">El sendero más largo del parque, con una duración de 2 horas 30 minutos. Es muy estrecho y no está completamente señalizado. Se recomienda contratar un guía local para este recorrido.</p>
+      </div>
+    </div>
+
+    <!-- Sendero El Calvario -->
+    <div style="background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);padding:22px 24px;margin-bottom:32px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:1.6rem">⛪</span>
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--moss)">Sendero El Calvario</div>
+          <div style="font-size:.75rem;color:var(--mist);margin-top:2px">Dentro del Parque Nacional Omar Torrijos</div>
+        </div>
+      </div>
+      <p style="font-size:.86rem;color:#6a7a64;line-height:1.7">Un recorrido con profundo valor histórico y espiritual dentro del Parque. El sendero atraviesa zonas de bosque primario y conduce a puntos de observación con vistas privilegiadas de la cordillera. Ideal para quienes buscan una experiencia más introspectiva en contacto con la naturaleza.</p>
+    </div>
+
+    <!-- Recomendaciones parque -->
+    <div class="rec-box">
+      <div class="rec-title">💡 Recomendaciones para visitar el parque</div>
+      <div class="rec-grid">
+        <div class="rec-item">Zapatos impermeables</div>
+        <div class="rec-item">Llevar guía local</div>
+        <div class="rec-item">Salir temprano (6-7 AM)</div>
+        <div class="rec-item">No dejar basura</div>
+        <div class="rec-item">Carro 4×4 preferible</div>
+        <div class="rec-item">Binoculares para aves</div>
+        <div class="rec-item">Temporada seca: Dic-Abr</div>
+        <div class="rec-item">No alimentar animales</div>
+      </div>
+    </div>
+
+    <!-- Ubicación parque -->
+    <div class="ubicacion-box">
+      <div class="ubicacion-header">
+        <span>📍</span>
+        <span>Cómo llegar — El Copé, Coclé</span>
+      </div>
+      <div class="ubicacion-body">
+        <p class="ubicacion-desc">
+          Desde Ciudad de Panamá: 17 km después de Penonomé, por la carretera Interamericana, está la comunidad de La Candelaria. Desde allí, sigue hasta El Copé (aprox. 35 km). El último tramo es de tierra, por lo que se recomienda un vehículo 4×4. Teléfono de la administración: (507) 997-9077.
+        </p>
+        <div class="ubicacion-map">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63183!2d-80.6!3d8.65!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8facab8c00000001%3A0x1!2sEl%20Cop%C3%A9%2C%20Cocl%C3%A9!5e0!3m2!1ses!2spa!4v1" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

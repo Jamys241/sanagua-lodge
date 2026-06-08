@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../../images/icon/icon.png">
+  <title>Noche de Fogata — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
+      --amber:#c9823a;--warm:#3a2010;--r:12px}
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
+
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none}
+    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
+    .nav-back:hover{color:var(--sage)}
+
+    /* Hero oscuro y cálido */
+    .hero{height:70vh;min-height:460px;position:relative;overflow:hidden;
+      background:linear-gradient(160deg,#1a0a00,#3a1a08,#1a0800);
+      display:flex;align-items:center;justify-content:center}
+    .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+      background-image:url('../../images/experiences/fogata/hero.jpg')}
+    .hero-bg::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(26,10,0,.5) 0%,rgba(26,10,0,.75) 100%)}
+    /* Efecto de brillo de fogata */
+    .hero::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+      width:400px;height:300px;
+      background:radial-gradient(ellipse at center bottom,rgba(201,130,58,.35) 0%,transparent 70%);
+      z-index:1}
+    .hero-content{position:relative;z-index:2;text-align:center;padding:0 32px;max-width:700px}
+    .hero-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--sand);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px}
+    .hero-badge::before,.hero-badge::after{content:'';width:24px;height:1px;background:var(--sand)}
+    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.6rem,5.5vw,4.5rem);
+      font-weight:300;color:#fff;line-height:1.05;margin-bottom:14px}
+    h1 em{font-style:italic;color:var(--sand)}
+    .hero-sub{font-size:.95rem;color:rgba(255,255,255,.65);line-height:1.75;max-width:500px;margin:0 auto}
+
+    .pw{max-width:960px;margin:0 auto;padding:72px 32px}
+
+    /* Intro con quote */
+    .quote-block{background:linear-gradient(135deg,#3a1a08,#2a1005);border-radius:var(--r);
+      padding:36px 40px;margin-bottom:56px;text-align:center;position:relative;overflow:hidden}
+    .quote-block::before{content:'🔥';position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+      font-size:5rem;opacity:.08}
+    .quote-text{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-style:italic;
+      color:var(--sand);line-height:1.5;margin-bottom:10px}
+    .quote-sub{font-size:.82rem;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase}
+
+    /* Galería de fogata */
+    .fogata-gallery{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+      margin-bottom:48px;border-radius:var(--r);overflow:hidden}
+    .fg-tall{grid-row:1/3}
+    .fogata-img{width:100%;height:100%;object-fit:cover;display:block;min-height:200px}
+    .fogata-ph{width:100%;height:100%;min-height:200px;display:flex;align-items:center;
+      justify-content:center;font-size:3rem;
+      background:linear-gradient(135deg,#3a1a08,#1a0a00)}
+
+    /* Timeline de la noche */
+    .timeline{margin-bottom:56px}
+    .timeline-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--moss);
+      margin-bottom:28px;font-weight:400}
+    .tl-item{display:flex;gap:20px;margin-bottom:24px;align-items:flex-start}
+    .tl-time{background:var(--warm);border:2px solid var(--amber);color:var(--sand);
+      border-radius:8px;padding:6px 12px;font-size:.82rem;font-weight:700;
+      white-space:nowrap;flex-shrink:0;min-width:70px;text-align:center}
+    .tl-content{}
+    .tl-name{font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:3px}
+    .tl-desc{font-size:.84rem;color:#7a6a5a;line-height:1.6}
+
+    /* Lo que incluye */
+    .incluye-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:16px;margin-bottom:56px}
+    .inc-card{background:#fff;border-radius:var(--r);padding:22px 20px;text-align:center;
+      border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 12px rgba(0,0,0,.04)}
+    .inc-icon{font-size:2.2rem;margin-bottom:10px}
+    .inc-title{font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:4px}
+    .inc-desc{font-size:.8rem;color:#7a6a5a;line-height:1.5}
+
+    /* Segunda galería */
+    .gallery-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+      border-radius:var(--r);overflow:hidden;height:220px;margin-bottom:56px}
+
+    /* CTA Reserva */
+    .cta-box{background:linear-gradient(135deg,var(--warm),#2a1008);border-radius:var(--r);
+      padding:40px;text-align:center;position:relative;overflow:hidden}
+    .cta-box::before{content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% 100%,rgba(201,130,58,.2) 0%,transparent 60%)}
+    .cta-box h3{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:#fff;
+      margin-bottom:8px;font-weight:400;position:relative}
+    .cta-box h3 em{font-style:italic;color:var(--sand)}
+    .cta-box p{font-size:.88rem;color:rgba(255,255,255,.6);margin-bottom:24px;position:relative}
+    .cta-btn{display:inline-block;background:var(--amber);color:#fff;text-decoration:none;
+      padding:14px 32px;border-radius:40px;font-weight:700;font-size:.9rem;
+      letter-spacing:.05em;transition:all .25s;position:relative}
+    .cta-btn:hover{background:#b87028;transform:translateY(-2px)}
+
+    @media(max-width:768px){
+      nav{padding:0 18px}.pw{padding:48px 18px}
+      .fogata-gallery{grid-template-columns:1fr 1fr}.fg-tall{grid-row:auto}
+      .gallery-3{grid-template-columns:1fr 1fr;height:auto}
+      .quote-block{padding:24px 20px}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-back" href="../../../index.html">← Inicio</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Experiencias · Sanagua Lodge</div>
+    <h1>🔥 Noche de <em>Fogata</em></h1>
+    <p class="hero-sub">Una experiencia para convivir y compartir bajo las estrellas. Fuego, malvas, buena compañía y el sonido de la naturaleza en la noche.</p>
+  </div>
+</section>
+
+<div class="pw">
+
+  <div class="quote-block">
+    <div class="quote-text">"Las mejores conversaciones suceden alrededor de una fogata"</div>
+    <div class="quote-sub">Todos los viernes y sábados · 8:00 PM · Sanagua Lodge</div>
+  </div>
+
+  <!-- Galería principal -->
+  <div class="fogata-gallery">
+    <div class="fg-tall" style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
+      <img class="fogata-img" src="../../images/experiences/fogata/fogata1.jpg" alt="Fogata"
+        onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:var(--r) 0 0 var(--r)\'>🔥</div>'">
+    </div>
+    <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
+      <img class="fogata-img" src="../../images/experiences/fogata/fogata2.jpg" alt="Malvas"
+        onerror="this.outerHTML='<div class=\'fogata-ph\'>🍡</div>'">
+    </div>
+    <div style="border-radius:0 0 var(--r) 0;overflow:hidden">
+      <img class="fogata-img" src="../../images/experiences/fogata/fogata3.jpg" alt="Noche"
+        onerror="this.outerHTML='<div class=\'fogata-ph\'>⭐</div>'">
+    </div>
+    <div style="border-radius:0 0 0 0;overflow:hidden">
+      <img class="fogata-img" src="../../images/experiences/fogata/fogata4.jpg" alt="Grupo"
+        onerror="this.outerHTML='<div class=\'fogata-ph\'>👥</div>'">
+    </div>
+    <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
+      <img class="fogata-img" src="../../images/experiences/fogata/fogata5.jpg" alt="Ambiente"
+        onerror="this.outerHTML='<div class=\'fogata-ph\'>🌙</div>'">
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline">
+    <h2 class="timeline-title">🌙 ¿Cómo es la experiencia?</h2>
+    <div class="tl-item">
+      <div class="tl-time">7:45 PM</div>
+      <div class="tl-content">
+        <div class="tl-name">Llegada y bienvenida</div>
+        <p class="tl-desc">Nos reunimos en el área de fogata de Sanagua Lodge. Preparamos el espacio con sillas y mantas para disfrutar la noche con comodidad.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">8:00 PM</div>
+      <div class="tl-content">
+        <div class="tl-name">🔥 Se enciende la fogata</div>
+        <p class="tl-desc">Comienza la magia. El fuego se enciende y el ambiente se transforma. Las malvas de cortesía son distribuidas para asar al ritmo de las llamas.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">8:00 PM+</div>
+      <div class="tl-content">
+        <div class="tl-name">Malvas, música y conversación</div>
+        <p class="tl-desc">El momento más esperado — asar malvas sobre el fuego mientras compartes historias, música y risas con familia y amigos bajo el cielo estrellado de Coclé.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">Noche</div>
+      <div class="tl-content">
+        <div class="tl-name">Contemplar las estrellas</div>
+        <p class="tl-desc">Lejos de las luces de la ciudad, el cielo nocturno de Sanagua Lodge es espectacular. La experiencia se extiende mientras el grupo lo desee.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lo que incluye -->
+  <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--moss);margin-bottom:24px;font-weight:400">
+    ¿Qué incluye la experiencia?
+  </h2>
+  <div class="incluye-grid">
+    <div class="inc-card">
+      <div class="inc-icon">🔥</div>
+      <div class="inc-title">Fogata lista</div>
+      <p class="inc-desc">Nos encargamos de todo. Tú solo llegas y disfrutas del ambiente.</p>
+    </div>
+    <div class="inc-card">
+      <div class="inc-icon">🍡</div>
+      <div class="inc-title">Malvas de cortesía</div>
+      <p class="inc-desc">Malvas incluidas para asar. La experiencia clásica de toda fogata.</p>
+    </div>
+    <div class="inc-card">
+      <div class="inc-icon">🌙</div>
+      <div class="inc-title">Ambiente nocturno</div>
+      <p class="inc-desc">Área acondicionada con sillas y luz ambiental para mayor confort.</p>
+    </div>
+    <div class="inc-card">
+      <div class="inc-icon">⭐</div>
+      <div class="inc-title">Cielo estrellado</div>
+      <p class="inc-desc">Sin contaminación lumínica. Una vista del firmamento que sorprende.</p>
+    </div>
+  </div>
+
+  <!-- Segunda galería -->
+  <div class="gallery-3">
+    <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
+      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata6.jpg" alt="Fogata"
+        onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:var(--r) 0 0 var(--r);height:220px\'>🔥</div>'">
+    </div>
+    <div style="overflow:hidden">
+      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata7.jpg" alt="Noche"
+        onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'height:220px\'>🌌</div>'">
+    </div>
+    <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
+      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata8.jpg" alt="Grupo"
+        onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:0 var(--r) var(--r) 0;height:220px\'>🎶</div>'">
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h3>¿Listo para tu noche de <em>fogata</em>?</h3>
+    <p>Incluida para huéspedes del Lodge · Consulta disponibilidad para visitantes externos</p>
+    <a href="https://wa.me/50766000000?text=Hola%20Sanagua%20Lodge!%20Me%20gustaría%20información%20sobre%20la%20experiencia%20de%20fogata." class="cta-btn">
+      Reservar por WhatsApp 🔥
+    </a>
+  </div>
+
+</div>
+</body>
+</html>
