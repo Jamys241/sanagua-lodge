@@ -1548,7 +1548,7 @@
     // Header
     document.getElementById('btn-login-header').style.display = 'none';
     document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
-    document.getElementById('btn-register-header').onclick = () => openAuth('user');
+    document.getElementById('btn-register-header').onclick = () => openUserPanel();
     // Menú lateral
     document.getElementById('nav-user-section').style.display = 'block';
     document.getElementById('nav-user-name').textContent = publicUser.name;
