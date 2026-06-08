@@ -200,6 +200,37 @@
     }
   }
   init();
+
+  // Auto-actualización cada 20 segundos (precios y populares)
+  let _lastHashCabs = null;
+  setInterval(async () => {
+    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
+    const hash = JSON.stringify({p,pop});
+    if (hash === _lastHashCabs) return;
+    _lastHashCabs = hash;
+    // Actualizar precios desde
+    if(p?.cabanas?.cabanas){
+      const it=p.cabanas.itbms||7;
+      const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
+      Object.entries(p.cabanas.cabanas).forEach(([k,cab])=>{
+        const el=document.getElementById(map[k]); if(!el)return;
+        const precios=Object.values(cab.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
+        el.textContent=`$${precios.length?Math.min(...precios).toFixed(2):'—'}`;
+      });
+    }
+    // Actualizar insignias populares
+    document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
+    document.querySelectorAll('.cabana-card').forEach(c=>c.classList.remove('popular'));
+    if(pop?.populares){
+      const cardMap={'cabana-yaguarundi':'card-yaguarundi','cabana-ocelot':'card-ocelot','cabana-motmot':'card-motmot'};
+      pop.populares.forEach(pid=>{
+        const card=document.getElementById(cardMap[pid]); if(!card||card.querySelector('.pop-badge'))return;
+        card.classList.add('popular'); card.style.position='relative';
+        const b=document.createElement('div'); b.className='pop-badge'; b.innerHTML='⭐ Más popular';
+        card.prepend(b);
+      });
+    }
+  }, 20000);
 </script>
 </body>
 </html>

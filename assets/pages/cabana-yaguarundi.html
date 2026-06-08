@@ -713,6 +713,31 @@
   }
 
   init();
+
+  // Auto-actualización cada 20 segundos (disponibilidad + horarios)
+  let _lastHashCab = null;
+  setInterval(async () => {
+    const [p, h, hist, ev] = await Promise.all([
+      ghF('precios.json'), ghF('horarios.json'),
+      ghF('history.json'), ghF('events.json')
+    ]);
+    const hash = JSON.stringify({p,h,hist,ev});
+    if (hash === _lastHashCab) return;
+    _lastHashCab = hash;
+    if (h) { DIAS_CERRADOS_PUB = h.dias_cerrados||[2,3]; EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas||[]; }
+    if (hist) H = hist.quotes || [];
+    if (ev)   E = ev.events   || [];
+    if (p?.cabanas?.cabanas?.[CABANA_KEY]) {
+      cabData = p.cabanas.cabanas[CABANA_KEY];
+      const it = p.cabanas.itbms||7;
+      const t = cabData.tarifas||{};
+      const toFixed2 = n => `$${(n*(1+it/100)).toFixed(2)}`;
+      const ps = document.getElementById('p-semana');    if(ps) ps.textContent = toFixed2(t.semana?.precio||0);
+      const pf = document.getElementById('p-finsemana'); if(pf) pf.textContent = toFixed2(t.finsemana?.precio||0);
+      const pa = document.getElementById('p-adicional'); if(pa) pa.textContent = toFixed2(t.adicional?.precio||0)+'/noche';
+    }
+    renderCal();
+  }, 20000);
 </script>
 </body>
 </html>

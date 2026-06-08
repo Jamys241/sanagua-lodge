@@ -323,6 +323,18 @@
   }
 
   init();
+
+  // Auto-actualización cada 20 segundos
+  let _lastMenu = null;
+  setInterval(async () => {
+    const menu = await ghF('menu.json');
+    if (!menu?.categorias) return;
+    // Solo re-renderizar si hubo cambios
+    const hash = JSON.stringify(menu);
+    if (hash === _lastMenu) return;
+    _lastMenu = hash;
+    renderMenu(menu);
+  }, 20000);
 </script>
 </body>
 </html>

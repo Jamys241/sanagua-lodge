@@ -681,6 +681,26 @@
   }
 
   init();
+
+  // Auto-actualización cada 20 segundos (precios, horarios, ocupaciones)
+  let _lastHashCamp = null;
+  setInterval(async () => {
+    const [p, h, hist, ev] = await Promise.all([
+      ghF('precios.json'), ghF('horarios.json'),
+      ghF('history.json'), ghF('events.json')
+    ]);
+    const hash = JSON.stringify({p,h,hist,ev});
+    if (hash === _lastHashCamp) return;
+    _lastHashCamp = hash;
+    if (p) { P = p; TOTAL_ESP = p.camping?.espacios_totales || 10; renderTar(); renderStock(); }
+    if (h) { DIAS_CERRADOS_PUB = h.dias_cerrados||[2,3]; EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas||[]; }
+    if (hist) H = hist.quotes || [];
+    if (ev)   E = ev.events   || [];
+    renderCal();
+    // Actualizar label de espacios
+    const lbl = document.getElementById('total-esp-lbl');
+    if (lbl) lbl.textContent = TOTAL_ESP;
+  }, 20000);
 </script>
 </body>
 </html>

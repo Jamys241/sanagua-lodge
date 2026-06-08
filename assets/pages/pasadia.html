@@ -732,6 +732,19 @@
   }
 
   init();
+
+  // Auto-actualización cada 20 segundos (horarios de cierre)
+  let _lastHorPas = null;
+  setInterval(async () => {
+    const h = await ghFetch('horarios.json');
+    if (!h) return;
+    const hash = JSON.stringify(h);
+    if (hash === _lastHorPas) return;
+    _lastHorPas = hash;
+    DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
+    EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
+    renderCalPasadia();
+  }, 20000);
 </script>
 </body>
 </html>
