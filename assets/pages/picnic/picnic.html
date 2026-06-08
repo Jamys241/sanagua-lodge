@@ -161,6 +161,14 @@
       .slide-content{left:24px;bottom:56px}
       .tablas-grid{grid-template-columns:1fr}
     }
+  
+    /* Toast de actualización */
+    .update-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-80px);
+      z-index:200;background:#1a1410;color:#fff;font-size:.78rem;font-weight:600;
+      padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
+      display:flex;align-items:center;gap:8px;pointer-events:none}
+    .update-toast.show{transform:translateX(-50%) translateY(0)}
   </style>
 </head>
 <body>
@@ -572,6 +580,41 @@
     if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1410;color:#fff;padding:12px 24px;border-radius:40px;font-family:DM Sans,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
     closeModal();
   }
+
+  // ── Polling: función de fetch simple ─────────────────────────────────
+  async function ghGet(fn) {
+    if(!GT_P||!GR_P) return null;
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GR_P}/contents/Data/json/${fn}?ref=${GB_P}`,
+        { headers: { 'Authorization': `token ${GT_P}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      if(!r.ok) return null;
+      const d = await r.json();
+      const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(b));
+    } catch { return null; }
+  }
+
+  function mostrarToastActualizacion(msg) {
+    const t = document.getElementById('update-toast');
+    if (!t) return;
+    t.innerHTML = `<span>🔄</span> ${msg || 'Contenido actualizado'}`;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Polling de precios de picnic (por si cambian los precios desde el admin)
+  let _lastHashPicnic = null;
+  setInterval(async () => {
+    const precios = await ghGet('precios.json');
+    if (!precios) return;
+    const hash = JSON.stringify(precios?.restaurante?.servicios || '');
+    if (hash === _lastHashPicnic) return;
+    _lastHashPicnic = hash;
+    mostrarToastActualizacion('Precios actualizados');
+  }, 20000);
 
   document.addEventListener('DOMContentLoaded', initSlider);
 </script>
