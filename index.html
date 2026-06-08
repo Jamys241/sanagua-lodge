@@ -1488,6 +1488,8 @@
 
   function aplicarUsuarioPublico() {
     if (!publicUser) return;
+    // Persistir en sessionStorage para que las páginas de servicios lo lean
+    sessionStorage.setItem('sl_pub_user', JSON.stringify(publicUser));
     // Header
     document.getElementById('btn-login-header').style.display = 'none';
     document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
@@ -1506,6 +1508,7 @@
 
   function cerrarSesionPublic() {
     publicUser = null;
+    sessionStorage.removeItem('sl_pub_user');
     document.getElementById('btn-login-header').style.display = '';
     document.getElementById('btn-register-header').textContent = 'Reservar';
     document.getElementById('btn-register-header').onclick = () => openAuth('register');
@@ -1530,6 +1533,18 @@
       h.style.background = 'rgba(26,31,24,0.96)';
     }
   });
+
+  // Restaurar sesión pública si existe
+  (function(){
+    try {
+      const raw = sessionStorage.getItem('sl_pub_user');
+      if (raw) { publicUser = JSON.parse(raw); aplicarUsuarioPublico(); }
+    } catch {}
+    // Abrir modal si viene de una página de servicio con ?action=login o ?action=register
+    const action = new URLSearchParams(window.location.search).get('action');
+    if (action === 'login') setTimeout(() => openAuth('login'), 400);
+    if (action === 'register') setTimeout(() => openAuth('register'), 400);
+  })();
 </script>
 </body>
 </html>
