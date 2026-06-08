@@ -1585,6 +1585,8 @@
     // Cargar datos
     (async () => {
       try { await loadAuth(); } catch(e) { console.warn('Auth load error:', e); }
+      // Re-aplicar permisos ahora que authData está cargado
+      aplicarPermisos();
       try { await loadHorarios(); } catch(e) { console.warn('Horarios load error:', e); }
       try {
         await Promise.all([loadCounter(), loadProducts(), loadLogo(), loadEmpresa(), loadEvents()]);
