@@ -497,7 +497,7 @@
       id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
       estado:     'pendiente',
       created_at: new Date().toISOString(),
-      usuario:    { nombre: sesion.name||sesion.username||'Usuario', tipo: sesion.tipo },
+      usuario:    { nombre: sesion.name||sesion.username||'Usuario', email: sesion.email||'', tipo: sesion.tipo },
       ...datos
     };
     try {
@@ -525,7 +525,26 @@
     } catch { return false; }
   }
 
-  function openModal(){verificarYReservar(()=>{document.getElementById('modal-ov').classList.add('open');loadYMostrarPopularesCamp();});}
+  // ── Auto-rellenar datos del usuario ──────────────────────────────────
+  function autorellenarDatos() {
+    const sesion = getSesionPublica();
+    if (!sesion) return;
+    const campos = {
+      'nombre-contacto': sesion.name  || sesion.username || '',
+      'tel-contacto':    sesion.phone || '',
+      'email-contacto':  sesion.email || '',
+      // Camping / Cabañas usan otros IDs
+      'nom': sesion.name  || sesion.username || '',
+      'tel': sesion.phone || '',
+      'ema': sesion.email || '',
+    };
+    Object.entries(campos).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && !el.value && val) el.value = val;
+    });
+  }
+
+  function openModal(){verificarYReservar(()=>{document.getElementById('modal-ov').classList.add('open');loadYMostrarPopularesCamp();setTimeout(autorellenarDatos,100);});}
   function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
   document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
 
@@ -566,7 +585,7 @@
         <div class="msc-precio">Desde $${v.length?Math.min(...v).toFixed(2):'0.00'}/noche</div>
       </div>`;
     }).join('');
-    selMod(MOD,false);
+    selMod(MOD,true);
   }
 
   function selMod(k,re=true){

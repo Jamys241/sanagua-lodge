@@ -257,7 +257,7 @@
     </div>
     <div class="mb">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="onEntradaChange()"></div>
+        <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="onEntradaChange()" oninput="onEntradaChange()"></div>
         <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="onSalidaChange()"></div>
       </div>
       <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
@@ -335,6 +335,67 @@
   }
 
   let P=null, H=[], E=[], calD=new Date(), adPersonas=0, cabData=null;
+  // ── Verificación de sesión pública ───────────────────────────────────
+  // La URL relativa al index.html depende de la profundidad del archivo
+  const INDEX_URL = '../../index.html'; // desde assets/pages/
+
+  function getSesionPublica() {
+    try {
+      // Sesión de usuario público
+      const pub = sessionStorage.getItem('sl_pub_user');
+      if (pub) return { tipo: 'publico', ...JSON.parse(pub) };
+      // Sesión de admin (también puede reservar)
+      const adm = sessionStorage.getItem('sl_session');
+      if (adm) {
+        const s = JSON.parse(adm);
+        if (s.role && (Date.now() - s.ts) < 8*3600*1000)
+          return { tipo: 'admin', name: s.username };
+      }
+    } catch {}
+    return null;
+  }
+
+  function verificarYReservar(fn) {
+    const sesion = getSesionPublica();
+    if (sesion) { fn(); return; }
+    // No hay sesión — mostrar aviso
+    mostrarAvisoLogin();
+  }
+
+  function mostrarAvisoLogin() {
+    // Crear overlay si no existe
+    let ov = document.getElementById('login-required-ov');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'login-required-ov';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
+      ov.innerHTML = `
+        <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)">
+          <div style="background:#2d3e2a;padding:24px 28px;text-align:center">
+            <div style="font-size:2rem;margin-bottom:8px">🌿</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
+          </div>
+          <div style="padding:24px 28px">
+            <p style="font-size:.9rem;color:#6a7a64;line-height:1.65;margin-bottom:20px;text-align:center">
+              Para realizar una solicitud de reserva necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
+            </p>
+            <a href="${INDEX_URL}?action=login" style="display:block;background:#2d3e2a;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
+              Iniciar sesión →
+            </a>
+            <a href="${INDEX_URL}?action=register" style="display:block;background:#f4efe6;color:#2d3e2a;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
+              Crear cuenta gratis
+            </a>
+            <button onclick="document.getElementById('login-required-ov').remove()" style="width:100%;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;padding:4px">
+              Continuar viendo sin iniciar sesión
+            </button>
+          </div>
+        </div>`;
+      ov.addEventListener('click', e => { if (e.target===ov) ov.remove(); });
+      document.body.appendChild(ov);
+    }
+    ov.style.display = 'flex';
+  }
+
 
   // ── Slider ────────────────────────────────────────────────────────────
   let slIdx=0;
@@ -481,8 +542,78 @@
     h+='</tr>'; document.getElementById('cal-body').innerHTML=h;
   }
 
+  // ── Auto-rellenar datos del usuario ──────────────────────────────────
+  function autorellenarDatos() {
+    const sesion = getSesionPublica();
+    if (!sesion) return;
+    const campos = {
+      'nombre-contacto': sesion.name  || sesion.username || '',
+      'tel-contacto':    sesion.phone || '',
+      'email-contacto':  sesion.email || '',
+      // Camping / Cabañas usan otros IDs
+      'nom': sesion.name  || sesion.username || '',
+      'tel': sesion.phone || '',
+      'ema': sesion.email || '',
+    };
+    Object.entries(campos).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && !el.value && val) el.value = val;
+    });
+  }
+
   // ── Modal ─────────────────────────────────────────────────────────────
-  function openModal(){document.getElementById('modal-ov').classList.add('open');}
+
+  // ── Guardar solicitud en GitHub ───────────────────────────────────────
+  async function guardarSolicitud(datos) {
+    const sesion = getSesionPublica();
+    if (!sesion) return false;
+    const solicitud = {
+      id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      estado:     'pendiente',
+      created_at: new Date().toISOString(),
+      usuario:    { nombre: sesion.name||sesion.username||'Usuario', email: sesion.email||'', tipo: sesion.tipo },
+      ...datos
+    };
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GR}/contents/Data/json/solicitudes.json?ref=${GB}`,
+        { headers: { 'Authorization': `token ${GT}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      let lista=[], sha=null;
+      if (r.ok) {
+        const d=await r.json(); sha=d.sha;
+        const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+        lista=JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes||[];
+      }
+      lista.push(solicitud);
+      const json=JSON.stringify({solicitudes:lista},null,2);
+      let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+      const content=btoa(bin);
+      const payload={message:`solicitud ${solicitud.id}`,content,branch:GB};
+      if(sha)payload.sha=sha;
+      const wr=await fetch(
+        `https://api.github.com/repos/${GR}/contents/Data/json/solicitudes.json`,
+        {method:'PUT',headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)}
+      );
+      return wr.ok;
+    } catch { return false; }
+  }
+
+  function openModal(){verificarYReservar(()=>{ _doOpenModal(); setTimeout(autorellenarDatos,200); });}
+  function _doOpenModal(){
+    document.getElementById('modal-ov').classList.add('open');
+    // Inicializar fechas si están vacías
+    const entEl=document.getElementById('f-ent');
+    const salEl=document.getElementById('f-sal');
+    const hoy=new Date();
+    const manana=new Date(hoy); manana.setDate(hoy.getDate()+1);
+    const pasadoManana=new Date(hoy); pasadoManana.setDate(hoy.getDate()+2);
+    if(!entEl.value){ entEl.value=lds(manana); }
+    if(!salEl.value){ salEl.value=lds(pasadoManana); }
+    entEl.min=lds(hoy);
+    salEl.min=lds(new Date(new Date(entEl.value+'T12:00:00').getTime()+86400000));
+    calcRes();
+  }
   function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
   document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
 
@@ -505,21 +636,32 @@
   function onEntradaChange(){
     const ent = document.getElementById('f-ent').value;
     if(!ent) return;
+    const nb=document.getElementById('n-badge');
     // Bloquear si es día cerrado
     if(esDiaCerradoPub(ent)){
       document.getElementById('f-ent').value = '';
-      const nb=document.getElementById('n-badge');
       nb.style.display='block';nb.style.background='#fff8f0';nb.style.borderColor='#f0d0a0';nb.style.color='#7a4a10';
       nb.textContent=mensajeDiaCerrado(ent);
-      clearTimeout(nb._t);nb._t=setTimeout(()=>nb.style.display='none',5000);
+      clearTimeout(nb._t);nb._t=setTimeout(()=>{nb.style.display='none';},5000);
       return;
     }
-    // Ajustar salida a 1 noche después
-    const entD = new Date(ent+'T12:00:00');
+    // Bloquear si es fecha pasada
+    const hoy=lds(new Date());
+    if(ent<hoy){
+      document.getElementById('f-ent').value='';
+      nb.style.display='block';nb.style.background='#fff5f5';nb.style.borderColor='#f0c0c0';nb.style.color='var(--red)';
+      nb.textContent='Esta fecha ya pasó. Por favor selecciona una fecha futura.';
+      clearTimeout(nb._t);nb._t=setTimeout(()=>{nb.style.display='none';},5000);
+      return;
+    }
+    // Ajustar salida a 1 noche después automáticamente
+    const entD=new Date(ent+'T12:00:00');
     entD.setDate(entD.getDate()+1);
-    const sal = lds(entD);
-    document.getElementById('f-sal').value = sal;
-    document.getElementById('f-sal').min   = sal;
+    const sal=lds(entD);
+    const salEl=document.getElementById('f-sal');
+    salEl.value=sal;
+    salEl.min=sal;
+    nb.style.display='none';
     calcRes();
   }
 
@@ -573,7 +715,7 @@
       <div class="rr tot"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
-  function enviar(){
+  async function enviar(){
     const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
     const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
@@ -583,12 +725,48 @@
     if(verificarConflicto(ent,sal)){alert('🌿 Estas fechas ya están reservadas. Por favor elige otras fechas disponibles.');return;}
     const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
     const ad=adPersonas>0?`\nPersonas adicionales: ${adPersonas}`:'';
+    const datos = {
+      servicio:  'Cabaña',
+      categoria: CABANA_CAT,
+      fecha_entrada: ent,
+      fecha_salida:  sal,
+      noches:    noches,
+      personas_adicionales: adPersonas,
+      contacto:  { nombre: nom, telefono: tel, email: ema }
+    };
+    const guardado = await guardarSolicitud(datos);
     const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar Cabaña Ocelot.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${noches} noche${noches===1?'':'s'})${ad}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
     window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
     closeModal();
+    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
   }
 
   init();
+
+  // Auto-actualización cada 20 segundos (disponibilidad + horarios)
+  let _lastHashCab = null;
+  setInterval(async () => {
+    const [p, h, hist, ev] = await Promise.all([
+      ghF('precios.json'), ghF('horarios.json'),
+      ghF('history.json'), ghF('events.json')
+    ]);
+    const hash = JSON.stringify({p,h,hist,ev});
+    if (hash === _lastHashCab) return;
+    _lastHashCab = hash;
+    if (h) { DIAS_CERRADOS_PUB = h.dias_cerrados||[2,3]; EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas||[]; }
+    if (hist) H = hist.quotes || [];
+    if (ev)   E = ev.events   || [];
+    if (p?.cabanas?.cabanas?.[CABANA_KEY]) {
+      cabData = p.cabanas.cabanas[CABANA_KEY];
+      const it = p.cabanas.itbms||7;
+      const t = cabData.tarifas||{};
+      const toFixed2 = n => `$${(n*(1+it/100)).toFixed(2)}`;
+      const ps = document.getElementById('p-semana');    if(ps) ps.textContent = toFixed2(t.semana?.precio||0);
+      const pf = document.getElementById('p-finsemana'); if(pf) pf.textContent = toFixed2(t.finsemana?.precio||0);
+      const pa = document.getElementById('p-adicional'); if(pa) pa.textContent = toFixed2(t.adicional?.precio||0)+'/noche';
+    }
+    renderCal();
+  }, 20000);
 </script>
 </body>
 </html>
