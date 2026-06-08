@@ -417,7 +417,58 @@
   // ── MODAL ──────────────────────────────────────────────────────────────
   let tablaActual='';
 
+  // ── Verificación de sesión pública ───────────────────────────────────
+  const INDEX_URL = '../../../index.html'; // desde assets/pages/picnic/
+
+  function getSesionPublica() {
+    try {
+      const pub = sessionStorage.getItem('sl_pub_user');
+      if (pub) return { tipo:'publico', ...JSON.parse(pub) };
+      const adm = sessionStorage.getItem('sl_session');
+      if (adm) {
+        const s = JSON.parse(adm);
+        if (s.role && (Date.now()-s.ts) < 8*3600*1000)
+          return { tipo:'admin', name:s.username };
+      }
+    } catch {}
+    return null;
+  }
+
+  function mostrarAvisoLogin() {
+    let ov = document.getElementById('login-required-ov');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'login-required-ov';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
+      ov.innerHTML = `
+        <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)">
+          <div style="background:#1a1410;padding:24px 28px;text-align:center">
+            <div style="font-size:2rem;margin-bottom:8px">🌿</div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
+          </div>
+          <div style="padding:24px 28px">
+            <p style="font-size:.9rem;color:#7a6a5a;line-height:1.65;margin-bottom:20px;text-align:center">
+              Para solicitar una tabla de picnic necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
+            </p>
+            <a href="${INDEX_URL}?action=login" style="display:block;background:#1a1410;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px">
+              Iniciar sesión →
+            </a>
+            <a href="${INDEX_URL}?action=register" style="display:block;background:#f5ede0;color:#1a1410;text-align:center;padding:13px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
+              Crear cuenta gratis
+            </a>
+            <button onclick="document.getElementById('login-required-ov').remove()" style="width:100%;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;padding:4px">
+              Continuar viendo sin iniciar sesión
+            </button>
+          </div>
+        </div>`;
+      ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
+      document.body.appendChild(ov);
+    }
+    ov.style.display = 'flex';
+  }
+
   function openModal(tabla, emoji, precio){
+    if (!getSesionPublica()) { mostrarAvisoLogin(); return; }
     tablaActual=tabla;
     document.getElementById('st-emoji').textContent=emoji;
     document.getElementById('st-nombre').textContent=`Tabla de Picnic ${tabla.charAt(0).toUpperCase()+tabla.slice(1)}`;
