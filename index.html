@@ -1125,6 +1125,7 @@
         <button class="user-tab active" onclick="switchUserTab('activas',this)">Activas</button>
         <button class="user-tab" onclick="switchUserTab('historial',this)">Historial</button>
         <button class="user-tab" onclick="switchUserTab('puntos',this)">Puntos</button>
+        <button class="user-tab" onclick="switchUserTab('perfil',this);preLlenarPerfil()">✏️ Perfil</button>
       </div>
 
       <div class="user-body">
@@ -1156,6 +1157,50 @@
           <div class="puntos-beneficio">👑 <span><strong>1000 pts</strong> — Noche en cabaña con desayuno incluido</span></div>
           <p style="font-size:.75rem;color:#aaa;margin-top:12px;">Acumulas 10 puntos por cada $1 gastado en Sanagua Lodge.</p>
         </div>
+
+        <!-- Editar perfil -->
+        <div class="user-panel-content" id="ucontent-perfil">
+          <div style="padding:4px 0 16px">
+            <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:16px">Datos personales</div>
+
+            <div class="auth-field" style="margin-bottom:12px">
+              <label>Nombre completo</label>
+              <input type="text" id="edit-name" class="auth-input" placeholder="Tu nombre">
+            </div>
+            <div class="auth-field" style="margin-bottom:12px">
+              <label>Cédula / Pasaporte</label>
+              <input type="text" id="edit-cedula" class="auth-input" placeholder="8-888-8888">
+            </div>
+            <div class="auth-field" style="margin-bottom:12px">
+              <label>Teléfono</label>
+              <input type="tel" id="edit-phone" class="auth-input" placeholder="+507 6000-0000">
+            </div>
+            <div class="auth-field" style="margin-bottom:12px">
+              <label>Correo electrónico</label>
+              <input type="email" id="edit-email" class="auth-input" placeholder="tu@correo.com" disabled style="opacity:.6;cursor:not-allowed">
+              <small style="font-size:.7rem;color:#aaa">El correo no se puede cambiar</small>
+            </div>
+
+            <div style="border-top:1px solid #f0f0f0;margin:16px 0;padding-top:16px">
+              <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:12px">Cambiar contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
+              <div class="auth-field" style="margin-bottom:12px">
+                <label>Contraseña actual</label>
+                <input type="password" id="edit-pass-actual" class="auth-input" placeholder="Tu contraseña actual">
+              </div>
+              <div class="auth-field" style="margin-bottom:12px">
+                <label>Nueva contraseña</label>
+                <input type="password" id="edit-pass-nueva" class="auth-input" placeholder="Mínimo 6 caracteres">
+              </div>
+            </div>
+
+            <div id="edit-perfil-msg" style="font-size:.78rem;margin-bottom:10px;min-height:18px;text-align:center"></div>
+
+            <button onclick="guardarPerfil()" style="width:100%;padding:12px;background:var(--moss);color:#fff;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--forest)'" onmouseout="this.style.background='var(--moss)'">
+              💾 Guardar cambios
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <div style="padding:0 28px 24px;">
@@ -1526,7 +1571,71 @@
 
   // Abrir panel de usuario si ya está logueado
   function openUserPanel() {
-    if (publicUser) { openAuth('user'); loadReservasUsuario(); }
+    if (publicUser) { openAuth('user'); loadReservasUsuario(); preLlenarPerfil(); }
+  }
+
+  function preLlenarPerfil() {
+    if (!publicUser) return;
+    const set = (id, v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+    set('edit-name',   publicUser.name   || '');
+    set('edit-cedula', publicUser.cedula || '');
+    set('edit-phone',  publicUser.phone  || '');
+    set('edit-email',  publicUser.email  || '');
+    document.getElementById('edit-pass-actual').value = '';
+    document.getElementById('edit-pass-nueva').value  = '';
+    document.getElementById('edit-perfil-msg').textContent = '';
+  }
+
+  async function guardarPerfil() {
+    const msgEl = document.getElementById('edit-perfil-msg');
+    msgEl.style.color = '#888'; msgEl.textContent = 'Guardando...';
+
+    const nuevoNombre  = document.getElementById('edit-name').value.trim();
+    const nuevaCedula  = document.getElementById('edit-cedula').value.trim();
+    const nuevoPhone   = document.getElementById('edit-phone').value.trim();
+    const passActual   = document.getElementById('edit-pass-actual').value;
+    const passNueva    = document.getElementById('edit-pass-nueva').value;
+
+    if (!nuevoNombre) { msgEl.style.color='#c0392b'; msgEl.textContent='El nombre no puede estar vacío.'; return; }
+    if (passNueva && !passActual) { msgEl.style.color='#c0392b'; msgEl.textContent='Ingresa tu contraseña actual para cambiarla.'; return; }
+    if (passNueva && passNueva.length < 6) { msgEl.style.color='#c0392b'; msgEl.textContent='La nueva contraseña debe tener al menos 6 caracteres.'; return; }
+
+    try {
+      const users = await loadUsers();
+      const idx = users.findIndex(u => u.email === publicUser.email);
+      if (idx < 0) { msgEl.style.color='#c0392b'; msgEl.textContent='Usuario no encontrado.'; return; }
+
+      // Verificar contraseña actual si quiere cambiarla
+      if (passNueva) {
+        if (users[idx].password !== passActual) {
+          msgEl.style.color='#c0392b'; msgEl.textContent='La contraseña actual no es correcta.'; return;
+        }
+        users[idx].password = passNueva;
+      }
+
+      // Actualizar campos
+      users[idx].name   = nuevoNombre;
+      users[idx].cedula = nuevaCedula;
+      users[idx].phone  = nuevoPhone;
+
+      const ok = await saveUsers(users);
+      if (!ok) { msgEl.style.color='#c0392b'; msgEl.textContent='Error al guardar. Intenta nuevamente.'; return; }
+
+      // Actualizar publicUser en memoria y sessionStorage
+      publicUser.name   = nuevoNombre;
+      publicUser.cedula = nuevaCedula;
+      publicUser.phone  = nuevoPhone;
+      sessionStorage.setItem('sl_pub_user', JSON.stringify(publicUser));
+      aplicarUsuarioPublico();
+
+      msgEl.style.color = '#2d7a4f';
+      msgEl.textContent = '✅ Perfil actualizado correctamente.';
+      document.getElementById('edit-pass-actual').value = '';
+      document.getElementById('edit-pass-nueva').value  = '';
+      setTimeout(() => { msgEl.textContent = ''; }, 4000);
+    } catch {
+      msgEl.style.color='#c0392b'; msgEl.textContent='Error de conexión. Intenta nuevamente.';
+    }
   }
 
   async function loadReservasUsuario() {
