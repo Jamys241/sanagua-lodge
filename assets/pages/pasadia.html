@@ -548,6 +548,43 @@
 
 
   // ── Modal ─────────────────────────────────────────────────────────────
+
+  // ── Guardar solicitud en GitHub ───────────────────────────────────────
+  async function guardarSolicitud(datos) {
+    const sesion = getSesionPublica();
+    if (!sesion) return false;
+    const solicitud = {
+      id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      estado:     'pendiente',
+      created_at: new Date().toISOString(),
+      usuario:    { nombre: sesion.name||sesion.username||'Usuario', tipo: sesion.tipo },
+      ...datos
+    };
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/solicitudes.json?ref=${GH_BRANCH}`,
+        { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      let lista=[], sha=null;
+      if (r.ok) {
+        const d=await r.json(); sha=d.sha;
+        const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+        lista=JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes||[];
+      }
+      lista.push(solicitud);
+      const json=JSON.stringify({solicitudes:lista},null,2);
+      let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+      const content=btoa(bin);
+      const payload={message:`solicitud ${solicitud.id}`,content,branch:GH_BRANCH};
+      if(sha)payload.sha=sha;
+      const wr=await fetch(
+        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/solicitudes.json`,
+        {method:'PUT',headers:{'Authorization':`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)}
+      );
+      return wr.ok;
+    } catch { return false; }
+  }
+
   function openModal(){ verificarYReservar(() => { document.getElementById('modal-overlay').classList.add('open'); loadYMostrarPopulares(); }); }
   function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
   document.getElementById('modal-overlay').addEventListener('click',e=>{
@@ -648,7 +685,7 @@
       <div class="resumen-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
-  function enviarSolicitud() {
+  async function enviarSolicitud() {
     const fecha   = document.getElementById('fecha-visita').value;
     const hoyStr=localDateStr(new Date());
     if(fecha && fecha<hoyStr){alert('Esta fecha ya pasó. Por favor selecciona una fecha futura.');return;}
@@ -668,12 +705,29 @@
       .map(([k,q])=>`${precios[SERVICIO].tarifas[k].label}: ${q}`)
       .join(', ');
     const modalidadLabel = precios?.[SERVICIO]?.modalidades?.[modalidadActual]?.label || modalidadActual;
+    // Guardar solicitud
+    const datos = {
+      servicio:  'Pasadía',
+      categoria: modalidadLabel,
+      fecha:     fecha,
+      personas:  detalle,
+      contacto:  { nombre, telefono: tel, email }
+    };
+    const guardado = await guardarSolicitud(datos);
+    // Notificar por WhatsApp
     const msg = encodeURIComponent(
       `Hola Sanagua Lodge! Quiero reservar una Pasadía ${modalidadLabel}.\n\n`+
       `📅 Fecha: ${fecha}\n👥 Personas: ${detalle}\n`+
       `👤 Nombre: ${nombre}\n📧 ${email||'Sin correo'}`
     );
     window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    if (guardado) {
+      const t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
+      t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';
+      document.body.appendChild(t);
+      setTimeout(()=>t.remove(),4000);
+    }
     closeModal();
   }
 

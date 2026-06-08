@@ -488,6 +488,43 @@
     clearTimeout(b._t);b._t=setTimeout(()=>{b.style.display='none';},5000);
   }
 
+
+  // ── Guardar solicitud en GitHub ───────────────────────────────────────
+  async function guardarSolicitud(datos) {
+    const sesion = getSesionPublica();
+    if (!sesion) return false;
+    const solicitud = {
+      id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      estado:     'pendiente',
+      created_at: new Date().toISOString(),
+      usuario:    { nombre: sesion.name||sesion.username||'Usuario', tipo: sesion.tipo },
+      ...datos
+    };
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GR}/contents/Data/json/solicitudes.json?ref=${GB}`,
+        { headers: { 'Authorization': `token ${GT}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      let lista=[], sha=null;
+      if (r.ok) {
+        const d=await r.json(); sha=d.sha;
+        const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
+        lista=JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes||[];
+      }
+      lista.push(solicitud);
+      const json=JSON.stringify({solicitudes:lista},null,2);
+      let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+      const content=btoa(bin);
+      const payload={message:`solicitud ${solicitud.id}`,content,branch:GB};
+      if(sha)payload.sha=sha;
+      const wr=await fetch(
+        `https://api.github.com/repos/${GR}/contents/Data/json/solicitudes.json`,
+        {method:'PUT',headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)}
+      );
+      return wr.ok;
+    } catch { return false; }
+  }
+
   function openModal(){verificarYReservar(()=>{document.getElementById('modal-ov').classList.add('open');loadYMostrarPopularesCamp();});}
   function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
   document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
@@ -613,7 +650,7 @@
       <div class="rr tot"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
-  function enviar(){
+  async function enviar(){
     const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
     const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
@@ -626,8 +663,20 @@
     const dp=Object.entries(CNT).filter(([,q])=>q>0).map(([k,q])=>`${m.tarifas[k].label}: ${q}`).join(', ');
     const ci=CARPA?`\nCarpa: ${m.carpas[CARPA].label}`:'';
     const nn=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
+    const datos = {
+      servicio:  'Camping',
+      categoria: m.label,
+      fecha_entrada: ent,
+      fecha_salida:  sal,
+      noches:    nn,
+      carpa:     CARPA ? m.carpas?.[CARPA]?.label : null,
+      personas:  dp,
+      contacto:  { nombre: nom, telefono: tel, email: ema }
+    };
+    const guardado = await guardarSolicitud(datos);
     const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar ${m.label}.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${nn} noche${nn===1?'':'s'})${ci}\n👥 ${dp}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
     window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
+    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
     closeModal();
   }
 
