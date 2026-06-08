@@ -623,7 +623,7 @@
     }
     .user-tab.active { color: var(--moss); border-bottom-color: var(--sage); }
 
-    .user-body { padding: 20px 28px 28px; }
+    .user-body { padding: 20px 28px 28px; overflow-y: auto; max-height: 420px; }
     .user-panel-content { display: none; }
     .user-panel-content.active { display: block; }
 
@@ -1195,9 +1195,14 @@
 
             <div id="edit-perfil-msg" style="font-size:.78rem;margin-bottom:10px;min-height:18px;text-align:center"></div>
 
-            <button onclick="guardarPerfil()" style="width:100%;padding:12px;background:var(--moss);color:#fff;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--forest)'" onmouseout="this.style.background='var(--moss)'">
-              💾 Guardar cambios
-            </button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+              <button onclick="preLlenarPerfil()" style="padding:12px;background:none;border:1.5px solid #e0e0e0;border-radius:8px;font-family:'Jost',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:#888;transition:all .2s" onmouseover="this.style.borderColor='#bbb';this.style.color='#555'" onmouseout="this.style.borderColor='#e0e0e0';this.style.color='#888'">
+                ↺ Cancelar
+              </button>
+              <button onclick="guardarPerfil()" style="padding:12px;background:var(--moss);color:#fff;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--forest)'" onmouseout="this.style.background='var(--moss)'">
+                💾 Guardar
+              </button>
+            </div>
           </div>
         </div>
 
