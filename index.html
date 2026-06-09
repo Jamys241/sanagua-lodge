@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1082,8 +1083,15 @@
           <p style="text-align:center;margin-top:16px;font-size:.78rem;color:#aaa;">
             ¿No tienes cuenta? <a href="#" onclick="switchAuthTab('register')" style="color:var(--earth);">Regístrate gratis</a>
           </p>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0f0f0;text-align:center;font-size:.73rem;color:#ccc;">
-            Administradores: usa tus credenciales de acceso
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0f0f0;text-align:center">
+            <div style="font-size:.73rem;color:#ccc;margin-bottom:10px">Administradores: usa tus credenciales de acceso</div>
+            <button onclick="abrirEscanerQR()" style="background:none;border:1.5px solid #e0e0e0;
+              border-radius:8px;color:#888;font-family:'Jost',sans-serif;font-size:.76rem;
+              font-weight:600;cursor:pointer;padding:7px 14px;transition:all .2s;width:100%"
+              onmouseover="this.style.borderColor='var(--earth)';this.style.color='var(--earth)'"
+              onmouseout="this.style.borderColor='#e0e0e0';this.style.color='#888'">
+              📷 Admin: iniciar con QR de sesión
+            </button>
           </div>
         </div>
 
@@ -1242,6 +1250,41 @@
         </button>
       </div>
     </div>
+
+    <!-- Panel escáner QR (admin) -->
+    <div id="panel-qr-admin" style="display:none">
+      <div class="auth-header">
+        <button class="auth-close" onclick="cerrarEscanerQR()">×</button>
+        <div class="auth-logo">🌿 Sanagua Lodge</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.6);margin-top:2px">Escáner QR de sesión</div>
+      </div>
+      <div style="padding:20px">
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="font-size:.85rem;font-weight:600;color:var(--ink);margin-bottom:4px">Escanea el QR de sesión</div>
+          <div style="font-size:.75rem;color:#aaa;line-height:1.5">Genera el QR desde ⚙️ Configuración<br>en el dispositivo que ya tiene acceso</div>
+        </div>
+        <div style="position:relative;border-radius:10px;overflow:hidden;background:#000;
+          max-width:260px;margin:0 auto 14px">
+          <video id="qr-video-admin" style="width:100%;display:block" playsinline></video>
+          <canvas id="qr-canvas-admin" style="display:none"></canvas>
+          <div style="position:absolute;inset:0;pointer-events:none;display:flex;
+            align-items:center;justify-content:center">
+            <div style="width:150px;height:150px;border:3px solid var(--earth);border-radius:8px;
+              box-shadow:0 0 0 9999px rgba(0,0,0,.45)"></div>
+          </div>
+        </div>
+        <div id="qr-admin-msg" style="text-align:center;font-size:.78rem;color:#888;
+          min-height:20px;margin-bottom:10px">Apunta al código QR...</div>
+        <div id="qr-admin-error" style="color:#c0392b;font-size:.78rem;min-height:16px;
+          text-align:center;margin-bottom:8px"></div>
+        <button onclick="cerrarEscanerQR()" style="width:100%;padding:10px;background:none;
+          border:1.5px solid #e0e0e0;border-radius:8px;font-family:'Jost',sans-serif;
+          font-size:.82rem;cursor:pointer;color:#888">
+          ← Volver al login
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1816,6 +1859,116 @@
       }
     };
   } catch {}
+  // ══════════════════════════════════════════════════════════════════════
+  // ESCÁNER QR DE SESIÓN (para admins en dispositivos nuevos)
+  // ══════════════════════════════════════════════════════════════════════
+  let _qrStream = null;
+  let _qrRAF    = null;
+
+  function abrirEscanerQR() {
+    document.getElementById('panel-auth').style.display     = 'none';
+    document.getElementById('panel-qr-admin').style.display = 'block';
+    document.getElementById('qr-admin-msg').textContent    = 'Iniciando cámara...';
+    document.getElementById('qr-admin-error').textContent  = '';
+    iniciarCamaraAdmin();
+  }
+
+  function cerrarEscanerQR() {
+    detenerCamaraAdmin();
+    document.getElementById('panel-qr-admin').style.display = 'none';
+    document.getElementById('panel-auth').style.display     = 'block';
+  }
+
+  async function iniciarCamaraAdmin() {
+    try {
+      _qrStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+      const video = document.getElementById('qr-video-admin');
+      video.srcObject = _qrStream;
+      await video.play();
+      document.getElementById('qr-admin-msg').textContent = 'Apunta al código QR...';
+      escanearFrameAdmin();
+    } catch {
+      document.getElementById('qr-admin-error').textContent =
+        '⚠️ No se pudo acceder a la cámara. Verifica los permisos del navegador.';
+    }
+  }
+
+  function detenerCamaraAdmin() {
+    cancelAnimationFrame(_qrRAF);
+    if (_qrStream) { _qrStream.getTracks().forEach(t=>t.stop()); _qrStream = null; }
+  }
+
+  function escanearFrameAdmin() {
+    const video  = document.getElementById('qr-video-admin');
+    const canvas = document.getElementById('qr-canvas-admin');
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      _qrRAF = requestAnimationFrame(escanearFrameAdmin); return;
+    }
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+    if (code) {
+      procesarQRAdmin(code.data);
+    } else {
+      _qrRAF = requestAnimationFrame(escanearFrameAdmin);
+    }
+  }
+
+  function procesarQRAdmin(data) {
+    detenerCamaraAdmin();
+    const errEl = document.getElementById('qr-admin-error');
+    const msgEl = document.getElementById('qr-admin-msg');
+
+    if (!data.startsWith('SANAGUA_SESSION:')) {
+      errEl.textContent = '❌ QR no válido. Genera uno nuevo desde Configuración.';
+      setTimeout(() => { iniciarCamaraAdmin(); errEl.textContent=''; }, 2000);
+      return;
+    }
+
+    try {
+      const enc = atob(data.replace('SANAGUA_SESSION:', ''));
+      let parsed = null;
+      const now = Date.now();
+      for (let t = now + 30000; t >= now - 5000; t -= 100) {
+        try {
+          const k = String(t).substring(0,13);
+          let dec = '';
+          for (let i=0; i<enc.length; i++) dec += String.fromCharCode(enc.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+          const obj = JSON.parse(dec);
+          if (obj.token && obj.repo && obj.expiry) { parsed = obj; break; }
+        } catch {}
+      }
+
+      if (!parsed) throw new Error('No se pudo descifrar');
+      if (Date.now() > parsed.expiry) {
+        errEl.textContent = '⚠️ El QR ha expirado. Genera uno nuevo (30 segundos).';
+        setTimeout(() => { cerrarEscanerQR(); }, 3000);
+        return;
+      }
+
+      // Guardar configuración en localStorage
+      localStorage.setItem('gh_token',  parsed.token);
+      localStorage.setItem('gh_repo',   parsed.repo);
+      localStorage.setItem('gh_branch', parsed.branch || 'main');
+      if (parsed.repoPub) localStorage.setItem('gh_repo_public', parsed.repoPub);
+
+      msgEl.textContent = '✅ Configuración aplicada. Redirigiendo...';
+      msgEl.style.color = '#2d7a4f';
+
+      // Redirigir al sistema de cotizaciones
+      setTimeout(() => {
+        window.location.href = 'sanagua-cot/achive.html';
+      }, 1200);
+
+    } catch {
+      errEl.textContent = '❌ Error al procesar el QR. Intenta nuevamente.';
+      setTimeout(() => { iniciarCamaraAdmin(); errEl.textContent=''; }, 2000);
+    }
+  }
+
 </script>
 </body>
 </html>
