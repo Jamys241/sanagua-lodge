@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <title>Escanear QR — Sanagua Lodge</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--ink:#1a1814;--accent:#c8541a;--success:#2d7a4f;--red:#c0392b;--border:#e0dbd4;--bg:#f5f3ee}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--ink);color:#fff;
+      min-height:100vh;display:flex;flex-direction:column}
+
+    header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08)}
+    .logo{font-size:1rem;font-weight:700;color:#fff}
+    .btn-back{color:rgba(255,255,255,.5);font-size:.8rem;text-decoration:none;
+      padding:6px 14px;border:1px solid rgba(255,255,255,.15);border-radius:6px;transition:all .2s}
+    .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.4)}
+
+    .main{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:24px 16px;gap:16px}
+
+    .title{font-size:1.1rem;font-weight:700;text-align:center}
+    .sub{font-size:.8rem;color:rgba(255,255,255,.5);text-align:center;line-height:1.6;max-width:300px}
+
+    /* Visor de cámara */
+    .cam-wrap{position:relative;width:100%;max-width:320px;border-radius:14px;
+      overflow:hidden;background:#000;aspect-ratio:1}
+    #cam-video{width:100%;height:100%;object-fit:cover;display:block}
+    #cam-canvas{display:none}
+    /* Marco guía */
+    .cam-frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      pointer-events:none}
+    .cam-frame-inner{width:200px;height:200px;border:3px solid var(--accent);border-radius:10px;
+      box-shadow:0 0 0 9999px rgba(0,0,0,.5);animation:pulse-frame 2s ease-in-out infinite}
+    @keyframes pulse-frame{0%,100%{border-color:var(--accent)}50%{border-color:#ff8a50}}
+    /* Esquinas */
+    .cam-frame-inner::before,.cam-frame-inner::after{content:'';position:absolute;
+      width:20px;height:20px;border-color:var(--accent);border-style:solid}
+    .cam-frame-inner::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 0}
+    .cam-frame-inner::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 0}
+
+    /* Estado */
+    .status{font-size:.82rem;font-weight:600;min-height:22px;text-align:center;
+      padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.06)}
+    .status.ok{background:rgba(45,122,79,.25);color:#7de8a0}
+    .status.err{background:rgba(192,57,43,.25);color:#ff8a7a}
+    .status.scan{background:rgba(200,84,26,.2);color:#ffaa80}
+
+    .error-box{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);
+      border-radius:10px;padding:16px 20px;max-width:320px;text-align:center}
+    .error-box .err-icon{font-size:2rem;margin-bottom:8px}
+    .error-box p{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:12px}
+
+    .btn{padding:11px 24px;border-radius:8px;font-family:inherit;font-size:.85rem;
+      font-weight:700;cursor:pointer;border:none;transition:all .2s}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:#b34816}
+    .btn-outline{background:none;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7)}
+    .btn-outline:hover{border-color:rgba(255,255,255,.5);color:#fff}
+
+    .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+    /* Éxito */
+    .success-box{text-align:center;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+    .success-icon{font-size:3.5rem;margin-bottom:12px}
+    .success-title{font-size:1.2rem;font-weight:700;margin-bottom:6px;color:#7de8a0}
+    .success-sub{font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:20px}
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🌿 Sanagua Lodge</span>
+  <a class="btn-back" href="../achive.html">← Sistema</a>
+</header>
+
+<div class="main" id="main">
+  <div class="title">📷 Escanear QR de sesión</div>
+  <div class="sub">Genera el QR desde <strong>📲 Generar QR de sesión</strong> en el dispositivo que ya tiene acceso y apunta la cámara al código.</div>
+
+  <div class="cam-wrap" id="cam-wrap">
+    <video id="cam-video" playsinline autoplay muted></video>
+    <canvas id="cam-canvas"></canvas>
+    <div class="cam-frame"><div class="cam-frame-inner"></div></div>
+  </div>
+
+  <div class="status scan" id="status">🔍 Iniciando cámara...</div>
+  <div class="btns">
+    <button class="btn btn-outline" onclick="reiniciarCamara()">🔄 Reiniciar cámara</button>
+    <a class="btn btn-outline" href="../achive.html">Cancelar</a>
+  </div>
+</div>
+
+<script>
+  let _stream = null;
+  let _raf    = null;
+  let _activo = true;
+
+  async function iniciar() {
+    const statusEl = document.getElementById('status');
+    statusEl.className='status scan'; statusEl.textContent='🔍 Iniciando cámara...';
+    try {
+      // Pedir cámara trasera primero, luego cualquier cámara
+      let constraints = { video:{ facingMode:'environment', width:{ideal:640}, height:{ideal:640} } };
+      try { _stream = await navigator.mediaDevices.getUserMedia(constraints); }
+      catch { _stream = await navigator.mediaDevices.getUserMedia({ video:true }); }
+
+      const video = document.getElementById('cam-video');
+      video.srcObject = _stream;
+      await video.play();
+      statusEl.className='status scan'; statusEl.textContent='🔍 Apunta al código QR...';
+      _activo = true;
+      escanear();
+    } catch(e) {
+      mostrarError(e);
+    }
+  }
+
+  function escanear() {
+    if (!_activo) return;
+    const video  = document.getElementById('cam-video');
+    const canvas = document.getElementById('cam-canvas');
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      _raf = requestAnimationFrame(escanear); return;
+    }
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts:'dontInvert' });
+    if (code) {
+      procesarQR(code.data);
+    } else {
+      _raf = requestAnimationFrame(escanear);
+    }
+  }
+
+  function detener() {
+    _activo = false;
+    cancelAnimationFrame(_raf);
+    if (_stream) { _stream.getTracks().forEach(t=>t.stop()); _stream=null; }
+  }
+
+  function reiniciarCamara() {
+    detener();
+    setTimeout(iniciar, 300);
+  }
+
+  function procesarQR(data) {
+    detener();
+    const statusEl = document.getElementById('status');
+
+    if (!data.startsWith('SANAGUA_SESSION:')) {
+      statusEl.className='status err'; statusEl.textContent='❌ QR no válido. Genera uno nuevo.';
+      setTimeout(() => { _activo=true; iniciar(); }, 2000); return;
+    }
+
+    try {
+      const enc  = atob(data.replace('SANAGUA_SESSION:',''));
+      let parsed = null;
+      const now  = Date.now();
+
+      // Buscar la clave correcta en un rango de 2 minutos
+      for (let t = now + 120000; t >= now - 10000; t -= 100) {
+        try {
+          const k = String(t).substring(0,13);
+          let dec = '';
+          for (let i=0; i<enc.length; i++)
+            dec += String.fromCharCode(enc.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+          const obj = JSON.parse(dec);
+          if (obj.token && obj.repo && obj.expiry) { parsed = obj; break; }
+        } catch {}
+      }
+
+      if (!parsed) throw new Error('No se pudo descifrar el QR');
+      if (Date.now() > parsed.expiry) {
+        statusEl.className='status err';
+        statusEl.textContent='⚠️ QR expirado. Genera uno nuevo (2 min).';
+        setTimeout(() => { _activo=true; iniciar(); }, 3000); return;
+      }
+
+      // ✅ Guardar config
+      localStorage.setItem('gh_token',  parsed.token);
+      localStorage.setItem('gh_repo',   parsed.repo);
+      localStorage.setItem('gh_branch', parsed.branch || 'main');
+      if (parsed.repoPub) localStorage.setItem('gh_repo_public', parsed.repoPub);
+
+      // Mostrar éxito
+      statusEl.className='status ok'; statusEl.textContent='✅ Configuración aplicada';
+      document.getElementById('main').innerHTML = `
+        <div class="success-box">
+          <div class="success-icon">✅</div>
+          <div class="success-title">¡Dispositivo configurado!</div>
+          <div class="success-sub">El token y repositorio se guardaron correctamente.<br>Redirigiendo al sistema...</div>
+          <button class="btn btn-primary" onclick="window.location.href='../achive.html'">
+            Ir al sistema →
+          </button>
+        </div>`;
+      setTimeout(() => { window.location.href='../achive.html'; }, 2000);
+
+    } catch(e) {
+      statusEl.className='status err'; statusEl.textContent='❌ Error: ' + e.message;
+      setTimeout(() => { _activo=true; iniciar(); }, 2000);
+    }
+  }
+
+  function mostrarError(e) {
+    const main = document.getElementById('main');
+    const esPermisos = e.name==='NotAllowedError' || e.name==='PermissionDeniedError';
+    main.innerHTML = `
+      <div class="error-box">
+        <div class="err-icon">${esPermisos ? '🔒' : '📷'}</div>
+        <p>${esPermisos
+          ? 'El navegador bloqueó el acceso a la cámara. Ve a <strong>Ajustes del navegador → Permisos del sitio → Cámara</strong> y permite el acceso.'
+          : 'No se pudo acceder a la cámara: ' + (e.message || e.name)}</p>
+        ${esPermisos ? '' : '<p style="font-size:.76rem;color:rgba(255,255,255,.4);margin-bottom:12px">Asegúrate de que ninguna otra app esté usando la cámara.</p>'}
+      </div>
+      <div class="btns">
+        <button class="btn btn-primary" onclick="window.location.reload()">🔄 Reintentar</button>
+        <a class="btn btn-outline" href="../achive.html">Cancelar</a>
+      </div>`;
+  }
+
+  // Iniciar al cargar
+  if (!navigator.mediaDevices?.getUserMedia) {
+    mostrarError({ name:'NotSupportedError', message:'Tu navegador no soporta acceso a cámara. Usa Chrome o Safari.' });
+  } else {
+    iniciar();
+  }
+</script>
+</body>
+</html>
