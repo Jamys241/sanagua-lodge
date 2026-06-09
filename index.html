@@ -1169,14 +1169,21 @@
 
         <!-- Puntos -->
         <div class="user-panel-content" id="ucontent-puntos">
-          <div class="puntos-card">
-            <div class="puntos-num" id="puntos-display">240</div>
-            <div class="puntos-label">PUNTOS DE FIDELIDAD</div>
-          </div>
+          <a href="assets/pages/points/points.html" style="text-decoration:none;display:block">
+            <div class="puntos-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative"
+              onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.25)'"
+              onmouseout="this.style.transform='';this.style.boxShadow=''">
+              <div class="puntos-num" id="puntos-display">0</div>
+              <div class="puntos-label">PUNTOS DE FIDELIDAD</div>
+              <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px">
+                Ver mi historial y beneficios →
+              </div>
+            </div>
+          </a>
           <div class="puntos-beneficio">🎁 <span><strong>250 pts</strong> — 10% descuento en tu próxima reserva</span></div>
           <div class="puntos-beneficio">⭐ <span><strong>500 pts</strong> — Pasadía gratis para 1 persona</span></div>
           <div class="puntos-beneficio">👑 <span><strong>1000 pts</strong> — Noche en cabaña con desayuno incluido</span></div>
-          <p style="font-size:.75rem;color:#aaa;margin-top:12px;">Acumulas 10 puntos por cada $1 gastado en Sanagua Lodge.</p>
+          <p style="font-size:.75rem;color:#aaa;margin-top:12px;text-align:center">Toca la tarjeta para ver tu historial completo y beneficios disponibles.</p>
         </div>
 
         <!-- Editar perfil -->
