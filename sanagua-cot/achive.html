@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cotizaciones — Sanagua Lodge</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -1153,13 +1154,32 @@
         <div class="form-group"><label>Usuario</label><input type="text" id="cred-admin-user" placeholder="admin"></div>
         <div class="form-group"><label>Contraseña</label><input type="password" id="cred-admin-pass" placeholder="••••••••"></div>
       </div>
-
     </div>
     <div style="margin-top:14px;">
       <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
     </div>
     <div style="margin-top:12px;font-size:.78rem;color:var(--muted);background:var(--bg);padding:10px 14px;border-radius:6px;">
       ⚠️ Después de cambiar las credenciales, todos los dispositivos necesitarán iniciar sesión nuevamente con las nuevas contraseñas.
+    </div>
+  </div>
+
+  <!-- QR de sesión -->
+  <div class="card" id="card-qr-sesion">
+    <div class="card-title">📱 QR de sesión</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
+      Genera un código QR temporal para configurar automáticamente un dispositivo nuevo sin escribir el token de GitHub. El QR expira en <strong>5 minutos</strong>.
+    </p>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <button class="btn btn-accent" onclick="generarQRSesion()" id="btn-gen-qr">
+          📲 Generar QR de sesión
+        </button>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:8px" id="qr-expire-lbl"></div>
+      </div>
+      <div id="qr-container" style="display:none;text-align:center">
+        <canvas id="qr-canvas" style="border-radius:8px;border:4px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.15)"></canvas>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:6px">Escanea desde el dispositivo nuevo</div>
+      </div>
     </div>
   </div>
 
@@ -5253,6 +5273,86 @@
   document.getElementById('chpass-ov')?.addEventListener('click', e => {
     if (e.target === document.getElementById('chpass-ov')) cerrarCambiarPass();
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // QR DE SESIÓN
+  // ══════════════════════════════════════════════════════════════════════
+  let _qrExpireTimer = null;
+
+  function generarQRSesion() {
+    const token  = localStorage.getItem('gh_token')  || '';
+    const repo   = localStorage.getItem('gh_repo')   || '';
+    const branch = localStorage.getItem('gh_branch') || 'main';
+    const repoPub= localStorage.getItem('gh_repo_public') || '';
+
+    if (!token || !repo) {
+      showToast('No hay token/repo configurado.', 'error');
+      return;
+    }
+
+    // Cifrar con clave temporal — XOR simple con timestamp
+    const expiry = Date.now() + 30 * 1000; // 30 segundos
+    const payload = JSON.stringify({ token, repo, branch, repoPub, expiry });
+
+    // Cifrado XOR con clave derivada del timestamp
+    const key = String(expiry);
+    let enc = '';
+    for (let i = 0; i < payload.length; i++) {
+      enc += String.fromCharCode(payload.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    const qrData = 'SANAGUA_SESSION:' + btoa(enc);
+
+    // Limpiar contenedor anterior
+    const canvas = document.getElementById('qr-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width  = 200;
+    canvas.height = 200;
+    ctx.clearRect(0, 0, 200, 200);
+
+    // Generar QR
+    const container = document.getElementById('qr-container');
+    container.style.display = 'block';
+
+    // Usar QRCode.js
+    const tmpDiv = document.createElement('div');
+    new QRCode(tmpDiv, {
+      text:   qrData,
+      width:  200,
+      height: 200,
+      colorDark:  '#1a1814',
+      colorLight: '#ffffff',
+    });
+
+    setTimeout(() => {
+      const img = tmpDiv.querySelector('img') || tmpDiv.querySelector('canvas');
+      if (img) {
+        if (img.tagName === 'IMG') {
+          const tempImg = new Image();
+          tempImg.onload = () => ctx.drawImage(tempImg, 0, 0, 200, 200);
+          tempImg.src = img.src;
+        } else {
+          ctx.drawImage(img, 0, 0, 200, 200);
+        }
+      }
+    }, 200);
+
+    // Temporizador de expiración
+    clearInterval(_qrExpireTimer);
+    let segsLeft = 30;
+    const lbl = document.getElementById('qr-expire-lbl');
+    if (lbl) lbl.textContent = `⏱ Expira en ${segsLeft}s`;
+    _qrExpireTimer = setInterval(() => {
+      segsLeft--;
+      if (lbl) lbl.textContent = segsLeft > 0 ? `⏱ Expira en ${segsLeft}s` : '⚠️ QR expirado';
+      if (segsLeft <= 0) {
+        clearInterval(_qrExpireTimer);
+        container.style.display = 'none';
+        ctx.clearRect(0, 0, 200, 200);
+      }
+    }, 1000);
+
+    showToast('✅ QR generado. Escanéalo en los próximos 30 segundos.', 'success');
+  }
 
 </script>
 </body>
