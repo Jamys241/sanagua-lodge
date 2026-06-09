@@ -7,6 +7,7 @@
   <title>Cotizaciones — Sanagua Lodge</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -425,6 +426,7 @@
     <div class="side-menu-divider"></div>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
     <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
+    <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
@@ -1595,6 +1597,41 @@
       <div style="display:flex;gap:10px">
         <button class="btn btn-outline" onclick="cerrarCambiarPass()" style="flex:1">Cancelar</button>
         <button class="btn btn-accent" onclick="guardarNuevaPass()" style="flex:1">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal QR de sesión -->
+<div id="qr-modal-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:340px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
+    <div style="background:var(--ink);padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-weight:700;color:#fff;font-size:.95rem">📲 QR de sesión</span>
+      <button onclick="cerrarModalQR()" style="background:none;border:none;color:rgba(255,255,255,.5);
+        font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div style="padding:22px;text-align:center">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Escanea este código desde el dispositivo nuevo para transferir la configuración. Expira en <strong>2 minutos</strong>.
+      </p>
+      <!-- QR -->
+      <div id="qr-output" style="display:flex;align-items:center;justify-content:center;
+        min-height:220px;background:var(--bg);border-radius:10px;margin-bottom:12px;border:1.5px solid var(--border)">
+        <div id="qr-generating" style="color:var(--muted);font-size:.85rem">⏳ Generando QR...</div>
+        <canvas id="qr-main-canvas" style="display:none;border-radius:6px"></canvas>
+      </div>
+      <!-- Contador -->
+      <div id="qr-countdown" style="font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:16px;min-height:22px"></div>
+      <!-- Botones -->
+      <div style="display:flex;gap:8px">
+        <button onclick="regenerarQR()" class="btn btn-outline btn-sm" style="flex:1">
+          🔄 Recargar QR
+        </button>
+        <button onclick="cerrarModalQR()" class="btn btn-outline btn-sm" style="flex:1">
+          Cerrar
+        </button>
       </div>
     </div>
   </div>
@@ -5275,84 +5312,161 @@
   });
 
   // ══════════════════════════════════════════════════════════════════════
-  // QR DE SESIÓN
+  // QR DE SESIÓN — usando QRCode.js correctamente
   // ══════════════════════════════════════════════════════════════════════
-  let _qrExpireTimer = null;
+  let _qrExpireTimer  = null;
+  let _qrExpireAt     = 0;
+  let _qrCountdown    = null;
 
-  function generarQRSesion() {
-    const token  = localStorage.getItem('gh_token')  || '';
-    const repo   = localStorage.getItem('gh_repo')   || '';
-    const branch = localStorage.getItem('gh_branch') || 'main';
-    const repoPub= localStorage.getItem('gh_repo_public') || '';
-
+  function abrirModalQR() {
+    const token = localStorage.getItem('gh_token')  || '';
+    const repo  = localStorage.getItem('gh_repo')   || '';
     if (!token || !repo) {
-      showToast('No hay token/repo configurado.', 'error');
+      showToast('No hay token/repo configurado en este dispositivo.', 'error');
       return;
     }
+    document.getElementById('qr-modal-ov').style.display = 'flex';
+    generarQR();
+  }
 
-    // Cifrar con clave temporal — XOR simple con timestamp
-    const expiry = Date.now() + 30 * 1000; // 30 segundos
-    const payload = JSON.stringify({ token, repo, branch, repoPub, expiry });
+  function cerrarModalQR() {
+    document.getElementById('qr-modal-ov').style.display = 'none';
+    clearInterval(_qrExpireTimer);
+    clearInterval(_qrCountdown);
+    document.getElementById('qr-main-canvas').style.display = 'none';
+    document.getElementById('qr-generating').style.display  = 'block';
+    document.getElementById('qr-countdown').textContent     = '';
+  }
 
-    // Cifrado XOR con clave derivada del timestamp
-    const key = String(expiry);
+  function regenerarQR() {
+    clearInterval(_qrExpireTimer);
+    clearInterval(_qrCountdown);
+    document.getElementById('qr-main-canvas').style.display = 'none';
+    document.getElementById('qr-generating').style.display  = 'block';
+    document.getElementById('qr-countdown').textContent     = '';
+    generarQR();
+  }
+
+  function generarQR() {
+    const token   = localStorage.getItem('gh_token')        || '';
+    const repo    = localStorage.getItem('gh_repo')         || '';
+    const branch  = localStorage.getItem('gh_branch')       || 'main';
+    const repoPub = localStorage.getItem('gh_repo_public')  || '';
+
+    _qrExpireAt = Date.now() + 2 * 60 * 1000; // 2 minutos
+    const payload = JSON.stringify({ token, repo, branch, repoPub, expiry: _qrExpireAt });
+
+    // Cifrado XOR
+    const key = String(_qrExpireAt);
     let enc = '';
     for (let i = 0; i < payload.length; i++) {
       enc += String.fromCharCode(payload.charCodeAt(i) ^ key.charCodeAt(i % key.length));
     }
     const qrData = 'SANAGUA_SESSION:' + btoa(enc);
 
-    // Limpiar contenedor anterior
-    const canvas = document.getElementById('qr-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width  = 200;
-    canvas.height = 200;
-    ctx.clearRect(0, 0, 200, 200);
-
-    // Generar QR
-    const container = document.getElementById('qr-container');
-    container.style.display = 'block';
-
-    // Usar QRCode.js
+    // Generar QR con QRCode.js en un div temporal y luego copiar al canvas
     const tmpDiv = document.createElement('div');
-    new QRCode(tmpDiv, {
-      text:   qrData,
-      width:  200,
-      height: 200,
-      colorDark:  '#1a1814',
-      colorLight: '#ffffff',
-    });
+    tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
+    document.body.appendChild(tmpDiv);
 
-    setTimeout(() => {
-      const img = tmpDiv.querySelector('img') || tmpDiv.querySelector('canvas');
-      if (img) {
-        if (img.tagName === 'IMG') {
+    try {
+      const qr = new QRCode(tmpDiv, {
+        text:        qrData,
+        width:       200,
+        height:      200,
+        colorDark:   '#1a1814',
+        colorLight:  '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+
+      // Esperar a que QRCode.js renderice
+      const intentar = (intentos) => {
+        const img = tmpDiv.querySelector('img');
+        const cv  = tmpDiv.querySelector('canvas');
+
+        if (cv && cv.width > 0) {
+          // Copiar canvas directamente
+          const mainCanvas = document.getElementById('qr-main-canvas');
+          mainCanvas.width  = 200;
+          mainCanvas.height = 200;
+          mainCanvas.getContext('2d').drawImage(cv, 0, 0, 200, 200);
+          mostrarQR(mainCanvas);
+          document.body.removeChild(tmpDiv);
+        } else if (img && img.complete && img.naturalWidth > 0) {
+          // Copiar imagen
+          const mainCanvas = document.getElementById('qr-main-canvas');
+          mainCanvas.width  = 200;
+          mainCanvas.height = 200;
           const tempImg = new Image();
-          tempImg.onload = () => ctx.drawImage(tempImg, 0, 0, 200, 200);
+          tempImg.onload = () => {
+            mainCanvas.getContext('2d').drawImage(tempImg, 0, 0, 200, 200);
+            mostrarQR(mainCanvas);
+            document.body.removeChild(tmpDiv);
+          };
+          tempImg.onerror = () => { if (intentos > 0) setTimeout(() => intentar(intentos-1), 150); };
           tempImg.src = img.src;
+        } else if (intentos > 0) {
+          setTimeout(() => intentar(intentos - 1), 150);
         } else {
-          ctx.drawImage(img, 0, 0, 200, 200);
+          document.getElementById('qr-generating').textContent = '❌ Error al generar QR. Pulsa Recargar.';
+          document.body.removeChild(tmpDiv);
         }
-      }
-    }, 200);
+      };
+      setTimeout(() => intentar(20), 100);
 
-    // Temporizador de expiración
-    clearInterval(_qrExpireTimer);
-    let segsLeft = 30;
-    const lbl = document.getElementById('qr-expire-lbl');
-    if (lbl) lbl.textContent = `⏱ Expira en ${segsLeft}s`;
-    _qrExpireTimer = setInterval(() => {
-      segsLeft--;
-      if (lbl) lbl.textContent = segsLeft > 0 ? `⏱ Expira en ${segsLeft}s` : '⚠️ QR expirado';
-      if (segsLeft <= 0) {
-        clearInterval(_qrExpireTimer);
-        container.style.display = 'none';
-        ctx.clearRect(0, 0, 200, 200);
+    } catch(e) {
+      console.error('QR error:', e);
+      document.getElementById('qr-generating').textContent = '❌ Error: ' + e.message;
+      document.body.removeChild(tmpDiv);
+    }
+  }
+
+  function mostrarQR(canvas) {
+    document.getElementById('qr-generating').style.display  = 'none';
+    canvas.style.display = 'block';
+    iniciarCuentaRegresiva();
+  }
+
+  function iniciarCuentaRegresiva() {
+    clearInterval(_qrCountdown);
+    actualizarCuentaRegresiva();
+    _qrCountdown = setInterval(() => {
+      if (!actualizarCuentaRegresiva()) {
+        clearInterval(_qrCountdown);
+        // QR expirado — limpiar canvas
+        const canvas = document.getElementById('qr-main-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#f5f3ee';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#c0392b';
+        ctx.font = 'bold 14px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('QR EXPIRADO', 100, 105);
       }
     }, 1000);
-
-    showToast('✅ QR generado. Escanéalo en los próximos 30 segundos.', 'success');
   }
+
+  function actualizarCuentaRegresiva() {
+    const el = document.getElementById('qr-countdown');
+    if (!el) return false;
+    const left = Math.max(0, Math.ceil((_qrExpireAt - Date.now()) / 1000));
+    if (left <= 0) {
+      el.textContent = '⚠️ QR expirado — pulsa Recargar';
+      el.style.color = 'var(--red)';
+      return false;
+    }
+    const min  = Math.floor(left / 60);
+    const segs = left % 60;
+    el.textContent = `⏱ Expira en ${min}:${String(segs).padStart(2,'0')}`;
+    el.style.color = left < 30 ? 'var(--red)' : 'var(--accent)';
+    return true;
+  }
+
+  // Cerrar modal al hacer clic fuera
+  document.getElementById('qr-modal-ov')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('qr-modal-ov')) cerrarModalQR();
+  });
 
 </script>
 </body>
