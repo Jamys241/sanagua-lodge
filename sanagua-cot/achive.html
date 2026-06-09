@@ -1163,7 +1163,7 @@
   </div>
 
   <!-- Control de polling / sincronización -->
-  <div class="card">
+  <div class="card" id="sync-control-card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0;">🔄 Sincronización automática</div>
       <div style="display:flex;gap:8px;align-items:center">
@@ -1573,6 +1573,7 @@
     ver_menu_editor:     true,
     ver_solicitudes:     true,
     gestionar_usuarios:  true,
+    ver_sincronizacion:  true,
   };
 
   const PERMISOS_LABELS = {
@@ -1591,6 +1592,7 @@
     ver_menu_editor:     { label:'Editor de menú',            desc:'Puede abrir y editar el menú del restaurante' },
     ver_solicitudes:     { label:'Ver solicitudes web',       desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
     gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
+    ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
   };
 
   async function loadAuth() {
@@ -2202,6 +2204,11 @@
     if (name === 'config') {
       _loadGHConfigUI();
       setTimeout(initPollControls, 100);
+      // Mostrar/ocultar sección de sincronización según permiso
+      const isSuper = currentUser?.role === 'superadmin';
+      const puedeSync = isSuper || getPermisos().ver_sincronizacion;
+      const syncCard = document.getElementById('sync-control-card');
+      if (syncCard) syncCard.style.display = puedeSync ? '' : 'none';
       const cardCred = document.getElementById('card-credenciales');
       if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
       if (currentUser?.role==='superadmin' && authData) {
