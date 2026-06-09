@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../../images/icon/icon.png">
+  <title>Mis Puntos — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
+      --gold:#c9923a;--r:12px;--mist:#a8b8a2;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);min-height:100vh}
+
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);
+      backdrop-filter:blur(10px);padding:0 28px;height:60px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:#fff;text-decoration:none}
+    .nav-back{color:rgba(255,255,255,.55);font-size:.8rem;text-decoration:none;
+      padding:5px 12px;border:1px solid rgba(255,255,255,.15);border-radius:6px;transition:all .2s}
+    .nav-back:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+
+    /* Hero de puntos */
+    .pts-hero{background:linear-gradient(135deg,var(--moss),var(--forest),#1a2a14);
+      padding:48px 28px 40px;text-align:center;position:relative;overflow:hidden}
+    .pts-hero::before{content:'✦';position:absolute;font-size:18rem;
+      color:rgba(255,255,255,.03);top:-40px;left:50%;transform:translateX(-50%);
+      pointer-events:none;font-family:'Cormorant Garamond',serif}
+    .pts-label{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--sage);margin-bottom:10px}
+    .pts-num{font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:300;
+      color:#fff;line-height:1;margin-bottom:6px}
+    .pts-num span{font-size:1.8rem;opacity:.6;vertical-align:super;margin-right:4px}
+    .pts-sub{font-size:.85rem;color:rgba(255,255,255,.55)}
+    .pts-user{font-size:.9rem;color:rgba(255,255,255,.7);margin-top:8px;font-weight:500}
+
+    /* Barra de progreso al siguiente nivel */
+    .progress-section{background:#fff;border-radius:var(--r);margin:20px 20px 0;
+      padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+    .prog-title{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:14px;
+      display:flex;align-items:center;justify-content:space-between}
+    .prog-bar-wrap{background:#f0ece6;border-radius:20px;height:10px;overflow:hidden;margin-bottom:8px}
+    .prog-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--gold),var(--sand));
+      transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+    .prog-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--mist)}
+    .prog-nivel{font-size:.78rem;font-weight:700;color:var(--gold);margin-top:10px;text-align:center}
+
+    /* Niveles */
+    .niveles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:12px;padding:20px}
+    .nivel-card{background:#fff;border-radius:var(--r);padding:16px;text-align:center;
+      border:2px solid transparent;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:all .3s}
+    .nivel-card.activo{border-color:var(--gold);background:linear-gradient(135deg,#fffbf3,#fff8ea)}
+    .nivel-card.activo .nivel-icon{opacity:1;transform:scale(1.1)}
+    .nivel-card.bloqueado{opacity:.5}
+    .nivel-icon{font-size:2rem;margin-bottom:8px;transition:all .3s}
+    .nivel-nombre{font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:4px}
+    .nivel-pts{font-size:.75rem;color:var(--mist)}
+    .nivel-badge{display:inline-block;background:var(--gold);color:#fff;font-size:.6rem;
+      font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;
+      border-radius:20px;margin-top:6px}
+
+    /* Beneficios */
+    .section{padding:0 20px 20px}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;
+      font-weight:400;color:var(--moss);margin-bottom:14px;padding-top:20px}
+    .beneficio-card{background:#fff;border-radius:var(--r);padding:16px 18px;
+      margin-bottom:10px;display:flex;align-items:center;gap:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.06)}
+    .ben-icon{font-size:1.8rem;flex-shrink:0}
+    .ben-pts{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;
+      color:var(--gold);min-width:60px;flex-shrink:0}
+    .ben-txt .ben-title{font-size:.88rem;font-weight:600;color:var(--ink);margin-bottom:2px}
+    .ben-txt .ben-desc{font-size:.76rem;color:var(--mist)}
+    .ben-status{margin-left:auto;flex-shrink:0}
+    .ben-lock{font-size:1rem;opacity:.3}
+    .ben-check{background:var(--moss);color:#fff;font-size:.68rem;font-weight:700;
+      padding:3px 10px;border-radius:20px}
+
+    /* Historial de transacciones */
+    .historial-wrap{padding:0 20px 32px}
+    .tx-item{display:flex;align-items:center;gap:12px;padding:12px 0;
+      border-bottom:1px solid rgba(0,0,0,.06)}
+    .tx-item:last-child{border-bottom:none}
+    .tx-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:.9rem;flex-shrink:0}
+    .tx-icon.sum{background:#f0f7ee;color:var(--moss)}
+    .tx-icon.res{background:#fff5f5;color:#c0392b}
+    .tx-info{flex:1}
+    .tx-desc{font-size:.85rem;font-weight:500;color:var(--ink)}
+    .tx-fecha{font-size:.72rem;color:var(--mist);margin-top:1px}
+    .tx-pts{font-weight:700;font-size:.92rem}
+    .tx-pts.sum{color:var(--moss)}
+    .tx-pts.res{color:#c0392b}
+
+    /* Estado sin sesión */
+    .no-session{text-align:center;padding:60px 20px}
+    .no-session-icon{font-size:3.5rem;margin-bottom:16px}
+    .no-session h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--moss);
+      font-weight:400;margin-bottom:10px}
+    .no-session p{font-size:.88rem;color:var(--mist);margin-bottom:24px;line-height:1.7}
+    .btn-login{display:inline-block;background:var(--moss);color:#fff;text-decoration:none;
+      padding:12px 28px;border-radius:40px;font-weight:700;font-size:.9rem;transition:all .25s}
+    .btn-login:hover{background:var(--forest);transform:translateY(-2px)}
+
+    .loading{text-align:center;padding:48px;color:var(--mist)}
+
+    @media(max-width:600px){
+      nav{padding:0 16px}.pts-hero{padding:36px 16px 32px}
+      .pts-num{font-size:4rem}.section{padding:0 14px 14px}
+      .historial-wrap{padding:0 14px 24px}.progress-section{margin:16px 14px 0}
+      .niveles-grid{padding:14px}.beneficio-card{padding:12px 14px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-back" href="../../../index.html">← Inicio</a>
+</nav>
+
+<div id="app">
+  <div class="loading">⏳ Cargando...</div>
+</div>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────────────
+  const GT = localStorage.getItem('gh_token')  || '';
+  const GR = localStorage.getItem('gh_repo')   || '';
+  const GB = localStorage.getItem('gh_branch') || 'main';
+
+  async function ghRead(fn, repo) {
+    const r = repo || GR;
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${r}/contents/Data/json/${fn}?ref=${GB}`,
+        { headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'} }
+      );
+      if (!res.ok) return null;
+      const d = await res.json();
+      const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c=>c.charCodeAt(0));
+      return { data: JSON.parse(new TextDecoder('utf-8').decode(b)), sha: d.sha };
+    } catch { return null; }
+  }
+
+  // ── Niveles y beneficios ─────────────────────────────────────────────
+  const NIVELES = [
+    { nombre:'Explorador',  min:0,    max:249,  icon:'🌿', color:'#7a9e6e' },
+    { nombre:'Viajero',     min:250,  max:499,  icon:'🥾', color:'#c9923a' },
+    { nombre:'Aventurero',  min:500,  max:999,  icon:'⛺', color:'#8b6b47' },
+    { nombre:'Residente',   min:1000, max:1999, icon:'🏡', color:'#2d3e2a' },
+    { nombre:'Guardián',    min:2000, max:Infinity, icon:'👑', color:'#9a6f00' },
+  ];
+
+  const BENEFICIOS = [
+    { pts:250,  icon:'🎁', title:'10% descuento en tu próxima reserva',    desc:'Aplica a pasadías y camping' },
+    { pts:500,  icon:'☀️', title:'Pasadía sencilla gratis para 1 persona', desc:'Válida de lunes a jueves' },
+    { pts:1000, icon:'⛺', title:'Noche de camping para 2 personas',       desc:'Incluye equipo básico' },
+    { pts:1500, icon:'🍽️', title:'Cena especial para 2 en el restaurante', desc:'Menú del chef incluido' },
+    { pts:2000, icon:'🏡', title:'Noche en cabaña Ocelot o Motmot',        desc:'Válida de domingo a jueves' },
+    { pts:3000, icon:'👑', title:'Fin de semana en cabaña Yaguarundi',     desc:'Viernes a domingo, desayuno incluido' },
+  ];
+
+  function getNivel(pts) {
+    return NIVELES.find(n => pts >= n.min && pts <= n.max) || NIVELES[0];
+  }
+
+  function getProximo(pts) {
+    return NIVELES.find(n => n.min > pts) || null;
+  }
+
+  // ── Render sin sesión ────────────────────────────────────────────────
+  function renderNoSession() {
+    document.getElementById('app').innerHTML = `
+      <div class="no-session">
+        <div class="no-session-icon">✦</div>
+        <h2>Programa de Fidelidad</h2>
+        <p>Acumula puntos con cada reserva confirmada y canjéalos por beneficios exclusivos en Sanagua Lodge.</p>
+        <a class="btn-login" href="../../../index.html?action=login">Iniciar sesión →</a>
+      </div>
+      <div class="section">
+        <div class="section-title">Cómo ganar puntos</div>
+        ${BENEFICIOS.map(b=>`
+          <div class="beneficio-card">
+            <div class="ben-icon">${b.icon}</div>
+            <div class="ben-pts">${b.pts} pts</div>
+            <div class="ben-txt">
+              <div class="ben-title">${b.title}</div>
+              <div class="ben-desc">${b.desc}</div>
+            </div>
+            <div class="ben-status"><span class="ben-lock">🔒</span></div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // ── Render con sesión ────────────────────────────────────────────────
+  async function renderConSesion(usuario) {
+    const pts     = usuario.puntos || 0;
+    const nivel   = getNivel(pts);
+    const proximo = getProximo(pts);
+    const txs     = usuario.transacciones || [];
+
+    // Barra de progreso al siguiente nivel
+    let progHTML = '';
+    if (proximo) {
+      const rango = proximo.min - nivel.min;
+      const avance = pts - nivel.min;
+      const pct = Math.min(100, Math.round((avance / rango) * 100));
+      progHTML = `
+        <div class="progress-section">
+          <div class="prog-title">
+            <span>Progreso al nivel <strong>${proximo.nombre}</strong></span>
+            <span style="color:var(--gold)">${pts} / ${proximo.min} pts</span>
+          </div>
+          <div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+          <div class="prog-labels"><span>${nivel.nombre}</span><span>${proximo.nombre}</span></div>
+          <div class="prog-nivel">Te faltan <strong>${proximo.min - pts} puntos</strong> para el siguiente nivel</div>
+        </div>`;
+    } else {
+      progHTML = `
+        <div class="progress-section" style="text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:6px">👑</div>
+          <div style="font-weight:700;color:var(--gold)">¡Eres Guardián! — Nivel máximo alcanzado</div>
+        </div>`;
+    }
+
+    // Niveles grid
+    const nivelesHTML = NIVELES.map(n => {
+      const activo   = n.nombre === nivel.nombre;
+      const desbloq  = pts >= n.min;
+      return `<div class="nivel-card ${activo?'activo':desbloq?'':'bloqueado'}">
+        <div class="nivel-icon">${n.icon}</div>
+        <div class="nivel-nombre">${n.nombre}</div>
+        <div class="nivel-pts">${n.min === 0 ? '0' : n.min} pts+</div>
+        ${activo ? '<div class="nivel-badge">Tu nivel</div>' : ''}
+      </div>`;
+    }).join('');
+
+    // Beneficios
+    const bensHTML = BENEFICIOS.map(b => {
+      const desbloq = pts >= b.pts;
+      return `<div class="beneficio-card${desbloq?'':' bloqueado'}">
+        <div class="ben-icon">${b.icon}</div>
+        <div class="ben-pts">${b.pts} pts</div>
+        <div class="ben-txt">
+          <div class="ben-title">${b.title}</div>
+          <div class="ben-desc">${b.desc}</div>
+        </div>
+        <div class="ben-status">
+          ${desbloq
+            ? '<span class="ben-check">✓ Disponible</span>'
+            : '<span class="ben-lock">🔒</span>'}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Historial de transacciones
+    const txHTML = txs.length
+      ? [...txs].reverse().slice(0,20).map(tx => {
+          const esSuma = tx.puntos > 0;
+          const fecha  = new Date(tx.fecha).toLocaleDateString('es-PA',{day:'2-digit',month:'short',year:'numeric'});
+          return `<div class="tx-item">
+            <div class="tx-icon ${esSuma?'sum':'res'}">${esSuma?'✦':'−'}</div>
+            <div class="tx-info">
+              <div class="tx-desc">${tx.descripcion||'Ajuste de puntos'}</div>
+              <div class="tx-fecha">${fecha}</div>
+            </div>
+            <div class="tx-pts ${esSuma?'sum':'res'}">${esSuma?'+':''}${tx.puntos} pts</div>
+          </div>`;
+        }).join('')
+      : `<div style="text-align:center;padding:24px 0;color:var(--mist);font-size:.85rem">
+          Aún no hay movimientos de puntos
+         </div>`;
+
+    document.getElementById('app').innerHTML = `
+      <!-- Hero -->
+      <div class="pts-hero">
+        <div class="pts-label">Programa de Fidelidad · Sanagua Lodge</div>
+        <div class="pts-num"><span>✦</span>${pts}</div>
+        <div class="pts-sub">puntos acumulados</div>
+        <div class="pts-user">${usuario.name || ''} · ${nivel.icon} ${nivel.nombre}</div>
+      </div>
+
+      ${progHTML}
+
+      <!-- Niveles -->
+      <div class="section">
+        <div class="section-title">Tus niveles</div>
+      </div>
+      <div class="niveles-grid">${nivelesHTML}</div>
+
+      <!-- Beneficios -->
+      <div class="section">
+        <div class="section-title">Beneficios disponibles</div>
+        ${bensHTML}
+      </div>
+
+      <!-- Historial -->
+      <div class="historial-wrap">
+        <div class="section-title">Historial de puntos</div>
+        ${txHTML}
+      </div>`;
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  async function init() {
+    const raw = sessionStorage.getItem('sl_pub_user');
+    if (!raw) { renderNoSession(); return; }
+
+    let publicUser;
+    try { publicUser = JSON.parse(raw); } catch { renderNoSession(); return; }
+
+    // Intentar leer datos actualizados desde users.json
+    if (GT && GR) {
+      try {
+        const res = await ghRead('users.json');
+        const users = res?.data?.users || [];
+        const u = users.find(u => u.email === publicUser.email);
+        if (u) {
+          publicUser.puntos = u.puntos || 0;
+          publicUser.transacciones = u.transacciones || [];
+          // Actualizar sessionStorage
+          sessionStorage.setItem('sl_pub_user', JSON.stringify({...publicUser}));
+        }
+      } catch {}
+    }
+
+    renderConSesion(publicUser);
+  }
+
+  init();
+
+  // BroadcastChannel
+  try {
+    const _bc = new BroadcastChannel('sanagua_refresh');
+    _bc.onmessage = e => { if (e.data?.type==='REFRESH') setTimeout(()=>init(), 1200); };
+  } catch {}
+</script>
+</body>
+</html>
