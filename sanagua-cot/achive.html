@@ -252,6 +252,12 @@
     .cal-grid td.cal-cerrado:hover { background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,.04) 5px,rgba(0,0,0,.04) 10px); }
     .cal-grid td.cal-excepcion { outline:2px dashed var(--accent); outline-offset:-2px; }
     .cal-cerrado-label { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); opacity:.6; padding:0 4px 2px; }
+    /* Botones de intervalo de polling */
+    .poll-btn{padding:6px 14px;border:1.5px solid var(--border);border-radius:6px;
+      background:var(--surface);font-family:var(--font);font-size:.8rem;font-weight:600;
+      color:var(--muted);cursor:pointer;transition:all .2s}
+    .poll-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .poll-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
     /* Tarjetas de solicitudes */
     .sol-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;
       overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);transition:box-shadow .2s}
@@ -1156,6 +1162,57 @@
     </div>
   </div>
 
+  <!-- Control de polling / sincronización -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0;">🔄 Sincronización automática</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="poll-status-dot" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>
+        <span id="poll-status-lbl" style="font-size:.78rem;color:var(--muted)">Inactivo</span>
+      </div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Controla con qué frecuencia el sistema detecta cambios en los datos. También puedes forzar una actualización inmediata con el botón de refresco.
+    </p>
+
+    <!-- Intervalo -->
+    <div class="form-group" style="margin-bottom:18px">
+      <label>Intervalo de polling</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="poll-interval-btns">
+        <button class="poll-btn" data-ms="10000">10 s</button>
+        <button class="poll-btn" data-ms="20000">20 s</button>
+        <button class="poll-btn active" data-ms="30000">30 s</button>
+        <button class="poll-btn" data-ms="60000">1 min</button>
+        <button class="poll-btn" data-ms="120000">2 min</button>
+        <button class="poll-btn" data-ms="300000">5 min</button>
+        <button class="poll-btn" data-ms="0">Apagado</button>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-accent" id="btn-poll-now" onclick="forcePoll()">
+        ⚡ Refrescar ahora
+      </button>
+      <button class="btn btn-outline btn-sm" id="btn-poll-toggle" onclick="togglePolling()">
+        ⏸ Pausar
+      </button>
+      <span id="poll-next-lbl" style="font-size:.78rem;color:var(--muted)"></span>
+    </div>
+
+    <!-- Broadcast a páginas públicas -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">📡 Refresco de páginas públicas</div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
+        Escribe un mensaje en el canal de sincronización para que todas las pestañas abiertas del sitio web recarguen sus datos automáticamente.
+      </p>
+      <button class="btn btn-outline btn-sm" onclick="broadcastRefresh()">
+        📢 Enviar señal de refresco a páginas públicas
+      </button>
+      <span id="broadcast-lbl" style="font-size:.75rem;color:var(--muted);margin-left:8px"></span>
+    </div>
+  </div>
+
 </div>
 </div><!-- /tab-config -->
 
@@ -1775,6 +1832,8 @@
       try { await loadHistory(); } catch(e) { console.warn('History load error:', e); }
       renderCalendario();
       startPolling();
+      // Inicializar controles de polling en configuración
+      setTimeout(initPollControls, 500);
     })();
   });
 
@@ -2118,6 +2177,7 @@
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
     if (name === 'config') {
       _loadGHConfigUI();
+      setTimeout(initPollControls, 100);
       const cardCred = document.getElementById('card-credenciales');
       if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
       if (currentUser?.role==='superadmin' && authData) {
@@ -4795,6 +4855,119 @@
     } finally {
       showLoading(false);
       _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // CONTROL DE POLLING CENTRALIZADO
+  // ══════════════════════════════════════════════════════════════════════
+  let _pollInterval = parseInt(localStorage.getItem('poll_interval')||'20000');
+  let _pollPaused   = false;
+  let _pollCountdown = null;
+  let _pollNextAt   = 0;
+
+  function initPollControls() {
+    // Marcar botón activo según intervalo guardado
+    document.querySelectorAll('.poll-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.ms) === _pollInterval);
+      btn.addEventListener('click', () => {
+        const ms = parseInt(btn.dataset.ms);
+        _pollInterval = ms;
+        localStorage.setItem('poll_interval', ms);
+        document.querySelectorAll('.poll-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Reiniciar polling con nuevo intervalo
+        clearInterval(_pollTimer);
+        clearInterval(_pollCountdown);
+        if (ms > 0 && !_pollPaused) {
+          POLL_INTERVAL = ms;
+          _pollTimer = setInterval(pollChanges, ms);
+          _pollNextAt = Date.now() + ms;
+          actualizarPollUI();
+          startCountdown();
+        } else {
+          actualizarPollUI();
+        }
+      });
+    });
+    // Aplicar intervalo guardado
+    if (_pollInterval > 0) {
+      POLL_INTERVAL = _pollInterval;
+      clearInterval(_pollTimer);
+      _pollTimer = setInterval(pollChanges, _pollInterval);
+      _pollNextAt = Date.now() + _pollInterval;
+      startCountdown();
+    }
+    actualizarPollUI();
+  }
+
+  function actualizarPollUI() {
+    const dot = document.getElementById('poll-status-dot');
+    const lbl = document.getElementById('poll-status-lbl');
+    const tog = document.getElementById('btn-poll-toggle');
+    if (!dot) return;
+    if (_pollInterval === 0) {
+      dot.style.background = '#ccc';
+      if (lbl) lbl.textContent = 'Apagado';
+      if (tog) tog.textContent = '▶ Activar';
+    } else if (_pollPaused) {
+      dot.style.background = '#f0a030';
+      if (lbl) lbl.textContent = 'Pausado';
+      if (tog) tog.textContent = '▶ Reanudar';
+    } else {
+      dot.style.background = '#2d7a4f';
+      if (lbl) lbl.textContent = `Activo · cada ${_pollInterval >= 60000 ? (_pollInterval/60000)+'min' : (_pollInterval/1000)+'s'}`;
+      if (tog) tog.textContent = '⏸ Pausar';
+    }
+  }
+
+  function startCountdown() {
+    clearInterval(_pollCountdown);
+    if (_pollInterval === 0 || _pollPaused) return;
+    _pollCountdown = setInterval(() => {
+      const el = document.getElementById('poll-next-lbl');
+      if (!el) return;
+      const left = Math.max(0, Math.ceil((_pollNextAt - Date.now()) / 1000));
+      el.textContent = left > 0 ? `Próxima sync en ${left}s` : '';
+    }, 1000);
+  }
+
+  function forcePoll() {
+    const btn = document.getElementById('btn-poll-now');
+    if (btn) { btn.textContent = '⏳ Sincronizando...'; btn.disabled = true; }
+    pollChanges().finally(() => {
+      if (btn) { btn.textContent = '⚡ Refrescar ahora'; btn.disabled = false; }
+      _pollNextAt = Date.now() + _pollInterval;
+      showToast('✅ Datos sincronizados', 'success');
+    });
+  }
+
+  function togglePolling() {
+    if (_pollInterval === 0) return;
+    _pollPaused = !_pollPaused;
+    if (_pollPaused) {
+      clearInterval(_pollTimer);
+      clearInterval(_pollCountdown);
+      document.getElementById('poll-next-lbl').textContent = '';
+    } else {
+      _pollTimer = setInterval(pollChanges, _pollInterval);
+      _pollNextAt = Date.now() + _pollInterval;
+      startCountdown();
+    }
+    actualizarPollUI();
+  }
+
+  // BroadcastChannel para señal de refresco a páginas públicas
+  let _bc = null;
+  try { _bc = new BroadcastChannel('sanagua_refresh'); } catch {}
+
+  function broadcastRefresh() {
+    const lbl = document.getElementById('broadcast-lbl');
+    if (_bc) {
+      _bc.postMessage({ type: 'REFRESH', ts: Date.now() });
+      if (lbl) { lbl.textContent = '✅ Señal enviada'; setTimeout(()=>{ lbl.textContent=''; }, 3000); }
+    } else {
+      if (lbl) lbl.textContent = '⚠️ BroadcastChannel no soportado en este navegador';
     }
   }
 
