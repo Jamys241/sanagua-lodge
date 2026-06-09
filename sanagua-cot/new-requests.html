@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Solicitudes de Reserva — Sanagua Lodge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f5f3ee;--surface:#fff;--ink:#1a1814;--muted:#6b6660;
+      --accent:#c8541a;--border:#e0dbd4;--success:#2d7a4f;--red:#c0392b;
+      --font:'DM Sans',sans-serif;--r:8px;
+    }
+    body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+
+    /* ── HEADER ── */
+    header{background:var(--ink);color:#fff;padding:0 24px;height:58px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+    .h-left{display:flex;align-items:center;gap:12px}
+    .h-logo{font-family:'DM Serif Display',serif;font-size:.95rem;color:#fff;text-decoration:none}
+    .h-sep{color:rgba(255,255,255,.25)}
+    .h-title{font-size:.82rem;color:rgba(255,255,255,.6)}
+    .h-right{display:flex;align-items:center;gap:8px}
+    .btn-back{color:rgba(255,255,255,.55);font-size:.78rem;text-decoration:none;
+      padding:5px 12px;border:1px solid rgba(255,255,255,.15);border-radius:6px;transition:all .2s}
+    .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+    .btn-reload{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:none;
+      border-radius:6px;padding:6px 12px;font-family:var(--font);font-size:.78rem;
+      cursor:pointer;transition:all .2s}
+    .btn-reload:hover{background:rgba(255,255,255,.15);color:#fff}
+
+    /* ── FILTROS ── */
+    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);
+      padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .search-wrap{position:relative;flex:1;min-width:220px;max-width:380px}
+    .search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1.5px solid var(--border);
+      border-radius:var(--r);font-family:var(--font);font-size:.85rem;color:var(--ink);
+      background:var(--bg);outline:none;transition:border-color .2s}
+    .search-wrap input:focus{border-color:var(--accent);background:#fff}
+    .search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+      font-size:.85rem;pointer-events:none;opacity:.5}
+    .filter-sel{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r);
+      font-family:var(--font);font-size:.82rem;background:var(--bg);color:var(--ink);
+      outline:none;cursor:pointer}
+    .filter-sel:focus{border-color:var(--accent)}
+
+    /* ── STATS ── */
+    .stats-bar{display:flex;gap:10px;padding:16px 24px;flex-wrap:wrap}
+    .stat{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
+      padding:10px 18px;text-align:center;min-width:80px}
+    .stat-n{font-size:1.3rem;font-weight:700;color:var(--ink)}
+    .stat-l{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+    .stat.pend{border-color:#f0d060}.stat.pend .stat-n{color:#b45309}
+    .stat.apro{border-color:#c0ddb8}.stat.apro .stat-n{color:var(--success)}
+    .stat.rech{border-color:#f0c0c0}.stat.rech .stat-n{color:var(--red)}
+
+    /* ── GRID ── */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:16px;padding:0 24px 32px}
+
+    /* ── CARDS ── */
+    .sol-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;
+      overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);transition:box-shadow .2s;
+      display:flex;flex-direction:column}
+    .sol-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.09)}
+    .sol-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--border)}
+    .sol-servicio{font-size:.82rem;font-weight:700;color:var(--ink)}
+    .sol-badge{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:3px 9px;border-radius:20px}
+    .sol-badge.pendiente{background:#fff8e1;color:#b45309}
+    .sol-badge.aprobada{background:#f0f7ee;color:var(--success)}
+    .sol-badge.rechazada{background:#fff5f5;color:var(--red)}
+    .sol-body{padding:14px;flex:1}
+    .sol-user{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+      padding-bottom:12px;border-bottom:1px solid var(--border)}
+    .sol-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);
+      color:#fff;display:flex;align-items:center;justify-content:center;
+      font-size:.85rem;font-weight:700;flex-shrink:0}
+    .sol-u-nom{font-size:.86rem;font-weight:600;color:var(--ink)}
+    .sol-u-con{font-size:.73rem;color:var(--muted);margin-top:1px}
+    .sol-datos{display:flex;flex-direction:column;gap:5px}
+    .sol-dato{display:flex;gap:8px;font-size:.79rem}
+    .sol-dato-l{color:var(--muted);min-width:76px;flex-shrink:0}
+    .sol-dato-v{color:var(--ink);font-weight:500}
+    .sol-ts{font-size:.67rem;color:var(--muted);margin-top:10px}
+    .sol-actions{padding:10px 14px;display:flex;gap:7px;
+      border-top:1px solid var(--border);background:var(--bg)}
+    .btn-ap{flex:1;background:var(--success);color:#fff;border:none;border-radius:6px;
+      padding:8px;font-family:var(--font);font-size:.78rem;font-weight:700;cursor:pointer;transition:background .2s}
+    .btn-ap:hover{background:#256940}
+    .btn-re{flex:1;background:none;border:1.5px solid var(--red);color:var(--red);
+      border-radius:6px;padding:8px;font-family:var(--font);font-size:.78rem;
+      font-weight:700;cursor:pointer;transition:all .2s}
+    .btn-re:hover{background:var(--red);color:#fff}
+    .btn-done{width:100%;background:var(--bg);color:var(--muted);
+      border:1.5px solid var(--border);border-radius:6px;padding:8px;
+      font-family:var(--font);font-size:.78rem;cursor:default}
+    .btn-del{background:none;border:1.5px solid var(--border);border-radius:6px;
+      padding:7px 10px;cursor:pointer;color:var(--muted);font-size:.88rem;
+      transition:all .2s;flex-shrink:0}
+    .btn-del:hover{border-color:var(--red);color:var(--red);background:#fff5f5}
+
+    /* ── EMPTY ── */
+    .empty{text-align:center;padding:64px 24px;color:var(--muted);grid-column:1/-1}
+    .empty-icon{font-size:3rem;margin-bottom:12px}
+    .empty p{font-size:.88rem}
+
+    /* ── LOADING ── */
+    .loading-ov{position:fixed;inset:0;background:rgba(255,255,255,.75);
+      z-index:500;display:none;align-items:center;justify-content:center}
+    .loading-ov.show{display:flex}
+    .spinner{width:32px;height:32px;border:3px solid var(--border);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── TOAST ── */
+    .toast{position:fixed;bottom:20px;right:20px;z-index:600;
+      background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;
+      font-size:.83rem;font-weight:500;opacity:0;transform:translateY(6px);
+      transition:all .3s;pointer-events:none;max-width:320px}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast.ok{background:var(--success)}
+    .toast.err{background:var(--red)}
+
+    /* ── MODAL BORRAR ── */
+    .del-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+    .del-ov.open{display:flex}
+    .del-box{background:#fff;border-radius:14px;width:100%;max-width:390px;overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,.3)}
+    .del-head{background:var(--red);padding:18px 22px;display:flex;align-items:center;gap:8px}
+    .del-head span{font-size:1rem;font-weight:700;color:#fff}
+    .del-body{padding:20px 22px}
+    .del-body p{font-size:.86rem;color:var(--muted);line-height:1.6;margin-bottom:18px}
+    .del-btns{display:flex;flex-direction:column;gap:9px}
+    .btn-dl{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+      padding:11px 14px;cursor:pointer;font-family:var(--font);font-size:.83rem;
+      font-weight:600;color:var(--ink);text-align:left;display:flex;align-items:center;
+      gap:10px;transition:all .2s}
+    .btn-dl:hover{border-color:var(--accent);background:#fff8f5}
+    .btn-dt{background:#fff5f5;border:1.5px solid var(--red);border-radius:8px;
+      padding:11px 14px;cursor:pointer;font-family:var(--font);font-size:.83rem;
+      font-weight:600;color:var(--red);text-align:left;display:flex;align-items:center;
+      gap:10px;transition:all .2s}
+    .btn-dt:hover{background:var(--red);color:#fff}
+    .btn-dc{background:none;border:none;color:var(--muted);font-family:var(--font);
+      font-size:.8rem;cursor:pointer;padding:8px;width:100%;text-align:center;margin-top:2px}
+    .btn-dc:hover{color:var(--ink)}
+
+    /* ── BADGE NOTIF ── */
+    .notif{display:inline-block;background:var(--red);color:#fff;font-size:.62rem;
+      font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px}
+
+    @media(max-width:600px){
+      .toolbar{padding:10px 14px}.stats-bar{padding:12px 14px}
+      .grid{padding:0 14px 24px;grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <a class="h-logo" href="../achive.html">🌿 Sanagua</a>
+    <span class="h-sep">›</span>
+    <span class="h-title">📬 Solicitudes de reserva</span>
+  </div>
+  <div class="h-right">
+    <button class="btn-reload" onclick="cargar()">🔄 Actualizar</button>
+    <a class="btn-back" href="../achive.html">← Sistema</a>
+  </div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-ico">🔍</span>
+    <input type="text" id="buscar" placeholder="Buscar por nombre o correo..." oninput="render()">
+  </div>
+  <select id="filtro" class="filter-sel" onchange="render()">
+    <option value="todas">Todas</option>
+    <option value="pendiente">⏳ Pendientes</option>
+    <option value="aprobada">✅ Aprobadas</option>
+    <option value="rechazada">❌ Rechazadas</option>
+  </select>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="stats"></div>
+
+<!-- Grid -->
+<div class="grid" id="grid">
+  <div class="empty"><div class="empty-icon">📭</div><p>Cargando solicitudes...</p></div>
+</div>
+
+<!-- Modal borrar -->
+<div class="del-ov" id="del-ov">
+  <div class="del-box">
+    <div class="del-head"><span>🗑️ Eliminar solicitud</span></div>
+    <div class="del-body">
+      <p>¿Cómo deseas eliminar esta solicitud?</p>
+      <div class="del-btns">
+        <button class="btn-dl" onclick="borrarLocal()">
+          <span>🗂️</span>
+          <div><div>Solo del sistema</div>
+          <div style="font-size:.72rem;font-weight:400;opacity:.65">Permanece en el perfil del usuario</div></div>
+        </button>
+        <button class="btn-dt" onclick="borrarCompleta()">
+          <span>⚠️</span>
+          <div><div>Eliminar completamente</div>
+          <div style="font-size:.72rem;font-weight:400;opacity:.85">Del sistema y del perfil del usuario</div></div>
+        </button>
+        <button class="btn-dc" onclick="cerrarDel()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loading-ov" id="lov"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Sesión ───────────────────────────────────────────────────────────
+  (function(){
+    const raw = sessionStorage.getItem('sl_session');
+    if (!raw) { window.location.href = '../achive.html'; return; }
+    try {
+      const s = JSON.parse(raw);
+      if (!s.role || (Date.now()-s.ts) > 8*3600*1000) {
+        sessionStorage.removeItem('sl_session');
+        window.location.href = '../achive.html';
+      }
+    } catch { window.location.href = '../achive.html'; }
+  })();
+
+  // ── GitHub ───────────────────────────────────────────────────────────
+  const GT = localStorage.getItem('gh_token')  || '';
+  const GR = localStorage.getItem('gh_repo')   || '';
+  const GB = localStorage.getItem('gh_branch') || 'main';
+  const GR_PUB = localStorage.getItem('gh_repo_public') || GR;
+
+  async function ghRead(fn) {
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,
+        { headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'} }
+      );
+      if (!r.ok) return null;
+      const d = await r.json();
+      const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c=>c.charCodeAt(0));
+      return { data: JSON.parse(new TextDecoder('utf-8').decode(b)), sha: d.sha };
+    } catch { return null; }
+  }
+
+  async function ghWrite(fn, data, sha) {
+    const json = JSON.stringify(data,null,2);
+    let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+    const payload = { message:`update ${fn}`, content:btoa(bin), branch:GB };
+    if (sha) payload.sha = sha;
+    const r = await fetch(
+      `https://api.github.com/repos/${GR}/contents/Data/json/${fn}`,
+      { method:'PUT', headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'}, body:JSON.stringify(payload) }
+    );
+    return r.ok;
+  }
+
+  async function ghWritePub(fn, data, sha) {
+    const json = JSON.stringify(data,null,2);
+    let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
+    const payload = { message:`update ${fn}`, content:btoa(bin), branch:GB };
+    if (sha) payload.sha = sha;
+    const r = await fetch(
+      `https://api.github.com/repos/${GR}/contents/Data/json/${fn}`,
+      { method:'PUT', headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'}, body:JSON.stringify(payload) }
+    );
+    return r.ok;
+  }
+
+  // ── Estado ───────────────────────────────────────────────────────────
+  let solicitudes = [];
+  let _idABorrar  = null;
+  let _pollTimer  = null;
+
+  function setLoading(v) { document.getElementById('lov').classList.toggle('show',v); }
+
+  function toast(msg, tipo='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${tipo} show`;
+    clearTimeout(t._t);
+    t._t = setTimeout(()=> t.className='toast', 3500);
+  }
+
+  // ── Cargar datos ──────────────────────────────────────────────────────
+  async function cargar() {
+    setLoading(true);
+    const res = await ghRead('solicitudes.json');
+    setLoading(false);
+    if (!res) { toast('No se pudo cargar solicitudes.json','err'); return; }
+    solicitudes = res.data?.solicitudes || [];
+    render();
+  }
+
+  // ── Renderizar ────────────────────────────────────────────────────────
+  function render() {
+    const filtro = document.getElementById('filtro').value;
+    const buscar = (document.getElementById('buscar').value||'').toLowerCase().trim();
+
+    let lista = filtro==='todas' ? solicitudes : solicitudes.filter(s=>s.estado===filtro);
+    if (buscar) lista = lista.filter(s=>
+      (s.usuario?.nombre||'').toLowerCase().includes(buscar) ||
+      (s.usuario?.email||'').toLowerCase().includes(buscar)  ||
+      (s.contacto?.email||'').toLowerCase().includes(buscar)
+    );
+
+    // Stats
+    const pend=solicitudes.filter(s=>s.estado==='pendiente').length;
+    const apro=solicitudes.filter(s=>s.estado==='aprobada').length;
+    const rech=solicitudes.filter(s=>s.estado==='rechazada').length;
+    document.getElementById('stats').innerHTML=`
+      <div class="stat"><div class="stat-n">${solicitudes.length}</div><div class="stat-l">Total</div></div>
+      <div class="stat pend"><div class="stat-n">${pend}</div><div class="stat-l">Pendientes</div></div>
+      <div class="stat apro"><div class="stat-n">${apro}</div><div class="stat-l">Aprobadas</div></div>
+      <div class="stat rech"><div class="stat-n">${rech}</div><div class="stat-l">Rechazadas</div></div>`;
+
+    // Actualizar título con badge
+    document.title = pend>0 ? `(${pend}) Solicitudes — Sanagua` : 'Solicitudes — Sanagua Lodge';
+
+    if (!lista.length) {
+      document.getElementById('grid').innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No hay solicitudes${filtro!=='todas'?' con estado "'+filtro+'"':''}.</p></div>`;
+      return;
+    }
+
+    // Ordenar: pendientes primero
+    const ord = [...lista].sort((a,b)=>{
+      if(a.estado==='pendiente'&&b.estado!=='pendiente') return -1;
+      if(a.estado!=='pendiente'&&b.estado==='pendiente') return 1;
+      return new Date(b.created_at)-new Date(a.created_at);
+    });
+
+    const ICONOS = {Pasadía:'☀️',Camping:'⛺',Cabaña:'🏡',Picnic:'🧀'};
+    const BADGE  = {pendiente:'⏳ Pendiente',aprobada:'✅ Aprobada',rechazada:'❌ Rechazada'};
+
+    document.getElementById('grid').innerHTML = ord.map(sol=>{
+      const icon   = ICONOS[sol.servicio]||'📋';
+      const badge  = BADGE[sol.estado]||sol.estado;
+      const ini    = (sol.usuario?.nombre||'?').charAt(0).toUpperCase();
+      const ts     = sol.created_at ? new Date(sol.created_at).toLocaleString('es-PA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+      const isPend = sol.estado==='pendiente';
+
+      const rows=[];
+      if(sol.categoria)     rows.push(['Tipo',     sol.categoria]);
+      if(sol.fecha)         rows.push(['Fecha',     sol.fecha]);
+      if(sol.fecha_entrada) rows.push(['Entrada',   sol.fecha_entrada]);
+      if(sol.fecha_salida)  rows.push(['Salida',    sol.fecha_salida]);
+      if(sol.noches)        rows.push(['Noches',    sol.noches]);
+      if(sol.personas)      rows.push(['Personas',  sol.personas]);
+      if(sol.carpa)         rows.push(['Carpa',     sol.carpa]);
+      if(sol.precio)        rows.push(['Precio',    sol.precio]);
+      if(sol.hora)          rows.push(['Hora',      sol.hora]);
+      if(sol.notas)         rows.push(['Notas',     sol.notas]);
+
+      return `<div class="sol-card">
+        <div class="sol-head">
+          <div class="sol-servicio">${icon} ${sol.servicio||'Reserva'}</div>
+          <span class="sol-badge ${sol.estado}">${badge}</span>
+        </div>
+        <div class="sol-body">
+          <div class="sol-user">
+            <div class="sol-avatar">${ini}</div>
+            <div>
+              <div class="sol-u-nom">${sol.usuario?.nombre||'—'}</div>
+              <div class="sol-u-con">${sol.contacto?.telefono?`📱 ${sol.contacto.telefono} `:''}${sol.contacto?.email?`✉️ ${sol.contacto.email}`:''}</div>
+            </div>
+          </div>
+          <div class="sol-datos">
+            ${rows.map(([l,v])=>`<div class="sol-dato"><span class="sol-dato-l">${l}</span><span class="sol-dato-v">${v}</span></div>`).join('')}
+          </div>
+          <div class="sol-ts">Recibida: ${ts}</div>
+        </div>
+        <div class="sol-actions">
+          ${isPend
+            ? `<button class="btn-ap" onclick="aprobar('${sol.id}')">✅ Aprobar</button>
+               <button class="btn-re" onclick="rechazar('${sol.id}')">❌ Rechazar</button>`
+            : `<button class="btn-done">${badge}</button>`
+          }
+          <button class="btn-del" onclick="confirmarBorrar('${sol.id}')" title="Eliminar">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Actualizar estado ─────────────────────────────────────────────────
+  async function actualizarEstado(id, nuevoEstado) {
+    const res = await ghRead('solicitudes.json');
+    if (!res) return false;
+    const lista = res.data?.solicitudes||[];
+    const idx   = lista.findIndex(s=>s.id===id);
+    if (idx<0) return false;
+    lista[idx].estado     = nuevoEstado;
+    lista[idx].updated_at = new Date().toISOString();
+    const ok = await ghWrite('solicitudes.json', { solicitudes:lista }, res.sha);
+    if (ok) solicitudes = lista;
+    return ok;
+  }
+
+  // ── Aprobar ───────────────────────────────────────────────────────────
+  async function aprobar(id) {
+    const sol = solicitudes.find(s=>s.id===id);
+    if (!sol) return;
+    clearInterval(_pollTimer);
+    setLoading(true);
+    try {
+      const ok = await actualizarEstado(id,'aprobada');
+      if (!ok) throw new Error();
+
+      // Número #WEB correlativo
+      const wcRes = await ghRead('web_counter.json');
+      const webN  = (wcRes?.data?.count||0)+1;
+      const qStr  = `WEB${String(webN).padStart(2,'0')}`;
+      await ghWrite('web_counter.json',{count:webN},wcRes?.sha);
+
+      // Precios
+      const pRes = await ghRead('precios.json');
+      const pData = pRes?.data||{};
+      let items=[], subtotal=0;
+      const srv=sol.servicio||'', cat=sol.categoria||'', itbms=7;
+
+      if(srv==='Pasadía'){
+        const mods=pData.pasadia?.modalidades||{};
+        const mk=Object.keys(mods).find(k=>mods[k].label===cat)||Object.keys(mods)[0];
+        const mod=mods[mk];
+        if(mod)(sol.personas||'').split(',').forEach(p=>{
+          const[l,q]=p.split(':').map(s=>s.trim());
+          const t=Object.values(mod.tarifas||{}).find(t=>t.label===l);
+          if(t&&q){const qn=parseInt(q)||1,pr=t.precio*qn;subtotal+=pr;items.push({description:`${l} × ${qn}`,quantity:qn,unit_price:t.precio,total:pr});}
+        });
+      } else if(srv==='Camping'){
+        const mods=pData.camping?.modalidades||{};
+        const mk=Object.keys(mods).find(k=>mods[k].label===cat)||Object.keys(mods)[0];
+        const mod=mods[mk];
+        if(mod){
+          (sol.personas||'').split(',').forEach(p=>{
+            const[l,q]=p.split(':').map(s=>s.trim());
+            const t=Object.values(mod.tarifas||{}).find(t=>t.label===l);
+            if(t&&q){const qn=parseInt(q)||1,n=sol.noches||1,pr=t.precio*qn*n;subtotal+=pr;items.push({description:`${l} × ${qn} × ${n} noche${n===1?'':'s'}`,quantity:qn,unit_price:t.precio,total:pr});}
+          });
+          if(sol.carpa&&mod.carpas){const ck=Object.keys(mod.carpas).find(k=>mod.carpas[k].label===sol.carpa);const carpa=ck?mod.carpas[ck]:null;if(carpa){const n=sol.noches||1,pr=carpa.precio*n;subtotal+=pr;items.push({description:`${carpa.label} × ${n}n`,quantity:n,unit_price:carpa.precio,total:pr});}}
+        }
+      } else if(srv==='Cabaña'){
+        const cabs=pData.cabanas?.cabanas||{};
+        const ck=Object.keys(cabs).find(k=>cabs[k].label===cat);
+        const cab=ck?cabs[ck]:null;
+        if(cab){
+          const n=sol.noches||1;
+          const ent=new Date((sol.fecha_entrada||sol.fecha)+'T12:00:00');
+          let nS=0,nF=0;
+          for(let i=0;i<n;i++){const d=new Date(ent);d.setDate(d.getDate()+i);d.getDay()>=1&&d.getDay()<=4?nS++:nF++;}
+          if(nS>0&&cab.tarifas?.semana){const p=cab.tarifas.semana.precio*nS;subtotal+=p;items.push({description:`Semana × ${nS}n`,quantity:nS,unit_price:cab.tarifas.semana.precio,total:p});}
+          if(nF>0&&cab.tarifas?.finsemana){const p=cab.tarifas.finsemana.precio*nF;subtotal+=p;items.push({description:`Fin de semana × ${nF}n`,quantity:nF,unit_price:cab.tarifas.finsemana.precio,total:p});}
+          if((sol.personas_adicionales||0)>0&&cab.tarifas?.adicional){const p=cab.tarifas.adicional.precio*sol.personas_adicionales*n;subtotal+=p;items.push({description:`Adicionales × ${sol.personas_adicionales}`,quantity:sol.personas_adicionales,unit_price:cab.tarifas.adicional.precio,total:p});}
+        }
+      } else if(srv==='Picnic'){
+        const pm=(sol.precio||'').match(/\$([\d.]+)/);
+        const pb=pm?parseFloat(pm[1])/(1+itbms/100):0;
+        items.push({description:cat,quantity:1,unit_price:pb,total:pb});subtotal=pb;
+      }
+
+      if(!items.length) items.push({description:cat,quantity:1,unit_price:0,total:0});
+      const itbmsAmt=Math.round(subtotal*itbms)/100;
+      const total=subtotal+itbmsAmt;
+
+      // Crear cotización
+      const hRes=await ghRead('history.json');
+      const hLista=hRes?.data?.quotes||[];
+      const fecha=sol.fecha||sol.fecha_entrada||new Date().toISOString().slice(0,10);
+      hLista.push({
+        quote_num:qStr,id:`hist_sol_${id}`,tipo:'cotizacion',plataforma:'web',
+        categoria:cat,estado:'Pendiente',created_at:new Date().toISOString(),
+        visit_date:fecha,visit_date_end:sol.fecha_salida||fecha,
+        notes:`Solicitud web #${id.slice(-6)}${sol.notas?' | '+sol.notas:''}`,
+        sol_id:id,
+        client:{name:sol.usuario?.nombre||'—',cedula:sol.usuario?.cedula||'',phone:sol.contacto?.telefono||'',email:sol.contacto?.email||sol.usuario?.email||''},
+        items,subtotal:Math.round(subtotal*100)/100,itbms:itbmsAmt,
+        total:Math.round(total*100)/100,abono:0,pendiente:Math.round(total*100)/100
+      });
+      await ghWrite('history.json',{quotes:hLista},hRes?.sha);
+
+      toast(`✅ Aprobada — Cotización #${qStr} creada`,'ok');
+      render();
+    } catch(e) { console.error(e); toast('❌ Error al aprobar','err'); }
+    finally { setLoading(false); _pollTimer=setInterval(pollear,20000); }
+  }
+
+  // ── Rechazar ──────────────────────────────────────────────────────────
+  async function rechazar(id) {
+    if (!confirm('¿Rechazar esta solicitud?')) return;
+    clearInterval(_pollTimer);
+    setLoading(true);
+    try {
+      const res = await ghRead('solicitudes.json');
+      if (!res) throw new Error();
+      const lista = res.data?.solicitudes||[];
+      const idx   = lista.findIndex(s=>s.id===id);
+      if (idx<0) throw new Error();
+      lista[idx].estado='rechazada'; lista[idx].updated_at=new Date().toISOString();
+      const ok = await ghWrite('solicitudes.json',{solicitudes:lista},res.sha);
+      if (!ok) throw new Error();
+      // Recargar fresco
+      const rf = await ghRead('solicitudes.json');
+      solicitudes = rf?.data?.solicitudes||lista;
+      toast('Solicitud rechazada.','ok');
+      render();
+    } catch { toast('❌ Error al rechazar','err'); }
+    finally { setLoading(false); _pollTimer=setInterval(pollear,20000); }
+  }
+
+  // ── Borrar ────────────────────────────────────────────────────────────
+  function confirmarBorrar(id) {
+    _idABorrar = id;
+    document.getElementById('del-ov').classList.add('open');
+  }
+  function cerrarDel() {
+    document.getElementById('del-ov').classList.remove('open');
+    _idABorrar = null;
+  }
+  document.getElementById('del-ov').addEventListener('click', e=>{ if(e.target===document.getElementById('del-ov')) cerrarDel(); });
+
+  async function borrarLocal() {
+    if (!_idABorrar) return;
+    const id = _idABorrar; cerrarDel();
+    clearInterval(_pollTimer); setLoading(true);
+    try {
+      const res=await ghRead('solicitudes.json'); if(!res) throw new Error();
+      const lista=(res.data?.solicitudes||[]).filter(s=>s.id!==id);
+      const ok=await ghWrite('solicitudes.json',{solicitudes:lista},res.sha); if(!ok) throw new Error();
+      const rf=await ghRead('solicitudes.json'); solicitudes=rf?.data?.solicitudes||lista;
+      toast('Solicitud eliminada del sistema.','ok'); render();
+    } catch { toast('❌ Error al eliminar','err'); }
+    finally { setLoading(false); _pollTimer=setInterval(pollear,20000); }
+  }
+
+  async function borrarCompleta() {
+    if (!_idABorrar) return;
+    const id=_idABorrar; const sol=solicitudes.find(s=>s.id===id); cerrarDel();
+    clearInterval(_pollTimer); setLoading(true);
+    try {
+      const res=await ghRead('solicitudes.json'); if(!res) throw new Error();
+      const lista=(res.data?.solicitudes||[]).filter(s=>s.id!==id);
+      await ghWrite('solicitudes.json',{solicitudes:lista},res.sha);
+      const rf=await ghRead('solicitudes.json'); solicitudes=rf?.data?.solicitudes||lista;
+      // Eliminar cotización asociada
+      if(sol?.id){
+        const hRes=await ghRead('history.json');
+        if(hRes){
+          const hf=(hRes.data?.quotes||[]).filter(q=>q.sol_id!==sol.id);
+          if(hf.length!==(hRes.data?.quotes||[]).length) await ghWrite('history.json',{quotes:hf},hRes.sha);
+        }
+      }
+      toast('✅ Eliminada completamente.','ok'); render();
+    } catch { toast('❌ Error al eliminar','err'); }
+    finally { setLoading(false); _pollTimer=setInterval(pollear,20000); }
+  }
+
+  // ── Polling 20s ───────────────────────────────────────────────────────
+  let _lastHash = '';
+  function hashObj(o){ const s=JSON.stringify(o); let h=0; for(let i=0;i<s.length;i++) h=(Math.imul(31,h)+s.charCodeAt(i))|0; return String(h); }
+
+  async function pollear() {
+    const res = await ghRead('solicitudes.json');
+    if (!res) return;
+    const newSols = res.data?.solicitudes||[];
+    const h = hashObj(newSols);
+    if (h === _lastHash) return;
+    _lastHash = h;
+    solicitudes = newSols;
+    render();
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  cargar().then(()=>{
+    _lastHash = hashObj(solicitudes);
+    _pollTimer = setInterval(pollear, 20000);
+  });
+</script>
+</body>
+</html>

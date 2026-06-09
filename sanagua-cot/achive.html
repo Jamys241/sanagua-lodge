@@ -411,7 +411,7 @@
     <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
-    <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
+    <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
     <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
     <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
 
@@ -1819,17 +1819,14 @@
         _lastHashHist = newHashH;
         _lastHashEvts = newHashE;
 
-        // Refrescar la vista activa
         const activeTab = document.querySelector('.tab-panel.active')?.id;
         if (activeTab === 'tab-calendario')   renderCalendario();
         if (activeTab === 'tab-historial')    renderHistory(allHistory);
         if (activeTab === 'tab-resumen')      renderResumen();
         if (activeTab === 'tab-solicitudes')  renderSolicitudes();
 
-        // Badge de solicitudes pendientes en el menú
         const pend = newSols.filter(s=>s.estado==='pendiente').length;
         actualizarBadgeSolicitudes(pend);
-
         showSyncDot();
       }
     } catch { /* fallo silencioso */ }
@@ -4466,7 +4463,6 @@
   async function aprobarSolicitud(id) {
     const sol = solicitudesData.find(s => s.id === id);
     if (!sol) return;
-    // Pausar polling para evitar conflictos
     clearInterval(_pollTimer);
     showLoading(true);
     try {
@@ -4623,7 +4619,6 @@
 
   async function rechazarSolicitud(id) {
     if (!confirm('¿Rechazar esta solicitud? El cliente no recibirá notificación automática.')) return;
-    // Pausar polling para evitar que sobreescriba el cambio
     clearInterval(_pollTimer);
     showLoading(true);
     try {
@@ -4642,7 +4637,6 @@
       showToast('❌ Error al rechazar. Intenta nuevamente.', 'error');
     } finally {
       showLoading(false);
-      // Reanudar polling
       _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     }
   }
