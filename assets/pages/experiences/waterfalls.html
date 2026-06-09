@@ -177,5 +177,17 @@
   <p style="font-size:.75rem;color:#aaa;text-align:center;margin-bottom:48px">📸 Sube tus fotos con #SanaguaLodge y etiquétanos en Instagram</p>
 
 </div>
+
+<script>
+  // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
+  try {
+    const _bc = new BroadcastChannel('sanagua_refresh');
+    _bc.onmessage = e => {
+      if (e.data?.type === 'REFRESH') {
+        setTimeout(() => window.location.reload(), 1200);
+      }
+    };
+  } catch {}
+</script>
 </body>
 </html>

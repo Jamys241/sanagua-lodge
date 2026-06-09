@@ -298,5 +298,17 @@
   </div>
 
 </div>
+
+<script>
+  // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
+  try {
+    const _bc = new BroadcastChannel('sanagua_refresh');
+    _bc.onmessage = e => {
+      if (e.data?.type === 'REFRESH') {
+        setTimeout(() => window.location.reload(), 1200);
+      }
+    };
+  } catch {}
+</script>
 </body>
 </html>
