@@ -550,7 +550,7 @@
     }
     .auth-tab.active { background: #fff; color: var(--moss); }
 
-    .auth-body { padding: 28px 36px 32px; }
+    .auth-body { padding: 28px 36px 32px; overflow-y: auto; max-height: 72vh; }
 
     .auth-panel { display: none; }
     .auth-panel.active { display: block; }
@@ -1090,8 +1090,16 @@
         <!-- Registro -->
         <div class="auth-panel" id="panel-register">
           <div class="auth-field">
-            <label>Nombre completo</label>
-            <input type="text" id="reg-name" placeholder="Tu nombre">
+            <label>Nombre y Apellido</label>
+            <input type="text" id="reg-name" placeholder="Ej: Juan Pérez">
+          </div>
+          <div class="auth-field">
+            <label>Cédula / Pasaporte</label>
+            <input type="text" id="reg-cedula" placeholder="8-888-8888">
+          </div>
+          <div class="auth-field">
+            <label>Celular</label>
+            <input type="tel" id="reg-phone" placeholder="+507 6000-0000">
           </div>
           <div class="auth-field">
             <label>Correo electrónico</label>
@@ -1102,12 +1110,8 @@
             <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
           </div>
           <div class="auth-field">
-            <label>Cédula / Pasaporte</label>
-            <input type="text" id="reg-cedula" placeholder="8-888-8888">
-          </div>
-          <div class="auth-field">
-            <label>Teléfono (opcional)</label>
-            <input type="tel" id="reg-phone" placeholder="+507 6000-0000">
+            <label>Confirmar contraseña</label>
+            <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña">
           </div>
           <button class="auth-btn" onclick="doRegister()">Crear cuenta</button>
           <p style="text-align:center;margin-top:16px;font-size:.75rem;color:#aaa;">
@@ -1491,8 +1495,15 @@
     const name   = document.getElementById('reg-name').value.trim();
     const email  = document.getElementById('reg-email').value.trim();
     const pass   = document.getElementById('reg-password').value;
+    const passConfirm = document.getElementById('reg-password-confirm').value;
     const cedula = document.getElementById('reg-cedula').value.trim();
     const phone  = document.getElementById('reg-phone').value.trim();
+
+    if (!name)  { showAuthError('Ingresa tu nombre y apellido.'); return; }
+    if (!cedula){ showAuthError('Ingresa tu cédula o pasaporte.'); return; }
+    if (!email) { showAuthError('Ingresa tu correo electrónico.'); return; }
+    if (!pass || pass.length < 6) { showAuthError('La contraseña debe tener al menos 6 caracteres.'); return; }
+    if (pass !== passConfirm) { showAuthError('Las contraseñas no coinciden.'); return; }
     const errEl = document.getElementById('login-error-pub');
     const btn   = document.querySelector('#panel-register .auth-btn');
     errEl.textContent = '';
