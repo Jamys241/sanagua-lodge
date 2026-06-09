@@ -1091,29 +1091,32 @@
         <div class="auth-panel" id="panel-register">
           <div class="auth-field">
             <label>Nombre y Apellido</label>
-            <input type="text" id="reg-name" placeholder="Ej: Juan Pérez">
+            <input type="text" id="reg-name" placeholder="Ej: Juan Pérez" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
             <label>Cédula / Pasaporte</label>
-            <input type="text" id="reg-cedula" placeholder="8-888-8888">
+            <input type="text" id="reg-cedula" placeholder="8-888-8888" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
             <label>Celular</label>
-            <input type="tel" id="reg-phone" placeholder="+507 6000-0000">
+            <input type="tel" id="reg-phone" placeholder="+507 6000-0000" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
             <label>Correo electrónico</label>
-            <input type="email" id="reg-email" placeholder="tu@correo.com">
+            <input type="email" id="reg-email" placeholder="tu@correo.com" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
             <label>Contraseña</label>
-            <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+            <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
             <label>Confirmar contraseña</label>
-            <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña">
+            <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña" oninput="limpiarAuthError()">
           </div>
           <button class="auth-btn" onclick="doRegister()">Crear cuenta</button>
+          <div id="reg-error-msg" style="display:none;margin-top:12px;padding:10px 14px;
+            background:#fff5f5;border:1px solid #f0c0c0;border-radius:8px;
+            font-size:.82rem;color:#c0392b;text-align:center;line-height:1.5"></div>
           <p style="text-align:center;margin-top:16px;font-size:.75rem;color:#aaa;">
             Al registrarte aceptas nuestros términos de servicio
           </p>
@@ -1489,6 +1492,21 @@
       }
     } catch { errEl.textContent = 'Error de conexión. Intenta nuevamente.'; }
     finally { btn.textContent = 'Ingresar'; btn.disabled = false; }
+  }
+
+  function limpiarAuthError() {
+    const el = document.getElementById('reg-error-msg');
+    if (el) { el.style.display = 'none'; clearTimeout(el._t); }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('reg-error-msg');
+    if (!el) { alert(msg); return; }
+    el.textContent = '⚠️ ' + msg;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 5000);
   }
 
   async function doRegister() {
