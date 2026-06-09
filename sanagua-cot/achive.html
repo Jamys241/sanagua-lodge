@@ -1456,15 +1456,15 @@
         <button class="btn-del-local" onclick="borrarSolicitudLocal()">
           <span>🗂️</span>
           <div>
-            <div>Solo de este sistema</div>
-            <div style="font-size:.75rem;font-weight:400;opacity:.7">Se elimina del gestor pero permanece en el perfil del usuario</div>
+            <div>Solo del sistema</div>
+            <div style="font-size:.75rem;font-weight:400;opacity:.7">Borra de solicitudes.json. El usuario aún la ve en su perfil web.</div>
           </div>
         </button>
         <button class="btn-del-total" onclick="borrarSolicitudCompleta()">
           <span>⚠️</span>
           <div>
             <div>Eliminar completamente</div>
-            <div style="font-size:.75rem;font-weight:400;opacity:.85">Se elimina del gestor Y del perfil del usuario en la web</div>
+            <div style="font-size:.75rem;font-weight:400;opacity:.85">Borra de solicitudes.json, history.json y del calendario. Desaparece de todo.</div>
           </div>
         </button>
         <button class="btn-del-cancel" onclick="cerrarDelModal()">Cancelar</button>
@@ -4847,6 +4847,13 @@
         }
       }
 
+      // Recargar historial local
+      const hFinalRes = await ghRead('history.json');
+      if (hFinalRes) {
+        allHistory = hFinalRes.data?.quotes || [];
+        buildCalIndex();
+        renderCalendario();
+      }
       showToast('✅ Solicitud eliminada completamente.', 'success');
       renderSolicitudes();
     } catch(e) {
