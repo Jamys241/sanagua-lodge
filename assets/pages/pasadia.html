@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../images/icon/icon.png">
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Pasadías — Sanagua Lodge</title>
-  <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -771,7 +771,7 @@
     t._t = setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // Polling: 20 segundos, solo re-renderiza si hay cambios
+  // Auto-actualización cada 20 segundos (horarios de cierre)
   let _lastHorPas = null;
   setInterval(async () => {
     const h = await ghFetch('horarios.json');
@@ -784,6 +784,16 @@
     renderCalPasadia();
     mostrarToastActualizacion('Horarios actualizados');
   }, 20000);
+  // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
+  try {
+    const _bc = new BroadcastChannel('sanagua_refresh');
+    _bc.onmessage = e => {
+      if (e.data?.type === 'REFRESH') {
+        mostrarToastActualizacion('Actualizando datos...');
+        setTimeout(() => window.location.reload(), 1200);
+      }
+    };
+  } catch {}
 </script>
 </body>
 </html>
