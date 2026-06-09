@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
   <title>Escanear QR — Sanagua Lodge</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--ink:#1a1814;--accent:#c8541a;--success:#2d7a4f;--red:#c0392b;--border:#e0dbd4;--bg:#f5f3ee}
@@ -226,12 +225,28 @@
       </div>`;
   }
 
-  // Iniciar al cargar
-  if (!navigator.mediaDevices?.getUserMedia) {
-    mostrarError({ name:'NotSupportedError', message:'Tu navegador no soporta acceso a cámara. Usa Chrome o Safari.' });
-  } else {
-    iniciar();
+  // Iniciar cuando jsQR esté disponible
+  function esperarJsQR(intentos) {
+    if (typeof jsQR !== 'undefined') {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        mostrarError({ name:'NotSupportedError', message:'Tu navegador no soporta acceso a cámara. Usa Chrome o Safari.' });
+      } else {
+        iniciar();
+      }
+    } else if (intentos > 0) {
+      setTimeout(() => esperarJsQR(intentos - 1), 200);
+    } else {
+      document.getElementById('status').className = 'status err';
+      document.getElementById('status').textContent = '❌ No se pudo cargar el lector QR. Revisa tu conexión.';
+    }
   }
+  esperarJsQR(20);
 </script>
+
+<!-- jsQR al final para garantizar que esté disponible -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"
+  onerror="document.getElementById('status').textContent='❌ Error cargando el lector QR. Revisa tu conexión.'">
+</script>
+
 </body>
 </html>
