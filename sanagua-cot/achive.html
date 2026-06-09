@@ -1490,13 +1490,37 @@
     </div>
 
     <div id="usr-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap">
         <div id="usr-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
-        <div>
+        <div style="flex:1">
           <div id="usr-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
           <div id="usr-email-display" style="font-size:.78rem;color:var(--muted)"></div>
           <div id="usr-cedula-display" style="font-size:.78rem;color:var(--muted)"></div>
         </div>
+        <div style="text-align:center;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;flex-shrink:0">
+          <div id="usr-puntos-num" style="font-size:1.6rem;font-weight:700;color:var(--accent)">—</div>
+          <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">puntos</div>
+        </div>
+      </div>
+
+      <!-- Ajuste manual de puntos -->
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">⭐ Ajustar puntos</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="form-group" style="margin:0;flex:1;min-width:90px">
+            <label>Cantidad</label>
+            <input type="number" id="usr-pts-cantidad" class="form-input" placeholder="50" min="1" step="1">
+          </div>
+          <div class="form-group" style="margin:0;flex:2;min-width:160px">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="usr-pts-motivo" class="form-input" placeholder="Compensación...">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-accent" onclick="ajustarPts(1)" style="flex:1">➕ Añadir</button>
+          <button class="btn btn-danger" onclick="ajustarPts(-1)" style="flex:1">➖ Restar</button>
+        </div>
+        <div id="usr-pts-msg" style="font-size:.78rem;min-height:16px;margin-top:8px;text-align:center"></div>
       </div>
 
       <div class="form-group">
@@ -2884,10 +2908,19 @@
 
     showLoading(true);
     try {
+      const prevEstado = currentQuote.estado;
+      const nuevoEstado = updates.estado;
       const idx = allHistory.findIndex(q=>q.quote_num===currentQuote.quote_num);
       if(idx>=0) allHistory[idx]={...allHistory[idx],...updates, updated_at: new Date().toISOString()};
       const ok = await ghReadWrite('history.json', {quotes: allHistory});
       if(!ok) throw new Error();
+
+      // Si acaba de confirmarse, otorgar puntos al usuario
+      if (nuevoEstado === 'Confirmada' && prevEstado !== 'Confirmada') {
+        const cotActualizada = allHistory[idx];
+        await otorgarPuntos(cotActualizada);
+      }
+
       renderHistory(allHistory);
       closeModal();
       showToast('✅ Cambios guardados correctamente','success');
@@ -4731,11 +4764,44 @@
       document.getElementById('usr-nombre').textContent        = user.name || '—';
       document.getElementById('usr-email-display').textContent = user.email || '—';
       document.getElementById('usr-cedula-display').textContent= user.cedula ? `Cédula: ${user.cedula}` : '';
+      document.getElementById('usr-puntos-num').textContent    = user.puntos || 0;
       document.getElementById('usr-nueva-pass').value          = '';
       document.getElementById('usr-confirmar-pass').value      = '';
+      document.getElementById('usr-pts-cantidad').value        = '';
+      document.getElementById('usr-pts-motivo').value          = '';
+      document.getElementById('usr-pts-msg').textContent       = '';
       document.getElementById('usr-resultado').style.display   = 'block';
     } catch { showToast('Error al buscar. Verifica la conexión.', 'error'); }
     finally  { showLoading(false); }
+  }
+
+  async function ajustarPts(signo) {
+    const msgEl   = document.getElementById('usr-pts-msg');
+    const cantEl  = document.getElementById('usr-pts-cantidad');
+    const motivoEl= document.getElementById('usr-pts-motivo');
+    if (!_usuarioEncontrado) return;
+    const cantidad = parseInt(cantEl.value) || 0;
+    if (cantidad <= 0) {
+      msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa una cantidad válida.'; return;
+    }
+    const delta      = signo * cantidad;
+    const motivo     = motivoEl.value.trim() || (delta > 0 ? 'Ajuste manual (+)' : 'Ajuste manual (-)');
+    const descripcion= `[Admin] ${motivo}`;
+    msgEl.style.color='var(--muted)'; msgEl.textContent='Guardando...';
+    showLoading(true);
+    const result = await ajustarPuntosUsuario(_usuarioEncontrado.email, delta, descripcion);
+    showLoading(false);
+    if (result.ok) {
+      document.getElementById('usr-puntos-num').textContent = result.nuevoPts;
+      msgEl.style.color='var(--success)';
+      msgEl.textContent = `✅ Puntos actualizados: ${result.nuevoPts} pts`;
+      cantEl.value=''; motivoEl.value='';
+      showToast(`⭐ ${delta>0?'+':''}${delta} pts para ${_usuarioEncontrado.name}`, 'success');
+      setTimeout(()=>{ msgEl.textContent=''; }, 4000);
+    } else {
+      msgEl.style.color='var(--red)';
+      msgEl.textContent='❌ Error al actualizar. Intenta nuevamente.';
+    }
   }
 
   async function cambiarPasswordUsuario() {
@@ -4976,6 +5042,104 @@
     } else {
       if (lbl) lbl.textContent = '⚠️ BroadcastChannel no soportado en este navegador';
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // SISTEMA DE PUNTOS DE FIDELIDAD
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Reglas de puntos por servicio
+  function calcularPuntos(cot) {
+    const cat  = (cot.categoria || '').toLowerCase();
+    const items = cot.items || [];
+    let puntos  = 0;
+
+    if (cat.includes('pasadía sencilla') || cat.includes('pasadia sencilla')) {
+      puntos += 5;
+      // 1 pto por persona adicional (detectar del string personas)
+      const adultos = items.find(i=>(i.description||'').toLowerCase().includes('adult'));
+      const ninos   = items.find(i=>(i.description||'').toLowerCase().includes('niñ'));
+      const totalPers = (adultos?.quantity||0) + (ninos?.quantity||0);
+      if (totalPers > 1) puntos += (totalPers - 1);
+    } else if (cat.includes('pasadía completa') || cat.includes('pasadia completa')) {
+      puntos += 8;
+      const totalPers = items.reduce((s,i)=>s+(i.quantity||0),0);
+      if (totalPers > 1) puntos += (totalPers - 1);
+    } else if (cat.includes('camping propio')) {
+      puntos += 12;
+      const totalPers = items.reduce((s,i)=>s+(i.quantity||0),0);
+      if (totalPers > 1) puntos += (totalPers - 1) * 3;
+    } else if (cat.includes('camping suministro') || cat.includes('suministro')) {
+      puntos += 12;
+      items.forEach(it => {
+        const d = (it.description||'').toLowerCase();
+        const q = it.quantity || 1;
+        if (d.includes('individual'))  puntos += 2 * q;
+        else if (d.includes('doble'))  puntos += 3 * q;
+        else if (d.includes('triple')) puntos += 5 * q;
+        else if (d.includes('cuádruple') || d.includes('cuadruple')) puntos += 8 * q;
+      });
+      const totalPers = items.reduce((s,i)=>s+(i.quantity||0),0);
+      if (totalPers > 1) puntos += (totalPers - 1) * 3;
+    } else if (cat.includes('yaguarundi')) {
+      // Determinar si es fin de semana por la fecha de visita
+      const dow = new Date((cot.visit_date||'')+'T12:00:00').getDay();
+      const esFin = dow === 0 || dow === 5 || dow === 6;
+      puntos += esFin ? 90 : 80;
+      const adicional = items.find(i=>(i.description||'').toLowerCase().includes('adicional'));
+      if (adicional) puntos += (adicional.quantity||0) * 2;
+    } else if (cat.includes('ocelot') || cat.includes('motmot')) {
+      const dow = new Date((cot.visit_date||'')+'T12:00:00').getDay();
+      const esFin = dow === 0 || dow === 5 || dow === 6;
+      puntos += esFin ? 60 : 50;
+      const adicional = items.find(i=>(i.description||'').toLowerCase().includes('adicional'));
+      if (adicional) puntos += (adicional.quantity||0) * 2;
+    }
+
+    return puntos;
+  }
+
+  async function otorgarPuntos(cot) {
+    if (!cot.client?.email) return;
+    const pts = calcularPuntos(cot);
+    if (pts <= 0) return;
+    try {
+      const res   = await ghRead('users.json');
+      if (!res) return;
+      const users = res.data?.users || [];
+      const idx   = users.findIndex(u => u.email === cot.client.email);
+      if (idx < 0) return; // usuario no encontrado
+      users[idx].puntos = (users[idx].puntos || 0) + pts;
+      users[idx].transacciones = users[idx].transacciones || [];
+      users[idx].transacciones.push({
+        fecha:       new Date().toISOString(),
+        puntos:      pts,
+        descripcion: `Reserva confirmada: ${cot.categoria} #${cot.quote_num}`,
+        quote_num:   cot.quote_num,
+      });
+      await ghWrite('users.json', { users }, res.sha);
+      showToast(`⭐ +${pts} puntos otorgados a ${cot.client.name || cot.client.email}`, 'success');
+    } catch(e) { console.warn('Error otorgando puntos:', e); }
+  }
+
+  async function ajustarPuntosUsuario(email, delta, descripcion) {
+    try {
+      const res = await ghRead('users.json');
+      if (!res) throw new Error();
+      const users = res.data?.users || [];
+      const idx   = users.findIndex(u => u.email === email);
+      if (idx < 0) throw new Error('Usuario no encontrado');
+      users[idx].puntos = Math.max(0, (users[idx].puntos || 0) + delta);
+      users[idx].transacciones = users[idx].transacciones || [];
+      users[idx].transacciones.push({
+        fecha:       new Date().toISOString(),
+        puntos:      delta,
+        descripcion: descripcion || (delta > 0 ? 'Ajuste manual (+)' : 'Ajuste manual (-)'),
+      });
+      const ok = await ghWrite('users.json', { users }, res.sha);
+      if (!ok) throw new Error();
+      return { ok: true, nuevoPts: users[idx].puntos };
+    } catch(e) { return { ok: false, error: e.message }; }
   }
 
 </script>
