@@ -1932,7 +1932,7 @@
       const enc = atob(data.replace('SANAGUA_SESSION:', ''));
       let parsed = null;
       const now = Date.now();
-      for (let t = now + 30000; t >= now - 5000; t -= 100) {
+      for (let t = now + 120000; t >= now - 5000; t -= 100) {
         try {
           const k = String(t).substring(0,13);
           let dec = '';
