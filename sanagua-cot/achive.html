@@ -288,6 +288,32 @@
     .btn-rechazar:hover{background:var(--red);color:#fff}
     .btn-sol-done{width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);
       border-radius:6px;padding:9px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:default}
+    .btn-sol-del{background:none;border:1.5px solid var(--border);border-radius:6px;
+      padding:7px 10px;cursor:pointer;color:var(--muted);font-size:.9rem;
+      transition:all .2s;flex-shrink:0}
+    .btn-sol-del:hover{border-color:var(--red);color:var(--red);background:#fff5f5}
+    /* Modal de confirmación de borrado */
+    .del-modal-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+    .del-modal-ov.open{display:flex}
+    .del-modal{background:#fff;border-radius:14px;width:100%;max-width:400px;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+    .del-modal-head{background:var(--red);padding:20px 24px;display:flex;align-items:center;gap:10px}
+    .del-modal-head span{font-size:1.1rem;font-weight:700;color:#fff}
+    .del-modal-body{padding:24px}
+    .del-modal-body p{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:20px}
+    .del-modal-btns{display:flex;flex-direction:column;gap:10px}
+    .btn-del-local{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+      padding:12px 16px;cursor:pointer;font-family:var(--font);font-size:.85rem;
+      font-weight:600;color:var(--ink);text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px}
+    .btn-del-local:hover{border-color:var(--accent);background:#fff8f5}
+    .btn-del-total{background:#fff5f5;border:1.5px solid var(--red);border-radius:8px;
+      padding:12px 16px;cursor:pointer;font-family:var(--font);font-size:.85rem;
+      font-weight:600;color:var(--red);text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px}
+    .btn-del-total:hover{background:var(--red);color:#fff}
+    .btn-del-cancel{background:none;border:none;color:var(--muted);font-family:var(--font);
+      font-size:.82rem;cursor:pointer;padding:8px;width:100%;text-align:center;margin-top:4px}
+    .btn-del-cancel:hover{color:var(--ink)}
     .sol-stat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
       padding:12px 18px;text-align:center;min-width:80px}
     .sol-stat-n{font-size:1.4rem;font-weight:700;color:var(--ink)}
@@ -1360,6 +1386,35 @@
   </div>
 </div>
 </div><!-- /tab-solicitudes -->
+
+<!-- Modal confirmación borrado solicitud -->
+<div class="del-modal-ov" id="del-sol-ov">
+  <div class="del-modal">
+    <div class="del-modal-head">
+      <span>🗑️ Eliminar solicitud</span>
+    </div>
+    <div class="del-modal-body">
+      <p>¿Cómo deseas eliminar esta solicitud?</p>
+      <div class="del-modal-btns">
+        <button class="btn-del-local" onclick="borrarSolicitudLocal()">
+          <span>🗂️</span>
+          <div>
+            <div>Solo de este sistema</div>
+            <div style="font-size:.75rem;font-weight:400;opacity:.7">Se elimina del gestor pero permanece en el perfil del usuario</div>
+          </div>
+        </button>
+        <button class="btn-del-total" onclick="borrarSolicitudCompleta()">
+          <span>⚠️</span>
+          <div>
+            <div>Eliminar completamente</div>
+            <div style="font-size:.75rem;font-weight:400;opacity:.85">Se elimina del gestor Y del perfil del usuario en la web</div>
+          </div>
+        </button>
+        <button class="btn-del-cancel" onclick="cerrarDelModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════════ TAB USUARIOS ══════════════════════════════ -->
 <div id="tab-usuarios" class="tab-panel">
@@ -4384,6 +4439,7 @@
                <button class="btn-rechazar" onclick="rechazarSolicitud('${sol.id}')">❌ Rechazar</button>`
             : `<button class="btn-sol-done">${badgeTxt}</button>`
           }
+          <button class="btn-sol-del" onclick="confirmarBorrarSolicitud('${sol.id}')" title="Eliminar solicitud">🗑</button>
         </div>
       </div>`;
     }).join('');
@@ -4659,6 +4715,79 @@
     } catch(e) {
       msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Error al guardar. Intenta nuevamente.';
     } finally { showLoading(false); }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // BORRADO DE SOLICITUDES
+  // ══════════════════════════════════════════════════════════════════════
+  let _solIdABorrar = null;
+
+  function confirmarBorrarSolicitud(id) {
+    _solIdABorrar = id;
+    document.getElementById('del-sol-ov').classList.add('open');
+  }
+
+  function cerrarDelModal() {
+    document.getElementById('del-sol-ov').classList.remove('open');
+    _solIdABorrar = null;
+  }
+
+  // Solo elimina de solicitudes.json — permanece en el perfil del usuario
+  async function borrarSolicitudLocal() {
+    if (!_solIdABorrar) return;
+    cerrarDelModal();
+    clearInterval(_pollTimer);
+    showLoading(true);
+    try {
+      const res   = await ghRead('solicitudes.json');
+      if (!res) throw new Error();
+      const lista = (res.data?.solicitudes || []).filter(s => s.id !== _solIdABorrar);
+      const ok    = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
+      if (!ok) throw new Error();
+      solicitudesData  = lista;
+      _lastHashSols    = simpleHash(lista);
+      showToast('Solicitud eliminada del sistema.', 'success');
+      renderSolicitudes();
+    } catch { showToast('❌ Error al eliminar.', 'error'); }
+    finally { showLoading(false); _pollTimer = setInterval(pollChanges, POLL_INTERVAL); }
+  }
+
+  // Elimina de solicitudes.json Y del perfil del usuario (history.json cotizaciones asociadas)
+  async function borrarSolicitudCompleta() {
+    if (!_solIdABorrar) return;
+    const sol = solicitudesData.find(s => s.id === _solIdABorrar);
+    cerrarDelModal();
+    clearInterval(_pollTimer);
+    showLoading(true);
+    try {
+      // 1. Eliminar de solicitudes.json
+      const res   = await ghRead('solicitudes.json');
+      if (!res) throw new Error();
+      const lista = (res.data?.solicitudes || []).filter(s => s.id !== _solIdABorrar);
+      const ok1   = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
+      if (!ok1) throw new Error();
+      solicitudesData = lista;
+      _lastHashSols   = simpleHash(lista);
+
+      // 2. Eliminar cotización asociada de history.json (si fue aprobada y generó cotización)
+      if (sol?.sol_id || sol?.id) {
+        const hRes = await ghRead('history.json');
+        if (hRes) {
+          const solId = sol.id;
+          const histFiltrado = (hRes.data?.quotes || []).filter(q => q.sol_id !== solId);
+          if (histFiltrado.length !== (hRes.data?.quotes || []).length) {
+            await ghWrite('history.json', { quotes: histFiltrado }, hRes.sha);
+            allHistory = histFiltrado;
+            buildCalIndex();
+            renderCalendario();
+          }
+        }
+      }
+
+      showToast('✅ Solicitud eliminada completamente (sistema + perfil de usuario).', 'success');
+      renderSolicitudes();
+    } catch { showToast('❌ Error al eliminar completamente.', 'error'); }
+    finally { showLoading(false); _pollTimer = setInterval(pollChanges, POLL_INTERVAL); }
   }
 
 </script>
