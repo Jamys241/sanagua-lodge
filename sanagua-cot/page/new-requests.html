@@ -208,12 +208,12 @@
         <button class="btn-dl" onclick="borrarLocal()">
           <span>🗂️</span>
           <div><div>Solo del sistema</div>
-          <div style="font-size:.72rem;font-weight:400;opacity:.65">Permanece en el perfil del usuario</div></div>
+          <div style="font-size:.72rem;font-weight:400;opacity:.65">Borra de solicitudes.json. El usuario aún la ve en su perfil.</div></div>
         </button>
         <button class="btn-dt" onclick="borrarCompleta()">
           <span>⚠️</span>
           <div><div>Eliminar completamente</div>
-          <div style="font-size:.72rem;font-weight:400;opacity:.85">Del sistema y del perfil del usuario</div></div>
+          <div style="font-size:.72rem;font-weight:400;opacity:.85">Borra de solicitudes.json, history.json y del calendario.</div></div>
         </button>
         <button class="btn-dc" onclick="cerrarDel()">Cancelar</button>
       </div>
@@ -563,7 +563,7 @@
         }
       }
       toast('✅ Eliminada completamente.','ok'); render();
-    } catch { toast('❌ Error al eliminar','err'); }
+    } catch(e) { console.error(e); toast('❌ Error al eliminar','err'); }
     finally { setLoading(false); _pollTimer=setInterval(pollear,20000); }
   }
 
