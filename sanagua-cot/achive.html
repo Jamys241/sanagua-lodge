@@ -4732,49 +4732,58 @@
     _solIdABorrar = null;
   }
 
-  // Solo elimina de solicitudes.json — permanece en el perfil del usuario
   async function borrarSolicitudLocal() {
     if (!_solIdABorrar) return;
+    const idABorrar = _solIdABorrar;
     cerrarDelModal();
     clearInterval(_pollTimer);
     showLoading(true);
     try {
-      const res   = await ghRead('solicitudes.json');
-      if (!res) throw new Error();
-      const lista = (res.data?.solicitudes || []).filter(s => s.id !== _solIdABorrar);
+      // Leer fresco para obtener SHA actual
+      const res = await ghRead('solicitudes.json');
+      if (!res) throw new Error('No se pudo leer solicitudes.json');
+      const lista = (res.data?.solicitudes || []).filter(s => s.id !== idABorrar);
       const ok    = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
-      if (!ok) throw new Error();
-      solicitudesData  = lista;
-      _lastHashSols    = simpleHash(lista);
+      if (!ok) throw new Error('Error al escribir');
+      // Recargar para sincronizar SHA nuevo
+      const resNuevo = await ghRead('solicitudes.json');
+      solicitudesData = resNuevo?.data?.solicitudes || lista;
+      _lastHashSols   = simpleHash(solicitudesData);
       showToast('Solicitud eliminada del sistema.', 'success');
       renderSolicitudes();
-    } catch { showToast('❌ Error al eliminar.', 'error'); }
-    finally { showLoading(false); _pollTimer = setInterval(pollChanges, POLL_INTERVAL); }
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Error al eliminar. Intenta nuevamente.', 'error');
+    } finally {
+      showLoading(false);
+      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+    }
   }
 
-  // Elimina de solicitudes.json Y del perfil del usuario (history.json cotizaciones asociadas)
   async function borrarSolicitudCompleta() {
     if (!_solIdABorrar) return;
-    const sol = solicitudesData.find(s => s.id === _solIdABorrar);
+    const idABorrar = _solIdABorrar;
+    const sol = solicitudesData.find(s => s.id === idABorrar);
     cerrarDelModal();
     clearInterval(_pollTimer);
     showLoading(true);
     try {
       // 1. Eliminar de solicitudes.json
-      const res   = await ghRead('solicitudes.json');
-      if (!res) throw new Error();
-      const lista = (res.data?.solicitudes || []).filter(s => s.id !== _solIdABorrar);
+      const res = await ghRead('solicitudes.json');
+      if (!res) throw new Error('No se pudo leer solicitudes.json');
+      const lista = (res.data?.solicitudes || []).filter(s => s.id !== idABorrar);
       const ok1   = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
-      if (!ok1) throw new Error();
-      solicitudesData = lista;
-      _lastHashSols   = simpleHash(lista);
+      if (!ok1) throw new Error('Error al escribir solicitudes.json');
+      // Recargar para sincronizar SHA nuevo
+      const resNuevo = await ghRead('solicitudes.json');
+      solicitudesData = resNuevo?.data?.solicitudes || lista;
+      _lastHashSols   = simpleHash(solicitudesData);
 
-      // 2. Eliminar cotización asociada de history.json (si fue aprobada y generó cotización)
-      if (sol?.sol_id || sol?.id) {
+      // 2. Eliminar cotización asociada de history.json
+      if (sol?.id) {
         const hRes = await ghRead('history.json');
         if (hRes) {
-          const solId = sol.id;
-          const histFiltrado = (hRes.data?.quotes || []).filter(q => q.sol_id !== solId);
+          const histFiltrado = (hRes.data?.quotes || []).filter(q => q.sol_id !== sol.id);
           if (histFiltrado.length !== (hRes.data?.quotes || []).length) {
             await ghWrite('history.json', { quotes: histFiltrado }, hRes.sha);
             allHistory = histFiltrado;
@@ -4784,10 +4793,15 @@
         }
       }
 
-      showToast('✅ Solicitud eliminada completamente (sistema + perfil de usuario).', 'success');
+      showToast('✅ Solicitud eliminada completamente.', 'success');
       renderSolicitudes();
-    } catch { showToast('❌ Error al eliminar completamente.', 'error'); }
-    finally { showLoading(false); _pollTimer = setInterval(pollChanges, POLL_INTERVAL); }
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Error al eliminar completamente.', 'error');
+    } finally {
+      showLoading(false);
+      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+    }
   }
 
 </script>
