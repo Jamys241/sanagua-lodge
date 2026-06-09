@@ -1519,6 +1519,7 @@
 
     if (!name)  { showAuthError('Ingresa tu nombre y apellido.'); return; }
     if (!cedula){ showAuthError('Ingresa tu cédula o pasaporte.'); return; }
+    if (!phone) { showAuthError('Ingresa tu número de celular.'); return; }
     if (!email) { showAuthError('Ingresa tu correo electrónico.'); return; }
     if (!pass || pass.length < 6) { showAuthError('La contraseña debe tener al menos 6 caracteres.'); return; }
     if (pass !== passConfirm) { showAuthError('Las contraseñas no coinciden.'); return; }
