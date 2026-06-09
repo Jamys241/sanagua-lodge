@@ -423,6 +423,7 @@
 
     <div class="side-menu-divider"></div>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
+    <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
@@ -1543,6 +1544,42 @@
 </div><!-- /tab-usuarios -->
 
 <!-- Loading & Toast -->
+<!-- Modal cambiar contraseña admin -->
+<div id="chpass-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:400px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
+    <div style="background:var(--ink);padding:18px 24px;display:flex;align-items:center;
+      justify-content:space-between">
+      <span style="font-weight:700;color:#fff;font-size:.95rem">🔑 Cambiar contraseña</span>
+      <button onclick="cerrarCambiarPass()" style="background:none;border:none;color:rgba(255,255,255,.5);
+        font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div style="padding:24px">
+      <div class="form-group">
+        <label>Contraseña actual</label>
+        <input type="password" id="chpass-actual" class="form-input" placeholder="Tu contraseña actual"
+          onkeydown="if(event.key==='Enter')document.getElementById('chpass-nueva').focus()">
+      </div>
+      <div class="form-group">
+        <label>Nueva contraseña</label>
+        <input type="password" id="chpass-nueva" class="form-input" placeholder="Mínimo 6 caracteres"
+          onkeydown="if(event.key==='Enter')document.getElementById('chpass-confirmar').focus()">
+      </div>
+      <div class="form-group">
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" id="chpass-confirmar" class="form-input" placeholder="Repite la nueva contraseña"
+          onkeydown="if(event.key==='Enter')guardarNuevaPass()">
+      </div>
+      <div id="chpass-msg" style="font-size:.8rem;min-height:18px;margin-bottom:12px;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" onclick="cerrarCambiarPass()" style="flex:1">Cancelar</button>
+        <button class="btn btn-accent" onclick="guardarNuevaPass()" style="flex:1">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
 </div>
@@ -5148,6 +5185,74 @@
       return { ok: true, nuevoPts: users[idx].puntos };
     } catch(e) { return { ok: false, error: e.message }; }
   }
+
+  // ── Cambiar contraseña del admin / superadmin ─────────────────────────
+  function abrirCambiarPass() {
+    document.getElementById('chpass-actual').value    = '';
+    document.getElementById('chpass-nueva').value     = '';
+    document.getElementById('chpass-confirmar').value = '';
+    document.getElementById('chpass-msg').textContent = '';
+    const ov = document.getElementById('chpass-ov');
+    ov.style.display = 'flex';
+    setTimeout(() => document.getElementById('chpass-actual').focus(), 100);
+  }
+
+  function cerrarCambiarPass() {
+    document.getElementById('chpass-ov').style.display = 'none';
+  }
+
+  async function guardarNuevaPass() {
+    const msgEl    = document.getElementById('chpass-msg');
+    const actual   = document.getElementById('chpass-actual').value;
+    const nueva    = document.getElementById('chpass-nueva').value;
+    const confirmar= document.getElementById('chpass-confirmar').value;
+    msgEl.textContent = '';
+
+    if (!actual)                  { msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa tu contraseña actual.'; return; }
+    if (!nueva || nueva.length<6) { msgEl.style.color='var(--red)'; msgEl.textContent='La nueva contraseña debe tener al menos 6 caracteres.'; return; }
+    if (nueva !== confirmar)      { msgEl.style.color='var(--red)'; msgEl.textContent='Las contraseñas no coinciden.'; return; }
+
+    msgEl.style.color='var(--muted)'; msgEl.textContent='Verificando...';
+    showLoading(true);
+    try {
+      const res = await ghRead('auth.json');
+      if (!res) throw new Error('No se pudo leer auth.json');
+      const auth = res.data;
+      const role = currentUser?.role;
+
+      // Verificar contraseña actual según el rol
+      if (role === 'superadmin') {
+        if (auth.superadmin?.password !== actual) {
+          msgEl.style.color='var(--red)'; msgEl.textContent='La contraseña actual no es correcta.';
+          showLoading(false); return;
+        }
+        auth.superadmin.password = nueva;
+      } else if (role === 'admin') {
+        if (auth.admin?.password !== actual) {
+          msgEl.style.color='var(--red)'; msgEl.textContent='La contraseña actual no es correcta.';
+          showLoading(false); return;
+        }
+        auth.admin.password = nueva;
+      } else {
+        throw new Error('Rol no reconocido');
+      }
+
+      const ok = await ghWrite('auth.json', auth, res.sha);
+      if (!ok) throw new Error('Error al guardar');
+
+      msgEl.style.color='var(--success)'; msgEl.textContent='✅ Contraseña actualizada correctamente.';
+      showToast('✅ Contraseña cambiada. Úsala la próxima vez que inicies sesión.', 'success');
+      setTimeout(() => cerrarCambiarPass(), 2000);
+    } catch(e) {
+      msgEl.style.color='var(--red)';
+      msgEl.textContent = e.message || '❌ Error al guardar. Intenta nuevamente.';
+    } finally { showLoading(false); }
+  }
+
+  // Cerrar modal al hacer clic fuera
+  document.getElementById('chpass-ov')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('chpass-ov')) cerrarCambiarPass();
+  });
 
 </script>
 </body>
