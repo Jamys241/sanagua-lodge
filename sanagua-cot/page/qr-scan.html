@@ -229,9 +229,14 @@
         </div>`;
       // Intentar redirigir en la misma pestaña o notificar a la pestaña padre
       setTimeout(() => {
-        if (window.opener) {
-          window.opener.location.href = 'sanagua-cot/achive.html';
-          window.close();
+        // Construir ruta absoluta basada en el origen del repo
+        // qr-scan.html está en: /repo/sanagua-cot/page/qr-scan.html
+        // achive.html está en:  /repo/sanagua-cot/achive.html
+        const base = window.location.href.split('/sanagua-cot/')[0];
+        const destino = base + '/sanagua-cot/achive.html';
+        if (window.opener && !window.opener.closed) {
+          try { window.opener.location.href = destino; window.close(); }
+          catch { window.location.href = '../achive.html'; }
         } else {
           window.location.href = '../achive.html';
         }
