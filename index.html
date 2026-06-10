@@ -497,6 +497,22 @@
     .exp-card-desc { font-size: .83rem; color: #7a8a74; line-height: 1.6; }
 
     /* ════════════════════════════════ CTA CENTRAL */
+    /* ── PET-FRIENDLY BANNER ── */
+    .pet-banner{background:linear-gradient(135deg,#2d3e2a,#3d5c38);overflow:hidden;position:relative}
+    .pet-inner{display:flex;align-items:center;max-width:1100px;margin:0 auto;height:110px}
+    .pet-text-side{padding:0 36px;flex-shrink:0;z-index:2}
+    .pet-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.2);border-radius:40px;padding:5px 14px 5px 10px;margin-bottom:7px}
+    .pet-badge-icon{font-size:1.1rem}
+    .pet-badge-txt{font-size:.65rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.9)}
+    .pet-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:400;color:#fff;line-height:1.2}
+    .pet-title em{font-style:italic;color:var(--sand)}
+    .pet-sub{font-size:.72rem;color:rgba(255,255,255,.55);margin-top:3px}
+    .pet-slider{flex:1;height:110px;overflow:hidden;position:relative;min-width:0}
+    .pet-slider::before{content:'';position:absolute;left:0;top:0;bottom:0;
+      width:70px;background:linear-gradient(to right,#2d3e2a,transparent);z-index:1;pointer-events:none}
+    @media(max-width:640px){.pet-inner{height:90px}.pet-text-side{padding:0 18px}.pet-title{font-size:1.05rem}.pet-slider{display:none}}
+
     .cta-section {
       padding: 100px 40px;
       text-align: center;
@@ -817,6 +833,25 @@
 
 <!-- ══════════════════════════════════════════════ SERVICIOS -->
 <section id="servicios">
+
+<!-- Banner Pet-Friendly -->
+<div class="pet-banner">
+  <div class="pet-inner">
+    <div class="pet-text-side">
+      <div class="pet-badge">
+        <span class="pet-badge-icon">🐾</span>
+        <span class="pet-badge-txt">Pet Friendly</span>
+      </div>
+      <div class="pet-title">Tus mascotas son <em>bienvenidas</em></div>
+      <div class="pet-sub">Espacios verdes y naturaleza para disfrutar en familia</div>
+    </div>
+    <div class="pet-slider">
+      <img src="assets/images/pet-friendly/pet.jpg" alt="Mascotas en Sanagua Lodge"
+        style="width:100%;height:110px;object-fit:cover;display:block"
+        onerror="this.parentElement.style.background='#3d5c38'">
+    </div>
+  </div>
+</div>
   <div class="section">
     <div class="section-label">Lo que ofrecemos</div>
     <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
@@ -1801,7 +1836,6 @@
     }
   });
 
-  // Restaurar sesión pública si existe
   (function(){
     try {
       const raw = sessionStorage.getItem('sl_pub_user');
