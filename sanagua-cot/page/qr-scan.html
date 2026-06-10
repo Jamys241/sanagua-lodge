@@ -274,15 +274,14 @@
     }
   }
   function irAlInicio() {
-    // Ir a la raíz del repo (index.html del sitio web público)
-    const base = window.location.href.split('/sanagua-cot/')[0];
-    const inicio = base + '/index.html';
     if (window.opener && !window.opener.closed) {
-      try { window.opener.location.href = inicio; window.close(); }
-      catch { window.location.href = inicio; }
-    } else {
-      window.location.href = inicio;
+      // Solo cerramos esta pestaña — el opener ya es el index.html correcto
+      window.close();
+      return;
     }
+    // Sin opener: navegar al index directamente
+    const base = window.location.href.split('/sanagua-cot/')[0];
+    window.location.href = base + '/index.html';
   }
 
   esperarJsQR(20);
