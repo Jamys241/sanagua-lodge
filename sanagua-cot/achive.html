@@ -5356,13 +5356,15 @@
     _qrExpireAt = Date.now() + 2 * 60 * 1000; // 2 minutos
     const payload = JSON.stringify({ token, repo, branch, repoPub, expiry: _qrExpireAt });
 
-    // Cifrado XOR
+    // Cifrado XOR — clave = expiry como string
     const key = String(_qrExpireAt);
     let enc = '';
     for (let i = 0; i < payload.length; i++) {
       enc += String.fromCharCode(payload.charCodeAt(i) ^ key.charCodeAt(i % key.length));
     }
-    const qrData = 'SANAGUA_SESSION:' + btoa(enc);
+    // Prefijo: expiry en texto plano + ":" + payload cifrado en base64
+    // Así el descifrador no necesita iterar — lee la clave directamente
+    const qrData = 'SANAGUA_SESSION:' + _qrExpireAt + ':' + btoa(enc);
 
     // Generar QR con QRCode.js en un div temporal y luego copiar al canvas
     const tmpDiv = document.createElement('div');
