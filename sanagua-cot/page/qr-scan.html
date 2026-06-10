@@ -222,18 +222,18 @@
         <div class="success-box">
           <div class="success-icon">✅</div>
           <div class="success-title">¡Dispositivo configurado!</div>
-          <div class="success-sub">El token y repositorio se guardaron correctamente.<br>Redirigiendo al sistema...</div>
-          <button class="btn btn-primary" onclick="window.location.href='../achive.html'">
-            Ir al sistema →
+          <div class="success-sub">Token guardado correctamente.<br>Ahora inicia sesión con tu usuario y contraseña.</div>
+          <button class="btn btn-primary" onclick="window.location.href='../index.html'">
+            Iniciar sesión →
           </button>
         </div>`;
       // Intentar redirigir en la misma pestaña o notificar a la pestaña padre
       setTimeout(() => {
         if (window.opener) {
-          window.opener.location.href = 'sanagua-cot/achive.html';
+          window.opener.location.href = 'sanagua-cot/index.html';
           window.close();
         } else {
-          window.location.href = '../achive.html';
+          window.location.href = '../index.html';
         }
       }, 2000);
 
