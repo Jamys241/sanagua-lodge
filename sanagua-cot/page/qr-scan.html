@@ -223,8 +223,8 @@
           <div class="success-icon">✅</div>
           <div class="success-title">¡Dispositivo configurado!</div>
           <div class="success-sub">Token guardado correctamente.<br>Ahora inicia sesión con tu usuario y contraseña.</div>
-          <button class="btn btn-primary" onclick="window.location.href='../achive.html'">
-            Ir al sistema →
+          <button class="btn btn-primary" onclick="irAlInicio()">
+            Ir al inicio →
           </button>
         </div>`;
       // Intentar redirigir en la misma pestaña o notificar a la pestaña padre
@@ -232,14 +232,7 @@
         // Construir ruta absoluta basada en el origen del repo
         // qr-scan.html está en: /repo/sanagua-cot/page/qr-scan.html
         // achive.html está en:  /repo/sanagua-cot/achive.html
-        const base = window.location.href.split('/sanagua-cot/')[0];
-        const destino = base + '/sanagua-cot/achive.html';
-        if (window.opener && !window.opener.closed) {
-          try { window.opener.location.href = destino; window.close(); }
-          catch { window.location.href = '../achive.html'; }
-        } else {
-          window.location.href = '../achive.html';
-        }
+        irAlInicio();
       }, 2000);
 
     } catch(e) {
@@ -280,6 +273,18 @@
       document.getElementById('status').textContent = '❌ No se pudo cargar el lector QR. Revisa tu conexión.';
     }
   }
+  function irAlInicio() {
+    // Ir a la raíz del repo (index.html del sitio web público)
+    const base = window.location.href.split('/sanagua-cot/')[0];
+    const inicio = base + '/index.html';
+    if (window.opener && !window.opener.closed) {
+      try { window.opener.location.href = inicio; window.close(); }
+      catch { window.location.href = inicio; }
+    } else {
+      window.location.href = inicio;
+    }
+  }
+
   esperarJsQR(20);
 </script>
 
