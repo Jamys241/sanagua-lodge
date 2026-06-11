@@ -254,6 +254,13 @@
     .cal-grid td.cal-cerrado:hover { background:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,.04) 5px,rgba(0,0,0,.04) 10px); }
     .cal-grid td.cal-excepcion { outline:2px dashed var(--accent); outline-offset:-2px; }
     .cal-cerrado-label { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); opacity:.6; padding:0 4px 2px; }
+    /* Tipo de cliente */
+    .tipo-cliente-opt{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+      padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;
+      font-size:.83rem;font-weight:600;color:var(--muted);transition:all .2s;
+      background:var(--surface);user-select:none}
+    .tipo-cliente-opt:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+    .tipo-cliente-opt input[type=radio]{display:none}
     /* Botones de intervalo de polling */
     .poll-btn{padding:6px 14px;border:1.5px solid var(--border);border-radius:6px;
       background:var(--surface);font-family:var(--font);font-size:.8rem;font-weight:600;
@@ -439,10 +446,29 @@
   <div class="card">
     <div class="card-title">Información del Cliente</div>
     <div class="form-grid">
-      <div class="form-group"><label>Nombre / Empresa</label><input type="text" id="client-name" placeholder="Cliente S.A."></div>
-      <div class="form-group"><label>RUC / Cédula</label><input type="text" id="client-ruc" placeholder="8-888-8888"></div>
-      <div class="form-group"><label>Correo electrónico</label><input type="email" id="client-email" placeholder="correo@empresa.com"></div>
-      <div class="form-group"><label>Teléfono</label><input type="tel" id="client-phone" placeholder="+507 6000-0000"></div>
+      <!-- Tipo de cliente -->
+      <div class="form-group full">
+        <label>Tipo de cliente</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <label class="tipo-cliente-opt" id="opt-contado">
+            <input type="radio" name="tipo-cliente" value="contado" checked onchange="onTipoClienteChange()">
+            <span>💵 Cliente Contado</span>
+          </label>
+          <label class="tipo-cliente-opt" id="opt-natural">
+            <input type="radio" name="tipo-cliente" value="natural" onchange="onTipoClienteChange()">
+            <span>👤 Persona Natural</span>
+          </label>
+          <label class="tipo-cliente-opt" id="opt-juridica">
+            <input type="radio" name="tipo-cliente" value="juridica" onchange="onTipoClienteChange()">
+            <span>🏢 Persona Jurídica</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group"><label>Nombre / Empresa <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="client-name" placeholder="Cliente S.A."></div>
+      <div class="form-group"><label>RUC / Cédula <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="client-ruc" placeholder="8-888-8888"></div>
+      <div class="form-group" id="dv-group" style="display:none"><label>DV <span style="color:var(--red)">*</span></label><input type="text" id="client-dv" placeholder="Ej: 45" maxlength="3" style="max-width:100px"></div>
+      <div class="form-group"><label>Correo electrónico <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="email" id="client-email" placeholder="correo@empresa.com"></div>
+      <div class="form-group"><label>Teléfono <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="tel" id="client-phone" placeholder="+507 6000-0000"></div>
       <div class="form-group full"><label>Dirección</label><input type="text" id="client-address" placeholder="Ciudad de Panamá, Panamá"></div>
       <div class="form-group"><label>Fecha</label><input type="date" id="quote-date"></div>
       <div class="form-group"><label>Válida hasta</label><input type="date" id="quote-valid"></div>
@@ -708,10 +734,19 @@
       <div class="modal-section">
         <div class="modal-section-title">Datos del cliente</div>
         <div class="form-grid">
-          <div class="form-group full"><label>Nombre / Empresa</label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
-          <div class="form-group"><label>RUC / Cédula</label><input type="text" id="ev-client-ruc" placeholder="8-888-8888"></div>
-          <div class="form-group"><label>Teléfono</label><input type="tel" id="ev-client-phone" placeholder="+507 6000-0000"></div>
-          <div class="form-group full"><label>Correo electrónico</label><input type="email" id="ev-client-email" placeholder="correo@ejemplo.com"></div>
+          <div class="form-group full">
+            <label>Tipo de cliente</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span>💵 Contado</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span>👤 Persona Natural</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span>🏢 Persona Jurídica</span></label>
+            </div>
+          </div>
+          <div class="form-group full"><label>Nombre / Empresa <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
+          <div class="form-group"><label>RUC / Cédula <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="ev-client-ruc" placeholder="8-888-8888"></div>
+          <div class="form-group" id="ev-dv-group" style="display:none"><label>DV <span style="color:var(--red)">*</span></label><input type="text" id="ev-client-dv" placeholder="Ej: 45" maxlength="3" style="max-width:100px"></div>
+          <div class="form-group"><label>Teléfono <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="tel" id="ev-client-phone" placeholder="+507 6000-0000"></div>
+          <div class="form-group full"><label>Correo electrónico <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="email" id="ev-client-email" placeholder="correo@ejemplo.com"></div>
           <div class="form-group full"><label>Dirección</label><input type="text" id="ev-client-address" placeholder="Ciudad de Panamá"></div>
         </div>
       </div>
@@ -803,6 +838,15 @@
     <div class="modal-section">
       <div class="modal-section-title">Datos del Cliente</div>
       <div class="form-grid">
+        <!-- Tipo de cliente en edición -->
+        <div class="form-group full">
+          <label>Tipo de cliente</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span>💵 Contado</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span>👤 Persona Natural</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span>🏢 Persona Jurídica</span></label>
+          </div>
+        </div>
         <div class="form-group full">
           <label>Nombre / Empresa</label>
           <div style="display:flex;gap:6px;">
@@ -815,6 +859,13 @@
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-ruc" placeholder="8-888-8888" style="flex:1">
             <button class="btn-copy" onclick="copyField('edit-client-ruc')" title="Copiar">📋</button>
+          </div>
+        </div>
+        <div class="form-group" id="edit-dv-group" style="display:none">
+          <label>DV <span style="color:var(--red)">*</span></label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="edit-client-dv" placeholder="Ej: 45" maxlength="3" style="flex:1;max-width:100px">
+            <button class="btn-copy" onclick="copyField('edit-client-dv')" title="Copiar">📋</button>
           </div>
         </div>
         <div class="form-group">
@@ -2523,6 +2574,8 @@
     const baseA=sub-totalDisc, total=baseA+i7+i10;
     return {
       client:{name:clientName,ruc:document.getElementById('client-ruc').value,
+              dv:document.getElementById('client-dv').value,
+              tipo:getTipoCliente('tipo-cliente'),
               email:document.getElementById('client-email').value,
               phone:document.getElementById('client-phone').value,
               address:document.getElementById('client-address').value},
@@ -2545,6 +2598,15 @@
     if(!items.length){ showToast('Agrega al menos un ítem.','error'); return; }
     const clientName=document.getElementById('client-name').value.trim();
     if(!clientName){ showToast('Ingresa el nombre del cliente.','error'); return; }
+    // Validar campos obligatorios para Persona Natural / Jurídica
+    const tipoCli = getTipoCliente('tipo-cliente');
+    const errTipo = validateTipoCliente(tipoCli, [
+      ['RUC / Cédula', document.getElementById('client-ruc').value],
+      ['DV',           document.getElementById('client-dv').value],
+      ['Correo',       document.getElementById('client-email').value],
+      ['Teléfono',     document.getElementById('client-phone').value],
+    ]);
+    if (errTipo) { showToast(errTipo, 'error'); return; }
     const payload = _buildPayload();
     showLoading(true);
     try {
@@ -2796,9 +2858,12 @@
     const cl = q.client || {};
     document.getElementById('edit-client-name').value    = cl.name    || '';
     document.getElementById('edit-client-ruc').value     = cl.ruc     || '';
+    document.getElementById('edit-client-dv').value      = cl.dv      || '';
     document.getElementById('edit-client-phone').value   = cl.phone   || '';
     document.getElementById('edit-client-email').value   = cl.email   || '';
     document.getElementById('edit-client-address').value = cl.address || '';
+    // Tipo de cliente
+    setTipoCliente('edit-tipo-cliente', cl.tipo || 'contado');
     document.getElementById('edit-visit-date').value     = q.visit_date || '';
     document.getElementById('edit-visit-date-end').value = q.visit_date_end || '';
     updateEditNights();
@@ -2992,8 +3057,10 @@
       categoria:  document.getElementById('edit-categoria').value,
       plataforma: document.getElementById('edit-plataforma').value,
       client: {
+        tipo:    getTipoCliente('edit-tipo-cliente'),
         name:    document.getElementById('edit-client-name').value.trim(),
         ruc:     document.getElementById('edit-client-ruc').value.trim(),
+        dv:      document.getElementById('edit-client-dv').value.trim(),
         phone:   document.getElementById('edit-client-phone').value.trim(),
         email:   document.getElementById('edit-client-email').value.trim(),
         address: document.getElementById('edit-client-address').value.trim(),
@@ -5469,6 +5536,52 @@
   document.getElementById('qr-modal-ov')?.addEventListener('click', e => {
     if (e.target === document.getElementById('qr-modal-ov')) cerrarModalQR();
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // TIPO DE CLIENTE
+  // ══════════════════════════════════════════════════════════════════════
+  function getTipoCliente(name) {
+    return document.querySelector(`input[name="${name}"]:checked`)?.value || 'contado';
+  }
+
+  function setTipoCliente(name, val) {
+    const input = document.querySelector(`input[name="${name}"][value="${val}"]`);
+    if (input) input.checked = true;
+    // Disparar el cambio visual
+    if (name === 'tipo-cliente')      onTipoClienteChange();
+    if (name === 'ev-tipo-cliente')   onEvTipoClienteChange();
+    if (name === 'edit-tipo-cliente') onEditTipoClienteChange();
+  }
+
+  function aplicarTipoCliente(tipo, dvGroupId, reqMarksSelector) {
+    const esFormal = tipo === 'natural' || tipo === 'juridica';
+    const dvGroup  = document.getElementById(dvGroupId);
+    if (dvGroup) dvGroup.style.display = esFormal ? '' : 'none';
+    document.querySelectorAll(reqMarksSelector).forEach(el => {
+      el.style.display = esFormal ? 'inline' : 'none';
+    });
+  }
+
+  function onTipoClienteChange() {
+    aplicarTipoCliente(getTipoCliente('tipo-cliente'), 'dv-group', '#tab-nueva .req-mark');
+  }
+
+  function onEvTipoClienteChange() {
+    aplicarTipoCliente(getTipoCliente('ev-tipo-cliente'), 'ev-dv-group', '#event-modal .ev-req-mark');
+  }
+
+  function onEditTipoClienteChange() {
+    aplicarTipoCliente(getTipoCliente('edit-tipo-cliente'), 'edit-dv-group', '#edit-modal .edit-req-mark');
+  }
+
+  function validateTipoCliente(tipo, fields) {
+    const esFormal = tipo === 'natural' || tipo === 'juridica';
+    if (!esFormal) return null;
+    for (const [label, val] of fields) {
+      if (!val?.trim()) return `El campo "${label}" es obligatorio para ${tipo === 'natural' ? 'Persona Natural' : 'Persona Jurídica'}.`;
+    }
+    return null;
+  }
 
 </script>
 </body>
