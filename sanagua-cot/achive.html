@@ -3239,18 +3239,39 @@
 
     // ── Datos cliente ─────────────────────────────────────────────────────
     const cl = data.client || {};
+    const tipoLabel = cl.tipo === 'natural' ? 'Persona Natural' : cl.tipo === 'juridica' ? 'Persona Jurídica' : 'Cliente Contado';
+    const rucConDv  = cl.ruc ? (cl.dv ? `${cl.ruc} DV: ${cl.dv}` : cl.ruc) : '—';
+    // Ampliar el rectángulo si hay tipo formal
+    const clH = cl.tipo && cl.tipo !== 'contado' ? 34 : 28;
     doc.setFillColor(245, 243, 238);
-    doc.roundedRect(margin, y, cW, 28, 2, 2, 'F');
+    doc.roundedRect(margin, y, cW, clH, 2, 2, 'F');
     doc.setFontSize(9);
     doc.setTextColor(...dark);
-    doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+7);
-    doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+7);
-    doc.setFont('helvetica','bold'); doc.text('RUC/Cédula:', margin+4, y+13);
-    doc.setFont('helvetica','normal'); doc.text(cl.ruc||'—', margin+26, y+13);
-    doc.setFont('helvetica','bold'); doc.text('Teléfono:', margin+4, y+19);
-    doc.setFont('helvetica','normal'); doc.text(cl.phone||'—', margin+22, y+19);
-    doc.setFont('helvetica','bold'); doc.text('Correo:', margin+4, y+25);
-    doc.setFont('helvetica','normal'); doc.text(cl.email||'—', margin+18, y+25);
+    // Tipo de cliente (badge en la esquina)
+    if (cl.tipo && cl.tipo !== 'contado') {
+      doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.setTextColor(200,84,26);
+      doc.text(tipoLabel.toUpperCase(), margin+4, y+5);
+      doc.setTextColor(...dark); doc.setFontSize(9);
+      doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+11);
+      doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+11);
+      doc.setFont('helvetica','bold'); doc.text('RUC/Cédula:', margin+4, y+17);
+      doc.setFont('helvetica','normal'); doc.text(rucConDv, margin+26, y+17);
+      doc.setFont('helvetica','bold'); doc.text('Teléfono:', margin+4, y+23);
+      doc.setFont('helvetica','normal'); doc.text(cl.phone||'—', margin+22, y+23);
+      doc.setFont('helvetica','bold'); doc.text('Correo:', margin+4, y+29);
+      doc.setFont('helvetica','normal'); doc.text(cl.email||'—', margin+18, y+29);
+    } else {
+      doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+7);
+      doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+7);
+      doc.setFont('helvetica','bold'); doc.text('RUC/Cédula:', margin+4, y+13);
+      doc.setFont('helvetica','normal'); doc.text(cl.ruc||'—', margin+26, y+13);
+      doc.setFont('helvetica','bold'); doc.text('Teléfono:', margin+4, y+19);
+      doc.setFont('helvetica','normal'); doc.text(cl.phone||'—', margin+22, y+19);
+      doc.setFont('helvetica','bold'); doc.text('Correo:', margin+4, y+25);
+      doc.setFont('helvetica','normal'); doc.text(cl.email||'—', margin+18, y+25);
+    }
+    y += clH + 2;
 
     // Fecha y categoría a la derecha
     const fmtD = s => { if(!s)return'—'; try{const d=new Date(s+'T12:00:00');return d.toLocaleDateString('es-PA',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;} };
