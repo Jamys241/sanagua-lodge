@@ -449,7 +449,7 @@
       <!-- Tipo de cliente -->
       <div class="form-group full">
         <label>Tipo de cliente</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;align-items:center">
           <label class="tipo-cliente-opt" id="opt-contado">
             <input type="radio" name="tipo-cliente" value="contado" checked onchange="onTipoClienteChange()">
             <span>💵 Cliente Contado</span>
@@ -461,6 +461,11 @@
           <label class="tipo-cliente-opt" id="opt-juridica">
             <input type="radio" name="tipo-cliente" value="juridica" onchange="onTipoClienteChange()">
             <span>🏢 Persona Jurídica</span>
+          </label>
+          <!-- Exento -->
+          <label class="tipo-cliente-opt" id="opt-exento" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff">
+            <input type="checkbox" id="client-exento" onchange="onExentoChange()">
+            <span>🔵 Exento de ITBMS</span>
           </label>
         </div>
       </div>
@@ -736,10 +741,11 @@
         <div class="form-grid">
           <div class="form-group full">
             <label>Tipo de cliente</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
               <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span>💵 Contado</span></label>
               <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span>👤 Persona Natural</span></label>
               <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span>🏢 Persona Jurídica</span></label>
+              <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="ev-client-exento"><span>🔵 Exento de ITBMS</span></label>
             </div>
           </div>
           <div class="form-group full"><label>Nombre / Empresa <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
@@ -841,10 +847,11 @@
         <!-- Tipo de cliente en edición -->
         <div class="form-group full">
           <label>Tipo de cliente</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
             <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span>💵 Contado</span></label>
             <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span>👤 Persona Natural</span></label>
             <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span>🏢 Persona Jurídica</span></label>
+            <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="edit-client-exento"><span>🔵 Exento de ITBMS</span></label>
           </div>
         </div>
         <div class="form-group full">
@@ -2528,6 +2535,7 @@
 
   // ── Totales ──────────────────────────────────────────────────────────────────
   function calcTotals() {
+    const exento = isExento('client-exento');
     let sub=0, totalDisc=0, i7=0, i10=0;
     items.forEach(it=>{
       const d     = getItemDisc(it);
@@ -2536,8 +2544,10 @@
       const after = base - dAmt;
       sub       += base;
       totalDisc += dAmt;
-      if(it.itbms===7)  i7  += after*.07;
-      if(it.itbms===10) i10 += after*.10;
+      if(!exento){
+        if(it.itbms===7)  i7  += after*.07;
+        if(it.itbms===10) i10 += after*.10;
+      }
     });
     const baseA = sub - totalDisc;
     const total = baseA + i7 + i10;
@@ -2559,14 +2569,15 @@
   // ── Generar PDF cotización ──────────────────────────────────────────────────
   function _buildPayload() {
     const clientName = document.getElementById('client-name').value.trim();
+    const exento = isExento('client-exento');
     let sub=0, totalDisc=0, i7=0, i10=0;
     const payItems = items.map(it => {
       const d=getItemDisc(it);
       const base=it.qty*it.price, dAmt=base*d.pct, after=base-dAmt;
-      const iamt=it.itbms===7?after*.07:it.itbms===10?after*.10:0;
+      const iamt=exento?0:(it.itbms===7?after*.07:it.itbms===10?after*.10:0);
       sub+=base; totalDisc+=dAmt;
-      if(it.itbms===7)i7+=iamt; if(it.itbms===10)i10+=iamt;
-      return {desc:it.desc,qty:it.qty,price:it.price,itbms_pct:it.itbms,
+      if(!exento){if(it.itbms===7)i7+=iamt; if(it.itbms===10)i10+=iamt;}
+      return {desc:it.desc,qty:it.qty,price:it.price,itbms_pct:exento?0:it.itbms,
               disc_key:it.disc||'none',disc_label:d.label,disc_pct:d.pct*100,
               line_base:base,line_discount:dAmt,line_after_discount:after,
               itbms_amount:iamt,line_total:after+iamt};
@@ -2576,6 +2587,7 @@
       client:{name:clientName,ruc:document.getElementById('client-ruc').value,
               dv:document.getElementById('client-dv').value,
               tipo:getTipoCliente('tipo-cliente'),
+              exento,
               email:document.getElementById('client-email').value,
               phone:document.getElementById('client-phone').value,
               address:document.getElementById('client-address').value},
@@ -2864,6 +2876,7 @@
     document.getElementById('edit-client-address').value = cl.address || '';
     // Tipo de cliente
     setTipoCliente('edit-tipo-cliente', cl.tipo || 'contado');
+    setExento('edit-client-exento', cl.exento || false);
     document.getElementById('edit-visit-date').value     = q.visit_date || '';
     document.getElementById('edit-visit-date-end').value = q.visit_date_end || '';
     updateEditNights();
@@ -3058,6 +3071,7 @@
       plataforma: document.getElementById('edit-plataforma').value,
       client: {
         tipo:    getTipoCliente('edit-tipo-cliente'),
+        exento:  isExento('edit-client-exento'),
         name:    document.getElementById('edit-client-name').value.trim(),
         ruc:     document.getElementById('edit-client-ruc').value.trim(),
         dv:      document.getElementById('edit-client-dv').value.trim(),
@@ -3241,17 +3255,27 @@
     const cl = data.client || {};
     const tipoLabel = cl.tipo === 'natural' ? 'Persona Natural' : cl.tipo === 'juridica' ? 'Persona Jurídica' : 'Cliente Contado';
     const rucConDv  = cl.ruc ? (cl.dv ? `${cl.ruc} DV: ${cl.dv}` : cl.ruc) : '—';
-    // Ampliar el rectángulo si hay tipo formal
-    const clH = cl.tipo && cl.tipo !== 'contado' ? 34 : 28;
+    const esFormal  = cl.tipo && cl.tipo !== 'contado';
+    const clH = esFormal ? 34 : 28;
     doc.setFillColor(245, 243, 238);
     doc.roundedRect(margin, y, cW, clH, 2, 2, 'F');
-    doc.setFontSize(9);
-    doc.setTextColor(...dark);
-    // Tipo de cliente (badge en la esquina)
-    if (cl.tipo && cl.tipo !== 'contado') {
-      doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.setTextColor(200,84,26);
+    doc.setFontSize(9); doc.setTextColor(...dark);
+
+    // Helper: badge celeste para exento
+    function drawExentoBadge(bx, by) {
+      doc.setFillColor(173, 216, 230);
+      doc.roundedRect(bx, by, 28, 5, 1.5, 1.5, 'F');
+      doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+      doc.setTextColor(30, 90, 130);
+      doc.text('EXENTO ITBMS', bx+3, by+3.8);
+      doc.setTextColor(...dark); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    }
+
+    if (esFormal) {
+      // Badge tipo (naranja)
+      doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(200,84,26);
       doc.text(tipoLabel.toUpperCase(), margin+4, y+5);
+      if (cl.exento) drawExentoBadge(margin+70, y+2);
       doc.setTextColor(...dark); doc.setFontSize(9);
       doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+11);
       doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+11);
@@ -3262,6 +3286,7 @@
       doc.setFont('helvetica','bold'); doc.text('Correo:', margin+4, y+29);
       doc.setFont('helvetica','normal'); doc.text(cl.email||'—', margin+18, y+29);
     } else {
+      if (cl.exento) drawExentoBadge(margin+55, y+2);
       doc.setFont('helvetica','bold'); doc.text('Cliente:', margin+4, y+7);
       doc.setFont('helvetica','normal'); doc.text(cl.name||'—', margin+20, y+7);
       doc.setFont('helvetica','bold'); doc.text('RUC/Cédula:', margin+4, y+13);
@@ -5565,13 +5590,31 @@
     return document.querySelector(`input[name="${name}"]:checked`)?.value || 'contado';
   }
 
+  function isExento(checkboxId) {
+    return document.getElementById(checkboxId)?.checked || false;
+  }
+
   function setTipoCliente(name, val) {
     const input = document.querySelector(`input[name="${name}"][value="${val}"]`);
     if (input) input.checked = true;
-    // Disparar el cambio visual
     if (name === 'tipo-cliente')      onTipoClienteChange();
     if (name === 'ev-tipo-cliente')   onEvTipoClienteChange();
     if (name === 'edit-tipo-cliente') onEditTipoClienteChange();
+  }
+
+  function setExento(checkboxId, val) {
+    const el = document.getElementById(checkboxId);
+    if (el) el.checked = !!val;
+  }
+
+  function onExentoChange() {
+    // Recalcular totales cuando cambia exento en nueva cotización
+    recalcItems();
+  }
+
+  // Recalcular items respetando exención
+  function getItbmsEfectivo(itbmsPct, exento) {
+    return exento ? 0 : itbmsPct;
   }
 
   function aplicarTipoCliente(tipo, dvGroupId, reqMarksSelector) {
