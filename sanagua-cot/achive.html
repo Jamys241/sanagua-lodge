@@ -621,6 +621,7 @@
       <button class="btn btn-outline btn-large" onclick="clearAll()">🗑 Limpiar</button>
       <button class="btn btn-outline btn-large" onclick="soloGenerarPDF()">📄 Vista previa PDF</button>
       <button class="btn btn-accent btn-large" onclick="guardarCotizacion()">💾 Guardar cotización</button>
+      <button class="btn btn-green btn-large" onclick="guardarYGenerarPDF()">📥 Guardar y generar PDF</button>
     </div>
   </div>
 
@@ -820,6 +821,7 @@
         <button class="btn btn-outline" onclick="closeEventModal()">Cancelar</button>
         <button class="btn btn-outline" onclick="soloGenerarPDFevento()">📄 Vista previa PDF</button>
         <button class="btn btn-green" onclick="saveEvent()">💾 Guardar evento</button>
+        <button class="btn btn-accent" onclick="saveEventYGenerarPDF()">📥 Guardar y generar PDF</button>
       </div>
     </div>
   </div>
@@ -2668,6 +2670,65 @@
 
   // Mantener compatibilidad con el permiso que verifica [onclick="generatePDF()"]
   async function generatePDF() { return guardarCotizacion(); }
+
+  // ── Guardar cotización Y generar PDF en un solo clic ────────────────────────
+  async function guardarYGenerarPDF() {
+    await guardarCotizacion();
+    // guardarCotizacion ya genera el PDF internamente
+  }
+
+  // ── Guardar evento Y generar PDF ────────────────────────────────────────────
+  async function saveEventYGenerarPDF() {
+    const name = document.getElementById('ev-client-name').value.trim();
+    if (!name) { showToast('Ingresa el nombre del cliente.', 'error'); return; }
+    const total  = parseFloat(document.getElementById('ev-total').value)  || 0;
+    const abono  = parseFloat(document.getElementById('ev-abono').value)  || 0;
+    const cancel = parseFloat(document.getElementById('ev-cancelacion').value) || 0;
+    const ev = {
+      id:        editingEvent ? editingEvent.id : `ev_${Date.now()}`,
+      type:      'event',
+      client: {
+        tipo:    getTipoCliente('ev-tipo-cliente'),
+        exento:  isExento('ev-client-exento'),
+        name,
+        ruc:     document.getElementById('ev-client-ruc').value.trim(),
+        dv:      document.getElementById('ev-client-dv').value.trim(),
+        phone:   document.getElementById('ev-client-phone').value.trim(),
+        email:   document.getElementById('ev-client-email').value.trim(),
+        address: document.getElementById('ev-client-address').value.trim(),
+      },
+      categoria:          document.getElementById('ev-categoria').value,
+      plataforma:         document.getElementById('ev-plataforma').value,
+      estado:             document.getElementById('ev-estado').value,
+      visit_date:         document.getElementById('ev-visit-date').value,
+      visit_date_end:     document.getElementById('ev-visit-date-end').value,
+      total, abono_50: total*.5, abono_pagado: abono,
+      cancelacion_pagada: cancel,
+      notas:              document.getElementById('ev-notas').value,
+      created_at:         editingEvent ? editingEvent.created_at : new Date().toISOString(),
+    };
+    if (editingEvent) {
+      const idx = allEvents.findIndex(e => e.id === editingEvent.id);
+      if (idx >= 0) allEvents[idx] = ev;
+    } else {
+      allEvents.push(ev);
+    }
+    showLoading(true);
+    try {
+      await saveEventToServer();
+      closeEventModal();
+      renderCalendario();
+      renderHistory(allHistory);
+      // Generar PDF con el ID del evento como número
+      const evNum = ev.id.replace('ev_','').slice(-6);
+      const payload = {...ev, items:[], subtotal:total,
+        itbms7_total:0, itbms10_total:0, discount_amount:0,
+        base_after_discount:total, logo:logoBase64||null, empresa:empresaData};
+      generatePDFlocal(payload, `EV-${evNum}`, 'cotizacion');
+      showToast(`✅ Evento guardado y PDF generado.`, 'success');
+    } catch(e) { console.error(e); showToast('❌ Error al guardar el evento.', 'error'); }
+    finally { showLoading(false); }
+  }
 
   // ── HISTORIAL ───────────────────────────────────────────────────────────────
   async function loadHistory() {
