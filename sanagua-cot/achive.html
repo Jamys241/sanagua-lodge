@@ -818,6 +818,7 @@
       <div class="actions-bar">
         <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;">🗑 Eliminar</button>
         <button class="btn btn-outline" onclick="closeEventModal()">Cancelar</button>
+        <button class="btn btn-outline" onclick="soloGenerarPDFevento()">📄 Vista previa PDF</button>
         <button class="btn btn-green" onclick="saveEvent()">💾 Guardar evento</button>
       </div>
     </div>
@@ -4050,6 +4051,46 @@
     document.getElementById('evr-recibido').textContent = `$${recibido.toFixed(2)}`;
     document.getElementById('evr-saldo').textContent    = `$${saldo.toFixed(2)}`;
     document.getElementById('evr-saldo').style.color    = saldo===0?'var(--success)':'var(--accent)';
+  }
+
+  // ── Vista previa PDF de evento — SIN guardar ────────────────────────────────
+  async function soloGenerarPDFevento() {
+    const name = document.getElementById('ev-client-name').value.trim();
+    if (!name) { showToast('Ingresa el nombre del cliente.', 'error'); return; }
+
+    const total  = parseFloat(document.getElementById('ev-total').value)  || 0;
+    const abono  = parseFloat(document.getElementById('ev-abono').value)  || 0;
+    const cancel = parseFloat(document.getElementById('ev-cancelacion').value) || 0;
+
+    const payload = {
+      client: {
+        tipo:    getTipoCliente('ev-tipo-cliente'),
+        exento:  isExento('ev-client-exento'),
+        name,
+        ruc:     document.getElementById('ev-client-ruc').value.trim(),
+        dv:      document.getElementById('ev-client-dv').value.trim(),
+        phone:   document.getElementById('ev-client-phone').value.trim(),
+        email:   document.getElementById('ev-client-email').value.trim(),
+        address: document.getElementById('ev-client-address').value.trim(),
+      },
+      categoria:  document.getElementById('ev-categoria').value,
+      plataforma: document.getElementById('ev-plataforma').value,
+      estado:     document.getElementById('ev-estado').value,
+      visit_date: document.getElementById('ev-visit-date').value,
+      visit_date_end: document.getElementById('ev-visit-date-end').value,
+      total, abono_50: total*.5, abono_pagado: abono,
+      cancelacion_pagada: cancel,
+      notas: document.getElementById('ev-notas').value,
+      items: [], subtotal: total, itbms7_total: 0, itbms10_total: 0,
+      discount_amount: 0, base_after_discount: total,
+      logo: logoBase64 || null, empresa: empresaData,
+    };
+    showLoading(true);
+    try {
+      generatePDFlocal(payload, 'PREV', 'cotizacion');
+      showToast('📄 Vista previa generada — el evento no fue guardado.', 'success');
+    } catch(e) { showToast('❌ Error al generar el PDF.', 'error'); }
+    finally { showLoading(false); }
   }
 
   async function saveEvent() {
