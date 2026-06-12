@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="assets/images/icon/icon.png">
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Editor de Menú — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -414,52 +414,193 @@
     return `https://${owner}.github.io/${repoName}/${path}`;
   }
 
-  // ── Manejar foto ──────────────────────────────────────────────────────
+  // ── Modal de recorte ──────────────────────────────────────────────────
+  let _cropCallback = null;
+
+  function abrirCrop(src, callback) {
+    _cropCallback = callback;
+    // Crear modal si no existe
+    if (!document.getElementById('crop-modal')) {
+      const m = document.createElement('div');
+      m.id = 'crop-modal';
+      m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px';
+      m.innerHTML = `
+        <div style="color:#fff;font-size:.9rem;font-weight:600;text-align:center">
+          Arrastra o haz zoom para centrar el producto
+        </div>
+        <div id="crop-viewport" style="width:300px;height:300px;border-radius:10px;overflow:hidden;position:relative;background:#000;cursor:move;touch-action:none">
+          <img id="crop-img" style="position:absolute;transform-origin:0 0" draggable="false">
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="color:rgba(255,255,255,.6);font-size:.8rem">Zoom</span>
+          <input id="crop-zoom" type="range" min="0.5" max="3" step="0.05" value="1" style="width:160px;accent-color:var(--gold)">
+          <span id="crop-zoom-lbl" style="color:#fff;font-size:.8rem;min-width:36px">1.0×</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button id="crop-cancel" style="padding:10px 24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;cursor:pointer;font-family:inherit;font-size:.85rem">Cancelar</button>
+          <button id="crop-ok" style="padding:10px 28px;background:var(--accent);border:none;border-radius:8px;color:#fff;cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:700">✓ Usar esta imagen</button>
+        </div>`;
+      document.body.appendChild(m);
+
+      // Zoom slider
+      const zoomSlider = document.getElementById('crop-zoom');
+      const zoomLbl    = document.getElementById('crop-zoom-lbl');
+      zoomSlider.addEventListener('input', () => {
+        zoomLbl.textContent = parseFloat(zoomSlider.value).toFixed(1) + '×';
+        applyCropTransform();
+      });
+
+      // Drag
+      const vp = document.getElementById('crop-viewport');
+      let dragging=false, startX=0, startY=0, ox=0, oy=0;
+      vp.addEventListener('mousedown', e => { dragging=true; startX=e.clientX-ox; startY=e.clientY-oy; e.preventDefault(); });
+      window.addEventListener('mousemove', e => { if(!dragging)return; ox=e.clientX-startX; oy=e.clientY-startY; applyCropTransform(); });
+      window.addEventListener('mouseup', ()=>dragging=false);
+      // Touch
+      vp.addEventListener('touchstart', e => { dragging=true; startX=e.touches[0].clientX-ox; startY=e.touches[0].clientY-oy; }, {passive:true});
+      window.addEventListener('touchmove', e => { if(!dragging)return; ox=e.touches[0].clientX-startX; oy=e.touches[0].clientY-startY; applyCropTransform(); }, {passive:true});
+      window.addEventListener('touchend', ()=>dragging=false);
+
+      document.getElementById('crop-cancel').onclick = () => {
+        document.getElementById('crop-modal').style.display = 'none';
+        _cropCallback = null;
+      };
+      document.getElementById('crop-ok').onclick = () => {
+        const result = exportCrop();
+        document.getElementById('crop-modal').style.display = 'none';
+        if (_cropCallback) _cropCallback(result);
+        _cropCallback = null;
+      };
+    }
+
+    // Cargar imagen
+    const img = document.getElementById('crop-img');
+    img._ox = 0; img._oy = 0;
+    document.getElementById('crop-zoom').value = 1;
+    document.getElementById('crop-zoom-lbl').textContent = '1.0×';
+    // Reset offset
+    const vp2 = document.getElementById('crop-viewport');
+    vp2._ox = 0; vp2._oy = 0;
+    // Necesitamos acceso al offset desde applyCropTransform
+    window._cropOx = 0; window._cropOy = 0;
+
+    img.onload = () => {
+      // Zoom inicial para que llene el viewport
+      const vW=300, vH=300;
+      const scale = Math.max(vW/img.naturalWidth, vH/img.naturalHeight);
+      document.getElementById('crop-zoom').value = Math.min(3, scale.toFixed(2));
+      document.getElementById('crop-zoom-lbl').textContent = parseFloat(document.getElementById('crop-zoom').value).toFixed(1) + '×';
+      window._cropOx = (vW - img.naturalWidth * scale) / 2;
+      window._cropOy = (vH - img.naturalHeight * scale) / 2;
+      // Reasignar drag con nuevo offset
+      const vp3 = document.getElementById('crop-viewport');
+      vp3._dragStartX = null;
+      applyCropTransform();
+    };
+    img.src = src;
+    document.getElementById('crop-modal').style.display = 'flex';
+  }
+
+  function applyCropTransform() {
+    const img   = document.getElementById('crop-img');
+    const scale = parseFloat(document.getElementById('crop-zoom').value);
+    if (!img) return;
+    img.style.transform = `translate(${window._cropOx||0}px,${window._cropOy||0}px) scale(${scale})`;
+  }
+
+  // Sobreescribir drag para actualizar _cropOx/_cropOy
+  (function() {
+    let dragging=false, startX=0, startY=0;
+    document.addEventListener('mousedown', e => {
+      const vp = document.getElementById('crop-viewport');
+      if (vp && vp.contains(e.target)) { dragging=true; startX=e.clientX-(window._cropOx||0); startY=e.clientY-(window._cropOy||0); }
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      window._cropOx = e.clientX-startX; window._cropOy = e.clientY-startY;
+      applyCropTransform();
+    });
+    document.addEventListener('mouseup', ()=>dragging=false);
+    document.addEventListener('touchstart', e => {
+      const vp = document.getElementById('crop-viewport');
+      if (vp && vp.contains(e.target)) { dragging=true; startX=e.touches[0].clientX-(window._cropOx||0); startY=e.touches[0].clientY-(window._cropOy||0); }
+    }, {passive:true});
+    document.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      window._cropOx = e.touches[0].clientX-startX; window._cropOy = e.touches[0].clientY-startY;
+      applyCropTransform();
+    }, {passive:true});
+    document.addEventListener('touchend', ()=>dragging=false);
+  })();
+
+  function exportCrop() {
+    const img   = document.getElementById('crop-img');
+    const scale = parseFloat(document.getElementById('crop-zoom').value);
+    const vW=300, vH=300;
+    const canvas = document.createElement('canvas');
+    canvas.width  = vW;
+    canvas.height = vH;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img,
+      -(window._cropOx||0)/scale, -(window._cropOy||0)/scale,
+      vW/scale, vH/scale,
+      0, 0, vW, vH
+    );
+    return canvas.toDataURL('image/jpeg', 0.88);
+  }
+
+  // ── Manejar foto — con editor de recorte ─────────────────────────────
   async function handleFoto(event, id, catIdx, platoIdx) {
     const file = event.target.files[0];
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      showToast('La foto supera 3 MB. Comprime la imagen antes de subirla.', 'error');
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('La foto supera 5 MB. Comprime la imagen antes de subirla.', 'error');
       return;
     }
 
-    // Preview inmediato con base64 local mientras sube
     const reader = new FileReader();
-    reader.onload = async e => {
-      const b64preview = e.target.result;
-      // Mostrar preview inmediato
-      const wrap = document.getElementById(`img-preview-${id}`);
-      if (wrap?.tagName === 'IMG') {
-        wrap.src = b64preview;
-      } else if (wrap) {
-        wrap.outerHTML = `<img id="img-preview-${id}" src="${b64preview}" alt="foto" style="width:100%;height:100%;object-fit:cover">`;
-      }
+    reader.onload = e => {
+      // Abrir editor de recorte
+      abrirCrop(e.target.result, async (croppedDataUrl) => {
+        // Mostrar preview inmediato con la imagen recortada
+        const wrap = document.getElementById(`img-preview-${id}`);
+        if (wrap?.tagName === 'IMG') {
+          wrap.src = croppedDataUrl;
+        } else if (wrap) {
+          wrap.outerHTML = `<img id="img-preview-${id}" src="${croppedDataUrl}" alt="foto" style="width:100%;height:100%;object-fit:cover">`;
+        }
 
-      const cat   = menuData.categorias[catIdx];
-      const plato = cat.platos[platoIdx];
+        const cat   = menuData.categorias[catIdx];
+        const plato = cat.platos[platoIdx];
 
-      // Mostrar estado de subida
-      const btn = document.getElementById(`btn-p-${catIdx}-${platoIdx}`);
-      const prevText = btn?.textContent;
-      if (btn) { btn.textContent = '📤 Subiendo...'; btn.disabled = true; }
-      showToast('Subiendo imagen a GitHub...', 'success');
+        const btn = document.getElementById(`btn-p-${catIdx}-${platoIdx}`);
+        const prevText = btn?.textContent;
+        if (btn) { btn.textContent = '📤 Subiendo...'; btn.disabled = true; }
+        showToast('Subiendo imagen...', 'success');
 
-      try {
-        const url = await uploadImagen(file, cat.id, plato.nombre);
-        // Guardar URL pública en los datos (no base64)
-        menuData.categorias[catIdx].platos[platoIdx].foto = url;
-        // Actualizar preview con URL final
-        const img = document.getElementById(`img-preview-${id}`);
-        if (img) img.src = url;
-        showToast('✅ Imagen subida correctamente. Guarda el plato para confirmar.', 'success');
-      } catch (err) {
-        console.warn('Upload failed:', err);
-        // Fallback: guardar base64 si falla la subida
-        menuData.categorias[catIdx].platos[platoIdx].foto = b64preview;
-        showToast('⚠️ No se pudo subir al repo. Se usará imagen local.', 'error');
-      } finally {
-        if (btn) { btn.textContent = prevText || '💾 Guardar'; btn.disabled = false; }
-      }
+        try {
+          // Convertir dataUrl a File para subir
+          const res  = await fetch(croppedDataUrl);
+          const blob = await res.blob();
+          const croppedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {type:'image/jpeg'});
+
+          const url = await uploadImagen(croppedFile, cat.id, plato.nombre);
+          menuData.categorias[catIdx].platos[platoIdx].foto = url;
+
+          // Actualizar preview con la URL final
+          const img = document.getElementById(`img-preview-${id}`);
+          if (img) img.src = url;
+          showToast('✅ Imagen subida y guardada.', 'success');
+        } catch (err) {
+          console.warn('Upload failed, usando base64:', err);
+          // Fallback: guardar base64 del recorte directamente
+          menuData.categorias[catIdx].platos[platoIdx].foto = croppedDataUrl;
+          // Preview ya está correcto con croppedDataUrl
+          showToast('⚠️ Se usará imagen local (no se pudo subir al repo).', 'error');
+        } finally {
+          if (btn) { btn.textContent = prevText || '💾 Guardar'; btn.disabled = false; }
+        }
+      });
     };
     reader.readAsDataURL(file);
   }
