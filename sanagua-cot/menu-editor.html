@@ -579,24 +579,26 @@
         showToast('Subiendo imagen...', 'success');
 
         try {
-          // Convertir dataUrl a File para subir
+          // Guardar base64 inmediatamente para que se vea de inmediato
+          menuData.categorias[catIdx].platos[platoIdx].foto = croppedDataUrl;
+          // Actualizar preview
+          const imgEl = document.getElementById(`img-preview-${id}`);
+          if (imgEl) imgEl.src = croppedDataUrl;
+
+          // Intentar subir al repo público en segundo plano
           const res  = await fetch(croppedDataUrl);
           const blob = await res.blob();
           const croppedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {type:'image/jpeg'});
-
           const url = await uploadImagen(croppedFile, cat.id, plato.nombre);
-          menuData.categorias[catIdx].platos[platoIdx].foto = url;
 
-          // Actualizar preview con la URL final
-          const img = document.getElementById(`img-preview-${id}`);
-          if (img) img.src = url;
-          showToast('✅ Imagen subida y guardada.', 'success');
+          // Si la subida fue exitosa, reemplazar base64 por URL pública
+          menuData.categorias[catIdx].platos[platoIdx].foto = url;
+          if (imgEl) imgEl.src = url;
+          showToast('✅ Imagen subida al repo público. Guarda para confirmar.', 'success');
         } catch (err) {
           console.warn('Upload failed, usando base64:', err);
-          // Fallback: guardar base64 del recorte directamente
-          menuData.categorias[catIdx].platos[platoIdx].foto = croppedDataUrl;
-          // Preview ya está correcto con croppedDataUrl
-          showToast('⚠️ Se usará imagen local (no se pudo subir al repo).', 'error');
+          // Ya se guardó el base64 — la imagen se ve correctamente
+          showToast('💾 Imagen guardada localmente. Guarda para confirmar.', 'success');
         } finally {
           if (btn) { btn.textContent = prevText || '💾 Guardar'; btn.disabled = false; }
         }
