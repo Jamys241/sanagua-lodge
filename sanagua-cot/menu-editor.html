@@ -562,12 +562,17 @@
     reader.onload = e => {
       // Abrir editor de recorte
       abrirCrop(e.target.result, async (croppedDataUrl) => {
-        // Mostrar preview inmediato con la imagen recortada
+        // Actualizar preview — buscar el contenedor padre y reemplazar contenido
         const wrap = document.getElementById(`img-preview-${id}`);
-        if (wrap?.tagName === 'IMG') {
-          wrap.src = croppedDataUrl;
-        } else if (wrap) {
-          wrap.outerHTML = `<img id="img-preview-${id}" src="${croppedDataUrl}" alt="foto" style="width:100%;height:100%;object-fit:cover">`;
+        const container = wrap ? wrap.parentElement : null;
+        if (container) {
+          // Crear nuevo img y reemplazar lo que haya
+          const newImg = document.createElement('img');
+          newImg.id    = `img-preview-${id}`;
+          newImg.src   = croppedDataUrl;
+          newImg.alt   = 'foto';
+          newImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+          if (wrap) wrap.replaceWith(newImg);
         }
 
         const cat   = menuData.categorias[catIdx];
@@ -581,9 +586,7 @@
         try {
           // Guardar base64 inmediatamente para que se vea de inmediato
           menuData.categorias[catIdx].platos[platoIdx].foto = croppedDataUrl;
-          // Actualizar preview
-          const imgEl = document.getElementById(`img-preview-${id}`);
-          if (imgEl) imgEl.src = croppedDataUrl;
+          // Preview ya actualizado arriba
 
           // Intentar subir al repo público en segundo plano
           const res  = await fetch(croppedDataUrl);
@@ -593,7 +596,9 @@
 
           // Si la subida fue exitosa, reemplazar base64 por URL pública
           menuData.categorias[catIdx].platos[platoIdx].foto = url;
-          if (imgEl) imgEl.src = url;
+          // Actualizar src del img ya existente en el DOM
+          const imgEl2 = document.getElementById(`img-preview-${id}`);
+          if (imgEl2?.tagName === 'IMG') imgEl2.src = url;
           showToast('✅ Imagen subida al repo público. Guarda para confirmar.', 'success');
         } catch (err) {
           console.warn('Upload failed, usando base64:', err);
