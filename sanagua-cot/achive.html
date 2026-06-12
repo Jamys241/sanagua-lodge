@@ -619,7 +619,8 @@
 
     <div class="actions-bar" style="margin-top:18px;">
       <button class="btn btn-outline btn-large" onclick="clearAll()">🗑 Limpiar</button>
-      <button class="btn btn-accent btn-large" onclick="generatePDF()">📄 Generar PDF</button>
+      <button class="btn btn-outline btn-large" onclick="soloGenerarPDF()">📄 Vista previa PDF</button>
+      <button class="btn btn-accent btn-large" onclick="guardarCotizacion()">💾 Guardar cotización</button>
     </div>
   </div>
 
@@ -2606,11 +2607,11 @@
     };
   }
 
-  async function generatePDF() {
-    if(!items.length){ showToast('Agrega al menos un ítem.','error'); return; }
+  // ── Validación común ────────────────────────────────────────────────────────
+  function _validarFormCotizacion() {
+    if(!items.length){ showToast('Agrega al menos un ítem.','error'); return false; }
     const clientName=document.getElementById('client-name').value.trim();
-    if(!clientName){ showToast('Ingresa el nombre del cliente.','error'); return; }
-    // Validar campos obligatorios para Persona Natural / Jurídica
+    if(!clientName){ showToast('Ingresa el nombre del cliente.','error'); return false; }
     const tipoCli = getTipoCliente('tipo-cliente');
     const errTipo = validateTipoCliente(tipoCli, [
       ['RUC / Cédula', document.getElementById('client-ruc').value],
@@ -2618,20 +2619,37 @@
       ['Correo',       document.getElementById('client-email').value],
       ['Teléfono',     document.getElementById('client-phone').value],
     ]);
-    if (errTipo) { showToast(errTipo, 'error'); return; }
+    if (errTipo) { showToast(errTipo, 'error'); return false; }
+    return true;
+  }
+
+  // ── Vista previa PDF — SIN guardar ni consumir número ───────────────────────
+  async function soloGenerarPDF() {
+    if (!_validarFormCotizacion()) return;
     const payload = _buildPayload();
     showLoading(true);
     try {
-      // Obtener y actualizar contador
+      // Usar número provisional "PREV" para la vista previa
+      generatePDFlocal(payload, 'PREV', 'cotizacion');
+      showToast('📄 PDF de vista previa generado — no se guardó en el sistema.', 'success');
+    } catch(e) { console.error(e); showToast('❌ Error al generar el PDF.','error'); }
+    finally { showLoading(false); }
+  }
+
+  // ── Guardar cotización + generar PDF con número real ────────────────────────
+  async function guardarCotizacion() {
+    if (!_validarFormCotizacion()) return;
+    const payload = _buildPayload();
+    showLoading(true);
+    try {
       const cRes = await ghRead('counter.json');
       const quoteNum = cRes?.data?.count || 1;
       const quoteStr = String(quoteNum).padStart(4,'0');
       await ghReadWrite('counter.json', {count: quoteNum + 1});
 
-      // Guardar en historial
       const histRes = await ghRead('history.json');
-      const quotes = histRes?.data?.quotes || [];
-      const record = {...payload, quote_num: quoteStr,
+      const quotes  = histRes?.data?.quotes || [];
+      const record  = {...payload, quote_num: quoteStr,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         abono_pagado: 0, estado: 'Pendiente', notas_internas: ''};
       delete record.logo; delete record.empresa;
@@ -2640,14 +2658,15 @@
       await ghReadWrite('history.json', {quotes});
       allHistory = quotes;
 
-      // Generar PDF en el navegador
       generatePDFlocal(payload, quoteStr, 'cotizacion');
-
       document.getElementById('quote-counter').textContent=`Próxima: #${String(quoteNum+1).padStart(4,'0')}`;
-      showToast(`✅ Cotización #${quoteStr} generada`,'success');
-    } catch(e) { console.error(e); showToast('❌ Error al generar la cotización.','error'); }
+      showToast(`✅ Cotización #${quoteStr} guardada y PDF generado.`, 'success');
+    } catch(e) { console.error(e); showToast('❌ Error al guardar la cotización.','error'); }
     finally { showLoading(false); }
   }
+
+  // Mantener compatibilidad con el permiso que verifica [onclick="generatePDF()"]
+  async function generatePDF() { return guardarCotizacion(); }
 
   // ── HISTORIAL ───────────────────────────────────────────────────────────────
   async function loadHistory() {
