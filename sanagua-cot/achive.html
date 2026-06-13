@@ -430,6 +430,7 @@
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
     <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
+    <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
 
     <div class="side-menu-divider"></div>
     <div class="side-menu-section-label">Sistema</div>
@@ -510,24 +511,6 @@
             <option value="Booking">Booking</option>
             <option value="Airbnb">Airbnb</option>
         </select>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div class="card-title" style="margin:0">Mis Productos</div>
-      <button class="btn btn-outline" onclick="toggleManage()">⚙️ Gestionar</button>
-    </div>
-    <div class="manage-products" id="manage-panel">
-      <div id="product-list"></div>
-      <div class="add-product-form">
-        <div class="form-group"><label>Nombre</label><input type="text" id="new-product-name" placeholder="Ej: Cabaña Doble"></div>
-        <div class="form-group"><label>Precio (USD)</label><input type="number" id="new-product-price" placeholder="0.00" step="0.01" min="0"></div>
-        <div class="form-group"><label>ITBMS</label>
-          <select id="new-product-itbms"><option value="7">7%</option><option value="10">10%</option><option value="0">Sin ITBMS</option></select>
-        </div>
-        <div class="form-group"><label>&nbsp;</label><button class="btn btn-accent" onclick="addProduct()">+ Agregar</button></div>
       </div>
     </div>
   </div>
@@ -1700,6 +1683,42 @@
         <button onclick="cerrarModalQR()" class="btn btn-outline btn-sm" style="flex:1">
           Cerrar
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mis Productos -->
+<div id="productos-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:88vh;
+    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
+      <span style="font-weight:700;color:#fff;font-size:.95rem">📦 Mis Productos</span>
+      <button onclick="cerrarMisProductos()" style="background:none;border:none;
+        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div id="modal-product-list"></div>
+      <div style="background:var(--bg);border-radius:8px;padding:16px;margin-top:12px">
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;
+          letter-spacing:.08em;color:var(--muted);margin-bottom:12px">➕ Nuevo producto</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre</label>
+            <input type="text" id="modal-product-name" class="form-input" placeholder="Ej: Cabaña Doble"></div>
+          <div class="form-group"><label>Precio (USD)</label>
+            <input type="number" id="modal-product-price" class="form-input" placeholder="0.00" step="0.01" min="0"></div>
+          <div class="form-group"><label>ITBMS</label>
+            <select id="modal-product-itbms" class="form-input">
+              <option value="7">7%</option>
+              <option value="10">10%</option>
+              <option value="0">Sin ITBMS</option>
+            </select></div>
+          <div class="form-group" style="display:flex;align-items:flex-end">
+            <button class="btn btn-accent" onclick="addProductFromModal()" style="width:100%">+ Agregar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -5773,6 +5792,66 @@
     }
     return null;
   }
+
+  // ── Modal Mis Productos ────────────────────────────────────────────────────
+  function abrirMisProductos() {
+    renderModalProductList();
+    document.getElementById('productos-ov').style.display = 'flex';
+  }
+
+  function cerrarMisProductos() {
+    document.getElementById('productos-ov').style.display = 'none';
+    // Refrescar el selector de productos en la cotización
+    renderProductSelect();
+  }
+
+  function renderModalProductList() {
+    const el = document.getElementById('modal-product-list');
+    if (!el) return;
+    if (!products.length) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:12px 0">No hay productos aún. Agrega uno abajo.</p>';
+      return;
+    }
+    el.innerHTML = products.map((pr, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+        background:var(--bg);border-radius:8px;margin-bottom:8px;border:1.5px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.88rem;color:var(--ink)">${pr.name}</div>
+          <div style="font-size:.75rem;color:var(--muted)">$${parseFloat(pr.price).toFixed(2)} · ITBMS ${pr.itbms}%</div>
+        </div>
+        <button onclick="deleteProductFromModal(${i})" style="background:none;border:none;
+          color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;transition:color .2s"
+          onmouseover="this.style.color='#c0392b'" onmouseout="this.style.color='var(--muted)'">🗑</button>
+      </div>`).join('');
+  }
+
+  function addProductFromModal() {
+    const name  = document.getElementById('modal-product-name').value.trim();
+    const price = parseFloat(document.getElementById('modal-product-price').value) || 0;
+    const itbms = parseInt(document.getElementById('modal-product-itbms').value) || 7;
+    if (!name) { showToast('Ingresa el nombre del producto.', 'error'); return; }
+    if (price <= 0) { showToast('El precio debe ser mayor a 0.', 'error'); return; }
+    const newProduct = { id: `pr_${Date.now()}`, name, price, itbms };
+    products.push(newProduct);
+    saveProducts();
+    document.getElementById('modal-product-name').value  = '';
+    document.getElementById('modal-product-price').value = '';
+    renderModalProductList();
+    showToast(`✅ "${name}" agregado.`, 'success');
+  }
+
+  function deleteProductFromModal(i) {
+    const nombre = products[i]?.name || '';
+    if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+    products.splice(i, 1);
+    saveProducts();
+    renderModalProductList();
+    showToast('Producto eliminado.', 'success');
+  }
+
+  document.getElementById('productos-ov')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('productos-ov')) cerrarMisProductos();
+  });
 
 </script>
 </body>
