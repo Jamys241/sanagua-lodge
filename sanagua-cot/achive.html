@@ -48,6 +48,15 @@
     .side-menu nav button.active { color:white; background:rgba(255,255,255,.08); border-left-color:var(--accent); }
     .side-menu-divider { height:1px; background:rgba(255,255,255,.08); margin:8px 16px; }
     .side-menu-section-label { font-size:.62rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.25); padding:10px 24px 4px; }
+    /* Grupos desplegables */
+    .menu-group-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:13px 24px; background:none; border:none; color:rgba(255,255,255,.7); font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; border-left:3px solid transparent; transition:all .2s; }
+    .menu-group-btn:hover { background:rgba(255,255,255,.05); color:#fff; }
+    .menu-group-btn.open { color:#fff; border-left-color:var(--accent); }
+    .menu-group-arrow { font-size:.7rem; transition:transform .25s; opacity:.5; }
+    .menu-group-btn.open .menu-group-arrow { transform:rotate(180deg); opacity:1; }
+    .menu-group-items { overflow:hidden; max-height:0; transition:max-height .3s cubic-bezier(.4,0,.2,1); }
+    .menu-group-items.open { max-height:500px; }
+    .menu-group-items button { padding-left:36px; font-size:.88rem; border-left:none; }
 
     /* ── PERMISOS ── */
     .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -418,30 +427,49 @@
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="side-menu" id="side-menu">
   <nav>
-    <div class="side-menu-section-label">Reservas</div>
-    <button onclick="switchTab('calendario');closeMenu()">📅 Calendario</button>
-    <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
-    <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
-    <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
-    <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
+
+    <!-- Reservas -->
+    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
+      📅 Reservas <span class="menu-group-arrow">▼</span>
+    </button>
+    <div class="menu-group-items" id="grp-reservas">
+      <button onclick="switchTab('calendario');closeMenu()">📅 Calendario</button>
+      <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
+      <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
+      <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
+      <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
+    </div>
 
     <div class="side-menu-divider"></div>
-    <div class="side-menu-section-label">Mis Servicios</div>
-    <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
-    <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
-    <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
-    <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
+
+    <!-- Mis Servicios -->
+    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-servicios',this)">
+      🛎️ Mis Servicios <span class="menu-group-arrow">▼</span>
+    </button>
+    <div class="menu-group-items" id="grp-servicios">
+      <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
+      <button onclick="switchTab('precios');closeMenu()">💰 Precios Web</button>
+      <button onclick="switchTab('popular');closeMenu()">⭐ Populares Web</button>
+      <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú Web</button>
+    </div>
 
     <div class="side-menu-divider"></div>
-    <div class="side-menu-section-label">Sistema</div>
-    <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
-    <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
-    <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
-    <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
-    <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
+
+    <!-- Sistema -->
+    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-sistema',this)">
+      ⚙️ Sistema <span class="menu-group-arrow">▼</span>
+    </button>
+    <div class="menu-group-items" id="grp-sistema">
+      <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
+      <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
+      <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
+      <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
+      <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
+    </div>
 
     <div class="side-menu-divider"></div>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
+
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
@@ -5791,6 +5819,21 @@
       if (!val?.trim()) return `El campo "${label}" es obligatorio para ${tipo === 'natural' ? 'Persona Natural' : 'Persona Jurídica'}.`;
     }
     return null;
+  }
+
+
+  // ── Grupos desplegables del menú ──────────────────────────────────────────
+  function toggleMenuGroup(id, btn) {
+    const items = document.getElementById(id);
+    const isOpen = items.classList.contains('open');
+    // Cerrar todos primero
+    document.querySelectorAll('.menu-group-items').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.menu-group-btn').forEach(el => el.classList.remove('open'));
+    // Abrir el seleccionado si estaba cerrado
+    if (!isOpen) {
+      items.classList.add('open');
+      btn.classList.add('open');
+    }
   }
 
   // ── Modal Mis Productos ────────────────────────────────────────────────────
