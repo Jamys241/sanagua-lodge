@@ -47,6 +47,7 @@
     .side-menu nav button:hover { background:rgba(255,255,255,.06); color:white; }
     .side-menu nav button.active { color:white; background:rgba(255,255,255,.08); border-left-color:var(--accent); }
     .side-menu-divider { height:1px; background:rgba(255,255,255,.08); margin:8px 16px; }
+    .side-menu-section-label { font-size:.62rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.25); padding:10px 24px 4px; }
 
     /* ── PERMISOS ── */
     .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -417,23 +418,28 @@
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="side-menu" id="side-menu">
   <nav>
+    <div class="side-menu-section-label">Reservas</div>
     <button onclick="switchTab('calendario');closeMenu()">📅 Calendario</button>
-    <div class="side-menu-divider"></div>
     <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
     <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
     <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
+    <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
+
     <div class="side-menu-divider"></div>
-    <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
+    <div class="side-menu-section-label">Mis Servicios</div>
     <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
     <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
-    <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
-    <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
     <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
 
     <div class="side-menu-divider"></div>
+    <div class="side-menu-section-label">Sistema</div>
+    <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
+    <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
     <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
     <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
     <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
+
+    <div class="side-menu-divider"></div>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
