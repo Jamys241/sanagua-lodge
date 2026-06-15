@@ -48,15 +48,6 @@
     .side-menu nav button.active { color:white; background:rgba(255,255,255,.08); border-left-color:var(--accent); }
     .side-menu-divider { height:1px; background:rgba(255,255,255,.08); margin:8px 16px; }
     .side-menu-section-label { font-size:.62rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.25); padding:10px 24px 4px; }
-    /* Grupos desplegables */
-    .menu-group-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:13px 24px; background:none; border:none; color:rgba(255,255,255,.7); font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; border-left:3px solid transparent; transition:all .2s; }
-    .menu-group-btn:hover { background:rgba(255,255,255,.05); color:#fff; }
-    .menu-group-btn.open { color:#fff; border-left-color:var(--accent); }
-    .menu-group-arrow { font-size:.7rem; transition:transform .25s; opacity:.5; }
-    .menu-group-btn.open .menu-group-arrow { transform:rotate(180deg); opacity:1; }
-    .menu-group-items { overflow:hidden; max-height:0; transition:max-height .3s cubic-bezier(.4,0,.2,1); }
-    .menu-group-items.open { max-height:500px; }
-    .menu-group-items button { padding-left:36px; font-size:.88rem; border-left:none; }
 
     /* ── PERMISOS ── */
     .perm-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -423,69 +414,34 @@
   </button>
 </header>
 
-<!-- Cintillo de cuenta atrás de bloqueo -->
-<div id="suscrip-banner" style="display:none;background:#7a1f1f;color:#fff;padding:7px 16px;
-  text-align:center;font-size:.78rem;font-weight:600;letter-spacing:.02em">
-  ⏳ El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
-</div>
-
 <!-- Overlay y menú lateral -->
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="side-menu" id="side-menu">
   <nav>
-
-    <!-- Reservas -->
-    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
-      📅 Reservas <span class="menu-group-arrow">▼</span>
-    </button>
-    <div class="menu-group-items" id="grp-reservas">
-      <button onclick="switchTab('calendario');closeMenu()">📅 Calendario</button>
-      <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
-      <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
-      <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
-      <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
-    </div>
+    <div class="side-menu-section-label">Reservas</div>
+    <button onclick="switchTab('calendario');closeMenu()">📅 Calendario</button>
+    <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
+    <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
+    <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
+    <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
 
     <div class="side-menu-divider"></div>
-
-    <!-- Mis Servicios -->
-    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-servicios',this)">
-      🛎️ Mis Servicios <span class="menu-group-arrow">▼</span>
-    </button>
-    <div class="menu-group-items" id="grp-servicios">
-      <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
-      <button onclick="switchTab('precios');closeMenu()">💰 Precios Web</button>
-      <button onclick="switchTab('popular');closeMenu()">⭐ Populares Web</button>
-      <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú Web</button>
-    </div>
+    <div class="side-menu-section-label">Mis Servicios</div>
+    <button onclick="switchTab('precios');closeMenu()">💰 Precios</button>
+    <button onclick="switchTab('popular');closeMenu()">⭐ Populares</button>
+    <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú</button>
+    <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
 
     <div class="side-menu-divider"></div>
-
-    <!-- Suscrip -->
-    <button class="menu-group-btn" id="btn-grp-suscrip" onclick="toggleMenuGroup('grp-suscrip',this)" style="display:none">
-      🔒 Suscrip. <span class="menu-group-arrow">▼</span>
-    </button>
-    <div class="menu-group-items" id="grp-suscrip">
-      <button onclick="abrirModalSuscripcion();closeMenu()">🔒 Control de Bloqueo</button>
-    </div>
-
-    <div class="side-menu-divider"></div>
-
-    <!-- Sistema -->
-    <button class="menu-group-btn" onclick="toggleMenuGroup('grp-sistema',this)">
-      ⚙️ Sistema <span class="menu-group-arrow">▼</span>
-    </button>
-    <div class="menu-group-items" id="grp-sistema">
-      <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
-      <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
-      <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
-      <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
-      <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
-    </div>
+    <div class="side-menu-section-label">Sistema</div>
+    <button onclick="switchTab('usuarios');closeMenu()">👥 Usuarios</button>
+    <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
+    <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
+    <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
+    <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
 
     <div class="side-menu-divider"></div>
     <button onclick="cerrarSesion()" style="color:#e88;">🚪 Cerrar sesión</button>
-
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
@@ -1768,142 +1724,6 @@
   </div>
 </div>
 
-<!-- Modal Control de Bloqueo / Suscripción -->
-<div id="suscrip-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:88vh;
-    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
-      justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
-      <span style="font-weight:700;color:#fff;font-size:.95rem">🔒 Control de Bloqueo</span>
-      <button onclick="cerrarModalSuscripcion()" style="background:none;border:none;
-        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:22px">
-
-      <!-- Estado actual -->
-      <div id="suscrip-estado-box" style="background:var(--bg);border:1.5px solid var(--border);
-        border-radius:10px;padding:16px;margin-bottom:18px;text-align:center">
-        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px">
-          Estado actual del sistema
-        </div>
-        <div id="suscrip-estado-lbl" style="font-size:1.1rem;font-weight:800;color:var(--success)">
-          ✅ Activo
-        </div>
-        <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
-      </div>
-
-      <!-- Bloqueo inmediato -->
-      <div style="background:#fff5f5;border:1.5px solid #f0c0c0;border-radius:10px;padding:16px;margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px">⛔ Bloqueo inmediato</div>
-        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
-          Bloquea el sistema al instante. Solo el SuperAdmin podrá acceder.
-        </p>
-        <button class="btn" style="background:#c0392b;color:#fff;width:100%" onclick="bloquearAhora()">
-          ⛔ Bloquear sistema ahora
-        </button>
-      </div>
-
-      <!-- Programar cuenta atrás -->
-      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:12px">⏳ Programar cuenta atrás</div>
-        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-          <div class="form-group" style="margin:0;flex:1;min-width:90px">
-            <label>Cantidad</label>
-            <input type="number" id="suscrip-cantidad" class="form-input" min="1" value="1" step="1">
-          </div>
-          <div class="form-group" style="margin:0;flex:1;min-width:110px">
-            <label>Unidad</label>
-            <select id="suscrip-unidad" class="form-input">
-              <option value="horas">Horas</option>
-              <option value="dias" selected>Días</option>
-              <option value="meses">Meses</option>
-              <option value="anos">Años</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-accent" style="width:100%;margin-top:10px" onclick="programarBloqueo()">
-          ⏳ Programar cuenta atrás
-        </button>
-      </div>
-
-      <!-- Contraseña maestra de desbloqueo -->
-      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
-        padding:16px;margin-top:18px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
-          🔐 Contraseña maestra de desbloqueo
-        </div>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
-          Contraseña fija que solo tú conoces. Funciona desde cualquier dispositivo para desbloquear el sistema sin límite de usos.
-        </p>
-        <div style="display:flex;gap:8px">
-          <input type="password" id="suscrip-master-pass" class="form-input" placeholder="Tu contraseña maestra" style="flex:1">
-          <button class="btn btn-accent" onclick="guardarPasswordMaestra()">💾</button>
-        </div>
-        <div id="master-pass-msg" style="font-size:.76rem;min-height:16px;margin-top:6px;text-align:center"></div>
-      </div>
-
-      <!-- Quitar bloqueo -->
-      <button class="btn btn-outline" style="width:100%;margin-top:18px" onclick="quitarBloqueo()">
-        ✅ Quitar bloqueo / Reactivar sistema
-      </button>
-
-      <!-- Código de un solo uso para el Admin -->
-      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
-        padding:16px;margin-top:18px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
-          🔑 Código de desbloqueo de un solo uso
-        </div>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
-          Genera un código de 5 dígitos para que el Admin pueda desbloquear el sistema una sola vez, sin conocer la contraseña maestra.
-        </p>
-        <div id="codigo-actual-box" style="display:none;text-align:center;background:var(--surface);
-          border:1.5px dashed var(--accent);border-radius:8px;padding:14px;margin-bottom:10px">
-          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">
-            Código activo
-          </div>
-          <div id="codigo-actual-num" style="font-size:1.6rem;font-weight:800;letter-spacing:.2em;color:var(--accent)"></div>
-        </div>
-        <button class="btn btn-accent" style="width:100%" onclick="generarCodigoTemporal()">
-          🎲 Generar nuevo código
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- Pantalla de bloqueo total -->
-<div id="lock-screen" style="display:none;position:fixed;inset:0;z-index:9999;
-  background:var(--ink);color:#fff;align-items:center;justify-content:center;
-  flex-direction:column;text-align:center;padding:24px">
-  <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
-  <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">Sistema desactivado</div>
-  <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6;margin-bottom:24px">
-    El acceso a este sistema ha sido suspendido temporalmente. Contacta al administrador para más información.
-  </div>
-
-  <!-- Formulario de desbloqueo -->
-  <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
-    border-radius:12px;padding:20px;max-width:320px;width:100%">
-    <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);
-      text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
-      🔑 Código de desbloqueo
-    </div>
-    <input type="text" id="lock-codigo" placeholder="Ingresa el código"
-      style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.04);color:#fff;font-family:inherit;font-size:.95rem;
-      text-align:center;letter-spacing:.1em;margin-bottom:10px;outline:none"
-      onkeydown="if(event.key==='Enter')intentarDesbloqueo()">
-    <button onclick="intentarDesbloqueo()" style="width:100%;padding:11px;border:none;
-      border-radius:8px;background:var(--accent);color:#fff;font-family:inherit;
-      font-size:.85rem;font-weight:700;cursor:pointer">
-      Desbloquear
-    </button>
-    <div id="lock-error" style="font-size:.78rem;color:#ff8a7a;min-height:18px;margin-top:8px"></div>
-  </div>
-</div>
-
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
 </div>
@@ -2221,9 +2041,6 @@
       startPolling();
       // Inicializar controles de polling en configuración
       setTimeout(initPollControls, 500);
-      // Sistema de bloqueo por suscripción
-      initSuscripVisibility();
-      cargarSuscripcion();
     })();
   });
 
@@ -5976,21 +5793,6 @@
     return null;
   }
 
-
-  // ── Grupos desplegables del menú ──────────────────────────────────────────
-  function toggleMenuGroup(id, btn) {
-    const items = document.getElementById(id);
-    const isOpen = items.classList.contains('open');
-    // Cerrar todos primero
-    document.querySelectorAll('.menu-group-items').forEach(el => el.classList.remove('open'));
-    document.querySelectorAll('.menu-group-btn').forEach(el => el.classList.remove('open'));
-    // Abrir el seleccionado si estaba cerrado
-    if (!isOpen) {
-      items.classList.add('open');
-      btn.classList.add('open');
-    }
-  }
-
   // ── Modal Mis Productos ────────────────────────────────────────────────────
   function abrirMisProductos() {
     renderModalProductList();
@@ -6050,346 +5852,6 @@
   document.getElementById('productos-ov')?.addEventListener('click', e => {
     if (e.target === document.getElementById('productos-ov')) cerrarMisProductos();
   });
-
-  // ══════════════════════════════════════════════════════════════════════
-  // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN
-  // ══════════════════════════════════════════════════════════════════════
-  let _suscripData = null;
-  let _suscripTimer = null;
-
-  // Mostrar el botón "Suscrip." solo para SuperAdmin
-  function initSuscripVisibility() {
-    const btn = document.getElementById('btn-grp-suscrip');
-    if (btn) btn.style.display = currentUser?.role === 'superadmin' ? '' : 'none';
-  }
-
-  // Cargar estado de suscripción — llamado al iniciar sesión
-  async function cargarSuscripcion() {
-    try {
-      const res = await ghRead('suscripcion.json');
-      _suscripData = res?.data || { bloqueado: false, expira_en: null, sha: res?.sha };
-      _suscripData.sha = res?.sha;
-    } catch {
-      _suscripData = { bloqueado: false, expira_en: null, sha: null };
-    }
-    aplicarEstadoSuscripcion();
-  }
-
-  // Aplicar el estado: bloquear pantalla o mostrar cintillo
-  function aplicarEstadoSuscripcion() {
-    const isSuper = currentUser?.role === 'superadmin';
-    const data = _suscripData || {};
-    const ahora = Date.now();
-    const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
-
-    // Determinar si está efectivamente bloqueado
-    const bloqueadoInmediato = !!data.bloqueado;
-    const expirado = expiraEn && ahora >= expiraEn;
-    const estaBloqueado = bloqueadoInmediato || expirado;
-
-    clearInterval(_suscripTimer);
-    const banner = document.getElementById('suscrip-banner');
-    const lockScreen = document.getElementById('lock-screen');
-
-    if (estaBloqueado) {
-      if (isSuper) {
-        // SuperAdmin puede seguir usando, pero ve un cintillo de aviso
-        if (banner) {
-          banner.style.display = 'block';
-          banner.style.background = '#7a1f1f';
-          document.getElementById('suscrip-countdown').textContent = '🔒 SISTEMA BLOQUEADO (solo tú puedes acceder)';
-        }
-        if (lockScreen) lockScreen.style.display = 'none';
-      } else {
-        // Admin normal: pantalla de bloqueo total
-        if (lockScreen) lockScreen.style.display = 'flex';
-        if (banner) banner.style.display = 'none';
-        // Bloquear scroll
-        document.body.style.overflow = 'hidden';
-      }
-      return;
-    }
-
-    // No está bloqueado — pantalla normal
-    if (lockScreen) lockScreen.style.display = 'none';
-    document.body.style.overflow = '';
-
-    // Si hay countdown activo, mostrar cintillo con cuenta atrás
-    if (expiraEn && expiraEn > ahora) {
-      if (banner) banner.style.display = 'block';
-      _suscripTimer = setInterval(() => {
-        const left = expiraEn - Date.now();
-        if (left <= 0) {
-          clearInterval(_suscripTimer);
-          aplicarEstadoSuscripcion(); // re-evaluar → ahora estará bloqueado
-          return;
-        }
-        document.getElementById('suscrip-countdown').textContent = formatCountdown(left);
-      }, 1000);
-      // Disparar inmediatamente
-      const left = expiraEn - ahora;
-      document.getElementById('suscrip-countdown').textContent = formatCountdown(left);
-    } else {
-      if (banner) banner.style.display = 'none';
-    }
-  }
-
-  function formatCountdown(ms) {
-    let totalSec = Math.floor(ms / 1000);
-    const d = Math.floor(totalSec / 86400); totalSec %= 86400;
-    const h = Math.floor(totalSec / 3600);  totalSec %= 3600;
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    const parts = [];
-    if (d > 0) parts.push(`${d}d`);
-    parts.push(`${String(h).padStart(2,'0')}h`);
-    parts.push(`${String(m).padStart(2,'0')}m`);
-    parts.push(`${String(s).padStart(2,'0')}s`);
-    return parts.join(' ');
-  }
-
-  // ── Modal ────────────────────────────────────────────────────────────────
-  function abrirModalSuscripcion() {
-    renderSuscripEstado();
-    cargarPasswordMaestra();
-    document.getElementById('suscrip-ov').style.display = 'flex';
-  }
-  function cerrarModalSuscripcion() {
-    document.getElementById('suscrip-ov').style.display = 'none';
-  }
-  document.getElementById('suscrip-ov')?.addEventListener('click', e => {
-    if (e.target === document.getElementById('suscrip-ov')) cerrarModalSuscripcion();
-  });
-
-  function renderSuscripEstado() {
-    const data = _suscripData || {};
-    const lbl = document.getElementById('suscrip-estado-lbl');
-    const det = document.getElementById('suscrip-estado-detalle');
-    const ahora = Date.now();
-    const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
-    const expirado = expiraEn && ahora >= expiraEn;
-
-    if (data.bloqueado || expirado) {
-      lbl.textContent = '⛔ Bloqueado';
-      lbl.style.color = '#c0392b';
-      det.textContent = data.bloqueado
-        ? 'Bloqueo manual activo.'
-        : `Expiró el ${new Date(expiraEn).toLocaleString('es-PA')}`;
-    } else if (expiraEn) {
-      lbl.textContent = '⏳ Cuenta atrás activa';
-      lbl.style.color = '#b45309';
-      det.textContent = `Se bloqueará: ${new Date(expiraEn).toLocaleString('es-PA')}`;
-    } else {
-      lbl.textContent = '✅ Activo';
-      lbl.style.color = 'var(--success)';
-      det.textContent = 'Sin restricciones programadas.';
-    }
-
-    // Mostrar código temporal activo, si existe
-    const codBox = document.getElementById('codigo-actual-box');
-    const codNum = document.getElementById('codigo-actual-num');
-    if (data.codigo_temporal && codBox && codNum) {
-      codNum.textContent = data.codigo_temporal;
-      codBox.style.display = 'block';
-    } else if (codBox) {
-      codBox.style.display = 'none';
-    }
-  }
-
-  // ── Contraseña maestra de desbloqueo ────────────────────────────────────
-  async function cargarPasswordMaestra() {
-    try {
-      const res = await ghRead('auth.json');
-      const pass = res?.data?.superadmin?.unlock_password || '';
-      document.getElementById('suscrip-master-pass').value = pass;
-    } catch {}
-  }
-
-  async function guardarPasswordMaestra() {
-    const msgEl = document.getElementById('master-pass-msg');
-    const pass  = document.getElementById('suscrip-master-pass').value.trim();
-    if (!pass || pass.length < 4) {
-      msgEl.style.color = 'var(--red)';
-      msgEl.textContent = 'Mínimo 4 caracteres.';
-      return;
-    }
-    showLoading(true);
-    try {
-      const res = await ghRead('auth.json');
-      const auth = res?.data || {};
-      auth.superadmin = auth.superadmin || {};
-      auth.superadmin.unlock_password = pass;
-      const ok = await ghWrite('auth.json', auth, res?.sha);
-      if (!ok) throw new Error();
-      msgEl.style.color = 'var(--success)';
-      msgEl.textContent = '✅ Guardada correctamente.';
-      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
-    } catch {
-      msgEl.style.color = 'var(--red)';
-      msgEl.textContent = '❌ Error al guardar.';
-    } finally { showLoading(false); }
-  }
-
-  // ── Código temporal de un solo uso ──────────────────────────────────────
-  async function generarCodigoTemporal() {
-    const codigo = String(Math.floor(10000 + Math.random() * 90000)); // 5 dígitos
-    const nuevaData = { ..._suscripData, codigo_temporal: codigo };
-    delete nuevaData.sha;
-    const ok = await guardarSuscripcion(nuevaData);
-    if (ok) showToast(`🎲 Código generado: ${codigo}`, 'success');
-  }
-
-  // ── Pantalla de bloqueo: intentar desbloqueo ────────────────────────────
-  async function intentarDesbloqueo() {
-    const input = document.getElementById('lock-codigo');
-    const errEl = document.getElementById('lock-error');
-    const valor = input.value.trim();
-    errEl.textContent = '';
-
-    if (!valor) { errEl.textContent = 'Ingresa un código.'; return; }
-
-    try {
-      // Releer auth.json y suscripcion.json frescos
-      const [authRes, suscripRes] = await Promise.all([
-        ghRead('auth.json'),
-        ghRead('suscripcion.json'),
-      ]);
-      const authData2 = authRes?.data || {};
-      const suscrip2  = suscripRes?.data || {};
-      const masterPass = authData2.superadmin?.unlock_password || '';
-
-      let valido = false;
-      let esCodigoTemporal = false;
-
-      // 1. Contraseña fija maestra (siempre válida)
-      if (masterPass && valor === masterPass) {
-        valido = true;
-      }
-      // 2. Código temporal de un solo uso
-      else if (suscrip2.codigo_temporal && valor === suscrip2.codigo_temporal) {
-        valido = true;
-        esCodigoTemporal = true;
-      }
-
-      if (!valido) {
-        errEl.textContent = '❌ Código incorrecto.';
-        input.value = '';
-        return;
-      }
-
-      // Desbloquear: reactivar sistema
-      const nuevaData = { bloqueado: false, expira_en: null };
-      if (esCodigoTemporal) nuevaData.codigo_temporal = null; // consumir código de un solo uso
-      else nuevaData.codigo_temporal = suscrip2.codigo_temporal || null; // preservar si no se usó
-
-      const ok = await ghWrite('suscripcion.json', nuevaData, suscripRes?.sha);
-      if (!ok) { errEl.textContent = '❌ Error al desbloquear. Intenta de nuevo.'; return; }
-
-      // Sincronizar copia pública
-      ghWritePublico('suscripcion-publica.json', {
-        bloqueado: false, expira_en: null, mensaje: null, updated_at: new Date().toISOString(),
-      }).catch(()=>{});
-
-      // Recargar estado y ocultar pantalla de bloqueo
-      const res = await ghRead('suscripcion.json');
-      _suscripData = res?.data || nuevaData;
-      _suscripData.sha = res?.sha;
-      document.getElementById('lock-screen').style.display = 'none';
-      document.body.style.overflow = '';
-      aplicarEstadoSuscripcion();
-      showToast('✅ Sistema desbloqueado.', 'success');
-    } catch {
-      errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
-    }
-  }
-
-  // Escribir un archivo en el repo público (Data/json/)
-  async function ghWritePublico(filename, data) {
-    const token   = localStorage.getItem('gh_token')        || '';
-    const repoPub = localStorage.getItem('gh_repo_public')  || '';
-    const branch  = localStorage.getItem('gh_branch')       || 'main';
-    if (!token || !repoPub) return false;
-    try {
-      // Verificar si ya existe (para SHA)
-      let sha = null;
-      try {
-        const chk = await fetch(
-          `https://api.github.com/repos/${repoPub}/contents/Data/json/${filename}?ref=${branch}`,
-          { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
-        );
-        if (chk.ok) { const d = await chk.json(); sha = d.sha; }
-      } catch {}
-
-      const json = JSON.stringify(data, null, 2);
-      let bin = ''; new TextEncoder().encode(json).forEach(b => bin += String.fromCharCode(b));
-      const payload = { message: `update ${filename}`, content: btoa(bin), branch };
-      if (sha) payload.sha = sha;
-
-      const r = await fetch(
-        `https://api.github.com/repos/${repoPub}/contents/Data/json/${filename}`,
-        { method:'PUT', headers:{ 'Authorization':`token ${token}`, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json' }, body: JSON.stringify(payload) }
-      );
-      return r.ok;
-    } catch { return false; }
-  }
-
-  async function guardarSuscripcion(data) {
-    showLoading(true);
-    try {
-      const ok = await ghWrite('suscripcion.json', data, _suscripData?.sha);
-      if (!ok) throw new Error();
-      // Recargar para obtener el nuevo sha
-      const res = await ghRead('suscripcion.json');
-      _suscripData = res?.data || data;
-      _suscripData.sha = res?.sha;
-      renderSuscripEstado();
-      aplicarEstadoSuscripcion();
-      // Sincronizar copia pública (visible para todos los visitantes del sitio)
-      ghWritePublico('suscripcion-publica.json', {
-        bloqueado:  data.bloqueado,
-        expira_en:  data.expira_en,
-        mensaje:    data.bloqueado || data.expira_en
-          ? 'El sistema de reservas estará temporalmente fuera de servicio.'
-          : null,
-        updated_at: new Date().toISOString(),
-      }).catch(()=>{});
-      return true;
-    } catch {
-      showToast('❌ Error al guardar la configuración.', 'error');
-      return false;
-    } finally { showLoading(false); }
-  }
-
-  async function bloquearAhora() {
-    if (!confirm('¿Bloquear el sistema inmediatamente? Solo el SuperAdmin podrá acceder.')) return;
-    const ok = await guardarSuscripcion({ bloqueado: true, expira_en: null });
-    if (ok) showToast('⛔ Sistema bloqueado.', 'success');
-  }
-
-  async function quitarBloqueo() {
-    const ok = await guardarSuscripcion({ bloqueado: false, expira_en: null });
-    if (ok) showToast('✅ Sistema reactivado.', 'success');
-  }
-
-  async function programarBloqueo() {
-    const cantidad = parseInt(document.getElementById('suscrip-cantidad').value) || 0;
-    const unidad   = document.getElementById('suscrip-unidad').value;
-    if (cantidad <= 0) { showToast('Ingresa una cantidad válida.', 'error'); return; }
-
-    const ms = {
-      horas: 3600000,
-      dias:  86400000,
-      meses: 30 * 86400000,
-      anos:  365 * 86400000,
-    }[unidad] * cantidad;
-
-    const expiraEn = new Date(Date.now() + ms).toISOString();
-    const ok = await guardarSuscripcion({ bloqueado: false, expira_en: expiraEn });
-    if (ok) {
-      const unidadLbl = {horas:'horas', dias:'días', meses:'meses', anos:'años'}[unidad];
-      showToast(`⏳ Cuenta atrás programada: ${cantidad} ${unidadLbl}.`, 'success');
-    }
-  }
 
 </script>
 </body>
