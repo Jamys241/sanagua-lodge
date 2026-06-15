@@ -6376,10 +6376,16 @@
     if (idEl)  idEl.value  = cfg.id;
     const statusEl = document.getElementById('jsonbin-status');
     if (statusEl) {
-      statusEl.textContent = cfg.key && cfg.id
-        ? `✅ Configurado · Bin ID: ${cfg.id}`
-        : '⚠️ No configurado — el bloqueo solo afecta a dispositivos con token.';
-      statusEl.style.color = cfg.key && cfg.id ? 'var(--success)' : 'var(--muted)';
+      if (cfg.key && cfg.id) {
+        statusEl.innerHTML = `✅ Configurado · Bin ID: <strong>${cfg.id}</strong>`
+          + `<br><span style="color:var(--muted)">⚠️ IMPORTANTE: para que el bloqueo afecte a TODOS los visitantes (sin token), `
+          + `copia este Bin ID y pégalo en la constante <code>JSONBIN_BIN_ID_FALLBACK</code> dentro de <code>index.html</code> (página pública). `
+          + `Esto solo se hace una vez.</span>`;
+        statusEl.style.color = 'var(--success)';
+      } else {
+        statusEl.textContent = '⚠️ No configurado — el bloqueo solo afecta a dispositivos con token.';
+        statusEl.style.color = 'var(--muted)';
+      }
     }
   }
 
