@@ -163,10 +163,14 @@
 </header>
 
 <!-- Barra de configuración de repo público -->
-<div id="config-bar" style="background:#2a1f18;padding:8px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.06)">
-  <span style="font-size:.75rem;color:rgba(255,255,255,.5)">📁 Imágenes se guardan en repo público:</span>
+<div id="config-bar" style="background:#2a1f18;padding:10px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.06)">
+  <span id="config-icon" style="font-size:.9rem">📁</span>
+  <span id="config-text" style="font-size:.75rem;color:rgba(255,255,255,.5)">Imágenes se guardan en repo público:</span>
   <code id="config-repo-pub" style="font-size:.75rem;color:var(--gold)">—</code>
-  <span style="font-size:.75rem;color:rgba(255,255,255,.3)">→ assets/images/restaurante/ → GitHub Pages</span>
+  <span style="font-size:.75rem;color:rgba(255,255,255,.3)">→ assets/images/restaurante/</span>
+  <button id="btn-config-repo-pub" onclick="configurarRepoPublico()" style="margin-left:auto;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.7);
+    font-size:.72rem;padding:5px 12px;cursor:pointer;font-family:inherit">⚙️ Configurar</button>
 </div>
 
 <div class="layout">
@@ -199,8 +203,55 @@
   const GB = localStorage.getItem('gh_branch') || 'main';
   // Repo público (GitHub Pages) — guarda en localStorage como gh_repo_public
   // Formato: "usuario/nombre-repo-publico"
-  // Si no está configurado, usa el mismo repo privado como fallback
-  const GR_PUBLIC = localStorage.getItem('gh_repo_public') || GR;
+  let GR_PUBLIC = localStorage.getItem('gh_repo_public') || '';
+
+  function actualizarConfigBar() {
+    const el      = document.getElementById('config-repo-pub');
+    const icon    = document.getElementById('config-icon');
+    const text    = document.getElementById('config-text');
+    const bar     = document.getElementById('config-bar');
+    const usandoPrivado = !localStorage.getItem('gh_repo_public');
+
+    if (!GR_PUBLIC) {
+      // Sin repo público configurado en absoluto
+      el.textContent   = 'NO CONFIGURADO';
+      el.style.color   = '#ff8a7a';
+      icon.textContent = '⚠️';
+      text.textContent = 'Configura el repo público para que las imágenes sean visibles:';
+      bar.style.background = '#3a1a1a';
+    } else if (usandoPrivado) {
+      el.textContent   = GR_PUBLIC + ' (= repo privado ⚠️)';
+      el.style.color   = '#ffaa50';
+      icon.textContent = '⚠️';
+      text.textContent = 'Atención: usando el repo privado como público. Las imágenes NO serán visibles. Configura:';
+      bar.style.background = '#3a2a1a';
+    } else {
+      el.textContent   = GR_PUBLIC;
+      el.style.color   = 'var(--gold)';
+      icon.textContent = '📁';
+      text.textContent = 'Imágenes se guardan en repo público:';
+      bar.style.background = '#2a1f18';
+    }
+  }
+
+  function configurarRepoPublico() {
+    const actual = localStorage.getItem('gh_repo_public') || '';
+    const val = prompt(
+      'Ingresa el repo público (GitHub Pages) en formato:\nusuario/nombre-repositorio\n\nEjemplo: sanagua/sanagua-web',
+      actual
+    );
+    if (val === null) return; // cancelado
+    const trimmed = val.trim();
+    if (!trimmed || !trimmed.includes('/')) {
+      showToast('Formato inválido. Usa: usuario/repositorio', 'error');
+      return;
+    }
+    localStorage.setItem('gh_repo_public', trimmed);
+    GR_PUBLIC = trimmed;
+    actualizarConfigBar();
+    showToast('✅ Repo público configurado correctamente.', 'success');
+  }
+
 
   // ── Verificar sesión ────────────────────────────────────────────────
   (function(){
@@ -263,9 +314,7 @@
 
   // ── Init ────────────────────────────────────────────────────────────
   async function init() {
-    // Mostrar repo público en barra de config
-    const el = document.getElementById('config-repo-pub');
-    if (el) el.textContent = GR_PUBLIC || 'No configurado';
+    actualizarConfigBar();
 
     if (!GT || !GR) {
       document.getElementById('main-content').innerHTML = `
@@ -376,6 +425,7 @@
 
   // ── Subir imagen a repo público (GitHub Pages) ───────────────────────
   async function uploadImagen(file, catId, platoNombre) {
+    if (!GR_PUBLIC) throw new Error('Repo público no configurado');
     const ext   = file.name.split('.').pop().toLowerCase() || 'jpg';
     const slug  = platoNombre.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').slice(0,30);
     const fname = `${catId}-${slug}-${Date.now()}.${ext}`;
@@ -559,6 +609,11 @@
     if (file.size > 5 * 1024 * 1024) {
       showToast('La foto supera 5 MB. Comprime la imagen antes de subirla.', 'error');
       return;
+    }
+    if (!GR_PUBLIC || GR_PUBLIC === GR) {
+      showToast('⚠️ Configura el repo público antes de subir imágenes (botón ⚙️ Configurar arriba).', 'error');
+      configurarRepoPublico();
+      if (!GR_PUBLIC || GR_PUBLIC === GR) return; // si sigue sin configurar, abortar
     }
 
     const reader = new FileReader();
