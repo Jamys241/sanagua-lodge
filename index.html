@@ -1940,10 +1940,14 @@
   }
 
   const JSONBIN_API_PUB = 'https://api.jsonbin.io/v3';
+  // Bin ID público de solo-lectura para el estado del sistema.
+  // Se rellena automáticamente cuando el SuperAdmin configura JSONBin desde el panel
+  // de administración (Suscrip. → Bloqueo público). Es un identificador, no una clave secreta.
+  const JSONBIN_BIN_ID_FALLBACK = '';
 
   async function cargarSuscripcionPub() {
     // 1. Prioridad: leer desde JSONBin (sin token, accesible para todos)
-    const binId = localStorage.getItem('jsonbin_id') || '';
+    const binId = localStorage.getItem('jsonbin_id') || JSONBIN_BIN_ID_FALLBACK;
     if (binId) {
       try {
         const r = await fetch(`${JSONBIN_API_PUB}/b/${binId}/latest`, {
