@@ -6128,6 +6128,36 @@
     }
   }
 
+  // Escribir un archivo en el repo público (Data/json/)
+  async function ghWritePublico(filename, data) {
+    const token   = localStorage.getItem('gh_token')        || '';
+    const repoPub = localStorage.getItem('gh_repo_public')  || '';
+    const branch  = localStorage.getItem('gh_branch')       || 'main';
+    if (!token || !repoPub) return false;
+    try {
+      // Verificar si ya existe (para SHA)
+      let sha = null;
+      try {
+        const chk = await fetch(
+          `https://api.github.com/repos/${repoPub}/contents/Data/json/${filename}?ref=${branch}`,
+          { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+        );
+        if (chk.ok) { const d = await chk.json(); sha = d.sha; }
+      } catch {}
+
+      const json = JSON.stringify(data, null, 2);
+      let bin = ''; new TextEncoder().encode(json).forEach(b => bin += String.fromCharCode(b));
+      const payload = { message: `update ${filename}`, content: btoa(bin), branch };
+      if (sha) payload.sha = sha;
+
+      const r = await fetch(
+        `https://api.github.com/repos/${repoPub}/contents/Data/json/${filename}`,
+        { method:'PUT', headers:{ 'Authorization':`token ${token}`, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json' }, body: JSON.stringify(payload) }
+      );
+      return r.ok;
+    } catch { return false; }
+  }
+
   async function guardarSuscripcion(data) {
     showLoading(true);
     try {
@@ -6139,6 +6169,15 @@
       _suscripData.sha = res?.sha;
       renderSuscripEstado();
       aplicarEstadoSuscripcion();
+      // Sincronizar copia pública (visible para todos los visitantes del sitio)
+      ghWritePublico('suscripcion-publica.json', {
+        bloqueado:  data.bloqueado,
+        expira_en:  data.expira_en,
+        mensaje:    data.bloqueado || data.expira_en
+          ? 'El sistema de reservas estará temporalmente fuera de servicio.'
+          : null,
+        updated_at: new Date().toISOString(),
+      }).catch(()=>{});
       return true;
     } catch {
       showToast('❌ Error al guardar la configuración.', 'error');
