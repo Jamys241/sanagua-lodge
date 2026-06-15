@@ -1893,10 +1893,12 @@
   <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
   <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px;font-family:'Cormorant Garamond',serif">Sistema desactivado</div>
   <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6;margin-bottom:24px">
-    El acceso a este sistema ha sido suspendido temporalmente. Si tienes un código de acceso, ingrésalo abajo.
+    El acceso a este sistema ha sido suspendido temporalmente.
+    <span id="lock-msg-token">Si tienes un código de acceso, ingrésalo abajo.</span>
+    <span id="lock-msg-notoken" style="display:none">Contacta al administrador para más información.</span>
   </div>
 
-  <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  <div id="lock-form-box" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
     border-radius:12px;padding:20px;max-width:320px;width:100%">
     <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);
       text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
@@ -1937,8 +1939,28 @@
     return parts.join(' ');
   }
 
+  const JSONBIN_API_PUB = 'https://api.jsonbin.io/v3';
+
   async function cargarSuscripcionPub() {
-    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return; // sin token configurado: no aplica
+    // 1. Prioridad: leer desde JSONBin (sin token, accesible para todos)
+    const binId = localStorage.getItem('jsonbin_id') || '';
+    if (binId) {
+      try {
+        const r = await fetch(`${JSONBIN_API_PUB}/b/${binId}/latest`, {
+          headers: { 'X-Bin-Meta': 'false' },
+          cache: 'no-store',
+        });
+        if (r.ok) {
+          const data = await r.json();
+          _suscripDataPub = data?.record || data;
+          aplicarEstadoSuscripcionPub();
+          return;
+        }
+      } catch {}
+    }
+
+    // 2. Fallback: si el dispositivo tiene token (Admin/SuperAdmin), leer de GitHub
+    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return;
     try {
       const res = await webGhRead('suscripcion.json');
       _suscripDataPub = res?.data || { bloqueado:false, expira_en:null, codigo_temporal:null };
@@ -1962,6 +1984,14 @@
       if (lockScreen) lockScreen.style.display = 'flex';
       if (banner) banner.style.display = 'none';
       document.body.style.overflow = 'hidden';
+      // Mostrar formulario de código solo si el dispositivo tiene token (Admin/SuperAdmin)
+      const tieneToken = !!(WEB_GH_TOKEN && WEB_GH_REPO);
+      const formBox  = document.getElementById('lock-form-box');
+      const msgToken = document.getElementById('lock-msg-token');
+      const msgNo    = document.getElementById('lock-msg-notoken');
+      if (formBox)  formBox.style.display  = tieneToken ? 'block' : 'none';
+      if (msgToken) msgToken.style.display = tieneToken ? 'inline' : 'none';
+      if (msgNo)    msgNo.style.display    = tieneToken ? 'none' : 'inline';
       return;
     }
 
@@ -2013,6 +2043,16 @@
         document.getElementById('lock-screen').style.display = 'none';
         document.body.style.overflow = '';
         aplicarEstadoSuscripcionPub();
+        // Sincronizar JSONBin para que el bloqueo público desaparezca para todos
+        const binId = localStorage.getItem('jsonbin_id') || '';
+        const binKey = localStorage.getItem('jsonbin_key') || '';
+        if (binId && binKey) {
+          fetch(`${JSONBIN_API_PUB}/b/${binId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': binKey },
+            body: JSON.stringify({ ...nuevaData, unlock_password: masterPass }),
+          }).catch(()=>{});
+        }
         return;
       }
 
