@@ -1840,6 +1840,7 @@
           <div class="form-group" style="margin:0;flex:1;min-width:110px">
             <label>Unidad</label>
             <select id="suscrip-unidad" class="form-input">
+              <option value="minutos">Minutos</option>
               <option value="horas">Horas</option>
               <option value="dias" selected>Días</option>
               <option value="meses">Meses</option>
@@ -6247,17 +6248,18 @@
     if (cantidad <= 0) { showToast('Ingresa una cantidad válida.', 'error'); return; }
 
     const msPorUnidad = {
-      horas: 3600000,
-      dias:  86400000,
-      meses: 30 * 86400000,
-      anos:  365 * 86400000,
+      minutos: 60000,
+      horas:   3600000,
+      dias:    86400000,
+      meses:   30 * 86400000,
+      anos:    365 * 86400000,
     }[unidad];
 
     const expiraEn = new Date(Date.now() + msPorUnidad * cantidad).toISOString();
     const nuevaData = { bloqueado: false, expira_en: expiraEn, codigo_temporal: _suscripData?.codigo_temporal || null };
     const ok = await guardarSuscripcion(nuevaData);
     if (ok) {
-      const unidadLbl = {horas:'horas', dias:'días', meses:'meses', anos:'años'}[unidad];
+      const unidadLbl = {minutos:'minutos', horas:'horas', dias:'días', meses:'meses', anos:'años'}[unidad];
       showToast(`⏳ Cuenta atrás programada: ${cantidad} ${unidadLbl}.`, 'success');
     }
   }
