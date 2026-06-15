@@ -1,5 +1,5 @@
 {
-  "bloqueado": false,
+  "bloqueado": true,
   "expira_en": null,
   "mensaje": null,
   "updated_at": null
