@@ -423,6 +423,12 @@
   </button>
 </header>
 
+<!-- Cintillo de cuenta atrás de bloqueo -->
+<div id="suscrip-banner" style="display:none;background:#7a1f1f;color:#fff;padding:7px 16px;
+  text-align:center;font-size:.78rem;font-weight:600;letter-spacing:.02em">
+  ⏳ El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
+</div>
+
 <!-- Overlay y menú lateral -->
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="side-menu" id="side-menu">
@@ -451,6 +457,16 @@
       <button onclick="switchTab('precios');closeMenu()">💰 Precios Web</button>
       <button onclick="switchTab('popular');closeMenu()">⭐ Populares Web</button>
       <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú Web</button>
+    </div>
+
+    <div class="side-menu-divider"></div>
+
+    <!-- Suscrip -->
+    <button class="menu-group-btn" id="btn-grp-suscrip" onclick="toggleMenuGroup('grp-suscrip',this)" style="display:none">
+      🔒 Suscrip. <span class="menu-group-arrow">▼</span>
+    </button>
+    <div class="menu-group-items" id="grp-suscrip">
+      <button onclick="abrirModalSuscripcion();closeMenu()">🔒 Control de Bloqueo</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -1752,6 +1768,85 @@
   </div>
 </div>
 
+<!-- Modal Control de Bloqueo / Suscripción -->
+<div id="suscrip-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:88vh;
+    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
+      <span style="font-weight:700;color:#fff;font-size:.95rem">🔒 Control de Bloqueo</span>
+      <button onclick="cerrarModalSuscripcion()" style="background:none;border:none;
+        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:22px">
+
+      <!-- Estado actual -->
+      <div id="suscrip-estado-box" style="background:var(--bg);border:1.5px solid var(--border);
+        border-radius:10px;padding:16px;margin-bottom:18px;text-align:center">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px">
+          Estado actual del sistema
+        </div>
+        <div id="suscrip-estado-lbl" style="font-size:1.1rem;font-weight:800;color:var(--success)">
+          ✅ Activo
+        </div>
+        <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
+      </div>
+
+      <!-- Bloqueo inmediato -->
+      <div style="background:#fff5f5;border:1.5px solid #f0c0c0;border-radius:10px;padding:16px;margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px">⛔ Bloqueo inmediato</div>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          Bloquea el sistema al instante. Solo el SuperAdmin podrá acceder.
+        </p>
+        <button class="btn" style="background:#c0392b;color:#fff;width:100%" onclick="bloquearAhora()">
+          ⛔ Bloquear sistema ahora
+        </button>
+      </div>
+
+      <!-- Programar cuenta atrás -->
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:12px">⏳ Programar cuenta atrás</div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-group" style="margin:0;flex:1;min-width:90px">
+            <label>Cantidad</label>
+            <input type="number" id="suscrip-cantidad" class="form-input" min="1" value="1" step="1">
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:110px">
+            <label>Unidad</label>
+            <select id="suscrip-unidad" class="form-input">
+              <option value="horas">Horas</option>
+              <option value="dias" selected>Días</option>
+              <option value="meses">Meses</option>
+              <option value="anos">Años</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-accent" style="width:100%;margin-top:10px" onclick="programarBloqueo()">
+          ⏳ Programar cuenta atrás
+        </button>
+      </div>
+
+      <!-- Quitar bloqueo -->
+      <button class="btn btn-outline" style="width:100%" onclick="quitarBloqueo()">
+        ✅ Quitar bloqueo / Reactivar sistema
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- Pantalla de bloqueo total -->
+<div id="lock-screen" style="display:none;position:fixed;inset:0;z-index:9999;
+  background:var(--ink);color:#fff;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;padding:24px">
+  <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
+  <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">Sistema desactivado</div>
+  <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6">
+    El acceso a este sistema ha sido suspendido temporalmente. Contacta al administrador para más información.
+  </div>
+</div>
+
 <div class="loading-overlay" id="loading" style="display:none;align-items:center;justify-content:center;">
   <div class="loading-box"><div class="spinner"></div><strong>Procesando...</strong><p style="font-size:.9rem;color:var(--ink-muted);margin-top:4px;">Un momento por favor</p></div>
 </div>
@@ -2069,6 +2164,9 @@
       startPolling();
       // Inicializar controles de polling en configuración
       setTimeout(initPollControls, 500);
+      // Sistema de bloqueo por suscripción
+      initSuscripVisibility();
+      cargarSuscripcion();
     })();
   });
 
@@ -5895,6 +5993,189 @@
   document.getElementById('productos-ov')?.addEventListener('click', e => {
     if (e.target === document.getElementById('productos-ov')) cerrarMisProductos();
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN
+  // ══════════════════════════════════════════════════════════════════════
+  let _suscripData = null;
+  let _suscripTimer = null;
+
+  // Mostrar el botón "Suscrip." solo para SuperAdmin
+  function initSuscripVisibility() {
+    const btn = document.getElementById('btn-grp-suscrip');
+    if (btn) btn.style.display = currentUser?.role === 'superadmin' ? '' : 'none';
+  }
+
+  // Cargar estado de suscripción — llamado al iniciar sesión
+  async function cargarSuscripcion() {
+    try {
+      const res = await ghRead('suscripcion.json');
+      _suscripData = res?.data || { bloqueado: false, expira_en: null, sha: res?.sha };
+      _suscripData.sha = res?.sha;
+    } catch {
+      _suscripData = { bloqueado: false, expira_en: null, sha: null };
+    }
+    aplicarEstadoSuscripcion();
+  }
+
+  // Aplicar el estado: bloquear pantalla o mostrar cintillo
+  function aplicarEstadoSuscripcion() {
+    const isSuper = currentUser?.role === 'superadmin';
+    const data = _suscripData || {};
+    const ahora = Date.now();
+    const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
+
+    // Determinar si está efectivamente bloqueado
+    const bloqueadoInmediato = !!data.bloqueado;
+    const expirado = expiraEn && ahora >= expiraEn;
+    const estaBloqueado = bloqueadoInmediato || expirado;
+
+    clearInterval(_suscripTimer);
+    const banner = document.getElementById('suscrip-banner');
+    const lockScreen = document.getElementById('lock-screen');
+
+    if (estaBloqueado) {
+      if (isSuper) {
+        // SuperAdmin puede seguir usando, pero ve un cintillo de aviso
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = '#7a1f1f';
+          document.getElementById('suscrip-countdown').textContent = '🔒 SISTEMA BLOQUEADO (solo tú puedes acceder)';
+        }
+        if (lockScreen) lockScreen.style.display = 'none';
+      } else {
+        // Admin normal: pantalla de bloqueo total
+        if (lockScreen) lockScreen.style.display = 'flex';
+        if (banner) banner.style.display = 'none';
+        // Bloquear scroll
+        document.body.style.overflow = 'hidden';
+      }
+      return;
+    }
+
+    // No está bloqueado — pantalla normal
+    if (lockScreen) lockScreen.style.display = 'none';
+    document.body.style.overflow = '';
+
+    // Si hay countdown activo, mostrar cintillo con cuenta atrás
+    if (expiraEn && expiraEn > ahora) {
+      if (banner) banner.style.display = 'block';
+      _suscripTimer = setInterval(() => {
+        const left = expiraEn - Date.now();
+        if (left <= 0) {
+          clearInterval(_suscripTimer);
+          aplicarEstadoSuscripcion(); // re-evaluar → ahora estará bloqueado
+          return;
+        }
+        document.getElementById('suscrip-countdown').textContent = formatCountdown(left);
+      }, 1000);
+      // Disparar inmediatamente
+      const left = expiraEn - ahora;
+      document.getElementById('suscrip-countdown').textContent = formatCountdown(left);
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
+  }
+
+  function formatCountdown(ms) {
+    let totalSec = Math.floor(ms / 1000);
+    const d = Math.floor(totalSec / 86400); totalSec %= 86400;
+    const h = Math.floor(totalSec / 3600);  totalSec %= 3600;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    parts.push(`${String(h).padStart(2,'0')}h`);
+    parts.push(`${String(m).padStart(2,'0')}m`);
+    parts.push(`${String(s).padStart(2,'0')}s`);
+    return parts.join(' ');
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────────
+  function abrirModalSuscripcion() {
+    renderSuscripEstado();
+    document.getElementById('suscrip-ov').style.display = 'flex';
+  }
+  function cerrarModalSuscripcion() {
+    document.getElementById('suscrip-ov').style.display = 'none';
+  }
+  document.getElementById('suscrip-ov')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('suscrip-ov')) cerrarModalSuscripcion();
+  });
+
+  function renderSuscripEstado() {
+    const data = _suscripData || {};
+    const lbl = document.getElementById('suscrip-estado-lbl');
+    const det = document.getElementById('suscrip-estado-detalle');
+    const ahora = Date.now();
+    const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
+    const expirado = expiraEn && ahora >= expiraEn;
+
+    if (data.bloqueado || expirado) {
+      lbl.textContent = '⛔ Bloqueado';
+      lbl.style.color = '#c0392b';
+      det.textContent = data.bloqueado
+        ? 'Bloqueo manual activo.'
+        : `Expiró el ${new Date(expiraEn).toLocaleString('es-PA')}`;
+    } else if (expiraEn) {
+      lbl.textContent = '⏳ Cuenta atrás activa';
+      lbl.style.color = '#b45309';
+      det.textContent = `Se bloqueará: ${new Date(expiraEn).toLocaleString('es-PA')}`;
+    } else {
+      lbl.textContent = '✅ Activo';
+      lbl.style.color = 'var(--success)';
+      det.textContent = 'Sin restricciones programadas.';
+    }
+  }
+
+  async function guardarSuscripcion(data) {
+    showLoading(true);
+    try {
+      const ok = await ghWrite('suscripcion.json', data, _suscripData?.sha);
+      if (!ok) throw new Error();
+      // Recargar para obtener el nuevo sha
+      const res = await ghRead('suscripcion.json');
+      _suscripData = res?.data || data;
+      _suscripData.sha = res?.sha;
+      renderSuscripEstado();
+      aplicarEstadoSuscripcion();
+      return true;
+    } catch {
+      showToast('❌ Error al guardar la configuración.', 'error');
+      return false;
+    } finally { showLoading(false); }
+  }
+
+  async function bloquearAhora() {
+    if (!confirm('¿Bloquear el sistema inmediatamente? Solo el SuperAdmin podrá acceder.')) return;
+    const ok = await guardarSuscripcion({ bloqueado: true, expira_en: null });
+    if (ok) showToast('⛔ Sistema bloqueado.', 'success');
+  }
+
+  async function quitarBloqueo() {
+    const ok = await guardarSuscripcion({ bloqueado: false, expira_en: null });
+    if (ok) showToast('✅ Sistema reactivado.', 'success');
+  }
+
+  async function programarBloqueo() {
+    const cantidad = parseInt(document.getElementById('suscrip-cantidad').value) || 0;
+    const unidad   = document.getElementById('suscrip-unidad').value;
+    if (cantidad <= 0) { showToast('Ingresa una cantidad válida.', 'error'); return; }
+
+    const ms = {
+      horas: 3600000,
+      dias:  86400000,
+      meses: 30 * 86400000,
+      anos:  365 * 86400000,
+    }[unidad] * cantidad;
+
+    const expiraEn = new Date(Date.now() + ms).toISOString();
+    const ok = await guardarSuscripcion({ bloqueado: false, expira_en: expiraEn });
+    if (ok) {
+      const unidadLbl = {horas:'horas', dias:'días', meses:'meses', anos:'años'}[unidad];
+      showToast(`⏳ Cuenta atrás programada: ${cantidad} ${unidadLbl}.`, 'success');
+    }
+  }
 
 </script>
 </body>
