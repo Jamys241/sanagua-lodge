@@ -786,6 +786,12 @@
   </div>
 </header>
 
+<!-- Cintillo de cuenta atrás de bloqueo -->
+<div id="suscrip-banner" style="display:none;background:#7a1f1f;color:#fff;padding:8px 16px;
+  text-align:center;font-size:.8rem;font-weight:700;letter-spacing:.02em">
+  ⏳ El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
+</div>
+
 <!-- ══════════════════════════════════════════════ MENÚ LATERAL -->
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 <nav class="nav-drawer" id="nav-drawer">
@@ -1878,9 +1884,147 @@
       }
     };
   } catch {}
-  // ══════════════════════════════════════════════════════════════════════
-  // ESCÁNER QR DE SESIÓN (para admins en dispositivos nuevos)
-  // ══════════════════════════════════════════════════════════════════════
-
 </script>
+
+<!-- Pantalla de bloqueo total -->
+<div id="lock-screen" style="display:none;position:fixed;inset:0;z-index:9999;
+  background:#1a1f18;color:#fff;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;padding:24px">
+  <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
+  <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px;font-family:'Cormorant Garamond',serif">Sistema desactivado</div>
+  <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6;margin-bottom:24px">
+    El acceso a este sistema ha sido suspendido temporalmente. Si tienes un código de acceso, ingrésalo abajo.
+  </div>
+
+  <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;padding:20px;max-width:320px;width:100%">
+    <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);
+      text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+      🔑 Código de acceso
+    </div>
+    <input type="text" id="lock-codigo" placeholder="Ingresa el código"
+      style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.04);color:#fff;font-family:inherit;font-size:.95rem;
+      text-align:center;letter-spacing:.1em;margin-bottom:10px;outline:none"
+      onkeydown="if(event.key==='Enter')intentarDesbloqueoPub()">
+    <button onclick="intentarDesbloqueoPub()" style="width:100%;padding:11px;border:none;
+      border-radius:8px;background:var(--earth);color:#fff;font-family:inherit;
+      font-size:.85rem;font-weight:700;cursor:pointer">
+      Continuar
+    </button>
+    <div id="lock-error" style="font-size:.78rem;color:#ff8a7a;min-height:18px;margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════════════════════════
+  // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN (lectura — solo si hay token configurado)
+  // ══════════════════════════════════════════════════════════════════════
+  let _suscripDataPub  = null;
+  let _suscripTimerPub = null;
+
+  function formatCountdownPub(ms) {
+    let totalSec = Math.floor(ms / 1000);
+    const d = Math.floor(totalSec / 86400); totalSec %= 86400;
+    const h = Math.floor(totalSec / 3600);  totalSec %= 3600;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    parts.push(`${String(h).padStart(2,'0')}h`);
+    parts.push(`${String(m).padStart(2,'0')}m`);
+    parts.push(`${String(s).padStart(2,'0')}s`);
+    return parts.join(' ');
+  }
+
+  async function cargarSuscripcionPub() {
+    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return; // sin token configurado: no aplica
+    try {
+      const res = await webGhRead('suscripcion.json');
+      _suscripDataPub = res?.data || { bloqueado:false, expira_en:null, codigo_temporal:null };
+      _suscripDataPub.sha = res?.sha;
+      aplicarEstadoSuscripcionPub();
+    } catch {}
+  }
+
+  function aplicarEstadoSuscripcionPub() {
+    const data = _suscripDataPub || {};
+    const ahora = Date.now();
+    const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
+    const expirado = expiraEn && ahora >= expiraEn;
+    const estaBloqueado = !!data.bloqueado || expirado;
+
+    clearInterval(_suscripTimerPub);
+    const banner = document.getElementById('suscrip-banner');
+    const lockScreen = document.getElementById('lock-screen');
+
+    if (estaBloqueado) {
+      if (lockScreen) lockScreen.style.display = 'flex';
+      if (banner) banner.style.display = 'none';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    if (lockScreen) lockScreen.style.display = 'none';
+    document.body.style.overflow = '';
+
+    if (expiraEn && expiraEn > ahora) {
+      if (banner) banner.style.display = 'block';
+      _suscripTimerPub = setInterval(() => {
+        const left = expiraEn - Date.now();
+        if (left <= 0) { clearInterval(_suscripTimerPub); aplicarEstadoSuscripcionPub(); return; }
+        document.getElementById('suscrip-countdown').textContent = formatCountdownPub(left);
+      }, 1000);
+      document.getElementById('suscrip-countdown').textContent = formatCountdownPub(expiraEn - ahora);
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
+  }
+
+  async function intentarDesbloqueoPub() {
+    const input = document.getElementById('lock-codigo');
+    const errEl = document.getElementById('lock-error');
+    const valor = input.value.trim();
+    errEl.textContent = '';
+    if (!valor) { errEl.textContent = 'Ingresa un código.'; return; }
+
+    try {
+      const [authRes, suscripRes] = await Promise.all([
+        webGhRead('auth.json'),
+        webGhRead('suscripcion.json'),
+      ]);
+      const authData2 = authRes?.data || {};
+      const suscrip2  = suscripRes?.data || {};
+      const masterPass = authData2.superadmin?.unlock_password || '';
+
+      // 1. Contraseña permanente SuperAdmin — solo acceso, no desbloquea para otros
+      if (masterPass && valor === masterPass) {
+        document.getElementById('lock-screen').style.display = 'none';
+        document.body.style.overflow = '';
+        return;
+      }
+
+      // 2. Código temporal — desbloquea para todos y se consume
+      if (suscrip2.codigo_temporal && valor === suscrip2.codigo_temporal) {
+        const nuevaData = { bloqueado:false, expira_en:null, codigo_temporal:null };
+        const ok = await webGhWrite('suscripcion.json', nuevaData, suscripRes?.sha);
+        if (!ok) { errEl.textContent = '❌ Error al desbloquear. Intenta de nuevo.'; return; }
+        _suscripDataPub = nuevaData;
+        document.getElementById('lock-screen').style.display = 'none';
+        document.body.style.overflow = '';
+        aplicarEstadoSuscripcionPub();
+        return;
+      }
+
+      errEl.textContent = '❌ Código incorrecto.';
+      input.value = '';
+    } catch {
+      errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
+    }
+  }
+
+  cargarSuscripcionPub();
+  setInterval(cargarSuscripcionPub, 60000);
+</script>
+
 </body>
