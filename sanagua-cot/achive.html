@@ -1827,10 +1827,47 @@
         </button>
       </div>
 
+      <!-- Contraseña maestra de desbloqueo -->
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+        padding:16px;margin-top:18px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
+          🔐 Contraseña maestra de desbloqueo
+        </div>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          Contraseña fija que solo tú conoces. Funciona desde cualquier dispositivo para desbloquear el sistema sin límite de usos.
+        </p>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="suscrip-master-pass" class="form-input" placeholder="Tu contraseña maestra" style="flex:1">
+          <button class="btn btn-accent" onclick="guardarPasswordMaestra()">💾</button>
+        </div>
+        <div id="master-pass-msg" style="font-size:.76rem;min-height:16px;margin-top:6px;text-align:center"></div>
+      </div>
+
       <!-- Quitar bloqueo -->
-      <button class="btn btn-outline" style="width:100%" onclick="quitarBloqueo()">
+      <button class="btn btn-outline" style="width:100%;margin-top:18px" onclick="quitarBloqueo()">
         ✅ Quitar bloqueo / Reactivar sistema
       </button>
+
+      <!-- Código de un solo uso para el Admin -->
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+        padding:16px;margin-top:18px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
+          🔑 Código de desbloqueo de un solo uso
+        </div>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          Genera un código de 5 dígitos para que el Admin pueda desbloquear el sistema una sola vez, sin conocer la contraseña maestra.
+        </p>
+        <div id="codigo-actual-box" style="display:none;text-align:center;background:var(--surface);
+          border:1.5px dashed var(--accent);border-radius:8px;padding:14px;margin-bottom:10px">
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px">
+            Código activo
+          </div>
+          <div id="codigo-actual-num" style="font-size:1.6rem;font-weight:800;letter-spacing:.2em;color:var(--accent)"></div>
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="generarCodigoTemporal()">
+          🎲 Generar nuevo código
+        </button>
+      </div>
 
     </div>
   </div>
@@ -1842,8 +1879,28 @@
   flex-direction:column;text-align:center;padding:24px">
   <div style="font-size:3.5rem;margin-bottom:16px">🔒</div>
   <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">Sistema desactivado</div>
-  <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6">
+  <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6;margin-bottom:24px">
     El acceso a este sistema ha sido suspendido temporalmente. Contacta al administrador para más información.
+  </div>
+
+  <!-- Formulario de desbloqueo -->
+  <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;padding:20px;max-width:320px;width:100%">
+    <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);
+      text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+      🔑 Código de desbloqueo
+    </div>
+    <input type="text" id="lock-codigo" placeholder="Ingresa el código"
+      style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.04);color:#fff;font-family:inherit;font-size:.95rem;
+      text-align:center;letter-spacing:.1em;margin-bottom:10px;outline:none"
+      onkeydown="if(event.key==='Enter')intentarDesbloqueo()">
+    <button onclick="intentarDesbloqueo()" style="width:100%;padding:11px;border:none;
+      border-radius:8px;background:var(--accent);color:#fff;font-family:inherit;
+      font-size:.85rem;font-weight:700;cursor:pointer">
+      Desbloquear
+    </button>
+    <div id="lock-error" style="font-size:.78rem;color:#ff8a7a;min-height:18px;margin-top:8px"></div>
   </div>
 </div>
 
@@ -6094,6 +6151,7 @@
   // ── Modal ────────────────────────────────────────────────────────────────
   function abrirModalSuscripcion() {
     renderSuscripEstado();
+    cargarPasswordMaestra();
     document.getElementById('suscrip-ov').style.display = 'flex';
   }
   function cerrarModalSuscripcion() {
@@ -6125,6 +6183,123 @@
       lbl.textContent = '✅ Activo';
       lbl.style.color = 'var(--success)';
       det.textContent = 'Sin restricciones programadas.';
+    }
+
+    // Mostrar código temporal activo, si existe
+    const codBox = document.getElementById('codigo-actual-box');
+    const codNum = document.getElementById('codigo-actual-num');
+    if (data.codigo_temporal && codBox && codNum) {
+      codNum.textContent = data.codigo_temporal;
+      codBox.style.display = 'block';
+    } else if (codBox) {
+      codBox.style.display = 'none';
+    }
+  }
+
+  // ── Contraseña maestra de desbloqueo ────────────────────────────────────
+  async function cargarPasswordMaestra() {
+    try {
+      const res = await ghRead('auth.json');
+      const pass = res?.data?.superadmin?.unlock_password || '';
+      document.getElementById('suscrip-master-pass').value = pass;
+    } catch {}
+  }
+
+  async function guardarPasswordMaestra() {
+    const msgEl = document.getElementById('master-pass-msg');
+    const pass  = document.getElementById('suscrip-master-pass').value.trim();
+    if (!pass || pass.length < 4) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = 'Mínimo 4 caracteres.';
+      return;
+    }
+    showLoading(true);
+    try {
+      const res = await ghRead('auth.json');
+      const auth = res?.data || {};
+      auth.superadmin = auth.superadmin || {};
+      auth.superadmin.unlock_password = pass;
+      const ok = await ghWrite('auth.json', auth, res?.sha);
+      if (!ok) throw new Error();
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = '✅ Guardada correctamente.';
+      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
+    } catch {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ Error al guardar.';
+    } finally { showLoading(false); }
+  }
+
+  // ── Código temporal de un solo uso ──────────────────────────────────────
+  async function generarCodigoTemporal() {
+    const codigo = String(Math.floor(10000 + Math.random() * 90000)); // 5 dígitos
+    const nuevaData = { ..._suscripData, codigo_temporal: codigo };
+    delete nuevaData.sha;
+    const ok = await guardarSuscripcion(nuevaData);
+    if (ok) showToast(`🎲 Código generado: ${codigo}`, 'success');
+  }
+
+  // ── Pantalla de bloqueo: intentar desbloqueo ────────────────────────────
+  async function intentarDesbloqueo() {
+    const input = document.getElementById('lock-codigo');
+    const errEl = document.getElementById('lock-error');
+    const valor = input.value.trim();
+    errEl.textContent = '';
+
+    if (!valor) { errEl.textContent = 'Ingresa un código.'; return; }
+
+    try {
+      // Releer auth.json y suscripcion.json frescos
+      const [authRes, suscripRes] = await Promise.all([
+        ghRead('auth.json'),
+        ghRead('suscripcion.json'),
+      ]);
+      const authData2 = authRes?.data || {};
+      const suscrip2  = suscripRes?.data || {};
+      const masterPass = authData2.superadmin?.unlock_password || '';
+
+      let valido = false;
+      let esCodigoTemporal = false;
+
+      // 1. Contraseña fija maestra (siempre válida)
+      if (masterPass && valor === masterPass) {
+        valido = true;
+      }
+      // 2. Código temporal de un solo uso
+      else if (suscrip2.codigo_temporal && valor === suscrip2.codigo_temporal) {
+        valido = true;
+        esCodigoTemporal = true;
+      }
+
+      if (!valido) {
+        errEl.textContent = '❌ Código incorrecto.';
+        input.value = '';
+        return;
+      }
+
+      // Desbloquear: reactivar sistema
+      const nuevaData = { bloqueado: false, expira_en: null };
+      if (esCodigoTemporal) nuevaData.codigo_temporal = null; // consumir código de un solo uso
+      else nuevaData.codigo_temporal = suscrip2.codigo_temporal || null; // preservar si no se usó
+
+      const ok = await ghWrite('suscripcion.json', nuevaData, suscripRes?.sha);
+      if (!ok) { errEl.textContent = '❌ Error al desbloquear. Intenta de nuevo.'; return; }
+
+      // Sincronizar copia pública
+      ghWritePublico('suscripcion-publica.json', {
+        bloqueado: false, expira_en: null, mensaje: null, updated_at: new Date().toISOString(),
+      }).catch(()=>{});
+
+      // Recargar estado y ocultar pantalla de bloqueo
+      const res = await ghRead('suscripcion.json');
+      _suscripData = res?.data || nuevaData;
+      _suscripData.sha = res?.sha;
+      document.getElementById('lock-screen').style.display = 'none';
+      document.body.style.overflow = '';
+      aplicarEstadoSuscripcion();
+      showToast('✅ Sistema desbloqueado.', 'success');
+    } catch {
+      errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
     }
   }
 
