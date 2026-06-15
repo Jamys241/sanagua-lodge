@@ -1792,6 +1792,32 @@
         <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
       </div>
 
+      <!-- Configuración JSONBin (bloqueo público sin token) -->
+      <div id="jsonbin-config-box" style="background:var(--bg);border:1.5px solid var(--border);
+        border-radius:10px;padding:16px;margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
+          🌐 Bloqueo público (JSONBin)
+        </div>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          Permite que TODOS los visitantes (sin necesitar token) vean la pantalla de bloqueo. Crea una cuenta gratis en
+          <a href="https://jsonbin.io" target="_blank" rel="noopener" style="color:var(--accent)">jsonbin.io</a>,
+          copia tu <strong>X-Master-Key</strong> y, si ya tienes un Bin creado, su ID.
+        </p>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>X-Master-Key</label>
+          <input type="password" id="jsonbin-key" class="form-input" placeholder="$2a$10$...">
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Bin ID (déjalo vacío para crear uno nuevo)</label>
+          <input type="text" id="jsonbin-id" class="form-input" placeholder="65f1...">
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="guardarConfigJSONBin()">
+          💾 Guardar configuración
+        </button>
+        <div id="jsonbin-msg" style="font-size:.76rem;min-height:16px;margin-top:8px;text-align:center"></div>
+        <div id="jsonbin-status" style="font-size:.74rem;margin-top:6px;text-align:center;color:var(--muted)"></div>
+      </div>
+
       <!-- Bloqueo inmediato -->
       <div style="background:#fff5f5;border:1.5px solid #f0c0c0;border-radius:10px;padding:16px;margin-bottom:18px">
         <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px">⛔ Bloqueo inmediato</div>
@@ -6139,6 +6165,7 @@
   function abrirModalSuscripcion() {
     renderSuscripEstado();
     cargarPasswordMaestra();
+    initJsonbinUI();
     document.getElementById('suscrip-ov').style.display = 'flex';
   }
   function cerrarModalSuscripcion() {
@@ -6193,6 +6220,7 @@
       _suscripData.sha = res?.sha;
       renderSuscripEstado();
       aplicarEstadoSuscripcion();
+      sincronizarJSONBin();
       return true;
     } catch {
       showToast('❌ Error al guardar la configuración.', 'error');
@@ -6261,6 +6289,7 @@
       if (!ok) throw new Error();
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = '✅ Guardada correctamente.';
+      sincronizarJSONBin();
       setTimeout(()=>{ msgEl.textContent=''; }, 3000);
     } catch {
       msgEl.style.color = 'var(--red)';
@@ -6315,6 +6344,7 @@
         document.getElementById('lock-screen').style.display = 'none';
         document.body.style.overflow = '';
         aplicarEstadoSuscripcion();
+        sincronizarJSONBin();
         showToast('✅ Sistema desbloqueado.', 'success');
         return;
       }
@@ -6324,6 +6354,110 @@
     } catch {
       errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // SINCRONIZACIÓN PÚBLICA VÍA JSONBIN (bloqueo visible sin token)
+  // ══════════════════════════════════════════════════════════════════════
+  const JSONBIN_API = 'https://api.jsonbin.io/v3';
+
+  function getJsonbinConfig() {
+    return {
+      key: localStorage.getItem('jsonbin_key') || '',
+      id:  localStorage.getItem('jsonbin_id')  || '',
+    };
+  }
+
+  function initJsonbinUI() {
+    const cfg = getJsonbinConfig();
+    const keyEl = document.getElementById('jsonbin-key');
+    const idEl  = document.getElementById('jsonbin-id');
+    if (keyEl) keyEl.value = cfg.key;
+    if (idEl)  idEl.value  = cfg.id;
+    const statusEl = document.getElementById('jsonbin-status');
+    if (statusEl) {
+      statusEl.textContent = cfg.key && cfg.id
+        ? `✅ Configurado · Bin ID: ${cfg.id}`
+        : '⚠️ No configurado — el bloqueo solo afecta a dispositivos con token.';
+      statusEl.style.color = cfg.key && cfg.id ? 'var(--success)' : 'var(--muted)';
+    }
+  }
+
+  async function guardarConfigJSONBin() {
+    const msgEl = document.getElementById('jsonbin-msg');
+    const key = document.getElementById('jsonbin-key').value.trim();
+    let   id  = document.getElementById('jsonbin-id').value.trim();
+
+    if (!key) { msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa tu X-Master-Key.'; return; }
+
+    msgEl.style.color='var(--muted)'; msgEl.textContent='Verificando...';
+    showLoading(true);
+    try {
+      if (!id) {
+        const payload = {
+          bloqueado: _suscripData?.bloqueado || false,
+          expira_en: _suscripData?.expira_en || null,
+          codigo_temporal: _suscripData?.codigo_temporal || null,
+          unlock_password: '',
+        };
+        const r = await fetch(`${JSONBIN_API}/b`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': key,
+            'X-Bin-Name': 'sanagua-suscripcion',
+            'X-Bin-Private': 'false',
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok) throw new Error('No se pudo crear el Bin. Verifica tu X-Master-Key.');
+        const data = await r.json();
+        id = data?.metadata?.id;
+        if (!id) throw new Error('Respuesta inesperada de JSONBin.');
+        document.getElementById('jsonbin-id').value = id;
+      } else {
+        const r = await fetch(`${JSONBIN_API}/b/${id}/latest`, {
+          headers: { 'X-Master-Key': key },
+        });
+        if (!r.ok) throw new Error('No se pudo acceder al Bin con ese ID/Key.');
+      }
+
+      localStorage.setItem('jsonbin_key', key);
+      localStorage.setItem('jsonbin_id',  id);
+      msgEl.style.color='var(--success)';
+      msgEl.textContent='✅ Configuración guardada correctamente.';
+      initJsonbinUI();
+      sincronizarJSONBin();
+    } catch(e) {
+      msgEl.style.color='var(--red)';
+      msgEl.textContent='❌ ' + (e.message || 'Error al configurar JSONBin.');
+    } finally { showLoading(false); }
+  }
+
+  async function sincronizarJSONBin() {
+    const cfg = getJsonbinConfig();
+    if (!cfg.key || !cfg.id) return;
+
+    try {
+      const authRes = await ghRead('auth.json');
+      const masterPass = authRes?.data?.superadmin?.unlock_password || '';
+
+      const payload = {
+        bloqueado:       _suscripData?.bloqueado || false,
+        expira_en:       _suscripData?.expira_en || null,
+        codigo_temporal: _suscripData?.codigo_temporal || null,
+        unlock_password: masterPass,
+      };
+
+      await fetch(`${JSONBIN_API}/b/${cfg.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': cfg.key,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch(e) { console.warn('Error sincronizando JSONBin:', e); }
   }
 
 </script>
