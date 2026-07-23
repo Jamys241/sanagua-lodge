@@ -7,6 +7,7 @@
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1539,19 +1540,23 @@
 
     btn.textContent = 'Ingresando...'; btn.disabled = true;
 
-    // 1. Verificar si es administrador (RPC directo contra Supabase)
+    // 1. Verificar si es administrador (lectura directa + bcrypt en el navegador)
     try {
-      const { data, error } = await supa.rpc('verify_admin_login', {
-        p_username: input,
-        p_password: pass,
-      });
+      const { data, error } = await supa
+        .from('admin_login_view')
+        .select('username, password_hash, role, permisos')
+        .eq('username', input)
+        .limit(1);
       if (!error && data && data.length > 0) {
-        const admin = data[0];
-        const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
-        btn.textContent = 'Ingresar'; btn.disabled = false;
-        closeAuth();
-        showAdminRedirect({ role: admin.role, user: admin.username, label: labels[admin.role] || admin.role, url: SISTEMA_URL });
-        return;
+        const row = data[0];
+        const match = dcodeIO.bcrypt.compareSync(pass, row.password_hash);
+        if (match) {
+          const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
+          btn.textContent = 'Ingresar'; btn.disabled = false;
+          closeAuth();
+          showAdminRedirect({ role: row.role, user: row.username, label: labels[row.role] || row.role, url: SISTEMA_URL });
+          return;
+        }
       }
     } catch { /* si Supabase no responde, seguimos como intento de usuario público */ }
 
