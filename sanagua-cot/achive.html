@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -2092,28 +2093,51 @@
     if (!confirmPass) { showToast('Ingresa tu contraseña actual para confirmar.','error'); return; }
     if (!sU && !sP && !aU && !aP) { showToast('No hay cambios para guardar.','error'); return; }
 
-    const updates = [];
-    if (sU || sP) updates.push({ role:'superadmin', username: sU, password: sP });
-    if (aU || aP) updates.push({ role:'admin',      username: aU, password: aP });
-
+    // Verificar primero, en el navegador, que la contraseña de confirmación
+    // sea correcta (evita gastar la escritura si el usuario se equivocó).
+    // La verificación real y definitiva la hace de todas formas la base de
+    // datos (policy con headers), esto es solo para dar un mensaje claro.
     showLoading(true);
     try {
-      for (const u of updates) {
-        const { data: ok, error } = await supa.rpc('update_admin_credentials', {
-          p_actor_username: currentUser.username,
-          p_actor_password: confirmPass,
-          p_role:           u.role,
-          p_new_username:   u.username || null,
-          p_new_password:   u.password || null,
-        });
-        if (error || ok !== true) throw new Error(error?.message || 'Contraseña actual incorrecta o error al guardar');
+      const { data: selfRow, error: selfErr } = await supa
+        .from('admin_login_view')
+        .select('password_hash')
+        .eq('username', currentUser.username)
+        .limit(1);
+      if (selfErr || !selfRow?.length || !dcodeIO.bcrypt.compareSync(confirmPass, selfRow[0].password_hash)) {
+        showToast('❌ Contraseña actual incorrecta.', 'error');
+        return;
       }
+
+      // Cliente temporal que manda las credenciales del actor como headers,
+      // que es lo que exige la policy de UPDATE en Supabase.
+      const supaAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { 'x-actor-username': currentUser.username, 'x-actor-password': confirmPass } },
+      });
+
+      if (sU || sP) {
+        const row = {};
+        if (sU) row.username = sU;
+        if (sP) row.password_hash = dcodeIO.bcrypt.hashSync(sP, dcodeIO.bcrypt.genSaltSync(10));
+        const { error } = await supaAuth.from('admin_users').update(row).eq('role', 'superadmin');
+        if (error) throw new Error(error.message);
+      }
+      if (aU || aP) {
+        const row = {};
+        if (aU) row.username = aU;
+        if (aP) row.password_hash = dcodeIO.bcrypt.hashSync(aP, dcodeIO.bcrypt.genSaltSync(10));
+        const { error } = await supaAuth.from('admin_users').update(row).eq('role', 'admin');
+        if (error) throw new Error(error.message);
+      }
+
       document.getElementById('cred-super-user').value = '';
       document.getElementById('cred-super-pass').value = '';
       document.getElementById('cred-admin-user').value = '';
       document.getElementById('cred-admin-pass').value = '';
       document.getElementById('cred-confirm-pass').value = '';
       showToast('✅ Credenciales actualizadas.','success');
+      // Si el superadmin se cambió su propio usuario, actualizamos la sesión
+      if (sU) { currentUser.username = sU; sessionStorage.setItem('sl_session', JSON.stringify({ username: sU, role: 'superadmin', ts: Date.now() })); }
     } catch (e) { showToast('❌ ' + (e.message || 'Error al guardar.'), 'error'); }
     finally { showLoading(false); }
   }
