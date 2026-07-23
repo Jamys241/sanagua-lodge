@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -2092,17 +2093,21 @@
     if (!sU && !sP && !aU && !aP) { showToast('No hay cambios para guardar.','error'); return; }
 
     const updates = [];
-    if (sU || sP) updates.push({ role:'superadmin', username: sU || undefined, password: sP || undefined });
-    if (aU || aP) updates.push({ role:'admin',      username: aU || undefined, password: aP || undefined });
+    if (sU || sP) updates.push({ role:'superadmin', username: sU, password: sP });
+    if (aU || aP) updates.push({ role:'admin',      username: aU, password: aP });
 
     showLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/auth/credentials`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor_username: currentUser.username, actor_password: confirmPass, updates }),
-      });
-      if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error || 'Error al guardar'); }
+      for (const u of updates) {
+        const { data: ok, error } = await supa.rpc('update_admin_credentials', {
+          p_actor_username: currentUser.username,
+          p_actor_password: confirmPass,
+          p_role:           u.role,
+          p_new_username:   u.username || null,
+          p_new_password:   u.password || null,
+        });
+        if (error || ok !== true) throw new Error(error?.message || 'Contraseña actual incorrecta o error al guardar');
+      }
       document.getElementById('cred-super-user').value = '';
       document.getElementById('cred-super-pass').value = '';
       document.getElementById('cred-admin-user').value = '';
@@ -2118,8 +2123,10 @@
   // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
   // Para compartir entre dispositivos, cada uno debe configurar su token
 
-  // URL del backend Flask desplegado (Render). Debe ser la misma que en index.html.
-  const API_BASE = 'https://cotizaciones-api.onrender.com';
+  // ── Supabase (solo para gestión de credenciales de administrador) ──────
+  const SUPABASE_URL      = 'https://xxxxxxxxxxxxx.supabase.co';
+  const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_ANON_KEY';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let GH_TOKEN  = localStorage.getItem('gh_token')  || '';
   let GH_REPO   = localStorage.getItem('gh_repo')   || '';
