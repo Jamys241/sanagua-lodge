@@ -10,8 +10,23 @@ import io, json, os, base64
 import requests as req_lib
 from datetime import datetime
 
+import bcrypt
+from supabase import create_client
+
 app = Flask(__name__)
 CORS(app)
+
+# ── Supabase — SOLO para credenciales de administrador ───────────────────────
+# El resto de los datos (cotizaciones, productos, empresa, eventos, usuarios
+# web) sigue guardándose en GitHub exactamente igual que antes.
+#
+# Variables de entorno nuevas en Render:
+#   SUPABASE_URL          → https://xxxxx.supabase.co
+#   SUPABASE_SERVICE_KEY  → service_role key (nunca la anon/public)
+SUPABASE_URL         = os.environ.get('SUPABASE_URL', '')
+SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+sb = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY) if SUPABASE_URL and SUPABASE_SERVICE_KEY else None
+
 
 # ── GitHub como base de datos ────────────────────────────────────────────────
 # Variables de entorno en Render:
@@ -134,11 +149,80 @@ def index():
 @app.route('/debug')
 def debug():
     return jsonify({
-        'GH_TOKEN':  '✅ configurado' if GH_TOKEN  else '❌ FALTA',
-        'GH_REPO':   GH_REPO  or '❌ FALTA',
-        'GH_BRANCH': GH_BRANCH,
-        'storage':   'GitHub API',
+        'GH_TOKEN':             '✅ configurado' if GH_TOKEN  else '❌ FALTA',
+        'GH_REPO':              GH_REPO  or '❌ FALTA',
+        'GH_BRANCH':            GH_BRANCH,
+        'storage':              'GitHub API',
+        'SUPABASE_URL':         '✅ configurado' if SUPABASE_URL else '❌ FALTA',
+        'SUPABASE_SERVICE_KEY': '✅ configurado' if SUPABASE_SERVICE_KEY else '❌ FALTA',
+        'auth_storage':         'Supabase (tabla admin_users)',
     })
+
+
+# ── Autenticación de administradores (Supabase) ──────────────────────────────
+# Reemplaza la comparación de auth.json en el navegador. Ahora cualquier
+# dispositivo puede iniciar sesión llamando a este endpoint, sin necesitar
+# configurar un token de GitHub localmente.
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    if sb is None:
+        return jsonify({'error': 'Supabase no configurado en el servidor'}), 500
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    if not username or not password:
+        return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
+
+    res = sb.table('admin_users').select('*').eq('username', username).limit(1).execute()
+    if not res.data:
+        return jsonify({'error': 'Credenciales inválidas'}), 401
+    user = res.data[0]
+    if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+        return jsonify({'error': 'Credenciales inválidas'}), 401
+
+    return jsonify({
+        'ok':       True,
+        'username': user['username'],
+        'role':     user['role'],
+        'permisos': user.get('permisos', {}),
+    })
+
+
+@app.route('/auth/credentials', methods=['PUT'])
+def auth_update_credentials():
+    """Reemplaza a saveCreds() del panel (antes escribía auth.json en GitHub).
+    Requiere reautenticarse con la contraseña actual del superadmin que hace
+    el cambio, ya que no hay sesión/token de servidor todavía."""
+    if sb is None:
+        return jsonify({'error': 'Supabase no configurado en el servidor'}), 500
+    data = request.get_json() or {}
+    actor_username = (data.get('actor_username') or '').strip()
+    actor_password = data.get('actor_password') or ''
+
+    res = sb.table('admin_users').select('*').eq('username', actor_username).limit(1).execute()
+    if not res.data or res.data[0]['role'] != 'superadmin':
+        return jsonify({'error': 'Solo el super administrador puede cambiar credenciales'}), 403
+    actor = res.data[0]
+    if not bcrypt.checkpw(actor_password.encode('utf-8'), actor['password_hash'].encode('utf-8')):
+        return jsonify({'error': 'Contraseña actual incorrecta'}), 401
+
+    updates = data.get('updates', [])  # [{role, username?, password?}, ...]
+    for u in updates:
+        role = u.get('role')
+        if role not in ('superadmin', 'admin'):
+            continue
+        row = {}
+        new_username = (u.get('username') or '').strip()
+        new_password = u.get('password') or ''
+        if new_username:
+            row['username'] = new_username
+        if new_password:
+            row['password_hash'] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+        if row:
+            sb.table('admin_users').update(row).eq('role', role).execute()
+
+    return jsonify({'ok': True})
+
 
 @app.route('/counter')
 def get_counter():

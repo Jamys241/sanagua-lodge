@@ -1347,8 +1347,6 @@
       document.getElementById('panel-auth').style.display = 'block';
       document.getElementById('panel-user').style.display = 'none';
       switchAuthTab(tab || 'login');
-      // Cargar credenciales admin en background al abrir el login
-      if (!webAuthData) loadWebAuth();
     }
     document.getElementById('auth-overlay').classList.add('open');
   }
@@ -1371,19 +1369,12 @@
     feedEl.textContent = '';
     if (!input) { feedEl.style.color='#c0392b'; feedEl.textContent='Ingresa tu correo.'; return; }
 
-    // Verificar si es admin (sin necesidad de consultar users.json)
-    const isAdminUser = getAdminCreds().some(a => a.user === input || a.user === input.split('@')[0]);
-    if (isAdminUser) {
-      // Admin — ir directo al paso 2 sin mostrar nombre
+    // Si no parece un correo, puede ser un usuario de administrador
+    // (la verificación real ocurre en el paso 2, contra el backend)
+    if (!input.includes('@')) {
       document.getElementById('login-user-name').textContent  = 'Administrador';
       document.getElementById('login-user-email').textContent = input;
       showLoginStep2();
-      return;
-    }
-
-    if (!input.includes('@')) {
-      feedEl.style.color = '#c0392b';
-      feedEl.textContent = 'El usuario no existe. ¿Quieres registrarte?';
       return;
     }
 
@@ -1439,6 +1430,9 @@
   // ── Credenciales de administradores ──────────────────────────────────
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/achive.html';
+
+  // URL del backend Flask desplegado (Render). Reemplaza por tu URL real.
+  const API_BASE = 'https://cotizaciones-api.onrender.com';
 
   // ── GitHub — mismo repo privado que el sistema ───────────────────────
   const WEB_GH_TOKEN  = localStorage.getItem('gh_token')  || '';
@@ -1525,19 +1519,8 @@
     });
   }
 
-  async function loadWebAuth() {
-    const res = await webGhRead('auth.json');
-    if (res?.data) webAuthData = res.data;
-  }
-
-  function getAdminCreds() {
-    // Si se cargó el auth.json usa esas credenciales, si no usa las de respaldo
-    const src = webAuthData || {};
-    return [
-      { user: src.superadmin?.username || 'superadmin', pass: src.superadmin?.password || 'super123', role: 'superadmin', label: '⭐ Super Administrador', url: SISTEMA_URL },
-      { user: src.admin?.username      || 'admin',      pass: src.admin?.password      || 'admin123', role: 'admin',      label: '👑 Administrador',       url: SISTEMA_URL },
-    ];
-  }
+  // NOTA: las credenciales de administrador ya NO se cargan desde GitHub.
+  // Se verifican en el backend contra Supabase (ver doPublicLogin más abajo).
 
   // ── Login ─────────────────────────────────────────────────────────────
   async function doPublicLogin() {
@@ -1548,14 +1531,26 @@
     errEl.textContent = '';
     if (!pass) { errEl.textContent = 'Ingresa tu contraseña.'; return; }
 
-    // 1. Verificar si es administrador
-    const adminMatch = getAdminCreds().find(a =>
-      (a.user === input || a.user === input.split('@')[0]) && a.pass === pass
-    );
-    if (adminMatch) { closeAuth(); showAdminRedirect(adminMatch); return; }
+    btn.textContent = 'Ingresando...'; btn.disabled = true;
+
+    // 1. Verificar si es administrador (contra Supabase, vía el backend)
+    try {
+      const r = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: input, password: pass }),
+      });
+      if (r.ok) {
+        const admin = await r.json();
+        const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
+        btn.textContent = 'Ingresar'; btn.disabled = false;
+        closeAuth();
+        showAdminRedirect({ role: admin.role, user: admin.username, label: labels[admin.role] || admin.role, url: SISTEMA_URL });
+        return;
+      }
+    } catch { /* si el backend no responde, seguimos como intento de usuario público */ }
 
     // 2. Verificar usuario público — usar caché del paso 1
-    btn.textContent = 'Ingresando...'; btn.disabled = true;
     try {
       const users = _cachedUsers || await loadUsers();
       const found = users.find(u => u.email === input && u.password === pass);
@@ -1654,7 +1649,7 @@
     document.body.appendChild(div);
     // Guardar sesión en sessionStorage para que achive.html la lea
     sessionStorage.setItem('sl_session', JSON.stringify({
-      username: admin.role === 'superadmin' ? (webAuthData?.superadmin?.username || admin.user) : (webAuthData?.admin?.username || admin.user),
+      username: admin.user,
       role: admin.role,
       ts: Date.now(),
     }));
