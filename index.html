@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1431,8 +1432,13 @@
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/achive.html';
 
-  // URL del backend Flask desplegado (Render). Reemplaza por tu URL real.
-  const API_BASE = 'https://cotizaciones-api.onrender.com';
+  // ── Supabase (solo para login de administrador) ─────────────────────
+  // La "anon key" es pública a propósito: Supabase la protege con Row
+  // Level Security + las funciones RPC de rpc_functions.sql, así que es
+  // seguro tenerla en el código del navegador.
+  const SUPABASE_URL      = 'https://xxxxxxxxxxxxx.supabase.co';
+  const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_ANON_KEY';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── GitHub — mismo repo privado que el sistema ───────────────────────
   const WEB_GH_TOKEN  = localStorage.getItem('gh_token')  || '';
@@ -1533,22 +1539,21 @@
 
     btn.textContent = 'Ingresando...'; btn.disabled = true;
 
-    // 1. Verificar si es administrador (contra Supabase, vía el backend)
+    // 1. Verificar si es administrador (RPC directo contra Supabase)
     try {
-      const r = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: input, password: pass }),
+      const { data, error } = await supa.rpc('verify_admin_login', {
+        p_username: input,
+        p_password: pass,
       });
-      if (r.ok) {
-        const admin = await r.json();
+      if (!error && data && data.length > 0) {
+        const admin = data[0];
         const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
         btn.textContent = 'Ingresar'; btn.disabled = false;
         closeAuth();
         showAdminRedirect({ role: admin.role, user: admin.username, label: labels[admin.role] || admin.role, url: SISTEMA_URL });
         return;
       }
-    } catch { /* si el backend no responde, seguimos como intento de usuario público */ }
+    } catch { /* si Supabase no responde, seguimos como intento de usuario público */ }
 
     // 2. Verificar usuario público — usar caché del paso 1
     try {
