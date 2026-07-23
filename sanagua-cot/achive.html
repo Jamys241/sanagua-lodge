@@ -1236,20 +1236,25 @@
   <div class="card" id="card-credenciales">
     <div class="card-title">Credenciales de acceso</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
-      Cambia los usuarios y contraseñas. Se guardan en tu repositorio privado.<br>
+      Cambia los usuarios y contraseñas. Se guardan de forma segura en Supabase (no en texto plano).<br>
+      Deja un campo en blanco si no quieres cambiarlo.<br>
       <strong>Solo visible y editable por el Super Administrador.</strong>
     </p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
       <div>
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b45309;margin-bottom:10px;">⭐ Super Administrador</div>
-        <div class="form-group"><label>Usuario</label><input type="text" id="cred-super-user" placeholder="superadmin"></div>
-        <div class="form-group"><label>Contraseña</label><input type="password" id="cred-super-pass" placeholder="••••••••"></div>
+        <div class="form-group"><label>Usuario nuevo (opcional)</label><input type="text" id="cred-super-user" placeholder="Dejar en blanco para no cambiar"></div>
+        <div class="form-group"><label>Contraseña nueva (opcional)</label><input type="password" id="cred-super-pass" placeholder="Dejar en blanco para no cambiar"></div>
       </div>
       <div>
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:10px;">👑 Administrador</div>
-        <div class="form-group"><label>Usuario</label><input type="text" id="cred-admin-user" placeholder="admin"></div>
-        <div class="form-group"><label>Contraseña</label><input type="password" id="cred-admin-pass" placeholder="••••••••"></div>
+        <div class="form-group"><label>Usuario nuevo (opcional)</label><input type="text" id="cred-admin-user" placeholder="Dejar en blanco para no cambiar"></div>
+        <div class="form-group"><label>Contraseña nueva (opcional)</label><input type="password" id="cred-admin-pass" placeholder="Dejar en blanco para no cambiar"></div>
       </div>
+    </div>
+    <div class="form-group" style="margin-top:6px;">
+      <label>Tu contraseña actual de Super Administrador (para confirmar el cambio)</label>
+      <input type="password" id="cred-confirm-pass" placeholder="••••••••">
     </div>
     <div style="margin-top:14px;">
       <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
@@ -2082,15 +2087,29 @@
     const sP = document.getElementById('cred-super-pass').value.trim();
     const aU = document.getElementById('cred-admin-user').value.trim();
     const aP = document.getElementById('cred-admin-pass').value.trim();
-    if (!sU||!sP||!aU||!aP) { showToast('Completa todos los campos.','error'); return; }
-    authData.superadmin = { username:sU, password:sP };
-    authData.admin      = { username:aU, password:aP };
+    const confirmPass = document.getElementById('cred-confirm-pass').value;
+    if (!confirmPass) { showToast('Ingresa tu contraseña actual para confirmar.','error'); return; }
+    if (!sU && !sP && !aU && !aP) { showToast('No hay cambios para guardar.','error'); return; }
+
+    const updates = [];
+    if (sU || sP) updates.push({ role:'superadmin', username: sU || undefined, password: sP || undefined });
+    if (aU || aP) updates.push({ role:'admin',      username: aU || undefined, password: aP || undefined });
+
     showLoading(true);
     try {
-      const ok = await ghReadWrite('auth.json', authData);
-      if (!ok) throw new Error();
+      const r = await fetch(`${API_BASE}/auth/credentials`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_username: currentUser.username, actor_password: confirmPass, updates }),
+      });
+      if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error || 'Error al guardar'); }
+      document.getElementById('cred-super-user').value = '';
+      document.getElementById('cred-super-pass').value = '';
+      document.getElementById('cred-admin-user').value = '';
+      document.getElementById('cred-admin-pass').value = '';
+      document.getElementById('cred-confirm-pass').value = '';
       showToast('✅ Credenciales actualizadas.','success');
-    } catch { showToast('❌ Error al guardar.','error'); }
+    } catch (e) { showToast('❌ ' + (e.message || 'Error al guardar.'), 'error'); }
     finally { showLoading(false); }
   }
 
@@ -2098,6 +2117,9 @@
   // GH_TOKEN y GH_REPO se configuran en la pestaña ⚙️ Configuración
   // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
   // Para compartir entre dispositivos, cada uno debe configurar su token
+
+  // URL del backend Flask desplegado (Render). Debe ser la misma que en index.html.
+  const API_BASE = 'https://cotizaciones-api.onrender.com';
 
   let GH_TOKEN  = localStorage.getItem('gh_token')  || '';
   let GH_REPO   = localStorage.getItem('gh_repo')   || '';
@@ -2600,12 +2622,8 @@
       if (syncCard) syncCard.style.display = puedeSync ? '' : 'none';
       const cardCred = document.getElementById('card-credenciales');
       if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
-      if (currentUser?.role==='superadmin' && authData) {
-        document.getElementById('cred-super-user').value  = authData.superadmin?.username || '';
-        document.getElementById('cred-super-pass').value  = authData.superadmin?.password || '';
-        document.getElementById('cred-admin-user').value  = authData.admin?.username  || '';
-        document.getElementById('cred-admin-pass').value  = authData.admin?.password  || '';
-      }
+      // Los campos quedan vacíos a propósito: las contraseñas ya no se
+      // guardan ni se leen en texto plano (viven hasheadas en Supabase).
       renderDowBtns();
       renderExcepcionLista();
     }
