@@ -2159,7 +2159,7 @@
     try {
       // Reautenticar con la contraseña actual antes de permitir el cambio.
       const { error: reauthErr } = await supa.auth.signInWithPassword({ email: currentUser.email, password: actual });
-      if (reauthErr) { showToast('❌ Contraseña actual incorrecta.', 'error'); return; }
+      if (reauthErr) { showToast('❌ ' + reauthErr.message + ' (correo usado: ' + currentUser.email + ')', 'error'); return; }
 
       const { error } = await supa.auth.updateUser({ password: nueva });
       if (error) throw new Error(error.message);
