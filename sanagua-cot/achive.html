@@ -2193,7 +2193,14 @@
       document.getElementById('newadmin-email').value = '';
       document.getElementById('newadmin-pass').value  = '';
       showToast(`✅ Administrador ${email} creado.`, 'success');
-    } catch (e) { showToast('❌ ' + e.message, 'error'); }
+    } catch (e) {
+      // Esta acción SÍ necesita el backend Flask desplegado (usa la
+      // service_role key, que nunca puede vivir en el navegador). Mientras
+      // tanto, crea la cuenta manualmente desde el dashboard de Supabase
+      // (Authentication → Users → Add user) y asígnale el role en
+      // public.profiles con una consulta SQL.
+      showToast('❌ ' + e.message + ' — ¿ya desplegaste el backend en ' + API_BASE + '? Mientras tanto puedes crear la cuenta manualmente desde el dashboard de Supabase.', 'error');
+    }
     finally { showLoading(false); }
   }
 
@@ -2589,7 +2596,7 @@
   let _pollTimer    = null;
   let _lastHashHist = '';
   let _lastHashEvts = '';
-  const POLL_INTERVAL = 20000; // 20 segundos
+  let POLL_INTERVAL = 20000; // 20 segundos (se reasigna en initPollControls)
 
   function simpleHash(obj) {
     const s = JSON.stringify(obj);
@@ -2796,10 +2803,16 @@
     if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede configurar permisos.','error'); return; }
     showLoading(true);
     try {
-      const resp = await authFetch(`${API_BASE}/auth/admins`);
-      if (!resp.ok) throw new Error();
-      _adminsCache = await resp.json();
-    } catch { showToast('❌ No se pudo cargar la lista de administradores.', 'error'); showLoading(false); return; }
+      // Lectura directa a Supabase (permitida por RLS: un superadmin puede
+      // ver todos los profiles). No depende de que el backend Flask esté
+      // desplegado.
+      const { data, error } = await supa
+        .from('profiles')
+        .select('id, email, name, role, permisos')
+        .in('role', ['admin', 'superadmin']);
+      if (error) throw error;
+      _adminsCache = data || [];
+    } catch (e) { showToast('❌ No se pudo cargar la lista de administradores: ' + e.message, 'error'); showLoading(false); return; }
     showLoading(false);
 
     const sel = document.getElementById('perm-admin-select');
@@ -2843,15 +2856,13 @@
     });
     showLoading(true);
     try {
-      const resp = await authFetch(`${API_BASE}/auth/admins/${admin.id}/role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permisos }),
-      });
-      if (!resp.ok) throw new Error();
+      // Escritura directa a Supabase (permitida por RLS: un admin puede
+      // actualizar el profile de otros admins). Tampoco depende del backend.
+      const { error } = await supa.from('profiles').update({ permisos }).eq('id', admin.id);
+      if (error) throw error;
       closePermisosModal();
       showToast(`✅ Permisos de ${admin.name||admin.email} guardados.`, 'success');
-    } catch { showToast('❌ Error al guardar permisos.', 'error'); }
+    } catch (e) { showToast('❌ Error al guardar permisos: ' + e.message, 'error'); }
     finally { showLoading(false); }
   }
 
@@ -3001,6 +3012,7 @@
 
   function renderProducts() {
     const el = document.getElementById('product-list');
+    if (!el) return; // Este elemento ya no existe en el panel actual — nada que hacer.
     if(!products.length){ el.innerHTML='<p style="color:var(--ink-muted);font-size:.88rem">Sin productos aún.</p>'; return; }
     el.innerHTML = products.map((p,i)=>`
       <div class="product-item">
