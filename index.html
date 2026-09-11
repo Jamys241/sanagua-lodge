@@ -1423,12 +1423,16 @@
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Trae el profile (nombre, role, puntos, etc.) del usuario ya autenticado.
+  // Devuelve { profile, errorMsg } — si algo falla, errorMsg trae el motivo
+  // exacto para poder mostrarlo en pantalla (sin depender de la consola).
   async function fetchOwnProfile() {
-    const { data: { user } } = await supa.auth.getUser();
-    if (!user) return null;
+    const { data: { user }, error: userErr } = await supa.auth.getUser();
+    if (userErr) return { profile: null, errorMsg: 'auth.getUser: ' + userErr.message };
+    if (!user) return { profile: null, errorMsg: 'No hay usuario autenticado.' };
     const { data, error } = await supa.from('profiles').select('*').eq('id', user.id).single();
-    if (error || !data) return null;
-    return data;
+    if (error) return { profile: null, errorMsg: 'profiles: ' + error.message + (error.code ? ' (' + error.code + ')' : '') };
+    if (!data) return { profile: null, errorMsg: 'No existe fila en profiles para este usuario.' };
+    return { profile: data, errorMsg: null };
   }
 
   // ── Populares ─────────────────────────────────────────────────────────
@@ -1488,9 +1492,10 @@
         return;
       }
 
-      const profile = await fetchOwnProfile();
+      const { profile, errorMsg } = await fetchOwnProfile();
       if (!profile) {
-        errEl.textContent = 'No se pudo cargar tu perfil. Intenta nuevamente.';
+        // Mostramos el motivo REAL (sin consola) para poder diagnosticar.
+        errEl.textContent = 'No se pudo cargar tu perfil: ' + (errorMsg || 'motivo desconocido');
         await supa.auth.signOut();
         return;
       }
@@ -1809,7 +1814,7 @@
       // en localStorage) en lugar de confiar en un dato copiado a mano.
       const { data: { session } } = await supa.auth.getSession();
       if (session) {
-        const profile = await fetchOwnProfile();
+        const { profile } = await fetchOwnProfile();
         if (profile && profile.role === 'cliente') {
           publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
           aplicarUsuarioPublico();
