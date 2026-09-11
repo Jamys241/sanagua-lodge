@@ -2045,11 +2045,13 @@
       const { data: { user } } = await supa.auth.getUser();
       const { data: profile, error } = await supa.from('profiles').select('*').eq('id', user.id).single();
       if (error || !profile) {
+        alert('No se pudo cargar tu perfil de administrador.\n\nDetalle: ' + (error?.message || 'sin fila en profiles') + (error?.code ? ' (código ' + error.code + ')' : ''));
         await supa.auth.signOut();
         window.location.href = '../index.html';
         return false;
       }
       if (profile.role !== 'admin' && profile.role !== 'superadmin') {
+        alert('Esta cuenta no tiene permisos de administrador (role actual: "' + profile.role + '").');
         await supa.auth.signOut();
         window.location.href = '../index.html';
         return false;
@@ -2064,7 +2066,8 @@
         accessToken: session.access_token,
       };
       return true;
-    } catch {
+    } catch (e) {
+      alert('Error inesperado verificando la sesión: ' + (e?.message || e));
       window.location.href = '../index.html';
       return false;
     }
