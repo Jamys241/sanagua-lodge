@@ -6070,30 +6070,17 @@
     msgEl.style.color='var(--muted)'; msgEl.textContent='Verificando...';
     showLoading(true);
     try {
-      const res = await ghRead('auth.json');
-      if (!res) throw new Error('No se pudo leer auth.json');
-      const auth = res.data;
-      const role = currentUser?.role;
-
-      // Verificar contraseña actual según el rol
-      if (role === 'superadmin') {
-        if (auth.superadmin?.password !== actual) {
-          msgEl.style.color='var(--red)'; msgEl.textContent='La contraseña actual no es correcta.';
-          showLoading(false); return;
-        }
-        auth.superadmin.password = nueva;
-      } else if (role === 'admin') {
-        if (auth.admin?.password !== actual) {
-          msgEl.style.color='var(--red)'; msgEl.textContent='La contraseña actual no es correcta.';
-          showLoading(false); return;
-        }
-        auth.admin.password = nueva;
-      } else {
-        throw new Error('Rol no reconocido');
+      // Reautenticar contra Supabase Auth con la contraseña actual (ya no
+      // se compara texto plano contra auth.json de GitHub).
+      const { error: reauthErr } = await supa.auth.signInWithPassword({ email: currentUser.email, password: actual });
+      if (reauthErr) {
+        msgEl.style.color='var(--red)';
+        msgEl.textContent = reauthErr.message + ' (correo: ' + currentUser.email + ')';
+        return;
       }
 
-      const ok = await ghWrite('auth.json', auth, res.sha);
-      if (!ok) throw new Error('Error al guardar');
+      const { error } = await supa.auth.updateUser({ password: nueva });
+      if (error) throw new Error(error.message);
 
       msgEl.style.color='var(--success)'; msgEl.textContent='✅ Contraseña actualizada correctamente.';
       showToast('✅ Contraseña cambiada. Úsala la próxima vez que inicies sesión.', 'success');
