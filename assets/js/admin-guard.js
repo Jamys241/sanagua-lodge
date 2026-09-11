@@ -43,20 +43,19 @@
       const { data: { session } } = await supaGuard.auth.getSession();
       if (!session) { irAIndex(); return; }
 
-      // Verificación real contra el backend: valida el JWT de nuevo y
-      // confirma el role — no basta con lo que diga el navegador.
-      const resp = await fetch(`${API_BASE}/auth/me`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` },
-      });
-      if (!resp.ok) { await supaGuard.auth.signOut(); irAIndex(); return; }
-      const me = await resp.json();
-      if (me.role !== 'admin' && me.role !== 'superadmin') {
+      // Leemos el profile directamente de Supabase (protegido por RLS).
+      // No depende de que el backend Flask esté desplegado — el backend
+      // sigue protegiendo cada acción de escritura por su cuenta.
+      const { data: { user } } = await supaGuard.auth.getUser();
+      const { data: profile, error } = await supaGuard.from('profiles').select('*').eq('id', user.id).single();
+      if (error || !profile) { await supaGuard.auth.signOut(); irAIndex(); return; }
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         await supaGuard.auth.signOut(); irAIndex(); return;
       }
 
       window.currentAdmin = {
-        id: me.id, email: me.email, name: me.name || me.email,
-        role: me.role, permisos: me.permisos || {},
+        id: profile.id, email: profile.email, name: profile.name || profile.email,
+        role: profile.role, permisos: profile.permisos || {},
         accessToken: session.access_token,
       };
       document.dispatchEvent(new CustomEvent('admin-ready', { detail: window.currentAdmin }));

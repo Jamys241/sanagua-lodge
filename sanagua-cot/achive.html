@@ -2037,30 +2037,30 @@
       const { data: { session } } = await supa.auth.getSession();
       if (!session) { window.location.href = '../index.html'; return false; }
 
-      // Segunda verificación contra el backend (no solo confiar en el
-      // profile leído con la anon key): el backend valida el JWT de nuevo
-      // y confirma el role antes de dejarnos usar el panel.
-      const resp = await fetch(`${API_BASE}/auth/me`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
-      });
-      if (!resp.ok) {
+      // Leemos el profile directamente de Supabase (protegido por RLS: cada
+      // quien solo puede leer el suyo). Esto NO depende de que el backend
+      // Flask esté desplegado/corriendo — el backend sigue siendo quien de
+      // verdad protege cada acción de escritura (ver @require_role en
+      // app.py), esto aquí solo decide si te deja ENTRAR a ver el panel.
+      const { data: { user } } = await supa.auth.getUser();
+      const { data: profile, error } = await supa.from('profiles').select('*').eq('id', user.id).single();
+      if (error || !profile) {
         await supa.auth.signOut();
         window.location.href = '../index.html';
         return false;
       }
-      const me = await resp.json();
-      if (me.role !== 'admin' && me.role !== 'superadmin') {
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         await supa.auth.signOut();
         window.location.href = '../index.html';
         return false;
       }
 
       currentUser = {
-        id: me.id,
-        email: me.email,
-        username: me.name || me.email,
-        role: me.role,
-        permisos: me.permisos || {},
+        id: profile.id,
+        email: profile.email,
+        username: profile.name || profile.email,
+        role: profile.role,
+        permisos: profile.permisos || {},
         accessToken: session.access_token,
       };
       return true;
@@ -2072,6 +2072,9 @@
 
   // Adjunta el JWT de Supabase a las llamadas al backend Flask. Usar esto
   // (en vez de fetch directo) para cualquier endpoint que escriba datos.
+  // Si el backend todavía no está desplegado, estas llamadas fallarán con
+  // un error de red — pero eso ya no te saca del panel, solo afecta a la
+  // acción puntual que lo necesite (generar PDF, guardar productos, etc.).
   function authFetch(url, options = {}) {
     const headers = { ...(options.headers || {}), 'Authorization': `Bearer ${currentUser?.accessToken || ''}` };
     return fetch(url, { ...options, headers });
