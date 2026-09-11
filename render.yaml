@@ -7,7 +7,18 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      # ⚠️ Todas las siguientes son secretos: se cargan en el dashboard de
+      # Render (Environment → Add Environment Variable), NUNCA se escriben
+      # aquí ni se suben al repo. "sync: false" le dice a Render que no
+      # intente sincronizarlas desde este archivo — te las pide en el
+      # dashboard la primera vez que despliegas.
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GH_TOKEN
+        sync: false
+      - key: GH_REPO
+        sync: false
+      - key: GH_BRANCH
         sync: false

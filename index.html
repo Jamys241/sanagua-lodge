@@ -7,7 +7,7 @@
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1362,41 +1362,21 @@
   });
 
   // ── Login en dos pasos ────────────────────────────────────────────────
-  let _cachedUsers = null; // caché para no leer GitHub dos veces
-
-  async function checkEmail() {
-    const input   = document.getElementById('login-email').value.trim();
-    const feedEl  = document.getElementById('login-email-feedback');
-    const btn     = document.querySelector('#login-step-1 .auth-btn');
+  // El paso 1 ya no consulta ninguna base de datos (Supabase no permite
+  // buscar si un correo existe con la anon key, y es lo correcto: evita
+  // que cualquiera pueda enumerar qué correos están registrados). Solo
+  // pre-llena el paso 2; la verificación real ocurre al enviar la
+  // contraseña, contra supabase.auth.signInWithPassword.
+  function checkEmail() {
+    const input  = document.getElementById('login-email').value.trim();
+    const feedEl = document.getElementById('login-email-feedback');
     feedEl.textContent = '';
     if (!input) { feedEl.style.color='#c0392b'; feedEl.textContent='Ingresa tu correo.'; return; }
 
-    // Si no parece un correo, puede ser un usuario de administrador
-    // (la verificación real ocurre en el paso 2, contra el backend)
-    if (!input.includes('@')) {
-      document.getElementById('login-user-name').textContent  = 'Administrador';
-      document.getElementById('login-user-email').textContent = input;
-      showLoginStep2();
-      return;
-    }
-
-    btn.textContent = 'Verificando...'; btn.disabled = true;
-    feedEl.textContent = '';
-    try {
-      _cachedUsers = await loadUsers();
-      const found = _cachedUsers.find(u => u.email === input);
-      if (found) {
-        document.getElementById('login-user-name').textContent  = found.name;
-        document.getElementById('login-user-email').textContent = found.email;
-        showLoginStep2();
-      } else {
-        feedEl.style.color = '#c0392b';
-        feedEl.innerHTML = `Este correo no está registrado. <a href="#" onclick="switchAuthTab('register')" style="color:var(--earth);">Regístrate aquí</a>`;
-      }
-    } catch {
-      feedEl.style.color = '#c0392b';
-      feedEl.textContent = 'Error de conexión. Intenta nuevamente.';
-    } finally { btn.textContent = 'Continuar'; btn.disabled = false; }
+    const esAdmin = !input.includes('@');
+    document.getElementById('login-user-name').textContent  = esAdmin ? 'Administrador' : input.split('@')[0];
+    document.getElementById('login-user-email').textContent = input;
+    showLoginStep2();
   }
 
   function showLoginStep2() {
@@ -1433,64 +1413,22 @@
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/achive.html';
 
-  // ── Supabase (solo para login de administrador) ─────────────────────
+  // ── Supabase Auth — identidad única para clientes y administradores ─
   // La "anon key" es pública a propósito: Supabase la protege con Row
-  // Level Security + las funciones RPC de rpc_functions.sql, así que es
-  // seguro tenerla en el código del navegador.
+  // Level Security (ver supabase/01_auth_setup.sql). Todo el login,
+  // registro y sesión pasa por aquí; ya no hay contraseñas en GitHub ni
+  // comparaciones hechas a mano en el navegador.
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ── GitHub — mismo repo privado que el sistema ───────────────────────
-  const WEB_GH_TOKEN  = localStorage.getItem('gh_token')  || '';
-  const WEB_GH_REPO   = localStorage.getItem('gh_repo')   || '';
-  const WEB_GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
-
-  let webAuthData = null;
-
-  async function webGhRead(filename) {
-    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return null;
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/${filename}?ref=${WEB_GH_BRANCH}`,
-        { headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      if (!r.ok) return null;
-      const d = await r.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
-      return { data: JSON.parse(new TextDecoder('utf-8').decode(bytes)), sha: d.sha };
-    } catch { return null; }
-  }
-
-  async function webGhWrite(filename, data, sha) {
-    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return false;
-    try {
-      const json    = JSON.stringify(data, null, 2);
-      const bytes   = new TextEncoder().encode(json);
-      let binary = ''; bytes.forEach(b => binary += String.fromCharCode(b));
-      const content = btoa(binary);
-      const payload = { message: `update ${filename}`, content, branch: WEB_GH_BRANCH };
-      if (sha) payload.sha = sha;
-      const r = await fetch(
-        `https://api.github.com/repos/${WEB_GH_REPO}/contents/Data/json/${filename}`,
-        { method: 'PUT', headers: { 'Authorization': `token ${WEB_GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
-      );
-      return r.ok;
-    } catch { return false; }
-  }
-
-  // ── Usuarios públicos ─────────────────────────────────────────────────
-  // Se guardan en Data/json/users.json en el repo privado
-  // Estructura: { "users": [ { email, name, phone, password, puntos, created_at, reservas:[] } ] }
-
-  async function loadUsers() {
-    const res = await webGhRead('users.json');
-    return res?.data?.users || [];
-  }
-
-  async function saveUsers(users) {
-    const existing = await webGhRead('users.json');
-    return webGhWrite('users.json', { users }, existing?.sha || null);
+  // Trae el profile (nombre, role, puntos, etc.) del usuario ya autenticado.
+  async function fetchOwnProfile() {
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supa.from('profiles').select('*').eq('id', user.id).single();
+    if (error || !data) return null;
+    return data;
   }
 
   // ── Populares ─────────────────────────────────────────────────────────
@@ -1540,39 +1478,38 @@
 
     btn.textContent = 'Ingresando...'; btn.disabled = true;
 
-    // 1. Verificar si es administrador (lectura directa + bcrypt en el navegador)
-    try {
-      const { data, error } = await supa
-        .from('admin_login_view')
-        .select('username, password_hash, role, permisos')
-        .eq('username', input)
-        .limit(1);
-      if (!error && data && data.length > 0) {
-        const row = data[0];
-        const match = dcodeIO.bcrypt.compareSync(pass, row.password_hash);
-        if (match) {
-          const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
-          btn.textContent = 'Ingresar'; btn.disabled = false;
-          closeAuth();
-          showAdminRedirect({ role: row.role, user: row.username, label: labels[row.role] || row.role, url: SISTEMA_URL });
-          return;
-        }
-      }
-    } catch { /* si Supabase no responde, seguimos como intento de usuario público */ }
+    // Los administradores migrados sin correo real usan "<usuario>@sanagualodge.local"
+    const email = input.includes('@') ? input : `${input}@sanagualodge.local`;
 
-    // 2. Verificar usuario público — usar caché del paso 1
     try {
-      const users = _cachedUsers || await loadUsers();
-      const found = users.find(u => u.email === input && u.password === pass);
-      if (found) {
-        publicUser = { name: found.name, email: found.email, cedula: found.cedula||'', phone: found.phone||'', puntos: found.puntos || 0, reservas: found.reservas || [] };
-        aplicarUsuarioPublico();
-        closeAuth();
-      } else {
-        errEl.textContent = 'Contraseña incorrecta.';
+      const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+      if (error || !data.session) {
+        errEl.textContent = 'Correo/usuario o contraseña incorrectos.';
+        return;
       }
-    } catch { errEl.textContent = 'Error de conexión. Intenta nuevamente.'; }
-    finally { btn.textContent = 'Ingresar'; btn.disabled = false; }
+
+      const profile = await fetchOwnProfile();
+      if (!profile) {
+        errEl.textContent = 'No se pudo cargar tu perfil. Intenta nuevamente.';
+        await supa.auth.signOut();
+        return;
+      }
+
+      if (profile.role === 'admin' || profile.role === 'superadmin') {
+        const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
+        closeAuth();
+        showAdminRedirect({ role: profile.role, user: profile.name || profile.email, label: labels[profile.role], url: SISTEMA_URL });
+        return;
+      }
+
+      publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
+      aplicarUsuarioPublico();
+      closeAuth();
+    } catch {
+      errEl.textContent = 'Error de conexión. Intenta nuevamente.';
+    } finally {
+      btn.textContent = 'Ingresar'; btn.disabled = false;
+    }
   }
 
   function limpiarAuthError() {
@@ -1614,27 +1551,36 @@
 
     btn.textContent = 'Creando cuenta...'; btn.disabled = true;
     try {
-      const users = await loadUsers();
-      if (users.find(u => u.email === email)) {
-        errEl.textContent = 'Este correo ya está registrado.'; return;
+      // signUp crea el usuario en auth.users; el trigger on_auth_user_created
+      // (ver supabase/01_auth_setup.sql) crea automáticamente su profile con
+      // role='cliente' — nunca se manda el role desde aquí.
+      const { data, error } = await supa.auth.signUp({
+        email, password: pass,
+        options: { data: { name, cedula, phone } },
+      });
+      if (error) {
+        errEl.textContent = error.message.includes('registered')
+          ? 'Este correo ya está registrado.'
+          : 'No se pudo crear la cuenta: ' + error.message;
+        return;
       }
-      const newUser = { email, name, cedula, phone, password: pass, puntos: 0, created_at: new Date().toISOString(), reservas: [] };
-      users.push(newUser);
-      const ok = await saveUsers(users);
-      if (ok) {
-        publicUser = { name, email, cedula, phone, puntos: 0, reservas: [] };
-        aplicarUsuarioPublico();
-        closeAuth();
-        setTimeout(() => {
-          const t = document.createElement('div');
-          t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--moss);color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
-          t.textContent = `¡Bienvenido/a, ${name.split(' ')[0]}! Tu cuenta ha sido creada.`;
-          document.body.appendChild(t);
-          setTimeout(() => t.remove(), 4000);
-        }, 400);
-      } else {
-        errEl.textContent = 'Error al guardar. Verifica la conexión e intenta nuevamente.';
+      // Con "Confirm email" desactivado en el dashboard, signUp ya deja
+      // sesión iniciada. Si en el futuro se activa, data.session vendrá null
+      // y habría que avisar al usuario que revise su correo.
+      if (!data.session) {
+        errEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla antes de ingresar.';
+        return;
       }
+      publicUser = { name, email, cedula, phone, puntos: 0, reservas: [] };
+      aplicarUsuarioPublico();
+      closeAuth();
+      setTimeout(() => {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--moss);color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
+        t.textContent = `¡Bienvenido/a, ${name.split(' ')[0]}! Tu cuenta ha sido creada.`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+      }, 400);
     } catch { errEl.textContent = 'Error de conexión. Intenta nuevamente.'; }
     finally { btn.textContent = 'Crear cuenta'; btn.disabled = false; }
   }
@@ -1657,19 +1603,14 @@
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     `;
     document.body.appendChild(div);
-    // Guardar sesión en sessionStorage para que achive.html la lea
-    sessionStorage.setItem('sl_session', JSON.stringify({
-      username: admin.user,
-      role: admin.role,
-      ts: Date.now(),
-    }));
+    // No hace falta guardar nada nosotros: supabase-js ya persistió la
+    // sesión (JWT) en localStorage bajo su propia clave, y sanagua-cot/*
+    // usa el mismo SUPABASE_URL/ANON_KEY para leerla y revalidar el role.
     setTimeout(() => { window.location.href = admin.url; }, 1500);
   }
 
   function aplicarUsuarioPublico() {
     if (!publicUser) return;
-    // Persistir en sessionStorage para que las páginas de servicios lo lean
-    sessionStorage.setItem('sl_pub_user', JSON.stringify(publicUser));
     // Header
     document.getElementById('btn-login-header').style.display = 'none';
     document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
@@ -1686,9 +1627,9 @@
     document.getElementById('puntos-display').textContent = publicUser.puntos;
   }
 
-  function cerrarSesionPublic() {
+  async function cerrarSesionPublic() {
+    await supa.auth.signOut();
     publicUser = null;
-    sessionStorage.removeItem('sl_pub_user');
     document.getElementById('btn-login-header').style.display = '';
     document.getElementById('btn-register-header').textContent = 'Reservar';
     document.getElementById('btn-register-header').onclick = () => openAuth('register');
@@ -1731,31 +1672,26 @@
     if (passNueva && passNueva.length < 6) { msgEl.style.color='#c0392b'; msgEl.textContent='La nueva contraseña debe tener al menos 6 caracteres.'; return; }
 
     try {
-      const users = await loadUsers();
-      const idx = users.findIndex(u => u.email === publicUser.email);
-      if (idx < 0) { msgEl.style.color='#c0392b'; msgEl.textContent='Usuario no encontrado.'; return; }
-
-      // Verificar contraseña actual si quiere cambiarla
+      // Si quiere cambiar la contraseña, reautenticamos primero con la
+      // actual (signInWithPassword) — es la forma correcta de confirmar
+      // "quién eres" antes de dejar cambiarla, ya que Supabase no expone
+      // un endpoint de "verificar contraseña actual" por separado.
       if (passNueva) {
-        if (users[idx].password !== passActual) {
-          msgEl.style.color='#c0392b'; msgEl.textContent='La contraseña actual no es correcta.'; return;
-        }
-        users[idx].password = passNueva;
+        const { error: reauthErr } = await supa.auth.signInWithPassword({ email: publicUser.email, password: passActual });
+        if (reauthErr) { msgEl.style.color='#c0392b'; msgEl.textContent='La contraseña actual no es correcta.'; return; }
+        const { error: updErr } = await supa.auth.updateUser({ password: passNueva });
+        if (updErr) { msgEl.style.color='#c0392b'; msgEl.textContent='No se pudo actualizar la contraseña: ' + updErr.message; return; }
       }
 
-      // Actualizar campos
-      users[idx].name   = nuevoNombre;
-      users[idx].cedula = nuevaCedula;
-      users[idx].phone  = nuevoPhone;
+      const { data: { user } } = await supa.auth.getUser();
+      const { error: profErr } = await supa.from('profiles')
+        .update({ name: nuevoNombre, cedula: nuevaCedula, phone: nuevoPhone })
+        .eq('id', user.id);
+      if (profErr) { msgEl.style.color='#c0392b'; msgEl.textContent='Error al guardar. Intenta nuevamente.'; return; }
 
-      const ok = await saveUsers(users);
-      if (!ok) { msgEl.style.color='#c0392b'; msgEl.textContent='Error al guardar. Intenta nuevamente.'; return; }
-
-      // Actualizar publicUser en memoria y sessionStorage
       publicUser.name   = nuevoNombre;
       publicUser.cedula = nuevaCedula;
       publicUser.phone  = nuevoPhone;
-      sessionStorage.setItem('sl_pub_user', JSON.stringify(publicUser));
       aplicarUsuarioPublico();
 
       msgEl.style.color = '#2d7a4f';
@@ -1867,10 +1803,21 @@
     }
   });
 
-  (function(){
+  (async function(){
     try {
-      const raw = sessionStorage.getItem('sl_pub_user');
-      if (raw) { publicUser = JSON.parse(raw); aplicarUsuarioPublico(); }
+      // Restaura la sesión real desde Supabase (persistida por supabase-js
+      // en localStorage) en lugar de confiar en un dato copiado a mano.
+      const { data: { session } } = await supa.auth.getSession();
+      if (session) {
+        const profile = await fetchOwnProfile();
+        if (profile && profile.role === 'cliente') {
+          publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
+          aplicarUsuarioPublico();
+        }
+        // Si es admin/superadmin y llega a index.html con sesión activa,
+        // lo dejamos navegar la web pública normalmente (no se le fuerza
+        // a entrar al panel), pero no se le trata como "cliente".
+      }
     } catch {}
     // Abrir modal si viene de una página de servicio con ?action=login o ?action=register
     const action = new URLSearchParams(window.location.search).get('action');

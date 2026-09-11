@@ -150,6 +150,7 @@
       .inc-grid,.ms,.carpa-grid,.cs,.pg{grid-template-columns:1fr}
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <nav>
@@ -283,20 +284,30 @@
   // La URL relativa al index.html depende de la profundidad del archivo
   const INDEX_URL = '../../index.html'; // desde assets/pages/
 
-  function getSesionPublica() {
+  // Sesión REAL de Supabase Auth. Ya no se confía en sessionStorage (era
+  // trivialmente falsificable desde la consola del navegador).
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPub = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let _sesionPublicaCache = null;
+  async function _refrescarSesionPublica() {
     try {
-      // Sesión de usuario público
-      const pub = sessionStorage.getItem('sl_pub_user');
-      if (pub) return { tipo: 'publico', ...JSON.parse(pub) };
-      // Sesión de admin (también puede reservar)
-      const adm = sessionStorage.getItem('sl_session');
-      if (adm) {
-        const s = JSON.parse(adm);
-        if (s.role && (Date.now() - s.ts) < 8*3600*1000)
-          return { tipo: 'admin', name: s.username };
-      }
-    } catch {}
-    return null;
+      const { data: { session } } = await supaPub.auth.getSession();
+      if (!session) { _sesionPublicaCache = null; return; }
+      const { data: profile } = await supaPub.from('profiles')
+        .select('name, email, cedula, phone, puntos, role').eq('id', session.user.id).single();
+      if (!profile) { _sesionPublicaCache = null; return; }
+      _sesionPublicaCache = (profile.role === 'admin' || profile.role === 'superadmin')
+        ? { tipo: 'admin', name: profile.name || profile.email }
+        : { tipo: 'publico', name: profile.name, email: profile.email, cedula: profile.cedula, phone: profile.phone, puntos: profile.puntos };
+    } catch { _sesionPublicaCache = null; }
+  }
+  _refrescarSesionPublica();
+  supaPub.auth.onAuthStateChange(() => _refrescarSesionPublica());
+
+  function getSesionPublica() {
+    return _sesionPublicaCache;
   }
 
   function verificarYReservar(fn) {

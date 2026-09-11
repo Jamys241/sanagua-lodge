@@ -9,7 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -751,9 +751,13 @@
       <button class="modal-close" onclick="closePermisosModal()">×</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:18px;">
-        Controla qué puede hacer el administrador <strong id="perm-admin-name"></strong>.
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">
+        Elige el administrador y controla qué puede hacer <strong id="perm-admin-name"></strong>.
       </p>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Administrador</label>
+        <select id="perm-admin-select" style="width:100%;padding:8px;border-radius:6px;"></select>
+      </div>
       <div id="permisos-lista"></div>
       <div class="actions-bar" style="margin-top:20px;">
         <button class="btn btn-outline" onclick="closePermisosModal()">Cancelar</button>
@@ -1249,35 +1253,40 @@
     </div>
   </div>
 
-  <!-- Credenciales de usuarios -->
+  <!-- Credenciales de acceso -->
   <div class="card" id="card-credenciales">
-    <div class="card-title">Credenciales de acceso</div>
+    <div class="card-title">Mi contraseña</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
-      Cambia los usuarios y contraseñas. Se guardan de forma segura en Supabase (no en texto plano).<br>
-      Deja un campo en blanco si no quieres cambiarlo.<br>
-      <strong>Solo visible y editable por el Super Administrador.</strong>
+      Cambia tu propia contraseña de acceso (Supabase Auth).
     </p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
-      <div>
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b45309;margin-bottom:10px;">⭐ Super Administrador</div>
-        <div class="form-group"><label>Usuario nuevo (opcional)</label><input type="text" id="cred-super-user" placeholder="Dejar en blanco para no cambiar"></div>
-        <div class="form-group"><label>Contraseña nueva (opcional)</label><input type="password" id="cred-super-pass" placeholder="Dejar en blanco para no cambiar"></div>
-      </div>
-      <div>
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:10px;">👑 Administrador</div>
-        <div class="form-group"><label>Usuario nuevo (opcional)</label><input type="text" id="cred-admin-user" placeholder="Dejar en blanco para no cambiar"></div>
-        <div class="form-group"><label>Contraseña nueva (opcional)</label><input type="password" id="cred-admin-pass" placeholder="Dejar en blanco para no cambiar"></div>
-      </div>
+    <div class="form-group"><label>Contraseña actual</label><input type="password" id="mypass-actual" placeholder="••••••••"></div>
+    <div class="form-group"><label>Contraseña nueva</label><input type="password" id="mypass-nueva" placeholder="Mínimo 6 caracteres"></div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-accent" onclick="cambiarMiPassword()">💾 Cambiar mi contraseña</button>
     </div>
-    <div class="form-group" style="margin-top:6px;">
-      <label>Tu contraseña actual de Super Administrador (para confirmar el cambio)</label>
-      <input type="password" id="cred-confirm-pass" placeholder="••••••••">
+  </div>
+
+  <!-- Crear administrador (solo superadmin) -->
+  <div class="card" id="card-crear-admin" style="display:none;">
+    <div class="card-title">Crear nuevo administrador</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
+      Se crea directamente en Supabase Auth. Comparte la contraseña con la persona por un canal seguro; podrá cambiarla desde "Mi contraseña".<br>
+      <strong>Solo visible para el Super Administrador.</strong>
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group"><label>Nombre</label><input type="text" id="newadmin-name" placeholder="Nombre completo"></div>
+      <div class="form-group"><label>Correo</label><input type="email" id="newadmin-email" placeholder="correo@ejemplo.com"></div>
+      <div class="form-group"><label>Contraseña temporal</label><input type="password" id="newadmin-pass" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="newadmin-role" style="width:100%;padding:8px;border-radius:6px;">
+          <option value="admin">Administrador</option>
+          <option value="superadmin">Super Administrador</option>
+        </select>
+      </div>
     </div>
     <div style="margin-top:14px;">
-      <button class="btn btn-accent" onclick="saveCreds()">💾 Guardar credenciales</button>
-    </div>
-    <div style="margin-top:12px;font-size:.78rem;color:var(--muted);background:var(--bg);padding:10px 14px;border-radius:6px;">
-      ⚠️ Después de cambiar las credenciales, todos los dispositivos necesitarán iniciar sesión nuevamente con las nuevas contraseñas.
+      <button class="btn btn-accent" onclick="crearNuevoAdmin()">➕ Crear administrador</button>
     </div>
   </div>
 
@@ -2018,19 +2027,54 @@
   }
 
   function verificarSesion() {
-    const raw = sessionStorage.getItem('sl_session');
-    if (!raw) { window.location.href = '../index.html'; return false; }
+    // Compatibilidad hacia atrás: algunos sitios llaman verificarSesion()
+    // de forma síncrona. Ver verificarSesionAsync() para la versión real.
+    return !!currentUser;
+  }
+
+  async function verificarSesionAsync() {
     try {
-      const s = JSON.parse(raw);
-      // Sesión válida por 8 horas
-      if (!s.role || !s.username || (Date.now() - s.ts) > 8 * 3600 * 1000) {
-        sessionStorage.removeItem('sl_session');
+      const { data: { session } } = await supa.auth.getSession();
+      if (!session) { window.location.href = '../index.html'; return false; }
+
+      // Segunda verificación contra el backend (no solo confiar en el
+      // profile leído con la anon key): el backend valida el JWT de nuevo
+      // y confirma el role antes de dejarnos usar el panel.
+      const resp = await fetch(`${API_BASE}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!resp.ok) {
+        await supa.auth.signOut();
         window.location.href = '../index.html';
         return false;
       }
-      currentUser = { username: s.username, role: s.role };
+      const me = await resp.json();
+      if (me.role !== 'admin' && me.role !== 'superadmin') {
+        await supa.auth.signOut();
+        window.location.href = '../index.html';
+        return false;
+      }
+
+      currentUser = {
+        id: me.id,
+        email: me.email,
+        username: me.name || me.email,
+        role: me.role,
+        permisos: me.permisos || {},
+        accessToken: session.access_token,
+      };
       return true;
-    } catch { window.location.href = '../index.html'; return false; }
+    } catch {
+      window.location.href = '../index.html';
+      return false;
+    }
+  }
+
+  // Adjunta el JWT de Supabase a las llamadas al backend Flask. Usar esto
+  // (en vez de fetch directo) para cualquier endpoint que escriba datos.
+  function authFetch(url, options = {}) {
+    const headers = { ...(options.headers || {}), 'Authorization': `Bearer ${currentUser?.accessToken || ''}` };
+    return fetch(url, { ...options, headers });
   }
 
   function iniciarSesion() {
@@ -2050,8 +2094,7 @@
 
   function cerrarSesion() {
     if (!confirm('¿Cerrar sesión?')) return;
-    sessionStorage.removeItem('sl_session');
-    window.location.href = '../index.html';
+    supa.auth.signOut().finally(() => { window.location.href = '../index.html'; });
   }
 
 
@@ -2059,7 +2102,9 @@
   function getPermisos() {
     if (currentUser?.role === 'superadmin')
       return Object.fromEntries(Object.keys(PERMISOS_DEFAULT).map(k=>[k,true]));
-    return { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
+    // Los permisos ahora viven en profiles.permisos (Supabase), cargados en
+    // verificarSesionAsync() vía /auth/me — ya no en auth.json de GitHub.
+    return { ...PERMISOS_DEFAULT, ...(currentUser?.permisos||{}) };
   }
 
   function aplicarPermisos() {
@@ -2098,73 +2143,67 @@
 
 
 
-  async function saveCreds() {
-    if (currentUser?.role!=='superadmin') { showToast('Solo el super administrador puede cambiar credenciales.','error'); return; }
-    const sU = document.getElementById('cred-super-user').value.trim();
-    const sP = document.getElementById('cred-super-pass').value.trim();
-    const aU = document.getElementById('cred-admin-user').value.trim();
-    const aP = document.getElementById('cred-admin-pass').value.trim();
-    const confirmPass = document.getElementById('cred-confirm-pass').value;
-    if (!confirmPass) { showToast('Ingresa tu contraseña actual para confirmar.','error'); return; }
-    if (!sU && !sP && !aU && !aP) { showToast('No hay cambios para guardar.','error'); return; }
+  async function cambiarMiPassword() {
+    const actual = document.getElementById('mypass-actual').value;
+    const nueva  = document.getElementById('mypass-nueva').value;
+    if (!actual || !nueva) { showToast('Completa ambos campos.', 'error'); return; }
+    if (nueva.length < 6) { showToast('La nueva contraseña debe tener al menos 6 caracteres.', 'error'); return; }
 
-    // Verificar primero, en el navegador, que la contraseña de confirmación
-    // sea correcta (evita gastar la escritura si el usuario se equivocó).
-    // La verificación real y definitiva la hace de todas formas la base de
-    // datos (policy con headers), esto es solo para dar un mensaje claro.
     showLoading(true);
     try {
-      const { data: selfRow, error: selfErr } = await supa
-        .from('admin_login_view')
-        .select('password_hash')
-        .eq('username', currentUser.username)
-        .limit(1);
-      if (selfErr || !selfRow?.length || !dcodeIO.bcrypt.compareSync(confirmPass, selfRow[0].password_hash)) {
-        showToast('❌ Contraseña actual incorrecta.', 'error');
-        return;
-      }
+      // Reautenticar con la contraseña actual antes de permitir el cambio.
+      const { error: reauthErr } = await supa.auth.signInWithPassword({ email: currentUser.email, password: actual });
+      if (reauthErr) { showToast('❌ Contraseña actual incorrecta.', 'error'); return; }
 
-      // Cliente temporal que manda las credenciales del actor como headers,
-      // que es lo que exige la policy de UPDATE en Supabase.
-      const supaAuth = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        global: { headers: { 'x-actor-username': currentUser.username, 'x-actor-password': confirmPass } },
-      });
+      const { error } = await supa.auth.updateUser({ password: nueva });
+      if (error) throw new Error(error.message);
 
-      if (sU || sP) {
-        const row = {};
-        if (sU) row.username = sU;
-        if (sP) row.password_hash = dcodeIO.bcrypt.hashSync(sP, dcodeIO.bcrypt.genSaltSync(10));
-        const { error } = await supaAuth.from('admin_users').update(row).eq('role', 'superadmin');
-        if (error) throw new Error(error.message);
-      }
-      if (aU || aP) {
-        const row = {};
-        if (aU) row.username = aU;
-        if (aP) row.password_hash = dcodeIO.bcrypt.hashSync(aP, dcodeIO.bcrypt.genSaltSync(10));
-        const { error } = await supaAuth.from('admin_users').update(row).eq('role', 'admin');
-        if (error) throw new Error(error.message);
-      }
-
-      document.getElementById('cred-super-user').value = '';
-      document.getElementById('cred-super-pass').value = '';
-      document.getElementById('cred-admin-user').value = '';
-      document.getElementById('cred-admin-pass').value = '';
-      document.getElementById('cred-confirm-pass').value = '';
-      showToast('✅ Credenciales actualizadas.','success');
-      // Si el superadmin se cambió su propio usuario, actualizamos la sesión
-      if (sU) { currentUser.username = sU; sessionStorage.setItem('sl_session', JSON.stringify({ username: sU, role: 'superadmin', ts: Date.now() })); }
+      document.getElementById('mypass-actual').value = '';
+      document.getElementById('mypass-nueva').value  = '';
+      showToast('✅ Contraseña actualizada.', 'success');
     } catch (e) { showToast('❌ ' + (e.message || 'Error al guardar.'), 'error'); }
     finally { showLoading(false); }
   }
 
-  // ── Configuración GitHub (sin Render) ───────────────────────────────────────
+  async function crearNuevoAdmin() {
+    if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede crear administradores.', 'error'); return; }
+    const name  = document.getElementById('newadmin-name').value.trim();
+    const email = document.getElementById('newadmin-email').value.trim();
+    const pass  = document.getElementById('newadmin-pass').value;
+    const role  = document.getElementById('newadmin-role').value;
+    if (!name || !email || !pass) { showToast('Completa nombre, correo y contraseña.', 'error'); return; }
+    if (pass.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+
+    showLoading(true);
+    try {
+      const resp = await authFetch(`${API_BASE}/auth/admins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password: pass, role }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'Error al crear el administrador.');
+      document.getElementById('newadmin-name').value  = '';
+      document.getElementById('newadmin-email').value = '';
+      document.getElementById('newadmin-pass').value  = '';
+      showToast(`✅ Administrador ${email} creado.`, 'success');
+    } catch (e) { showToast('❌ ' + e.message, 'error'); }
+    finally { showLoading(false); }
+  }
+
+  // ── Configuración GitHub ───────────────────────────────────────────────
   // GH_TOKEN y GH_REPO se configuran en la pestaña ⚙️ Configuración
   // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
   // Para compartir entre dispositivos, cada uno debe configurar su token
 
-  // ── Supabase (solo para gestión de credenciales de administrador) ──────
+  // ── Supabase Auth — sesión del panel administrativo ─────────────────────
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  // URL del backend Flask (app.py). Este proyecto ya no usa Render.
+  // Mientras corras app.py en tu máquina (`python app.py` / `flask run`),
+  // esto debe apuntar a localhost. Cuando decidas dónde desplegarlo,
+  // cambia este valor por esa URL (y el mismo en assets/js/admin-guard.js).
+  const API_BASE = 'http://localhost:5000';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── Cotizaciones y Eventos — ahora en Supabase (antes GitHub) ───────────
@@ -2501,7 +2540,7 @@
 
   // Init — todo dentro de DOMContentLoaded para garantizar que el DOM y las
   // funciones estén disponibles antes de ejecutar
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     setDiscount('none');
 
     // Fechas por defecto
@@ -2510,11 +2549,14 @@
     const _valid = new Date(_today); _valid.setDate(_valid.getDate()+30);
     document.getElementById('quote-valid').value = localDateStr(_valid);
 
-    // Verificar sesión — si no hay sesión válida redirige al sitio web
-    if (!verificarSesion()) return;
+    // Verificar sesión real de Supabase Auth (y su role) — si no hay sesión
+    // válida de admin/superadmin, redirige al sitio web.
+    if (!(await verificarSesionAsync())) return;
 
     // Mostrar el sistema con la sesión activa
     iniciarSesion();
+    document.getElementById('card-crear-admin').style.display =
+      currentUser.role === 'superadmin' ? '' : 'none';
 
     // Cargar datos
     (async () => {
@@ -2610,7 +2652,7 @@
     // Guardar hashes iniciales
     _lastHashHist = simpleHash(allHistory);
     _lastHashEvts = simpleHash(allEvents);
-    // Sin Render — no se necesita keep-alive
+    // No se necesita keep-alive de servidor
     // Iniciar ciclo de polling de datos
     _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     document.addEventListener('visibilitychange', () => {
@@ -2742,19 +2784,42 @@
     status.innerHTML = msg;
     status.style.color = missing.length ? 'var(--gold)' : 'var(--success)';
   }
-  function openPermisosModal() {
+  let _adminsCache = [];
+
+  async function openPermisosModal() {
     if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede configurar permisos.','error'); return; }
-    const permisos = { ...PERMISOS_DEFAULT, ...(authData?.permisos||{}) };
-    document.getElementById('perm-admin-name').textContent = authData?.admin?.username || 'admin';
-    document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS).map(([key,info])=>`
+    showLoading(true);
+    try {
+      const resp = await authFetch(`${API_BASE}/auth/admins`);
+      if (!resp.ok) throw new Error();
+      _adminsCache = await resp.json();
+    } catch { showToast('❌ No se pudo cargar la lista de administradores.', 'error'); showLoading(false); return; }
+    showLoading(false);
+
+    const sel = document.getElementById('perm-admin-select');
+    sel.innerHTML = _adminsCache.map(a => `<option value="${a.id}">${a.name || a.email} (${a.role})</option>`).join('');
+    sel.onchange = () => renderPermisosParaAdminSeleccionado();
+    document.getElementById('permisos-modal').classList.add('open');
+    renderPermisosParaAdminSeleccionado();
+  }
+
+  function renderPermisosParaAdminSeleccionado() {
+    const sel = document.getElementById('perm-admin-select');
+    const admin = _adminsCache.find(a => a.id === sel.value) || _adminsCache[0];
+    if (!admin) return;
+    const permisos = { ...PERMISOS_DEFAULT, ...(admin.permisos||{}) };
+    document.getElementById('perm-admin-name').textContent = admin.name || admin.email;
+    const esSuper = admin.role === 'superadmin';
+    document.getElementById('permisos-lista').innerHTML = (esSuper
+      ? `<p style="font-size:.85rem;color:var(--muted);">Este usuario es Super Administrador: tiene todos los permisos siempre.</p>`
+      : Object.entries(PERMISOS_LABELS).map(([key,info])=>`
       <div class="perm-row">
         <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
         <label class="toggle-sw">
           <input type="checkbox" id="perm-${key}" ${permisos[key]?'checked':''}>
           <span class="slider"></span>
         </label>
-      </div>`).join('');
-    document.getElementById('permisos-modal').classList.add('open');
+      </div>`).join(''));
   }
 
   function closePermisosModal() {
@@ -2762,17 +2827,24 @@
   }
 
   async function savePermisos() {
+    const sel = document.getElementById('perm-admin-select');
+    const admin = _adminsCache.find(a => a.id === sel.value);
+    if (!admin) return;
+    if (admin.role === 'superadmin') { closePermisosModal(); return; }
     const permisos = {};
     Object.keys(PERMISOS_LABELS).forEach(key => {
       permisos[key] = document.getElementById('perm-'+key)?.checked || false;
     });
-    authData.permisos = permisos;
     showLoading(true);
     try {
-      const ok = await ghReadWrite('auth.json', authData);
-      if (!ok) throw new Error();
+      const resp = await authFetch(`${API_BASE}/auth/admins/${admin.id}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permisos }),
+      });
+      if (!resp.ok) throw new Error();
       closePermisosModal();
-      showToast('✅ Permisos del admin guardados.', 'success');
+      showToast(`✅ Permisos de ${admin.name||admin.email} guardados.`, 'success');
     } catch { showToast('❌ Error al guardar permisos.', 'error'); }
     finally { showLoading(false); }
   }

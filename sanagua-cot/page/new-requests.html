@@ -7,6 +7,8 @@
   <title>Solicitudes de Reserva — Sanagua Lodge</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/js/admin-guard.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -226,17 +228,8 @@
 
 <script>
   // ── Sesión ───────────────────────────────────────────────────────────
-  (function(){
-    const raw = sessionStorage.getItem('sl_session');
-    if (!raw) { window.location.href = '../achive.html'; return; }
-    try {
-      const s = JSON.parse(raw);
-      if (!s.role || (Date.now()-s.ts) > 8*3600*1000) {
-        sessionStorage.removeItem('sl_session');
-        window.location.href = '../achive.html';
-      }
-    } catch { window.location.href = '../achive.html'; }
-  })();
+  // La verificación real ahora la hace assets/js/admin-guard.js (Supabase
+  // Auth + confirmación server-side), cargado en <head>.
 
   // ── GitHub ───────────────────────────────────────────────────────────
   const GT = localStorage.getItem('gh_token')  || '';

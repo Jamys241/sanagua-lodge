@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Editor de Menú — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -254,17 +256,9 @@
 
 
   // ── Verificar sesión ────────────────────────────────────────────────
-  (function(){
-    const raw = sessionStorage.getItem('sl_session');
-    if (!raw) { window.location.href = '../index.html'; return; }
-    try {
-      const s = JSON.parse(raw);
-      if (!s.role || (Date.now() - s.ts) > 8*3600*1000) {
-        sessionStorage.removeItem('sl_session');
-        window.location.href = '../index.html';
-      }
-    } catch { window.location.href = '../index.html'; }
-  })();
+  // La verificación real ahora la hace assets/js/admin-guard.js (Supabase
+  // Auth + confirmación server-side), cargado en <head>. Si no hay sesión
+  // de admin/superadmin válida, ya redirigió antes de llegar aquí.
 
   // ── GitHub helpers ──────────────────────────────────────────────────
   async function ghRead(filename) {

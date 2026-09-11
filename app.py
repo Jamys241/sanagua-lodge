@@ -9,18 +9,31 @@ from reportlab.lib.enums import TA_RIGHT, TA_LEFT, TA_CENTER
 import io, json, os, base64
 import requests as req_lib
 from datetime import datetime
+from functools import wraps
 
-import bcrypt
 from supabase import create_client
+
+# Carga variables desde .env SOLO en desarrollo local (copia .env.example a
+# .env). En Render no hace nada si el archivo no existe — ahí las variables
+# ya vienen inyectadas por el dashboard.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = Flask(__name__)
 CORS(app)
 
-# ── Supabase — SOLO para credenciales de administrador ───────────────────────
-# El resto de los datos (cotizaciones, productos, empresa, eventos, usuarios
-# web) sigue guardándose en GitHub exactamente igual que antes.
+# ── Supabase Auth — identidad única para clientes y administradores ─────────
+# El login/registro ya NO se hace comparando contraseñas a mano: todo pasa
+# por auth.users de Supabase (supabase.auth.signInWithPassword / signUp en el
+# frontend). Aquí, en el backend, solo VALIDAMOS el JWT que manda el cliente
+# en el header Authorization y consultamos su role en public.profiles para
+# decidir si puede tocar los endpoints de administración.
 #
-# Variables de entorno nuevas en Render:
+# Variables de entorno — se configuran en Render (Dashboard → Environment),
+# NUNCA en este archivo ni en el repo. Ver render.yaml y .env.example.
 #   SUPABASE_URL          → https://xxxxx.supabase.co
 #   SUPABASE_SERVICE_KEY  → service_role key (nunca la anon/public)
 SUPABASE_URL         = os.environ.get('SUPABASE_URL', '')
@@ -28,8 +41,52 @@ SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 sb = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY) if SUPABASE_URL and SUPABASE_SERVICE_KEY else None
 
 
+def get_authenticated_profile():
+    """Valida el JWT del header Authorization contra Supabase Auth y devuelve
+    el profile (con su role) del usuario autenticado, o None si no es válido.
+    Nunca confía en nada que mande el cliente aparte del token en sí."""
+    if sb is None:
+        return None
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return None
+    token = auth_header.split(' ', 1)[1].strip()
+    if not token:
+        return None
+    try:
+        user_res = sb.auth.get_user(token)
+        user = user_res.user
+        if not user:
+            return None
+        prof = sb.table('profiles').select('*').eq('id', user.id).limit(1).execute()
+        if not prof.data:
+            return None
+        return prof.data[0]
+    except Exception:
+        return None
+
+
+def require_role(*roles):
+    """Decorator: exige un JWT válido de Supabase cuyo profile.role esté en
+    `roles`. Usar en TODO endpoint que escriba/borre datos administrativos —
+    nunca confiar solo en que el frontend oculte el botón."""
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            profile = get_authenticated_profile()
+            if not profile:
+                return jsonify({'error': 'No autenticado'}), 401
+            if profile['role'] not in roles:
+                return jsonify({'error': 'No tienes permiso para esta acción'}), 403
+            request.profile = profile
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
 # ── GitHub como base de datos ────────────────────────────────────────────────
-# Variables de entorno en Render:
+# Variables de entorno — se configuran en Render (Dashboard → Environment),
+# NUNCA en este archivo ni en el repo. Ver render.yaml y .env.example.
 #   GH_TOKEN  → GitHub Personal Access Token (repo scope)
 #   GH_REPO   → usuario/repositorio  ej: sanagua/datos
 #   GH_BRANCH → rama donde se guardan los datos (default: main)
@@ -155,72 +212,86 @@ def debug():
         'storage':              'GitHub API',
         'SUPABASE_URL':         '✅ configurado' if SUPABASE_URL else '❌ FALTA',
         'SUPABASE_SERVICE_KEY': '✅ configurado' if SUPABASE_SERVICE_KEY else '❌ FALTA',
-        'auth_storage':         'Supabase (tabla admin_users)',
+        'auth_storage':         'Supabase Auth (auth.users + public.profiles)',
     })
 
 
-# ── Autenticación de administradores (Supabase) ──────────────────────────────
-# Reemplaza la comparación de auth.json en el navegador. Ahora cualquier
-# dispositivo puede iniciar sesión llamando a este endpoint, sin necesitar
-# configurar un token de GitHub localmente.
-@app.route('/auth/login', methods=['POST'])
-def auth_login():
-    if sb is None:
-        return jsonify({'error': 'Supabase no configurado en el servidor'}), 500
-    data = request.get_json() or {}
-    username = (data.get('username') or '').strip()
-    password = data.get('password') or ''
-    if not username or not password:
-        return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
+# ── Autenticación (Supabase Auth) ────────────────────────────────────────────
+# El login/registro real ocurre en el navegador con supabase-js
+# (auth.signInWithPassword / auth.signUp) contra auth.users. El backend ya no
+# recibe ni compara contraseñas: solo valida el JWT resultante.
 
-    res = sb.table('admin_users').select('*').eq('username', username).limit(1).execute()
-    if not res.data:
-        return jsonify({'error': 'Credenciales inválidas'}), 401
-    user = res.data[0]
-    if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
-        return jsonify({'error': 'Credenciales inválidas'}), 401
-
+@app.route('/auth/me', methods=['GET'])
+def auth_me():
+    """Confirma, del lado del servidor, quién es el usuario del token actual
+    y qué role tiene. Lo usan las páginas de sanagua-cot como segunda
+    verificación (además de la sesión de Supabase en el navegador) antes de
+    confiar en que alguien es admin."""
+    profile = get_authenticated_profile()
+    if not profile:
+        return jsonify({'error': 'No autenticado'}), 401
     return jsonify({
-        'ok':       True,
-        'username': user['username'],
-        'role':     user['role'],
-        'permisos': user.get('permisos', {}),
+        'id':       profile['id'],
+        'email':    profile['email'],
+        'name':     profile.get('name', ''),
+        'role':     profile['role'],
+        'permisos': profile.get('permisos', {}),
     })
 
 
-@app.route('/auth/credentials', methods=['PUT'])
-def auth_update_credentials():
-    """Reemplaza a saveCreds() del panel (antes escribía auth.json en GitHub).
-    Requiere reautenticarse con la contraseña actual del superadmin que hace
-    el cambio, ya que no hay sesión/token de servidor todavía."""
+@app.route('/auth/admins', methods=['GET'])
+@require_role('superadmin')
+def auth_list_admins():
+    """Lista todos los administradores (para el panel de permisos)."""
+    res = sb.table('profiles').select('id, email, name, role, permisos').in_('role', ['admin', 'superadmin']).execute()
+    return jsonify(res.data or [])
+
+
+@app.route('/auth/admins', methods=['POST'])
+@require_role('superadmin')
+def auth_create_admin():
+    """Crea un nuevo administrador directamente en Supabase Auth (reemplaza
+    el viejo flujo de escribir un hash bcrypt en admin_users). Solo puede
+    invocarlo alguien ya autenticado como superadmin."""
     if sb is None:
         return jsonify({'error': 'Supabase no configurado en el servidor'}), 500
     data = request.get_json() or {}
-    actor_username = (data.get('actor_username') or '').strip()
-    actor_password = data.get('actor_password') or ''
+    email    = (data.get('email') or '').strip()
+    name     = (data.get('name') or '').strip()
+    password = data.get('password') or ''
+    role     = data.get('role') or 'admin'
+    if role not in ('admin', 'superadmin'):
+        return jsonify({'error': 'Role inválido'}), 400
+    if not email or not password or len(password) < 6:
+        return jsonify({'error': 'Email y contraseña (mín. 6 caracteres) requeridos'}), 400
 
-    res = sb.table('admin_users').select('*').eq('username', actor_username).limit(1).execute()
-    if not res.data or res.data[0]['role'] != 'superadmin':
-        return jsonify({'error': 'Solo el super administrador puede cambiar credenciales'}), 403
-    actor = res.data[0]
-    if not bcrypt.checkpw(actor_password.encode('utf-8'), actor['password_hash'].encode('utf-8')):
-        return jsonify({'error': 'Contraseña actual incorrecta'}), 401
+    try:
+        created = sb.auth.admin.create_user({
+            'email': email,
+            'password': password,
+            'email_confirm': True,
+            'user_metadata': {'name': name, 'role': role},
+        })
+        return jsonify({'ok': True, 'id': created.user.id, 'email': email, 'role': role})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
-    updates = data.get('updates', [])  # [{role, username?, password?}, ...]
-    for u in updates:
-        role = u.get('role')
-        if role not in ('superadmin', 'admin'):
-            continue
-        row = {}
-        new_username = (u.get('username') or '').strip()
-        new_password = u.get('password') or ''
-        if new_username:
-            row['username'] = new_username
-        if new_password:
-            row['password_hash'] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
-        if row:
-            sb.table('admin_users').update(row).eq('role', role).execute()
 
+@app.route('/auth/admins/<user_id>/role', methods=['PUT'])
+@require_role('superadmin')
+def auth_update_admin_role(user_id):
+    """Cambia el role/permisos de un admin existente. Solo superadmin."""
+    if sb is None:
+        return jsonify({'error': 'Supabase no configurado en el servidor'}), 500
+    data = request.get_json() or {}
+    updates = {}
+    if data.get('role') in ('admin', 'superadmin', 'cliente'):
+        updates['role'] = data['role']
+    if 'permisos' in data:
+        updates['permisos'] = data['permisos']
+    if not updates:
+        return jsonify({'error': 'Nada que actualizar'}), 400
+    sb.table('profiles').update(updates).eq('id', user_id).execute()
     return jsonify({'ok': True})
 
 
@@ -234,6 +305,7 @@ def get_products():
     return jsonify(load_products())
 
 @app.route('/products', methods=['PUT'])
+@require_role('admin', 'superadmin')
 def update_products():
     products = request.get_json()
     if not isinstance(products, list):
@@ -247,6 +319,7 @@ def get_logo():
     return jsonify({'logo': load_logo()})
 
 @app.route('/logo', methods=['PUT'])
+@require_role('admin', 'superadmin')
 def update_logo():
     data = request.get_json()
     save_logo(data.get('logo', ''))
@@ -258,6 +331,7 @@ def get_empresa():
     return jsonify(load_empresa())
 
 @app.route('/empresa', methods=['PUT'])
+@require_role('admin', 'superadmin')
 def update_empresa():
     data = request.get_json()
     if not data or not data.get('nombre'):
@@ -271,6 +345,7 @@ def get_events():
     return jsonify(load_events())
 
 @app.route('/events', methods=['PUT'])
+@require_role('admin', 'superadmin')
 def update_events():
     data = request.get_json()
     if not isinstance(data, list):
@@ -280,10 +355,12 @@ def update_events():
 
 # Historial CRUD
 @app.route('/history', methods=['GET'])
+@require_role('admin', 'superadmin')
 def get_history():
     return jsonify(load_history())
 
 @app.route('/history/<quote_num>', methods=['PUT'])
+@require_role('admin', 'superadmin')
 def update_quote(quote_num):
     data = request.get_json()
     quotes = load_history()
@@ -296,6 +373,7 @@ def update_quote(quote_num):
     return jsonify({'error': 'Not found'}), 404
 
 @app.route('/history/<quote_num>', methods=['DELETE'])
+@require_role('admin', 'superadmin')
 def delete_quote(quote_num):
     quotes = load_history()
     quotes = [q for q in quotes if str(q.get('quote_num')) != str(quote_num)]
@@ -304,6 +382,7 @@ def delete_quote(quote_num):
 
 # Generar PDF cotización
 @app.route('/generate-pdf', methods=['POST'])
+@require_role('admin', 'superadmin')
 def generate_pdf():
     data = request.get_json()
     if not data:
@@ -337,6 +416,7 @@ def generate_pdf():
 
 # Generar PDF confirmación de reserva
 @app.route('/regenerate-pdf', methods=['POST'])
+@require_role('admin', 'superadmin')
 def regenerate_pdf():
     """Regenera el PDF de una cotización existente sin cambiar el contador ni el historial."""
     data = request.get_json()

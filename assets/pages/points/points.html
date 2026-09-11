@@ -6,6 +6,7 @@
   <link rel="icon" type="image/png" href="../../images/icon/icon.png">
   <title>Mis Puntos — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -308,29 +309,34 @@
       </div>`;
   }
 
+  // ── Sesión real de Supabase Auth (ya no sessionStorage falsificable) ──
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPub = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   // ── Init ─────────────────────────────────────────────────────────────
   async function init() {
-    const raw = sessionStorage.getItem('sl_pub_user');
-    if (!raw) { renderNoSession(); return; }
+    const { data: { session } } = await supaPub.auth.getSession();
+    if (!session) { renderNoSession(); return; }
 
-    let publicUser;
-    try { publicUser = JSON.parse(raw); } catch { renderNoSession(); return; }
+    const { data: profile, error } = await supaPub
+      .from('profiles')
+      .select('name, email, cedula, phone, puntos, role')
+      .eq('id', session.user.id)
+      .single();
+    if (error || !profile || profile.role !== 'cliente') { renderNoSession(); return; }
 
-    // Intentar leer datos actualizados desde users.json
-    if (GT && GR) {
-      try {
-        const res = await ghRead('users.json');
-        const users = res?.data?.users || [];
-        const u = users.find(u => u.email === publicUser.email);
-        if (u) {
-          publicUser.puntos = u.puntos || 0;
-          publicUser.transacciones = u.transacciones || [];
-          // Actualizar sessionStorage
-          sessionStorage.setItem('sl_pub_user', JSON.stringify({...publicUser}));
-        }
-      } catch {}
-    }
-
+    // NOTA: profiles no tiene todavía una columna de historial de puntos
+    // (transacciones); "reservas" es otra cosa (las reservas hechas, no el
+    // detalle de cómo se ganaron/gastaron puntos). Si quieres mostrar un
+    // historial real, hay que agregar una tabla/columna dedicada en
+    // Supabase para eso — por ahora queda vacío en vez de mostrar datos
+    // que no corresponden.
+    const publicUser = {
+      name: profile.name, email: profile.email, cedula: profile.cedula,
+      phone: profile.phone, puntos: profile.puntos || 0,
+      transacciones: [],
+    };
     renderConSesion(publicUser);
   }
 
