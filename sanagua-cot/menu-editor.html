@@ -198,10 +198,16 @@
 <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 
 <script>
-  // ── Config GitHub ───────────────────────────────────────────────────
+  // ── Supabase (datos del menú: categorías y platos) ───────────────────
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── Config GitHub (solo se usa para alojar las FOTOS en un repo
+  //    público de GitHub Pages — los datos del menú ya viven en Supabase) ─
   // ── Config repos ────────────────────────────────────────────────────
   const GT = localStorage.getItem('gh_token')  || '';
-  const GR = localStorage.getItem('gh_repo')   || '';  // repo privado (datos)
+  const GR = localStorage.getItem('gh_repo')   || '';  // repo privado (datos, ya no se usa para el menú)
   const GB = localStorage.getItem('gh_branch') || 'main';
   // Repo público (GitHub Pages) — guarda en localStorage como gh_repo_public
   // Formato: "usuario/nombre-repo-publico"
@@ -306,28 +312,87 @@
     document.getElementById('loading').classList.toggle('show', v);
   }
 
+  // ── Menú — Supabase (tablas restaurant_categories / restaurant_products) ─
+  async function sbLoadMenu() {
+    const [{ data: cats, error: e1 }, { data: prods, error: e2 }] = await Promise.all([
+      supa.from('restaurant_categories').select('*').order('orden', { ascending: true }),
+      supa.from('restaurant_products').select('*').order('orden', { ascending: true }),
+    ]);
+    if (e1) throw e1;
+    if (e2) throw e2;
+    return {
+      categorias: (cats || []).map(c => ({
+        id: c.id,               // uuid real de Supabase
+        key: c.key || c.id,
+        icon: c.icon || '🍽️',
+        label: c.nombre,
+        subtitulo: c.subtitulo || '',
+        platos: (prods || [])
+          .filter(p => p.categoria_id === c.id)
+          .map(p => ({ id: p.id, nombre: p.nombre, descripcion: p.descripcion || '', precio: parseFloat(p.precio) || 0, foto: p.foto || '' })),
+      })),
+    };
+  }
+
+  // Guarda todo: sincroniza categorías (upsert) y reemplaza sus platos.
+  // Es el equivalente a sobrescribir menu.json completo.
+  async function sbSaveMenu(data) {
+    for (const cat of data.categorias) {
+      // Upsert de la categoría (conserva su id si ya existe en Supabase)
+      const catRow = { nombre: cat.label, subtitulo: cat.subtitulo, icon: cat.icon, orden: 0 };
+      let categoriaId = cat.id;
+      if (typeof categoriaId === 'string' && categoriaId.length < 36) {
+        // id "nuevo" generado en el navegador (no es un uuid real todavía)
+        const { data: inserted, error } = await supa.from('restaurant_categories').insert(catRow).select().single();
+        if (error) throw error;
+        categoriaId = inserted.id;
+        cat.id = categoriaId;
+      } else {
+        const { error } = await supa.from('restaurant_categories').update(catRow).eq('id', categoriaId);
+        if (error) throw error;
+      }
+
+      // Reemplaza los platos de esta categoría (borra y vuelve a insertar,
+      // igual que antes se sobrescribía el arreglo completo en el JSON)
+      const { error: delErr } = await supa.from('restaurant_products').delete().eq('categoria_id', categoriaId);
+      if (delErr) throw delErr;
+      if (cat.platos.length) {
+        const rows = cat.platos.map((p, i) => ({
+          categoria_id: categoriaId,
+          nombre: p.nombre,
+          descripcion: p.descripcion,
+          precio: p.precio,
+          foto: p.foto,
+          orden: i,
+        }));
+        const { data: insertedProds, error: insErr } = await supa.from('restaurant_products').insert(rows).select();
+        if (insErr) throw insErr;
+        cat.platos = insertedProds.map(p => ({ id: p.id, nombre: p.nombre, descripcion: p.descripcion || '', precio: parseFloat(p.precio) || 0, foto: p.foto || '' }));
+      }
+    }
+  }
+
   // ── Init ────────────────────────────────────────────────────────────
   async function init() {
     actualizarConfigBar();
 
-    if (!GT || !GR) {
+    setLoading(true);
+    try {
+      menuData = await sbLoadMenu();
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+      showToast('❌ No se pudo cargar el menú desde Supabase. Revisa la consola.', 'error');
+      return;
+    }
+    setLoading(false);
+    if (!menuData.categorias.length) {
       document.getElementById('main-content').innerHTML = `
         <div class="empty-cat">
-          <div class="empty-icon">⚙️</div>
-          <p>Configura la conexión a GitHub en el sistema de cotizaciones primero.</p>
-          <a href="achive.html" style="color:var(--accent)">← Ir al sistema</a>
+          <div class="empty-icon">🍽️</div>
+          <p>Aún no hay categorías en Supabase. Corre el script de semilla del menú o crea una desde aquí.</p>
         </div>`;
-      return;
     }
-    setLoading(true);
-    const res = await ghRead('menu.json');
-    setLoading(false);
-    if (!res) {
-      showToast('No se encontró menu.json. Créalo desde el sistema.', 'error');
-      return;
-    }
-    menuData = res.data;
-    menuSha  = res.sha;
     renderSidebar();
     renderCategoria(0);
   }
@@ -711,22 +776,19 @@
     showToast(`"${nombre}" eliminado. Guarda todo para confirmar.`, 'success');
   }
 
-  // ── Guardar todo en GitHub ────────────────────────────────────────────
+  // ── Guardar todo en Supabase ────────────────────────────────────────────
   async function saveAll() {
     const btn = document.getElementById('btn-save-all');
     btn.disabled = true;
     btn.textContent = '⏳ Guardando...';
     setLoading(true);
     try {
-      const ok = await ghWrite('menu.json', menuData, menuSha);
-      if (!ok) throw new Error();
-      // Actualizar SHA
-      const res = await ghRead('menu.json');
-      if (res) menuSha = res.sha;
-      showToast('✅ Menú guardado correctamente en GitHub.', 'success');
+      await sbSaveMenu(menuData);
+      showToast('✅ Menú guardado correctamente en Supabase.', 'success');
       renderSidebar();
-    } catch {
-      showToast('❌ Error al guardar. Verifica la conexión a GitHub.', 'error');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Error al guardar en Supabase. Revisa la consola.', 'error');
     } finally {
       setLoading(false);
       btn.disabled = false;

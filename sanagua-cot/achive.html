@@ -2532,23 +2532,42 @@
 
   async function loadProducts() {
     try {
-      const res = await ghRead('products.json');
-      products = res?.data?.products || [];
-    } catch { products = []; }
+      const { data, error } = await supa.from('quote_catalog_items')
+        .select('*').eq('activo', true).order('orden', { ascending: true });
+      if (error) throw error;
+      products = (data || []).map(p => ({ id: p.id, name: p.nombre, price: parseFloat(p.precio) || 0, itbms: parseFloat(p.itbms) || 0 }));
+    } catch (e) { console.warn('loadProducts', e); products = []; }
     if (!products.length) {
+      // Semilla inicial — se persiste en Supabase con ids reales al guardar
       products = [
-        {id:1,name:'Cabaña Sencilla (noche)', price:120.00,itbms:7},
-        {id:2,name:'Cabaña Doble (noche)',    price:180.00,itbms:7},
-        {id:3,name:'Cabaña Familiar (noche)', price:240.00,itbms:7},
-        {id:4,name:'Paquete con alimentación',price:350.00,itbms:7},
+        {name:'Cabaña Sencilla (noche)', price:120.00,itbms:7},
+        {name:'Cabaña Doble (noche)',    price:180.00,itbms:7},
+        {name:'Cabaña Familiar (noche)', price:240.00,itbms:7},
+        {name:'Paquete con alimentación',price:350.00,itbms:7},
       ];
+      await saveProducts();
     }
     renderProducts();
     renderProductSelect();
   }
 
+  // Sincroniza el catálogo completo en Supabase (borra y vuelve a insertar,
+  // igual que antes se sobrescribía products.json completo).
   async function saveProducts() {
-    await ghReadWrite('products.json', {products});
+    try {
+      const { error: delErr } = await supa.from('quote_catalog_items')
+        .delete().not('id', 'is', null);
+      if (delErr) throw delErr;
+      if (products.length) {
+        const rows = products.map((p, i) => ({ nombre: p.name, precio: p.price, itbms: p.itbms, orden: i }));
+        const { data, error } = await supa.from('quote_catalog_items').insert(rows).select();
+        if (error) throw error;
+        products = data.map(r => ({ id: r.id, name: r.nombre, price: parseFloat(r.precio) || 0, itbms: parseFloat(r.itbms) || 0 }));
+      }
+    } catch (e) {
+      console.error('saveProducts', e);
+      showToast('❌ Error al guardar productos en Supabase.', 'error');
+    }
   }
 
   // Init — todo dentro de DOMContentLoaded para garantizar que el DOM y las
