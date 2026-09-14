@@ -153,84 +153,78 @@
     </a>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
-  async function ghF(fn){
-    if(!GT||!GR)return null;
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,{headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'}});
-      if(!r.ok)return null;
-      const d=await r.json();
-      const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
-      return JSON.parse(new TextDecoder('utf-8').decode(b));
-    }catch{return null;}
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPub = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function cargarPreciosYPopulares() {
+    const [{ data: rates }, { data: pops }] = await Promise.all([
+      supaPub.from('cabana_rates').select('cabana_key, precio'),
+      supaPub.from('populares').select('item_key, activo').eq('activo', true),
+    ]);
+    const precios = { cabanas: {} };
+    (rates||[]).forEach(r => {
+      if (r.precio > 0) (precios.cabanas[r.cabana_key] ||= []).push(parseFloat(r.precio));
+    });
+    return { precios, populares: (pops||[]).map(p => p.item_key) };
   }
+
   async function init(){
-    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
+    const { precios: p, populares } = await cargarPreciosYPopulares();
 
     // Precios desde
-    if(p?.cabanas?.cabanas){
-      const it=p.cabanas.itbms||7;
-      const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-      Object.entries(p.cabanas.cabanas).forEach(([k,cab])=>{
-        const el=document.getElementById(map[k]);
-        if(!el)return;
-        const precios=Object.values(cab.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
-        const desde=precios.length?Math.min(...precios):0;
-        el.textContent=`$${desde.toFixed(2)}`;
-      });
-    }
+    const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
+    Object.entries(p.cabanas).forEach(([k,precios])=>{
+      const el=document.getElementById(map[k]);
+      if(!el)return;
+      const desde=precios.length?Math.min(...precios):0;
+      el.textContent=`$${desde.toFixed(2)}`;
+    });
 
     // Insignias de popular
-    if(pop?.populares){
-      const cardMap={
-        'cabana-yaguarundi':'card-yaguarundi',
-        'cabana-ocelot':    'card-ocelot',
-        'cabana-motmot':    'card-motmot',
-      };
-      pop.populares.forEach(pid=>{
-        const card=document.getElementById(cardMap[pid]);
-        if(!card||card.querySelector('.pop-badge'))return;
-        card.classList.add('popular');
-        card.style.position='relative';
-        const b=document.createElement('div');
-        b.className='pop-badge';
-        b.innerHTML='⭐ Más popular';
-        card.prepend(b);
-      });
-    }
+    const cardMap={
+      'cabana-yaguarundi':'card-yaguarundi',
+      'cabana-ocelot':    'card-ocelot',
+      'cabana-motmot':    'card-motmot',
+    };
+    populares.forEach(pid=>{
+      const card=document.getElementById(cardMap[pid]);
+      if(!card||card.querySelector('.pop-badge'))return;
+      card.classList.add('popular');
+      card.style.position='relative';
+      const b=document.createElement('div');
+      b.className='pop-badge';
+      b.innerHTML='⭐ Más popular';
+      card.prepend(b);
+    });
   }
   init();
 
   // Auto-actualización cada 20 segundos (precios y populares)
   let _lastHashCabs = null;
   setInterval(async () => {
-    const [p, pop] = await Promise.all([ghF('precios.json'), ghF('populares.json')]);
-    const hash = JSON.stringify({p,pop});
+    const { precios: p, populares } = await cargarPreciosYPopulares();
+    const hash = JSON.stringify({p,populares});
     if (hash === _lastHashCabs) return;
     _lastHashCabs = hash;
     // Actualizar precios desde
-    if(p?.cabanas?.cabanas){
-      const it=p.cabanas.itbms||7;
-      const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-      Object.entries(p.cabanas.cabanas).forEach(([k,cab])=>{
-        const el=document.getElementById(map[k]); if(!el)return;
-        const precios=Object.values(cab.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio);
-        el.textContent=`$${precios.length?Math.min(...precios).toFixed(2):'—'}`;
-      });
-    }
+    const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
+    Object.entries(p.cabanas).forEach(([k,precios])=>{
+      const el=document.getElementById(map[k]); if(!el)return;
+      el.textContent=`$${precios.length?Math.min(...precios).toFixed(2):'—'}`;
+    });
     // Actualizar insignias populares
     document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
     document.querySelectorAll('.cabana-card').forEach(c=>c.classList.remove('popular'));
-    if(pop?.populares){
-      const cardMap={'cabana-yaguarundi':'card-yaguarundi','cabana-ocelot':'card-ocelot','cabana-motmot':'card-motmot'};
-      pop.populares.forEach(pid=>{
-        const card=document.getElementById(cardMap[pid]); if(!card||card.querySelector('.pop-badge'))return;
-        card.classList.add('popular'); card.style.position='relative';
-        const b=document.createElement('div'); b.className='pop-badge'; b.innerHTML='⭐ Más popular';
-        card.prepend(b);
-      });
-    }
+    const cardMap={'cabana-yaguarundi':'card-yaguarundi','cabana-ocelot':'card-ocelot','cabana-motmot':'card-motmot'};
+    populares.forEach(pid=>{
+      const card=document.getElementById(cardMap[pid]); if(!card||card.querySelector('.pop-badge'))return;
+      card.classList.add('popular'); card.style.position='relative';
+      const b=document.createElement('div'); b.className='pop-badge'; b.innerHTML='⭐ Más popular';
+      card.prepend(b);
+    });
   }, 20000);
 </script>
 </body>

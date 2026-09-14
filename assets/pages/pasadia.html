@@ -350,6 +350,36 @@
     } catch { return null; }
   }
 
+  const SUPABASE_URL_PRECIOS      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
+
+  const MOD_LABELS_PASADIA = { sencilla: 'Pasadía Sencilla', completa: 'Pasadía Completa' };
+
+  // Arma el mismo objeto { pasadia: {...} } que antes venía de precios.json,
+  // leído ahora desde Supabase.
+  async function cargarPreciosPasadia() {
+    const [{ data: rates }, { data: settingsRow }] = await Promise.all([
+      supaPrecios.from('pasadia_rates').select('*'),
+      supaPrecios.from('company_settings').select('value').eq('key','pasadia').single(),
+    ]);
+    const settings = settingsRow?.value || {};
+    const modalidades = {};
+    ['sencilla','completa'].forEach(mod => {
+      const tarifas = {};
+      (rates||[]).filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
+      modalidades[mod] = { label: MOD_LABELS_PASADIA[mod], tarifas };
+    });
+    return {
+      pasadia: {
+        itbms: settings.itbms || 7,
+        descripcion: settings.descripcion || '',
+        incluye: settings.incluye || [],
+        modalidades,
+      },
+    };
+  }
+
   function localDateStr(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
@@ -441,7 +471,8 @@
   let EXCEPCIONES_ABIERTAS_PUB = [];
 
   async function loadHorariosPub() {
-    const h = await ghFetch('horarios.json');
+    const { data } = await supaPrecios.from('camping_config').select('value').eq('key','horarios').single();
+    const h = data?.value;
     if (h) {
       DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
       EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
@@ -470,7 +501,7 @@
   // ── Inicializar ───────────────────────────────────────────────────────
   async function init() {
     const [p, h, e] = await Promise.all([
-      ghFetch('precios.json'),
+      cargarPreciosPasadia(),
       ghFetch('history.json'),
       ghFetch('events.json'),
     ]);
@@ -785,7 +816,8 @@
   // Auto-actualización cada 20 segundos (horarios de cierre)
   let _lastHorPas = null;
   setInterval(async () => {
-    const h = await ghFetch('horarios.json');
+    const { data } = await supaPrecios.from('camping_config').select('value').eq('key','horarios').single();
+    const h = data?.value;
     if (!h) return;
     const hash = JSON.stringify(h);
     if (hash === _lastHorPas) return;

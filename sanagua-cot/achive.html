@@ -1424,6 +1424,7 @@
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px;">⛺ Carpas disponibles — Camping Suministro</div>
         <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Edita el precio y el stock de cada carpa. El stock se muestra en tiempo real a los usuarios.</p>
         <div id="p-carpas-lista"></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="agregarCarpa()" style="margin-top:8px;">+ Agregar tipo de carpa</button>
       </div>
     </div>
 
@@ -4934,21 +4935,22 @@
 
   async function loadHorarios() {
     try {
-      const res = await ghRead('horarios.json');
-      if (res?.data) {
-        DIAS_CERRADOS        = res.data.dias_cerrados       || [2, 3];
-        EXCEPCIONES_ABIERTAS = res.data.excepciones_abiertas || [];
-      }
-    } catch { /* usar defaults */ }
+      const { data, error } = await supa.from('camping_config').select('value').eq('key', 'horarios').single();
+      if (error) throw error;
+      DIAS_CERRADOS        = data?.value?.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS = data?.value?.excepciones_abiertas || [];
+    } catch (e) { console.warn('loadHorarios', e); /* usar defaults */ }
   }
 
   async function saveHorarios() {
-    const ok = await ghReadWrite('horarios.json', {
-      dias_cerrados:        DIAS_CERRADOS,
-      excepciones_abiertas: EXCEPCIONES_ABIERTAS,
-    });
-    if (ok) showToast('✅ Horarios guardados correctamente.', 'success');
-    else    showToast('❌ Error al guardar horarios.', 'error');
+    try {
+      const { error } = await supa.from('camping_config').upsert({
+        key: 'horarios',
+        value: { dias_cerrados: DIAS_CERRADOS, excepciones_abiertas: EXCEPCIONES_ABIERTAS },
+      }, { onConflict: 'key' });
+      if (error) throw error;
+      showToast('✅ Horarios guardados correctamente.', 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar horarios en Supabase.', 'error'); }
   }
 
   function buildCalIndex() {
@@ -5025,19 +5027,85 @@
     });
   }
 
+  const MODALIDAD_LABELS_PASADIA = { sencilla: 'Pasadía Sencilla', completa: 'Pasadía Completa' };
+  const MODALIDAD_LABELS_CAMPING = { propio: 'Camping Propio', suministro: 'Camping Suministro' };
+
+  // Arma el mismo objeto `preciosData` que antes venía de precios.json,
+  // pero leyendo desde las tablas de Supabase.
   async function loadPrecios() {
     showToast('Cargando precios...','success');
-    const res = await ghRead('precios.json');
-    if (!res?.data) {
-      // Mostrar opción de crear el archivo
-      document.getElementById('precios-create-btn').style.display = 'block';
-      showToast('No se encontró precios.json — usa el botón para crearlo.','error');
-      return;
+    try {
+      const [
+        { data: cabanas,      error: e1 },
+        { data: cabanaRates,  error: e2 },
+        { data: campRates,    error: e3 },
+        { data: campCarpas,   error: e4 },
+        { data: campConfig,   error: e5 },
+        { data: pasRates,     error: e6 },
+        { data: settingsRows, error: e7 },
+      ] = await Promise.all([
+        supa.from('cabanas').select('*').order('orden', { ascending: true }),
+        supa.from('cabana_rates').select('*'),
+        supa.from('camping_rates').select('*'),
+        supa.from('camping_items').select('*').order('orden', { ascending: true }),
+        supa.from('camping_config').select('*'),
+        supa.from('pasadia_rates').select('*'),
+        supa.from('company_settings').select('*').in('key', ['cabanas','pasadia','camping','restaurante']),
+      ]);
+      for (const e of [e1,e2,e3,e4,e5,e6,e7]) if (e) throw e;
+
+      if (!cabanas.length) {
+        document.getElementById('precios-create-btn').style.display = 'block';
+        showToast('No hay precios en Supabase — usa el botón para crearlos.','error');
+        return;
+      }
+      document.getElementById('precios-create-btn').style.display = 'none';
+
+      const settings = {};
+      (settingsRows||[]).forEach(r => settings[r.key] = r.value || {});
+      const campConf = {};
+      (campConfig||[]).forEach(r => campConf[r.key] = r.value || {});
+
+      // ── Cabañas ──
+      const cabanasObj = {};
+      cabanas.forEach(c => {
+        const tarifas = {};
+        cabanaRates.filter(r => r.cabana_key === c.key).forEach(r => tarifas[r.tipo] = { label: r.label, precio: parseFloat(r.precio)||0 });
+        cabanasObj[c.key] = { label: c.nombre, capacidad: c.capacidad, descripcion: c.descripcion, incluye: c.incluye||[], tarifas };
+      });
+
+      // ── Camping ──
+      const campModalidades = {};
+      ['propio','suministro'].forEach(mod => {
+        const tarifas = {};
+        campRates.filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
+        campModalidades[mod] = { label: MODALIDAD_LABELS_CAMPING[mod], tarifas };
+      });
+      if (campCarpas.length) {
+        campModalidades.suministro.carpas = {};
+        campCarpas.forEach(c => campModalidades.suministro.carpas[c.id] = { label: c.label, precio: parseFloat(c.precio)||0, stock: c.cantidad_total||0 });
+      }
+
+      // ── Pasadía ──
+      const pasModalidades = {};
+      ['sencilla','completa'].forEach(mod => {
+        const tarifas = {};
+        pasRates.filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
+        pasModalidades[mod] = { label: MODALIDAD_LABELS_PASADIA[mod], tarifas };
+      });
+
+      preciosData = {
+        pasadia: { itbms: settings.pasadia?.itbms||7, horario: settings.pasadia?.horario||'', descripcion: settings.pasadia?.descripcion||'', incluye: settings.pasadia?.incluye||[], modalidades: pasModalidades },
+        camping: { itbms: campConf.settings?.itbms||7, espacios_totales: campConf.settings?.espacios_totales||10, descripcion: campConf.settings?.descripcion||'', incluye: campConf.settings?.incluye||[], modalidades: campModalidades },
+        cabanas: { itbms: settings.cabanas?.itbms||7, cabanas: cabanasObj },
+        restaurante: { itbms: settings.restaurante?.itbms||7, horario: settings.restaurante?.horario||'', descripcion: settings.restaurante?.descripcion||'', servicios: settings.restaurante?.servicios||{} },
+      };
+      renderPreciosUI();
+      showToast('✅ Precios cargados','success');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Error al cargar precios desde Supabase.','error');
     }
-    document.getElementById('precios-create-btn').style.display = 'none';
-    preciosData = res.data;
-    renderPreciosUI();
-    showToast('✅ Precios cargados','success');
   }
 
   async function crearPreciosDefault() {
@@ -5091,14 +5159,55 @@
     };
     showLoading(true);
     try {
-      const ok = await ghReadWrite('precios.json', defaultPrecios);
-      if (!ok) throw new Error();
       preciosData = defaultPrecios;
+      await persistirPrecios(preciosData);
       document.getElementById('precios-create-btn').style.display = 'none';
       renderPreciosUI();
-      showToast('✅ precios.json creado con valores por defecto.','success');
-    } catch { showToast('❌ Error al crear precios.json.','error'); }
+      showToast('✅ Precios por defecto creados en Supabase.','success');
+    } catch (e) { console.error(e); showToast('❌ Error al crear los precios en Supabase.','error'); }
     finally { showLoading(false); }
+  }
+
+  // Escribe el objeto preciosData (misma forma que antes precios.json) en
+  // las tablas correspondientes de Supabase.
+  async function persistirPrecios(p) {
+    // Pasadía
+    for (const [mod, m] of Object.entries(p.pasadia.modalidades||{})) {
+      for (const [tk, t] of Object.entries(m.tarifas||{})) {
+        await supa.from('pasadia_rates').upsert({ modalidad: mod, tipo_tarifa: tk, label: t.label, precio: t.precio }, { onConflict: 'modalidad,tipo_tarifa' });
+      }
+    }
+    await supa.from('company_settings').upsert({ key: 'pasadia', value: { itbms: p.pasadia.itbms, horario: p.pasadia.horario, descripcion: p.pasadia.descripcion, incluye: p.pasadia.incluye||[] } }, { onConflict: 'key' });
+
+    // Camping
+    for (const mod of ['propio','suministro']) {
+      const m = p.camping.modalidades?.[mod];
+      if (!m) continue;
+      for (const [tk, t] of Object.entries(m.tarifas||{})) {
+        await supa.from('camping_rates').upsert({ modalidad: mod, tipo_tarifa: tk, label: t.label, precio: t.precio }, { onConflict: 'modalidad,tipo_tarifa' });
+      }
+    }
+    const carpas = p.camping.modalidades?.suministro?.carpas || {};
+    for (const [ck, c] of Object.entries(carpas)) {
+      if (ck.length === 36) { // uuid real → actualizar
+        await supa.from('camping_items').update({ label: c.label, precio: c.precio, cantidad_total: c.stock }).eq('id', ck);
+      } else { // nuevo, sin id real todavía
+        await supa.from('camping_items').insert({ label: c.label, precio: c.precio, cantidad_total: c.stock });
+      }
+    }
+    await supa.from('camping_config').upsert({ key: 'settings', value: { itbms: p.camping.itbms, espacios_totales: p.camping.espacios_totales, descripcion: p.camping.descripcion, incluye: p.camping.incluye||[] } }, { onConflict: 'key' });
+
+    // Cabañas
+    await supa.from('company_settings').upsert({ key: 'cabanas', value: { itbms: p.cabanas.itbms } }, { onConflict: 'key' });
+    for (const [ck, cab] of Object.entries(p.cabanas.cabanas||{})) {
+      await supa.from('cabanas').upsert({ key: ck, nombre: cab.label, capacidad: cab.capacidad, descripcion: cab.descripcion, incluye: cab.incluye||[] }, { onConflict: 'key' });
+      for (const [tk, t] of Object.entries(cab.tarifas||{})) {
+        await supa.from('cabana_rates').upsert({ cabana_key: ck, tipo: tk, label: t.label, precio: t.precio }, { onConflict: 'cabana_key,tipo' });
+      }
+    }
+
+    // Restaurante (bloque informativo "desde $")
+    await supa.from('company_settings').upsert({ key: 'restaurante', value: { itbms: p.restaurante.itbms, horario: p.restaurante.horario, descripcion: p.restaurante.descripcion, servicios: p.restaurante.servicios||{} } }, { onConflict: 'key' });
   }
 
   function renderPreciosUI() {
@@ -5197,6 +5306,17 @@
     }
   }
 
+  function agregarCarpa() {
+    if (!preciosData) { showToast('Carga los precios primero.','error'); return; }
+    const label = prompt('Nombre del tipo de carpa (ej. "Carpa Doble"):');
+    if (!label || !label.trim()) return;
+    if (!preciosData.camping.modalidades.suministro.carpas) preciosData.camping.modalidades.suministro.carpas = {};
+    const tempKey = `nueva_${Date.now()}`;
+    preciosData.camping.modalidades.suministro.carpas[tempKey] = { label: label.trim(), precio: 0, stock: 0 };
+    renderPreciosUI();
+    showToast('Carpa añadida localmente. Presiona "Guardar precios" para confirmar.', 'success');
+  }
+
   async function savePrecios() {
     if (!preciosData) { showToast('Carga los precios primero.','error'); return; }
     const p = JSON.parse(JSON.stringify(preciosData)); // copia profunda
@@ -5254,11 +5374,11 @@
 
     showLoading(true);
     try {
-      const ok = await ghReadWrite('precios.json', p);
-      if (!ok) throw new Error();
+      await persistirPrecios(p);
       preciosData = p;
-      showToast('✅ Precios guardados correctamente','success');
-    } catch { showToast('❌ Error al guardar precios.','error'); }
+      await loadPrecios(); // recarga con los ids reales de Supabase (ej. carpas nuevas)
+      showToast('✅ Precios guardados correctamente en Supabase','success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar precios en Supabase.','error'); }
     finally { showLoading(false); }
   }
 
@@ -5275,8 +5395,9 @@
   ];
 
   async function loadPopulares() {
-    const res = await ghRead('populares.json');
-    const lista = res?.data?.populares || [];
+    const { data, error } = await supa.from('populares').select('*');
+    if (error) { console.error(error); showToast('❌ Error al cargar populares.', 'error'); return; }
+    const lista = (data||[]).filter(r => r.activo).map(r => r.item_key);
     POPULARES_IDS.forEach(id => {
       const cb = document.getElementById(`pop-${id}`);
       if (cb) cb.checked = lista.includes(id);
@@ -5294,13 +5415,14 @@
   }
 
   async function savePopulares() {
-    const lista = POPULARES_IDS.filter(id => document.getElementById(`pop-${id}`)?.checked);
+    const activos = new Set(POPULARES_IDS.filter(id => document.getElementById(`pop-${id}`)?.checked));
     showLoading(true);
     try {
-      const ok = await ghReadWrite('populares.json', { populares: lista });
-      if (!ok) throw new Error();
-      showToast(`✅ ${lista.length} servicio${lista.length===1?'':'s'} marcado${lista.length===1?'':'s'} como popular${lista.length===1?'':'es'}.`, 'success');
-    } catch { showToast('❌ Error al guardar.', 'error'); }
+      const rows = POPULARES_IDS.map(id => ({ item_key: id, activo: activos.has(id) }));
+      const { error } = await supa.from('populares').upsert(rows, { onConflict: 'item_key' });
+      if (error) throw error;
+      showToast(`✅ ${activos.size} servicio${activos.size===1?'':'s'} marcado${activos.size===1?'':'s'} como popular${activos.size===1?'':'es'}.`, 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar en Supabase.', 'error'); }
     finally { showLoading(false); }
   }
   // ── Horarios UI ──────────────────────────────────────────────────────────

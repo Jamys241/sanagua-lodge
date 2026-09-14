@@ -298,6 +298,29 @@
   const CABANA_KEY = 'yaguarundi'; // clave en precios.json
   const CABANA_CAT = 'Cabaña Yaguarundi'; // categoría en historial
 
+  const SUPABASE_URL_PRECIOS      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
+
+  // Arma el mismo objeto { cabanas: { itbms, cabanas: { [key]: {...} } } }
+  // que antes venía de precios.json, pero leído desde Supabase.
+  async function cargarPreciosCabanas() {
+    const [{ data: cab }, { data: rates }, { data: settings }] = await Promise.all([
+      supaPrecios.from('cabanas').select('*').eq('key', CABANA_KEY).single(),
+      supaPrecios.from('cabana_rates').select('*').eq('cabana_key', CABANA_KEY),
+      supaPrecios.from('company_settings').select('value').eq('key', 'cabanas').single(),
+    ]);
+    if (!cab) return null;
+    const tarifas = {};
+    (rates||[]).forEach(r => tarifas[r.tipo] = { label: r.label, precio: parseFloat(r.precio)||0 });
+    return {
+      cabanas: {
+        itbms: settings?.value?.itbms || 7,
+        cabanas: { [CABANA_KEY]: { label: cab.nombre, capacidad: cab.capacidad, descripcion: cab.descripcion, incluye: cab.incluye||[], tarifas } },
+      },
+    };
+  }
+
   async function ghF(fn){
     if(!GT||!GR)return null;
     try{
@@ -318,7 +341,8 @@
   let EXCEPCIONES_ABIERTAS_PUB = [];
 
   async function loadHorariosPub() {
-    const h = await ghF('horarios.json');
+    const { data } = await supaPrecios.from('camping_config').select('value').eq('key','horarios').single();
+    const h = data?.value;
     if (h) {
       DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
       EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
@@ -439,7 +463,7 @@
   async function init(){
     initSlider();
     await loadHorariosPub();
-    const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
+    const[p,h,e]=await Promise.all([cargarPreciosCabanas(),ghF('history.json'),ghF('events.json')]);
     P=p; H=h?.quotes||[]; E=e?.events||[];
     cabData=P?.cabanas?.cabanas?.[CABANA_KEY];
     if(cabData){
@@ -793,7 +817,7 @@
   let _lastHashCab = null;
   setInterval(async () => {
     const [p, h, hist, ev] = await Promise.all([
-      ghF('precios.json'), ghF('horarios.json'),
+      cargarPreciosCabanas(), supaPrecios.from('camping_config').select('value').eq('key','horarios').single().then(r=>r?.data?.value),
       ghF('history.json'), ghF('events.json')
     ]);
     const hash = JSON.stringify({p,h,hist,ev});

@@ -170,6 +170,7 @@
       display:flex;align-items:center;gap:8px;pointer-events:none}
     .update-toast.show{transform:translateX(-50%) translateY(0)}
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -248,7 +249,7 @@
   <div class="tablas-grid">
 
     <!-- Tabla Pequeña -->
-    <div class="tabla-card">
+    <div class="tabla-card" data-tamano="pequeña">
       <div class="tabla-img">
         <img src="../../images/picnic/tabla-pequena.jpg" alt="Tabla Pequeña"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -278,7 +279,7 @@
     </div>
 
     <!-- Tabla Mediana -->
-    <div class="tabla-card">
+    <div class="tabla-card" data-tamano="mediana">
       <div class="tabla-img">
         <img src="../../images/picnic/tabla-mediana.jpg" alt="Tabla Mediana"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -310,7 +311,7 @@
     </div>
 
     <!-- Tabla Grande -->
-    <div class="tabla-card">
+    <div class="tabla-card" data-tamano="grande">
       <div class="tabla-img">
         <img src="../../images/picnic/tabla-grande.jpg" alt="Tabla Grande"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -453,6 +454,33 @@
   function getSesionPublica() {
     return _sesionPublicaCache;
   }
+
+  // ── Paquetes de picnic (reemplaza los precios hardcodeados) ────────────
+  async function cargarPaquetesPicnic() {
+    try {
+      const { data, error } = await supaPub.from('picnic_packages')
+        .select('*').eq('activo', true).order('orden', { ascending: true });
+      if (error) throw error;
+      (data||[]).forEach(pkg => {
+        const card = document.querySelector(`.tabla-card[data-tamano="${pkg.tamano}"]`);
+        if (!card) return;
+        const precioTxt = `$${parseFloat(pkg.precio).toFixed(2)}`;
+        const personasEl = card.querySelector('.tabla-personas');
+        const descEl     = card.querySelector('.tabla-desc');
+        const compEl     = card.querySelector('.tabla-componentes');
+        const precioEl   = card.querySelector('.tabla-precio');
+        const btnEl      = card.querySelector('.btn-tabla');
+        if (personasEl && pkg.personas) personasEl.textContent = `👥 Ideal para ${pkg.personas}`;
+        if (descEl && pkg.descripcion) descEl.textContent = pkg.descripcion;
+        if (compEl && Array.isArray(pkg.componentes) && pkg.componentes.length) {
+          compEl.innerHTML = pkg.componentes.map(c => `<span class="comp-chip">${c}</span>`).join('');
+        }
+        if (precioEl) precioEl.innerHTML = `${precioTxt} <span>ITBMS inc.</span>`;
+        if (btnEl) btnEl.setAttribute('onclick', `openModal('${pkg.tamano}','${pkg.emoji||'🧀'}','${precioTxt}')`);
+      });
+    } catch (e) { console.warn('cargarPaquetesPicnic', e); /* se quedan los valores por defecto del HTML */ }
+  }
+  cargarPaquetesPicnic();
 
   function mostrarAvisoLogin() {
     let ov = document.getElementById('login-required-ov');
@@ -620,11 +648,14 @@
   // Polling de precios de picnic (por si cambian los precios desde el admin)
   let _lastHashPicnic = null;
   setInterval(async () => {
-    const precios = await ghGet('precios.json');
-    if (!precios) return;
-    const hash = JSON.stringify(precios?.restaurante?.servicios || '');
+    const { data } = await supaPub.from('picnic_packages').select('*').eq('activo', true).order('orden', { ascending: true });
+    if (!data) return;
+    const hash = JSON.stringify(data);
     if (hash === _lastHashPicnic) return;
+    const esPrimera = _lastHashPicnic === null;
     _lastHashPicnic = hash;
+    if (esPrimera) return; // no mostrar toast en la primera carga
+    await cargarPaquetesPicnic();
     mostrarToastActualizacion('Precios actualizados');
   }, 20000);
 

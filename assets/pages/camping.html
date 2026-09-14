@@ -266,6 +266,41 @@
 
 <script>
   const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
+
+  const SUPABASE_URL_PRECIOS      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
+
+  // Arma el mismo objeto { camping: {...} } que antes venía de precios.json,
+  // leído ahora desde Supabase.
+  async function cargarPreciosCamping() {
+    const [{ data: rates }, { data: carpas }, { data: cfg }] = await Promise.all([
+      supaPrecios.from('camping_rates').select('*'),
+      supaPrecios.from('camping_items').select('*').eq('activo', true).order('orden', { ascending: true }),
+      supaPrecios.from('camping_config').select('*').in('key', ['settings']),
+    ]);
+    const settings = (cfg||[]).find(r => r.key === 'settings')?.value || {};
+    const modalidades = {};
+    ['propio','suministro'].forEach(mod => {
+      const tarifas = {};
+      (rates||[]).filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
+      modalidades[mod] = { label: mod==='propio' ? 'Camping Propio' : 'Camping Suministro', tarifas };
+    });
+    if (carpas?.length) {
+      modalidades.suministro.carpas = {};
+      carpas.forEach(c => modalidades.suministro.carpas[c.id] = { label: c.label, precio: parseFloat(c.precio)||0, stock: c.cantidad_total||0 });
+    }
+    return {
+      camping: {
+        itbms: settings.itbms || 7,
+        espacios_totales: settings.espacios_totales || 10,
+        descripcion: settings.descripcion || '',
+        incluye: settings.incluye || [],
+        modalidades,
+      },
+    };
+  }
+
   async function ghF(fn){
     if(!GT||!GR)return null;
     try{
@@ -357,10 +392,10 @@
   let EXCEPCIONES_ABIERTAS_PUB = [];
 
   async function loadHorariosPub() {
-    const h = await ghF('horarios.json');
-    if (h) {
-      DIAS_CERRADOS_PUB        = h.dias_cerrados        || [2, 3];
-      EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas || [];
+    const { data } = await supaPrecios.from('camping_config').select('value').eq('key', 'horarios').single();
+    if (data?.value) {
+      DIAS_CERRADOS_PUB        = data.value.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS_PUB = data.value.excepciones_abiertas || [];
     }
   }
 
@@ -384,7 +419,7 @@
   }
 
   async function init(){
-    const[p,h,e]=await Promise.all([ghF('precios.json'),ghF('history.json'),ghF('events.json')]);
+    const[p,h,e]=await Promise.all([cargarPreciosCamping(),ghF('history.json'),ghF('events.json')]);
     await loadHorariosPub();
     P=p; H=h?.quotes||[]; E=e?.events||[];
     TOTAL_ESP=P?.camping?.espacios_totales||10;
@@ -732,10 +767,11 @@
 
   let _lastHashCamp = null;
   setInterval(async () => {
-    const [p, h, hist, ev] = await Promise.all([
-      ghF('precios.json'), ghF('horarios.json'),
+    const [p, horariosRow, hist, ev] = await Promise.all([
+      cargarPreciosCamping(), supaPrecios.from('camping_config').select('value').eq('key','horarios').single(),
       ghF('history.json'), ghF('events.json')
     ]);
+    const h = horariosRow?.data?.value;
     const hash = JSON.stringify({p,h,hist,ev});
     if (hash === _lastHashCamp) return;
     _lastHashCamp = hash;
