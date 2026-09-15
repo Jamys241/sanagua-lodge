@@ -354,22 +354,32 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
-  const MOD_LABELS_PASADIA = { sencilla: 'Pasadía Sencilla', completa: 'Pasadía Completa' };
+  const TARIFA_KEY_MAP_PAS = { 'Adulto':'adulto', 'Niño (3-11 años)':'nino', 'Menor de 3 años':'menor3', 'Jubilado':'jubilado' };
+  const PASADIA_CATEGORIAS = { sencilla: 'Pasadía Sencilla', completa: 'Pasadía Completa' };
 
-  // Arma el mismo objeto { pasadia: {...} } que antes venía de precios.json,
-  // leído ahora desde Supabase.
+  // Arma el mismo objeto { pasadia: {...} } de siempre, leído ahora desde
+  // el catálogo genérico de Mis Productos (product_categories + products).
   async function cargarPreciosPasadia() {
-    const [{ data: rates }, { data: settingsRow }] = await Promise.all([
-      supaPrecios.from('pasadia_rates').select('*'),
-      supaPrecios.from('company_settings').select('value').eq('key','pasadia').single(),
-    ]);
+    const { data: cats } = await supaPrecios.from('product_categories')
+      .select('*').in('nombre', Object.values(PASADIA_CATEGORIAS)).eq('activo', true);
+    const catIds = (cats||[]).map(c => c.id);
+    const { data: prods } = catIds.length
+      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true)
+      : { data: [] };
+    const { data: settingsRow } = await supaPrecios.from('company_settings').select('value').eq('key','pasadia').single();
     const settings = settingsRow?.value || {};
+
     const modalidades = {};
-    ['sencilla','completa'].forEach(mod => {
+    Object.entries(PASADIA_CATEGORIAS).forEach(([mod, nombreCat]) => {
+      const cat = (cats||[]).find(c => c.nombre === nombreCat);
       const tarifas = {};
-      (rates||[]).filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
-      modalidades[mod] = { label: MOD_LABELS_PASADIA[mod], tarifas };
+      if (cat) (prods||[]).filter(p => p.categoria_id === cat.id).forEach(p => {
+        const k = TARIFA_KEY_MAP_PAS[p.nombre];
+        if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
+      });
+      modalidades[mod] = { label: nombreCat, tarifas };
     });
+
     return {
       pasadia: {
         itbms: settings.itbms || 7,

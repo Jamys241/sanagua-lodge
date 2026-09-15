@@ -271,25 +271,41 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
-  // Arma el mismo objeto { camping: {...} } que antes venía de precios.json,
-  // leído ahora desde Supabase.
+  const TARIFA_KEY_MAP = { 'Adulto':'adulto', 'Niño (3-11 años)':'nino', 'Menor de 3 años':'menor3', 'Jubilado':'jubilado' };
+  const CAMPING_CATEGORIAS = { propio: 'Camping Propio', suministro: 'Camping Suministro' };
+
+  // Arma el mismo objeto { camping: {...} } de siempre, leído ahora desde
+  // el catálogo genérico de Mis Productos (product_categories + products).
   async function cargarPreciosCamping() {
-    const [{ data: rates }, { data: carpas }, { data: cfg }] = await Promise.all([
-      supaPrecios.from('camping_rates').select('*'),
-      supaPrecios.from('camping_items').select('*').eq('activo', true).order('orden', { ascending: true }),
-      supaPrecios.from('camping_config').select('*').in('key', ['settings']),
-    ]);
+    const { data: cats } = await supaPrecios.from('product_categories')
+      .select('*').in('nombre', [...Object.values(CAMPING_CATEGORIAS), 'Carpas']).eq('activo', true);
+    const catIds = (cats||[]).map(c => c.id);
+    const { data: prods } = catIds.length
+      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true).order('orden', { ascending: true })
+      : { data: [] };
+    const { data: cfg } = await supaPrecios.from('camping_config').select('*').eq('key','settings');
     const settings = (cfg||[]).find(r => r.key === 'settings')?.value || {};
+
     const modalidades = {};
-    ['propio','suministro'].forEach(mod => {
+    Object.entries(CAMPING_CATEGORIAS).forEach(([mod, nombreCat]) => {
+      const cat = (cats||[]).find(c => c.nombre === nombreCat);
       const tarifas = {};
-      (rates||[]).filter(r => r.modalidad === mod).forEach(r => tarifas[r.tipo_tarifa] = { label: r.label, precio: parseFloat(r.precio)||0 });
-      modalidades[mod] = { label: mod==='propio' ? 'Camping Propio' : 'Camping Suministro', tarifas };
+      if (cat) (prods||[]).filter(p => p.categoria_id === cat.id).forEach(p => {
+        const k = TARIFA_KEY_MAP[p.nombre];
+        if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
+      });
+      modalidades[mod] = { label: nombreCat, tarifas };
     });
-    if (carpas?.length) {
-      modalidades.suministro.carpas = {};
-      carpas.forEach(c => modalidades.suministro.carpas[c.id] = { label: c.label, precio: parseFloat(c.precio)||0, stock: c.cantidad_total||0 });
+
+    const catCarpas = (cats||[]).find(c => c.nombre === 'Carpas');
+    if (catCarpas) {
+      const carpasProds = (prods||[]).filter(p => p.categoria_id === catCarpas.id);
+      if (carpasProds.length) {
+        modalidades.suministro.carpas = {};
+        carpasProds.forEach(p => modalidades.suministro.carpas[p.id] = { label: p.nombre, precio: parseFloat(p.precio)||0, stock: 99 });
+      }
     }
+
     return {
       camping: {
         itbms: settings.itbms || 7,

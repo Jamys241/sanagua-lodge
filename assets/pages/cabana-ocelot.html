@@ -296,19 +296,28 @@
 
   // Arma el mismo objeto { cabanas: { itbms, cabanas: { [key]: {...} } } }
   // que antes venía de precios.json, pero leído desde Supabase.
+  const CABANA_KEY_TO_CATEGORIA = { motmot: 'Cabaña Motmot', ocelot: 'Cabaña Ocelot', yaguarundi: 'Cabaña Yaguarundí' };
+  const CABANA_TIPO_MAP = { 'Lunes – Jueves': 'semana', 'Viernes – Domingo': 'finsemana', 'Persona adicional': 'adicional' };
+
+  // Lee la categoría y sus productos desde el catálogo genérico
+  // (Mis Productos) y arma el mismo objeto { cabanas: {...} } de siempre.
   async function cargarPreciosCabanas() {
-    const [{ data: cab }, { data: rates }, { data: settings }] = await Promise.all([
-      supaPrecios.from('cabanas').select('*').eq('key', CABANA_KEY).single(),
-      supaPrecios.from('cabana_rates').select('*').eq('cabana_key', CABANA_KEY),
-      supaPrecios.from('company_settings').select('value').eq('key', 'cabanas').single(),
-    ]);
-    if (!cab) return null;
+    const nombreCategoria = CABANA_KEY_TO_CATEGORIA[CABANA_KEY];
+    const { data: cat } = await supaPrecios.from('product_categories').select('*').eq('nombre', nombreCategoria).eq('activo', true).single();
+    if (!cat) return null;
+    const { data: prods } = await supaPrecios.from('products').select('*').eq('categoria_id', cat.id).eq('activo', true);
     const tarifas = {};
-    (rates||[]).forEach(r => tarifas[r.tipo] = { label: r.label, precio: parseFloat(r.precio)||0 });
+    (prods||[]).forEach(p => {
+      const tipo = CABANA_TIPO_MAP[p.nombre];
+      if (tipo) tarifas[tipo] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
+    });
+    // Capacidad se extrae del texto de la descripción de la categoría, ej:
+    // "...Capacidad: 4 personas."
+    const capMatch = (cat.descripcion||'').match(/Capacidad:\s*(\d+)/i);
     return {
       cabanas: {
-        itbms: settings?.value?.itbms || 7,
-        cabanas: { [CABANA_KEY]: { label: cab.nombre, capacidad: cab.capacidad, descripcion: cab.descripcion, incluye: cab.incluye||[], tarifas } },
+        itbms: 7,
+        cabanas: { [CABANA_KEY]: { label: cat.nombre, capacidad: capMatch ? parseInt(capMatch[1]) : null, descripcion: cat.descripcion, incluye: [], tarifas } },
       },
     };
   }

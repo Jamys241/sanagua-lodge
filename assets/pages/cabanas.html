@@ -159,14 +159,23 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPub = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const CATEGORIA_POR_CABANA = { yaguarundi: 'Cabaña Yaguarundí', ocelot: 'Cabaña Ocelot', motmot: 'Cabaña Motmot' };
+
   async function cargarPreciosYPopulares() {
-    const [{ data: rates }, { data: pops }] = await Promise.all([
-      supaPub.from('cabana_rates').select('cabana_key, precio'),
+    const [{ data: cats }, { data: pops }] = await Promise.all([
+      supaPub.from('product_categories').select('id, nombre').in('nombre', Object.values(CATEGORIA_POR_CABANA)),
       supaPub.from('populares').select('item_key, activo').eq('activo', true),
     ]);
+    const catIds = (cats||[]).map(c => c.id);
+    const { data: prods } = catIds.length
+      ? await supaPub.from('products').select('categoria_id, precio').in('categoria_id', catIds).eq('activo', true)
+      : { data: [] };
     const precios = { cabanas: {} };
-    (rates||[]).forEach(r => {
-      if (r.precio > 0) (precios.cabanas[r.cabana_key] ||= []).push(parseFloat(r.precio));
+    Object.entries(CATEGORIA_POR_CABANA).forEach(([key, nombreCat]) => {
+      const cat = (cats||[]).find(c => c.nombre === nombreCat);
+      if (!cat) return;
+      const valores = (prods||[]).filter(p => p.categoria_id === cat.id && p.precio > 0).map(p => parseFloat(p.precio));
+      if (valores.length) precios.cabanas[key] = valores;
     });
     return { precios, populares: (pops||[]).map(p => p.item_key) };
   }
