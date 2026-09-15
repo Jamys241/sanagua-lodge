@@ -9,9 +9,9 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --moss:#7fa0ac;--forest:#5f7881;--sage:#7a9e6e;--earth:#8b6b47;
-      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
-      --mist:#a8b8a2;--gold:#c9a84c;--r:10px;--accent:#7a9e6e;
+      --moss:#7fa0ac;--forest:#5f7881;--sage:#8fabb5;--earth:#7d6a5c;
+      --sand:#c3c3b8;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a2226;
+      --mist:#b8c8cc;--gold:#c9a84c;--r:10px;--accent:#8fabb5;
       --red:#c0392b;--blue:#1a5fa8;
     }
     html{scroll-behavior:smooth}
@@ -31,7 +31,7 @@
 
     /* ── HERO ── */
     .hero{height:55vh;min-height:380px;position:relative;display:flex;align-items:flex-end;padding-bottom:60px;
-      background:linear-gradient(160deg,#1e3a1a,#2d5a28,#3d7a50)}
+      background:linear-gradient(160deg,#263840,#3d5c68,#567e8a)}
     .hero::before{content:'';position:absolute;inset:0;
       background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(26,31,24,.7) 0%,transparent 60%)}
     .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
@@ -55,7 +55,7 @@
 
     /* ── INCLUYE ── */
     .includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-    .include-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6a54}
+    .include-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6870}
     .include-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
 
     /* ── TARIFAS ── */
@@ -90,7 +90,7 @@
       display:flex;align-items:center;gap:8px;pointer-events:none}
     .update-toast.show{transform:translateX(-50%) translateY(0)}
     .cday.pasado{color:#d0d0d0;cursor:not-allowed;background:#fafafa}
-    .cday.excepcion{outline:2px dashed #7a9e6e;outline-offset:-2px}
+    .cday.excepcion{outline:2px dashed #8fabb5;outline-offset:-2px}
     .aviso-cerrado{display:none;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;
       padding:12px 16px;font-size:.84rem;color:#7a4a10;line-height:1.5;margin-top:10px;
       animation:fadeInMsg .3s ease}
@@ -246,9 +246,9 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:16px;background:#f0f7ee;border-color:#c0ddb8;">
+      <div class="card" style="margin-top:16px;background:#eef4f5;border-color:#cfe0e4;">
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--forest);margin-bottom:6px;">☀️ ¿Sencilla o Completa?</div>
-        <div style="font-size:.82rem;color:#5a7a54;line-height:1.6">
+        <div style="font-size:.82rem;color:#5a7880;line-height:1.6">
           <strong>Sencilla:</strong> Acceso a piscinas, senderos y áreas de descanso.<br>
           <strong>Completa:</strong> Todo lo anterior más actividades, entretenimiento y acceso a zonas premium.
         </div>
@@ -428,7 +428,7 @@
             <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
           </div>
           <div style="padding:24px 28px">
-            <p style="font-size:.9rem;color:#6a7a64;line-height:1.65;margin-bottom:20px;text-align:center">
+            <p style="font-size:.9rem;color:#6a7880;line-height:1.65;margin-bottom:20px;text-align:center">
               Para realizar una solicitud de reserva necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
             </p>
             <a href="${INDEX_URL}?action=login" style="display:block;background:#7fa0ac;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
@@ -686,7 +686,7 @@
       const el = document.getElementById(`mod-${k}`);
       const lbl = el?.querySelector('div:last-child');
       if (k === key) {
-        el.style.borderColor = 'var(--sage)'; el.style.background = '#f0f7ee';
+        el.style.borderColor = 'var(--sage)'; el.style.background = '#eef4f5';
         if (lbl) { lbl.textContent = '✓ Seleccionada'; lbl.style.color = 'var(--sage)'; }
       } else {
         el.style.borderColor = '#e8e8e8'; el.style.background = '#fafafa';

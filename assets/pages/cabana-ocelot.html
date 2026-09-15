@@ -8,8 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--moss:#7fa0ac;--forest:#5f7881;--sage:#7a9e6e;--earth:#8b6b47;
-      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;--mist:#a8b8a2;
+    :root{--moss:#7fa0ac;--forest:#5f7881;--sage:#8fabb5;--earth:#7d6a5c;
+      --sand:#c3c3b8;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a2226;--mist:#b8c8cc;
       --red:#c0392b;--r:10px;--hero1:#3a2a1a;--hero2:#6a4a28}
     html{scroll-behavior:smooth}
     body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
@@ -60,13 +60,13 @@
     .lbl{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
       color:var(--earth);margin-bottom:12px}
     .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .inc-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6a54}
+    .inc-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#5a6870}
     .inc-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
 
     /* Descripción */
-    .desc-text{font-size:.92rem;color:#5a6a54;line-height:1.8;margin-bottom:18px}
-    .cap-badge{display:inline-flex;align-items:center;gap:8px;background:#f0f7ee;
-      border:1px solid #c0ddb8;border-radius:20px;padding:6px 14px;font-size:.8rem;
+    .desc-text{font-size:.92rem;color:#5a6870;line-height:1.8;margin-bottom:18px}
+    .cap-badge{display:inline-flex;align-items:center;gap:8px;background:#eef4f5;
+      border:1px solid #cfe0e4;border-radius:20px;padding:6px 14px;font-size:.8rem;
       color:var(--forest);font-weight:600;margin-bottom:16px}
 
     /* Calendario */
@@ -88,11 +88,11 @@
       font-size:.84rem;line-height:1.5;animation:fadeIn .3s ease}
     .cal-msg.show{display:flex;align-items:flex-start;gap:10px}
     .cal-msg.ocupado{background:#fff8f0;border:1px solid #f0d0a0;color:#7a4a10}
-    .cal-msg.libre{background:#f0f7ee;border:1px solid #c0ddb8;color:#2d5a20}
+    .cal-msg.libre{background:#eef4f5;border:1px solid #cfe0e4;color:#3d5c68}
     @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-    .cd.ini{background:#c0ddb8;color:var(--forest);border-radius:8px 0 0 8px}
+    .cd.ini{background:#cfe0e4;color:var(--forest);border-radius:8px 0 0 8px}
     .cd.rng{background:#e8f4e4;color:var(--forest)}
-    .cd.fin{background:#c0ddb8;color:var(--forest);border-radius:0 8px 8px 0}
+    .cd.fin{background:#cfe0e4;color:var(--forest);border-radius:0 8px 8px 0}
     .cal-leg{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
     .leg-i{display:flex;align-items:center;gap:5px;font-size:.7rem;color:#888}
     .leg-d{width:10px;height:10px;border-radius:3px}
@@ -218,7 +218,7 @@
         </tr></thead><tbody id="cal-body"></tbody></table>
         <div class="cal-leg">
           <div class="leg-i"><div class="leg-d" style="background:#f0f0f0"></div>Ocupado</div>
-          <div class="leg-i"><div class="leg-d" style="background:#c0ddb8"></div>Inicio/Fin</div>
+          <div class="leg-i"><div class="leg-d" style="background:#cfe0e4"></div>Inicio/Fin</div>
           <div class="leg-i"><div class="leg-d" style="background:#e8f4e4"></div>Reservado</div>
           <div class="leg-i"><div class="leg-d" style="background:var(--sage)"></div>Hoy</div>
         </div>
@@ -263,7 +263,7 @@
         <div class="fg"><label class="fl">Fecha de entrada</label><input type="date" class="fi" id="f-ent" onchange="onEntradaChange()" oninput="onEntradaChange()"></div>
         <div class="fg"><label class="fl">Fecha de salida</label><input type="date" class="fi" id="f-sal" onchange="onSalidaChange()"></div>
       </div>
-      <div id="n-badge" style="display:none;background:#f0f7ee;border:1px solid #c0ddb8;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
+      <div id="n-badge" style="display:none;background:#eef4f5;border:1px solid #cfe0e4;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:14px"></div>
       <div id="aviso-cerrado-modal" class="aviso-cerrado"></div>
       <div id="conflicto-badge" style="display:none;background:#fff5f5;border:1px solid #f0c0c0;border-radius:7px;padding:10px 14px;font-size:.82rem;color:var(--red);margin-bottom:14px"></div>
       <div class="fg">
@@ -422,7 +422,7 @@
             <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
           </div>
           <div style="padding:24px 28px">
-            <p style="font-size:.9rem;color:#6a7a64;line-height:1.65;margin-bottom:20px;text-align:center">
+            <p style="font-size:.9rem;color:#6a7880;line-height:1.65;margin-bottom:20px;text-align:center">
               Para realizar una solicitud de reserva necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
             </p>
             <a href="${INDEX_URL}?action=login" style="display:block;background:#7fa0ac;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
@@ -733,7 +733,7 @@
     if(!ent||!sal){document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona las fechas</div>';return;}
     const noches=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
     if(noches<=0){nb.style.display='block';nb.style.background='#fff5f5';nb.style.borderColor='#f0c0c0';nb.style.color='var(--red)';nb.textContent='⚠️ La fecha de salida debe ser posterior a la de entrada';document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Fechas inválidas</div>';return;}
-    nb.style.display='block';nb.style.background='#f0f7ee';nb.style.borderColor='#c0ddb8';nb.style.color='var(--forest)';
+    nb.style.display='block';nb.style.background='#eef4f5';nb.style.borderColor='#cfe0e4';nb.style.color='var(--forest)';
     nb.textContent=`🌙 ${noches} noche${noches===1?'':'s'} · ${ent} → ${sal}`;
     // Aviso si la entrada cae en día cerrado
     const avCab=document.getElementById('aviso-cerrado-modal');

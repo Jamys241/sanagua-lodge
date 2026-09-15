@@ -10,9 +10,9 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --moss:#7fa0ac;--forest:#5f7881;--sage:#7a9e6e;--earth:#8b6b47;
-      --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
-      --gold:#c9923a;--r:12px;--mist:#a8b8a2;
+      --moss:#7fa0ac;--forest:#5f7881;--sage:#8fabb5;--earth:#7d6a5c;
+      --sand:#c3c3b8;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a2226;
+      --gold:#c9923a;--r:12px;--mist:#b8c8cc;
     }
     html{scroll-behavior:smooth}
     body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);min-height:100vh}
@@ -27,7 +27,7 @@
     .nav-back:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 
     /* Hero de puntos */
-    .pts-hero{background:linear-gradient(135deg,var(--moss),var(--forest),#1a2a14);
+    .pts-hero{background:linear-gradient(135deg,var(--moss),var(--forest),#1a2226);
       padding:48px 28px 40px;text-align:center;position:relative;overflow:hidden}
     .pts-hero::before{content:'✦';position:absolute;font-size:18rem;
       color:rgba(255,255,255,.03);top:-40px;left:50%;transform:translateX(-50%);
@@ -90,7 +90,7 @@
     .tx-item:last-child{border-bottom:none}
     .tx-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
       justify-content:center;font-size:.9rem;flex-shrink:0}
-    .tx-icon.sum{background:#f0f7ee;color:var(--moss)}
+    .tx-icon.sum{background:#eef4f5;color:var(--moss)}
     .tx-icon.res{background:#fff5f5;color:#c0392b}
     .tx-info{flex:1}
     .tx-desc{font-size:.85rem;font-weight:500;color:var(--ink)}
@@ -152,9 +152,9 @@
 
   // ── Niveles y beneficios ─────────────────────────────────────────────
   const NIVELES = [
-    { nombre:'Explorador',  min:0,    max:249,  icon:'🌿', color:'#7a9e6e' },
+    { nombre:'Explorador',  min:0,    max:249,  icon:'🌿', color:'#8fabb5' },
     { nombre:'Viajero',     min:250,  max:499,  icon:'🥾', color:'#c9923a' },
-    { nombre:'Aventurero',  min:500,  max:999,  icon:'⛺', color:'#8b6b47' },
+    { nombre:'Aventurero',  min:500,  max:999,  icon:'⛺', color:'#7d6a5c' },
     { nombre:'Residente',   min:1000, max:1999, icon:'🏡', color:'#7fa0ac' },
     { nombre:'Guardián',    min:2000, max:Infinity, icon:'👑', color:'#9a6f00' },
   ];
