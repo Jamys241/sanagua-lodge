@@ -15,6 +15,7 @@
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
     /* ── HEADER ── */
+   /* Colores de esta sección → fondo: var(--ink), var(--success), #aaa | texto: #fff, rgba(255,255,255,.3), rgba(255,255,255,.7), rgba(255,255,255,.6) | borde: rgba(255,255,255,.15) */
     header{background:var(--ink);color:#fff;padding:0 28px;height:60px;
       display:flex;align-items:center;justify-content:space-between;
       position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
@@ -36,6 +37,7 @@
     .layout{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 60px)}
 
     /* ── SIDEBAR ── */
+   /* Colores de esta sección → fondo: var(--ink), rgba(255,255,255,.05), rgba(255,255,255,.08), rgba(255,255,255,.1) | texto: rgba(255,255,255,.3), rgba(255,255,255,.6), #fff */
     .sidebar{background:var(--ink);overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
     .sidebar-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
       color:rgba(255,255,255,.3);padding:20px 20px 8px}
@@ -54,6 +56,7 @@
     .main{overflow-y:auto;padding:28px}
 
     /* Barra superior de categoría */
+   /* Colores de esta sección → fondo: var(--accent) | texto: var(--ink), var(--muted), #fff */
     .cat-header{display:flex;align-items:center;justify-content:space-between;
       margin-bottom:24px;flex-wrap:wrap;gap:12px}
     .cat-header-left{display:flex;align-items:center;gap:12px}
@@ -69,11 +72,13 @@
     .platos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 
     /* Card de plato */
+   /* Colores de esta sección → fondo: var(--surface) | borde: var(--border) | sombra: rgba(0,0,0,.04) */
     .plato-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);
       overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);transition:box-shadow .2s}
     .plato-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.09)}
 
     /* Imagen del plato */
+   /* Colores de esta sección → fondo: #f0ece6, rgba(0,0,0,.4), rgba(0,0,0,.5) | texto: var(--muted), #fff */
     .plato-img-wrap{height:160px;position:relative;background:#f0ece6;
       display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
     .plato-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
@@ -90,6 +95,7 @@
     .plato-img-input{display:none}
 
     /* Campos del plato */
+   /* Colores de esta sección → fondo: var(--bg), var(--border) | texto: var(--muted), var(--ink) | borde: var(--border), var(--accent) */
     .plato-fields{padding:16px}
     .field-group{margin-bottom:12px}
     .field-label{font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
@@ -105,6 +111,7 @@
     .price-wrap .field-input{border-radius:0 6px 6px 0;flex:1}
 
     /* Acciones de plato */
+   /* Colores de esta sección → fondo: var(--accent) | texto: var(--muted), #fff | borde: var(--border), var(--red) */
     .plato-actions{display:flex;gap:8px;padding:0 16px 14px}
     .btn-del{background:none;border:1.5px solid var(--border);border-radius:6px;
       padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:.78rem;
@@ -117,6 +124,7 @@
     .btn-save-plato.saved{background:var(--success)}
 
     /* Toast */
+   /* Colores de esta sección → fondo: var(--ink) | texto: #fff | sombra: rgba(0,0,0,.3) */
     .toast{position:fixed;bottom:24px;right:24px;z-index:999;
       background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;
       font-size:.85rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.3);
@@ -131,6 +139,7 @@
     .empty-cat p{font-size:.88rem;margin-bottom:16px}
 
     /* Loading */
+   /* Colores de esta sección → fondo: rgba(255,255,255,.8) | borde: var(--border) */
     .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);
       z-index:999;display:none;align-items:center;justify-content:center}
     .loading-overlay.show{display:flex}

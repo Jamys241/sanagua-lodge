@@ -40,6 +40,7 @@
     .sec-title em{font-style:italic;color:var(--earth)}
 
     /* Grid de cabañas */
+   /* Colores de esta sección → fondo: #fff, rgba(0,0,0,.3), #c9a84c, #e8c870 | texto: rgba(255,255,255,.15), rgba(255,255,255,.85), var(--moss), #6a7880 | borde: rgba(255,255,255,.15) | sombra: rgba(0,0,0,.08), rgba(201,168,76,.5), rgba(201,168,76,.3) */
     .cabanas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px}
     .cabana-card{background:#fff;border-radius:var(--r);overflow:hidden;
       box-shadow:0 4px 24px rgba(0,0,0,.08);transition:transform .3s,box-shadow .3s;

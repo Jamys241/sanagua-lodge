@@ -33,6 +33,7 @@
     }
 
     /* ════════════════════════════════ HEADER */
+   /* Colores de esta sección → fondo: rgba(26, 34, 38, 0.96) | texto: var(--sage), #fff, var(--mist) | borde: rgba(255,255,255,0.06), var(--sage) */
     header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
@@ -85,6 +86,7 @@
     .header-right { display: flex; align-items: center; gap: 16px; }
 
     /* Botones de auth */
+   /* Colores de esta sección → fondo: var(--sage), var(--forest) | texto: rgba(255,255,255,.85), var(--sage), #fff | borde: rgba(255,255,255,.2), var(--sage) */
     .btn-login {
       font-family: 'Jost', sans-serif;
       font-size: .82rem; font-weight: 500;
@@ -109,6 +111,7 @@
     .btn-register:hover { background: var(--forest); }
 
     /* Hamburguesa */
+   /* Colores de esta sección → fondo: rgba(255,255,255,.8) */
     .hamburger {
       background: none; border: none; cursor: pointer;
       display: flex; flex-direction: column; gap: 5px;
@@ -125,6 +128,7 @@
     .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* Menú lateral */
+   /* Colores de esta sección → fondo: var(--water), rgba(0,0,0,.5), rgba(255,255,255,.06), rgba(255,255,255,.08) | texto: var(--mist), rgba(255,255,255,.75), #fff | sombra: rgba(0,0,0,.3) */
     .nav-drawer {
       position: fixed; top: 72px; right: 0; bottom: 0;
       width: 300px; background: var(--water);
@@ -169,6 +173,7 @@
     .nav-divider { height: 1px; background: rgba(255,255,255,.08); margin: 8px 20px; }
 
     /* Sección usuario logueado */
+   /* Colores de esta sección → fondo: rgba(255,255,255,.06) | texto: #fff, var(--gold) | borde: rgba(255,255,255,.1) */
     .nav-user-card {
       margin: 16px 20px;
       background: rgba(255,255,255,.06);
@@ -179,6 +184,7 @@
     .nav-user-pts { font-size: .75rem; color: var(--gold); margin-top: 3px; }
 
     /* ════════════════════════════════ HERO */
+   /* Colores de esta sección → fondo: #1a2630, #3a5460, #4f7684, #35505a */
     .hero {
       height: 100vh; min-height: 600px;
       position: relative;
@@ -198,6 +204,7 @@
     }
 
     /* Textura de bosque abstracta */
+   /* Colores de esta sección → fondo: rgba(86,109,117,.25), rgba(95, 120, 129,.3), rgba(26,34,38,.8), var(--sage) | texto: var(--sage), #fff, var(--sand), rgba(255,255,255,.65) | borde: rgba(255,255,255,.25), var(--sand) | sombra: rgba(0,0,0,.3) */
     .hero-bg::before {
       content: '';
       position: absolute; inset: 0;
@@ -278,6 +285,7 @@
     .cta-secondary:hover { border-color: var(--sand); color: var(--sand); }
 
     /* Scroll indicator */
+   /* Colores de esta sección → texto: rgba(255,255,255,.4) */
     .scroll-hint {
       position: absolute; bottom: 28px; left: 50%;
       transform: translateX(-50%);
@@ -290,6 +298,7 @@
     @keyframes bob { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
 
     /* ════════════════════════════════ SERVICIOS */
+   /* Colores de esta sección → fondo: var(--sand) | texto: var(--earth), var(--moss) */
     .section { padding: 96px 40px; max-width: 1100px; margin: 0 auto; }
 
     .section-label {
@@ -310,6 +319,7 @@
     .section-title em { font-style: italic; color: var(--earth); }
 
     /* Índice de servicios — lista editorial, no tarjetas */
+   /* Colores de esta sección → fondo: rgba(127,160,172,.07) | texto: var(--sand), var(--moss), var(--ink), var(--water) | borde: rgba(122,140,148,.28), rgba(86,109,117,.35), var(--water) */
     .services-list {
       border-top: 1px solid rgba(122,140,148,.28);
     }
@@ -373,6 +383,7 @@
     .service-row:hover .service-link { border-color: var(--water); }
 
     /* ════════════════════════════════ SOBRE EL PROYECTO */
+   /* Colores de esta sección → fondo: var(--moss), var(--mist), #5f7881, #3a5460 | texto: var(--mist), #fff, var(--sand), rgba(255,255,255,.65) | borde: rgba(255,255,255,.15), rgba(255,255,255,.08), rgba(255,255,255,.07) */
     .about-section {
       background: var(--moss);
       padding: 100px 40px;
@@ -448,6 +459,7 @@
     .feat-desc { font-size: .78rem; color: rgba(255,255,255,.5); line-height: 1.5; }
 
     /* ════════════════════════════════ EXPERIENCIAS */
+   /* Colores de esta sección → fondo: var(--cream), #fff, var(--forest), var(--water) | texto: var(--earth), var(--moss), #7a8c94 | borde: rgba(0,0,0,.06) | sombra: rgba(0,0,0,.1) */
     .exp-section { padding: 96px 40px; background: var(--cream); }
     .exp-inner { max-width: 1100px; margin: 0 auto; }
 
@@ -493,6 +505,7 @@
     /* ════════════════════════════════ CTA CENTRAL */
     /* ── PET-FRIENDLY BANNER ── */
     /* ── PET-FRIENDLY ── */
+   /* Colores de esta sección → fondo: #1a2226, #7fa0ac, #5f7881, rgba(255,255,255,.1) | texto: #fff, var(--sand), rgba(255,255,255,.55), rgba(255,255,255,.7) | borde: rgba(255,255,255,.06), rgba(255,255,255,.22), rgba(255,255,255,.12) */
     .pet-banner{
       background:linear-gradient(120deg,#1a2226 0%,#7fa0ac 45%,#5f7881 100%);
       position:relative;overflow:hidden;border-top:1px solid rgba(255,255,255,.06);
@@ -542,6 +555,7 @@
     .cta-body { font-size: .95rem; color: #7a8c94; line-height: 1.7; margin-bottom: 36px; }
 
     /* ════════════════════════════════ MODAL AUTH */
+   /* Colores de esta sección → fondo: rgba(0,0,0,.7), #fff, var(--moss), rgba(0,0,0,.2) | texto: #fff, rgba(255,255,255,.6), var(--moss), #9a9a9a | borde: #e8e8e8, var(--sage) | sombra: rgba(0,0,0,.3) */
     .auth-overlay {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(0,0,0,.7);
@@ -621,6 +635,7 @@
 
     /* ════════════════════════════════ MODAL USUARIO */
     /* Panel de usuario (cuando está logueado) */
+   /* Colores de esta sección → fondo: var(--moss), var(--water), rgba(255,255,255,.15), #e8f5ee | texto: #fff, var(--gold), #aaa, var(--moss) | borde: #f0f0f0, #eee */
     .user-panel-header {
       background: linear-gradient(135deg, var(--moss), var(--water));
       padding: 28px 36px;
@@ -694,6 +709,7 @@
     .puntos-beneficio:last-child { border-bottom: none; }
 
     /* ════════════════════════════════ FOOTER */
+   /* Colores de esta sección → fondo: var(--ink) | texto: rgba(255,255,255,.6), #fff, rgba(255,255,255,.65), var(--sage) | borde: rgba(255,255,255,.08) */
     footer {
       background: var(--ink); color: rgba(255,255,255,.6);
       padding: 60px 40px 32px;

@@ -20,6 +20,7 @@
     .nav-back:hover{color:var(--sage)}
 
     /* Hero */
+   /* Colores de esta sección → fondo: #1a2226, #3a5460, #263840 | texto: var(--sage), #fff, rgba(255,255,255,.65) */
     .hero{height:60vh;min-height:400px;position:relative;overflow:hidden;
       background:linear-gradient(160deg,#1a2226,#3a5460,#263840);
       display:flex;align-items:flex-end;padding-bottom:60px}
@@ -45,6 +46,7 @@
     .exp-divider-icon{font-size:1.4rem;flex-shrink:0}
 
     /* Sección de experiencia */
+   /* Colores de esta sección → fondo: var(--sand) | texto: var(--earth), var(--moss), #5a6870 */
     .exp-section{margin-bottom:72px}
     .exp-label{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
       color:var(--earth);margin-bottom:8px;display:flex;align-items:center;gap:10px}
@@ -55,6 +57,7 @@
     .exp-desc{font-size:.92rem;color:#5a6870;line-height:1.8;margin-bottom:28px}
 
     /* Galería de imágenes */
+   /* Colores de esta sección → fondo: #3a5460, #4f7684 */
     .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:32px;border-radius:var(--r);overflow:hidden}
     .gallery-main{grid-column:1/3;grid-row:1/3}
     .gallery img,.gallery-placeholder{width:100%;height:100%;object-fit:cover;display:block;min-height:180px}
@@ -64,6 +67,7 @@
     .gallery-2col img,.gallery-2col .gallery-placeholder{height:240px}
 
     /* Senderos cards */
+   /* Colores de esta sección → fondo: #fff, var(--cream) | texto: var(--moss), var(--earth), #6a7880 | borde: rgba(0,0,0,.07), rgba(139,94,60,.15) */
     .senderos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:32px}
     .sendero-card{background:#fff;border-radius:var(--r);padding:20px 22px;
       border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 12px rgba(0,0,0,.05)}
@@ -77,6 +81,7 @@
     .sendero-desc{font-size:.84rem;color:#6a7880;line-height:1.65}
 
     /* Recomendaciones */
+   /* Colores de esta sección → fondo: var(--cream) | texto: var(--moss), var(--sage) */
     .rec-box{background:var(--cream);border-radius:var(--r);padding:24px 28px;margin-bottom:32px}
     .rec-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--moss);
       font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
@@ -85,6 +90,7 @@
     .rec-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
 
     /* Mapa / ubicación */
+   /* Colores de esta sección → fondo: #fff, var(--moss) | texto: #6a7880 | borde: rgba(0,0,0,.07) | sombra: rgba(0,0,0,.05) */
     .ubicacion-box{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);overflow:hidden;
       box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:32px}
     .ubicacion-header{background:var(--moss);padding:16px 20px;display:flex;align-items:center;gap:10px}
@@ -95,6 +101,7 @@
     .ubicacion-map iframe{width:100%;height:100%;border:none}
 
     /* Info parque */
+   /* Colores de esta sección → fondo: #fff | texto: var(--mist) | borde: rgba(0,0,0,.07) */
     .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
     .info-card{background:#fff;border-radius:8px;padding:14px 16px;border:1px solid rgba(0,0,0,.07);
       text-align:center}

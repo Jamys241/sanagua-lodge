@@ -21,6 +21,7 @@
     .nav-back:hover{color:var(--sage)}
 
     /* Hero oscuro y cálido */
+   /* Colores de esta sección → fondo: #1a0a00, #3a1a08, #1a0800 */
     .hero{height:70vh;min-height:460px;position:relative;overflow:hidden;
       background:linear-gradient(160deg,#1a0a00,#3a1a08,#1a0800);
       display:flex;align-items:center;justify-content:center}
@@ -29,6 +30,7 @@
     .hero-bg::after{content:'';position:absolute;inset:0;
       background:linear-gradient(to bottom,rgba(26,10,0,.5) 0%,rgba(26,10,0,.75) 100%)}
     /* Efecto de brillo de fogata */
+   /* Colores de esta sección → fondo: rgba(201,130,58,.35) | texto: var(--sand), #fff, rgba(255,255,255,.65) */
     .hero::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
       width:400px;height:300px;
       background:radial-gradient(ellipse at center bottom,rgba(201,130,58,.35) 0%,transparent 70%);
@@ -45,6 +47,7 @@
     .pw{max-width:960px;margin:0 auto;padding:72px 32px}
 
     /* Intro con quote */
+   /* Colores de esta sección → fondo: #3a1a08, #2a1005 | texto: var(--sand), rgba(255,255,255,.4) */
     .quote-block{background:linear-gradient(135deg,#3a1a08,#2a1005);border-radius:var(--r);
       padding:36px 40px;margin-bottom:56px;text-align:center;position:relative;overflow:hidden}
     .quote-block::before{content:'🔥';position:absolute;top:-20px;left:50%;transform:translateX(-50%);
@@ -63,6 +66,7 @@
       background:linear-gradient(135deg,#3a1a08,#1a0a00)}
 
     /* Timeline de la noche */
+   /* Colores de esta sección → fondo: var(--warm) | texto: var(--moss), var(--sand), var(--ink), #7a6a5a | borde: var(--amber) */
     .timeline{margin-bottom:56px}
     .timeline-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--moss);
       margin-bottom:28px;font-weight:400}
@@ -75,6 +79,7 @@
     .tl-desc{font-size:.84rem;color:#7a6a5a;line-height:1.6}
 
     /* Lo que incluye */
+   /* Colores de esta sección → fondo: #fff | texto: var(--ink), #7a6a5a | borde: rgba(0,0,0,.07) */
     .incluye-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
       gap:16px;margin-bottom:56px}
     .inc-card{background:#fff;border-radius:var(--r);padding:22px 20px;text-align:center;
@@ -88,6 +93,7 @@
       border-radius:var(--r);overflow:hidden;height:220px;margin-bottom:56px}
 
     /* CTA Reserva */
+   /* Colores de esta sección → fondo: var(--warm), #2a1008, var(--amber), #b87028 | texto: #fff, rgba(255,255,255,.6) */
     .cta-box{background:linear-gradient(135deg,var(--warm),#2a1008);border-radius:var(--r);
       padding:40px;text-align:center;position:relative;overflow:hidden}
     .cta-box::before{content:'';position:absolute;inset:0;

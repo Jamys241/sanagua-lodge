@@ -14,6 +14,7 @@
     body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
 
     /* NAV */
+   /* Colores de esta sección → fondo: rgba(26,34,38,.97), var(--sage) | texto: #fff, rgba(255,255,255,.6) */
     nav{position:sticky;top:0;z-index:100;background:rgba(26,34,38,.97);backdrop-filter:blur(10px);
       padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
       border-bottom:1px solid rgba(255,255,255,.06)}
@@ -26,6 +27,7 @@
     .btn-res:hover{background:var(--forest)}
 
     /* SLIDER */
+   /* Colores de esta sección → texto: var(--sage), #fff */
     .slider{position:relative;height:65vh;min-height:420px;overflow:hidden;background:var(--hero1)}
     .slide{position:absolute;inset:0;opacity:0;transition:opacity .7s ease}
     .slide.active{opacity:1}
@@ -41,6 +43,7 @@
       font-weight:300;color:#fff;line-height:1.05}
     .slide-title em{font-style:italic;color:var(--sand)}
     /* Controles slider */
+   /* Colores de esta sección → fondo: rgba(255,255,255,.3), #fff, rgba(0,0,0,.3) | texto: #fff | borde: rgba(255,255,255,.15) */
     .sl-ctrl{position:absolute;bottom:24px;right:48px;z-index:10;display:flex;gap:8px}
     .sl-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s}
     .sl-dot.active{background:#fff;width:24px;border-radius:4px}
@@ -52,6 +55,7 @@
     .sl-arrow.prev{left:20px}.sl-arrow.next{right:20px}
 
     /* LAYOUT */
+   /* Colores de esta sección → fondo: #fff | texto: var(--earth), var(--sage) | borde: rgba(0,0,0,.07) | sombra: rgba(0,0,0,.05) */
     .pw{max-width:1100px;margin:0 auto;padding:60px 32px}
     .two-col{display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start}
     .card{background:#fff;border-radius:var(--r);border:1px solid rgba(0,0,0,.07);padding:26px 28px;
@@ -63,12 +67,14 @@
     .inc-item::before{content:'✓';color:var(--sage);font-weight:700;flex-shrink:0}
 
     /* Descripción */
+   /* Colores de esta sección → fondo: #eef4f5 | texto: #5a6870, var(--forest) | borde: #cfe0e4 */
     .desc-text{font-size:.92rem;color:#5a6870;line-height:1.8;margin-bottom:18px}
     .cap-badge{display:inline-flex;align-items:center;gap:8px;background:#eef4f5;
       border:1px solid #cfe0e4;border-radius:20px;padding:6px 14px;font-size:.8rem;
       color:var(--forest);font-weight:600;margin-bottom:16px}
 
     /* Calendario */
+   /* Colores de esta sección → fondo: rgba(143,171,181,.15), #f0f0f0, var(--sage) | texto: #aaa, #999 | borde: #e0e0e0 */
     .cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
     .cal-nav{display:flex;gap:6px}
     .cal-btn{background:none;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.9rem;transition:border-color .2s}
@@ -83,6 +89,7 @@
     .cd.ocp .cn{font-size:.72rem;font-weight:700;color:#888}.cd.ocp .cl{font-size:.54rem;text-transform:uppercase;letter-spacing:.04em;color:#aaa}
     .cd.tod{background:var(--sage);color:#fff}.cd.oth{color:#e0e0e0}
     /* Mensaje amigable al hacer clic en día ocupado */
+   /* Colores de esta sección → fondo: #fff8f0, #eef4f5, #cfe0e4, #e8f4e4 | texto: var(--forest) | borde: #f0d0a0, #cfe0e4 */
     .cal-msg{display:none;margin-top:12px;padding:12px 16px;border-radius:8px;
       font-size:.84rem;line-height:1.5;animation:fadeIn .3s ease}
     .cal-msg.show{display:flex;align-items:flex-start;gap:10px}
@@ -97,6 +104,7 @@
     .leg-d{width:10px;height:10px;border-radius:3px}
 
     /* Sticky sidebar */
+   /* Colores de esta sección → fondo: var(--moss), rgba(255,255,255,.07), var(--sage) | texto: rgba(255,255,255,.8), var(--mist), #fff */
     .sc{position:sticky;top:80px}
     .ps{background:var(--moss);border-radius:var(--r);padding:24px;color:#fff}
     .pf{font-size:.72rem;color:rgba(255,255,255,.8);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
@@ -112,6 +120,7 @@
     .btn-rb:hover{background:var(--forest)}
 
     /* Modal */
+   /* Colores de esta sección → fondo: rgba(0,0,0,.65), #fff, var(--moss), rgba(255,255,255,.15) | texto: #fff, #9a9a9a, #aaa, #bbb | borde: #e8e8e8, var(--sage), #e0e0e0 */
     .ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
       display:none;align-items:center;justify-content:center;padding:16px}
     .ov.open{display:flex}

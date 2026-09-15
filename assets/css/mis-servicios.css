@@ -15,6 +15,7 @@
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
     /* ── HEADER ── */
+   /* Colores de esta sección → fondo: var(--ink) | texto: #fff, rgba(255,255,255,.3), rgba(255,255,255,.7), rgba(255,255,255,.6) | borde: rgba(255,255,255,.15) */
     header{background:var(--ink);color:#fff;padding:0 28px;height:60px;
       display:flex;align-items:center;justify-content:space-between;
       position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
@@ -31,6 +32,7 @@
     .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 60px)}
 
     /* ── SIDEBAR ── */
+   /* Colores de esta sección → fondo: var(--ink), rgba(255,255,255,.08), rgba(255,255,255,.1), var(--gold) | texto: rgba(255,255,255,.3), rgba(255,255,255,.6), rgba(255,255,255,.5), rgba(255,255,255,.4) | borde: rgba(255,255,255,.2) */
     .sidebar{background:var(--ink);overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
     .sidebar-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
       color:rgba(255,255,255,.3);padding:20px 20px 8px}
@@ -55,6 +57,7 @@
     .btn-add-cat:hover{background:rgba(255,255,255,.12);color:#fff}
 
     /* ── MAIN ── */
+   /* Colores de esta sección → fondo: var(--surface), #f0ece6, rgba(192,57,43,.1), var(--accent) | texto: var(--ink), var(--muted), var(--red), #fff | borde: var(--accent), var(--border) */
     .main{overflow-y:auto;padding:28px}
     .empty-cat{text-align:center;padding:60px 20px;color:var(--muted)}
     .empty-cat .empty-icon{font-size:3rem;margin-bottom:12px}
@@ -113,6 +116,7 @@
     .btn-add-item-card .plus{font-size:2rem}
 
     /* ── MODAL ── */
+   /* Colores de esta sección → fondo: rgba(0,0,0,.6), #fff, var(--ink), rgba(245,243,238,.7) | texto: #fff, rgba(255,255,255,.5), var(--muted) | borde: var(--border) */
     .modal-ov{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
       display:none;align-items:center;justify-content:center;padding:20px}
     .modal-ov.show{display:flex}

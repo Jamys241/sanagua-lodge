@@ -15,6 +15,7 @@
     body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
 
     /* NAV */
+   /* Colores de esta sección → fondo: rgba(26,20,16,.96) | texto: #fff, rgba(255,255,255,.55) */
     nav{position:sticky;top:0;z-index:100;background:rgba(26,20,16,.96);backdrop-filter:blur(12px);
       padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;
       border-bottom:1px solid rgba(255,255,255,.06)}
@@ -31,6 +32,7 @@
       transform:scale(1.05);transition:transform 6s ease}
     .slide.active .slide-bg{transform:scale(1)}
     /* Gradientes de color para slides sin foto */
+   /* Colores de esta sección → fondo: #2a1a08, #1a2226, #2a1810, #1a1a20 | texto: var(--gold), #fff, rgba(255,255,255,.65) */
     .slide:nth-child(1) .slide-bg{background-color:#2a1a08;background-image:radial-gradient(ellipse at 30% 50%,rgba(201,146,58,.3),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(143,171,181,.2),transparent 50%)}
     .slide:nth-child(2) .slide-bg{background-color:#1a2226;background-image:radial-gradient(ellipse at 60% 60%,rgba(143,171,181,.3),transparent 60%)}
     .slide:nth-child(3) .slide-bg{background-color:#2a1810;background-image:radial-gradient(ellipse at 40% 40%,rgba(196,90,42,.25),transparent 55%)}
@@ -49,6 +51,7 @@
     .slide-sub{font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.65;max-width:440px}
 
     /* Controles slider */
+   /* Colores de esta sección → fondo: rgba(255,255,255,.12), rgba(255,255,255,.35), #fff | texto: #fff | borde: rgba(255,255,255,.2) */
     .sl-arrows{position:absolute;top:50%;transform:translateY(-50%);width:100%;
       display:flex;justify-content:space-between;padding:0 20px;z-index:10;pointer-events:none}
     .sl-arrow{width:46px;height:46px;border-radius:50%;
@@ -63,6 +66,7 @@
     .sl-dot.active{background:#fff;width:20px;border-radius:3px}
 
     /* SECCIÓN PRINCIPAL */
+   /* Colores de esta sección → texto: var(--earth), var(--ink), #7a6a5a */
     .pw{max-width:1100px;margin:0 auto;padding:72px 32px}
     .section-intro{text-align:center;max-width:640px;margin:0 auto 60px}
     .section-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.22em;
@@ -73,6 +77,7 @@
     .section-desc{font-size:.92rem;color:#7a6a5a;line-height:1.75}
 
     /* CARDS DE TABLAS */
+   /* Colores de esta sección → fondo: var(--surface) | sombra: rgba(0,0,0,.08) */
     .tablas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
     .tabla-card{background:var(--surface);border-radius:var(--r);overflow:hidden;
       box-shadow:0 4px 24px rgba(0,0,0,.08);transition:transform .35s,box-shadow .35s;
@@ -80,6 +85,7 @@
     .tabla-card:hover{transform:translateY(-8px);box-shadow:0 16px 48px rgba(0,0,0,.14)}
 
     /* Imagen de la tabla */
+   /* Colores de esta sección → fondo: var(--warm), var(--ink) | texto: #fff */
     .tabla-img{height:240px;position:relative;overflow:hidden;background:var(--warm);
       display:flex;align-items:center;justify-content:center}
     .tabla-img img{width:100%;height:100%;object-fit:cover;display:block;
@@ -96,6 +102,7 @@
     .tabla-tag.grande{background:var(--rust)}
 
     /* Cuerpo de la card */
+   /* Colores de esta sección → fondo: var(--warm), var(--ink), var(--earth) | texto: var(--ink), var(--mist), #7a6a5a, var(--earth) | borde: rgba(139,94,60,.15) */
     .tabla-body{padding:24px 28px;flex:1;display:flex;flex-direction:column}
     .tabla-nombre{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;
       color:var(--ink);margin-bottom:6px}
@@ -118,6 +125,7 @@
     .btn-tabla:hover{background:var(--earth);transform:translateY(-1px)}
 
     /* MODAL RESERVA */
+   /* Colores de esta sección → fondo: rgba(26,20,16,.75), #fff, var(--ink), rgba(255,255,255,.12) | texto: #fff, #9a9a9a, #bbb | borde: #e8e8e8, var(--earth) */
     .ov{position:fixed;inset:0;z-index:500;background:rgba(26,20,16,.75);
       backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:16px}
     .ov.open{display:flex}
@@ -151,6 +159,7 @@
     .fn{font-size:.72rem;color:#bbb;text-align:center;margin-top:10px;line-height:1.5}
 
     /* NOTA */
+   /* Colores de esta sección → fondo: rgba(139,94,60,.06) | texto: #7a6a5a */
     .nota-final{text-align:center;max-width:560px;margin:48px auto 0;
       padding:24px;background:rgba(139,94,60,.06);border-radius:12px;
       border:1px solid rgba(139,94,60,.12)}
@@ -163,6 +172,7 @@
     }
   
     /* Toast de actualización */
+   /* Colores de esta sección → fondo: #1a1410 | texto: #fff | sombra: rgba(0,0,0,.2) */
     .update-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-80px);
       z-index:200;background:#1a1410;color:#fff;font-size:.78rem;font-weight:600;
       padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
