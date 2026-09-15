@@ -312,73 +312,68 @@
     }
     .section-title em { font-style: italic; color: var(--earth); }
 
-    /* Grid de servicios */
-    .services-grid {
+    /* Índice de servicios — lista editorial, no tarjetas */
+    .services-list {
+      border-top: 1px solid rgba(122,140,148,.28);
+    }
+
+    .service-row {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 2px;
-      background: var(--sand);
-      border: 2px solid var(--sand);
-      border-radius: 16px; overflow: hidden;
+      grid-template-columns: 56px minmax(180px, 300px) 1fr;
+      align-items: start;
+      column-gap: 40px;
+      padding: 38px 4px;
+      border-bottom: 1px solid rgba(122,140,148,.28);
+      text-decoration: none;
+      position: relative;
+      isolation: isolate;
     }
 
-    /* ── Insignia popular */
-    .pop-badge{position:absolute;top:16px;right:16px;z-index:3;
-      background:linear-gradient(135deg,#c9a84c,#e8c870);
-      color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.08em;
-      text-transform:uppercase;padding:4px 12px;border-radius:20px;
-      box-shadow:0 2px 10px rgba(201,168,76,.45);
-      display:flex;align-items:center;gap:4px;white-space:nowrap;
-      pointer-events:none}
-
-    .service-card {
-      background: var(--linen);
-      padding: 44px 40px;
-      position: relative; overflow: hidden;
-      cursor: pointer;
-      transition: background .3s;
-      text-decoration: none; display: block;
-    }
-    .service-card:hover { background: #fff; }
-
-    .service-card::before {
+    .service-row::before {
       content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, transparent 70%, rgba(122,158,110,.08));
-      transition: opacity .3s;
+      position: absolute; inset: 0 -28px;
+      background: rgba(127,160,172,.07);
+      transform: scaleY(0);
+      transform-origin: center;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+      z-index: -1;
     }
-    .service-card:hover::before { opacity: 0; }
+    .service-row:hover::before { transform: scaleY(1); }
 
-    .service-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 3.5rem; font-weight: 300;
-      color: var(--sand); line-height: 1;
-      margin-bottom: 16px;
+    .service-mark {
+      width: 32px; height: 32px;
+      color: var(--sand);
       transition: color .3s;
+      margin-top: 6px;
     }
-    .service-card:hover .service-num { color: var(--sage); }
-
-    .service-icon { font-size: 2rem; margin-bottom: 12px; }
+    .service-mark svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.1; }
+    .service-row:hover .service-mark { color: var(--moss); }
 
     .service-name {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem; font-weight: 600;
-      color: var(--moss); margin-bottom: 10px;
+      font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+      font-weight: 400; color: var(--ink);
+      transition: color .3s;
+      padding-top: 2px;
     }
+    .service-row:hover .service-name { color: var(--water); }
+
+    .service-body { max-width: 620px; }
 
     .service-desc {
-      font-size: .88rem; font-weight: 300;
-      color: #6a7880; line-height: 1.65;
+      font-size: .93rem; font-weight: 300;
+      color: #5a6870; line-height: 1.7;
+      margin-bottom: 16px;
     }
 
     .service-link {
-      display: inline-flex; align-items: center; gap: 8px;
-      margin-top: 20px; font-size: .78rem;
-      font-weight: 600; letter-spacing: .1em;
-      text-transform: uppercase; color: var(--earth);
-      transition: gap .2s;
+      display: inline-flex; align-items: center;
+      font-size: .8rem; font-weight: 500;
+      color: var(--water); border-bottom: 1px solid rgba(86,109,117,.35);
+      padding-bottom: 1px;
+      transition: border-color .3s;
     }
-    .service-card:hover .service-link { gap: 12px; }
+    .service-row:hover .service-link { border-color: var(--water); }
 
     /* ════════════════════════════════ SOBRE EL PROYECTO */
     .about-section {
@@ -757,7 +752,8 @@
       .hero-content { padding: 0 24px; }
       .hero-title { font-size: 2.6rem; }
       .section { padding: 64px 24px; }
-      .services-grid { grid-template-columns: 1fr; }
+      .service-row { grid-template-columns: 40px 1fr; row-gap: 10px; column-gap: 16px; padding: 28px 4px; }
+      .service-body { grid-column: 1 / -1; max-width: none; }
       .about-inner { grid-template-columns: 1fr; gap: 40px; }
       .exp-grid { grid-template-columns: 1fr; }
       .about-stats { grid-template-columns: repeat(3, 1fr); }
@@ -884,46 +880,50 @@
     <div class="section-label">Lo que ofrecemos</div>
     <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
 
-    <div class="services-grid">
+    <div class="services-list">
 
-      <a class="service-card" id="card-pasadia" href="assets/pages/pasadia.html">
-        <div class="service-num">01</div>
-        <div class="service-icon">☀️</div>
+      <a class="service-row" id="card-pasadia" href="assets/pages/pasadia.html">
+        <div class="service-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></div>
         <div class="service-name">Pasadías</div>
-        <p class="service-desc">
-          Un día completo rodeado de naturaleza. Disfruta de nuestras piscinas naturales, senderos, áreas de recreación y gastronomía local. De 8am a 6pm — el descanso que mereces sin quedarte la noche.
-        </p>
-        <div class="service-link">Más información →</div>
+        <div class="service-body">
+          <p class="service-desc">
+            Un día completo rodeado de naturaleza. Disfruta de nuestras piscinas naturales, senderos, áreas de recreación y gastronomía local. De 8am a 6pm — el descanso que mereces sin quedarte la noche.
+          </p>
+          <span class="service-link">Más información</span>
+        </div>
       </a>
 
-      <a class="service-card" id="card-camping" href="assets/pages/camping.html">
-        <div class="service-num">02</div>
-        <div class="service-icon">⛺</div>
+      <a class="service-row" id="card-camping" href="assets/pages/camping.html">
+        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M4 20L12 5l8 15"/><path d="M8.4 12.5L12 5l3.6 7.5"/><path d="M2 20h20"/></svg></div>
         <div class="service-name">Camping</div>
-        <p class="service-desc">
-          Duerme bajo las estrellas en nuestra zona de camping. Elige entre traer tu propio equipo o alquilar nuestro kit completo. La experiencia más auténtica en contacto con la selva panameña.
-        </p>
-        <div class="service-link">Más información →</div>
+        <div class="service-body">
+          <p class="service-desc">
+            Duerme bajo las estrellas en nuestra zona de camping. Elige entre traer tu propio equipo o alquilar nuestro kit completo. La experiencia más auténtica en contacto con la selva panameña.
+          </p>
+          <span class="service-link">Más información</span>
+        </div>
       </a>
 
-      <a class="service-card" id="card-cabanas" href="assets/pages/cabanas.html">
-        <div class="service-num">03</div>
-        <div class="service-icon">🏡</div>
+      <a class="service-row" id="card-cabanas" href="assets/pages/cabanas.html">
+        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
         <div class="service-name">Cabañas</div>
-        <p class="service-desc">
-          Tres cabañas únicas para una experiencia íntima y exclusiva. Cabaña Yaguarundi, Cabaña Ocelot y Cabaña Motmot — cada una con su propio carácter, vistas y comodidades en medio de la naturaleza.
-        </p>
-        <div class="service-link">Ver cabañas →</div>
+        <div class="service-body">
+          <p class="service-desc">
+            Tres cabañas únicas para una experiencia íntima y exclusiva. Cabaña Yaguarundi, Cabaña Ocelot y Cabaña Motmot — cada una con su propio carácter, vistas y comodidades en medio de la naturaleza.
+          </p>
+          <span class="service-link">Ver cabañas</span>
+        </div>
       </a>
 
-      <a class="service-card" id="card-restaurante" href="assets/pages/restaurante.html">
-        <div class="service-num">04</div>
-        <div class="service-icon">🍽️</div>
+      <a class="service-row" id="card-restaurante" href="assets/pages/restaurante.html">
+        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M7 2v9M4.5 2v5.5a2.5 2.5 0 005 0V2M9.5 2v9"/><path d="M16.5 2c-1.4 0-2.5 1.8-2.5 5s1 5 1 5v10M17 12v10"/></svg></div>
         <div class="service-name">Restaurante</div>
-        <p class="service-desc">
-          Gastronomía local con ingredientes frescos y de temporada. Desayunos, almuerzos y cenas con sabores panameños auténticos, preparados con amor en el corazón del lodge.
-        </p>
-        <div class="service-link">Ver menú →</div>
+        <div class="service-body">
+          <p class="service-desc">
+            Gastronomía local con ingredientes frescos y de temporada. Desayunos, almuerzos y cenas con sabores panameños auténticos, preparados con amor en el corazón del lodge.
+          </p>
+          <span class="service-link">Ver menú</span>
+        </div>
       </a>
 
     </div>
