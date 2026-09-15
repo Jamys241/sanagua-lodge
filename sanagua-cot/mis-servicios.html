@@ -292,7 +292,20 @@
     el.innerHTML = padres.map(p => fila(p,0) + catHijos(p.id).map(h => fila(h,14)).join('')).join('');
   }
 
-  function seleccionarCategoria(id) { catActualId = id; renderSidebar(); renderMain(); }
+  let subCatActualId = null; // hija seleccionada cuando catActualId es una categoria contenedora
+
+  function seleccionarCategoria(id) {
+    catActualId = id;
+    const hijos = catHijos(id);
+    subCatActualId = hijos.length ? (hijos.find(h=>h.id===subCatActualId)?.id || hijos[0].id) : null;
+    renderSidebar();
+    renderMain();
+  }
+
+  function seleccionarSubcategoria(id) {
+    subCatActualId = id;
+    renderMain();
+  }
 
   function renderMain() {
     const main = document.getElementById('main-content');
@@ -302,6 +315,9 @@
       return;
     }
     const hijos = catHijos(cat.id);
+    const sub = hijos.length ? (hijos.find(h=>h.id===subCatActualId) || hijos[0]) : null;
+    if (sub) subCatActualId = sub.id;
+
     main.innerHTML = `
       <div class="cat-header">
         <div class="cat-header-main">
@@ -318,9 +334,33 @@
           <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${cat.id}')">🗑 Eliminar</button>
         </div>
       </div>
-      ${hijos.length ? `<div class="empty-cat" style="padding:30px 20px"><div class="empty-icon">📂</div><p>"${esc(cat.nombre)}" agrupa ${hijos.length} subcategoría${hijos.length===1?'':'s'} (${hijos.map(h=>esc(h.nombre)).join(', ')}). Selecciónalas en el menú de la izquierda para ver y editar sus ítems.</p></div>`
+      ${hijos.length ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+          ${hijos.map(h => `<button class="btn btn-sm ${h.id===sub?.id?'btn-accent':'btn-outline'}" onclick="seleccionarSubcategoria('${h.id}')">
+            ${esc(h.nombre)} <span style="opacity:.75">(${h.productos.length})</span> ${h.activo?'':'🚫'}
+          </button>`).join('')}
+        </div>
+        ${sub ? `
+          <div class="cat-header" style="padding:14px 18px;margin-bottom:16px;">
+            <div class="cat-header-main">
+              <div class="cat-foto" style="width:44px;height:44px;font-size:1.2rem;">${sub.foto ? `<img src="${esc(sub.foto)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : '🏡'}</div>
+              <div>
+                <div class="cat-name" style="font-size:1.05rem;">${esc(sub.nombre)}${!sub.activo?'<span class="cat-badge-oculto">Oculta</span>':''}</div>
+                <div class="cat-sub">${esc(sub.descripcion||'Sin descripción todavía.')}</div>
+              </div>
+            </div>
+            <div class="cat-header-actions">
+              <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${sub.id}')">${sub.activo?'👁️ Visible':'🚫 Oculta'}</button>
+              <button class="btn btn-outline btn-sm" onclick="editarCategoria('${sub.id}')">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${sub.id}')">🗑 Eliminar</button>
+            </div>
+          </div>
+          <div class="items-grid" id="items-grid"></div>`
+        : ''}`
         : `<div class="items-grid" id="items-grid"></div>`}`;
-    if (!hijos.length) renderItems(cat);
+
+    const catParaItems = sub || (hijos.length ? null : cat);
+    if (catParaItems) renderItems(catParaItems);
   }
 
   function itbmsBadge(v) {
@@ -440,8 +480,15 @@
     document.getElementById('modal-item').classList.add('show');
   }
 
+  // Devuelve la categoría "real" donde viven los ítems que se están viendo:
+  // si catActualId es una contenedora (ej. "Cabañas"), es su hija seleccionada.
+  function catEfectiva() {
+    const hijos = catHijos(catActualId);
+    return hijos.length ? subCatActualId : catActualId;
+  }
+
   function editarItem(id) {
-    const cat = categorias.find(c => c.id === catActualId);
+    const cat = categorias.find(c => c.id === catEfectiva());
     const p = cat?.productos.find(p => p.id === id);
     if (!p) return;
     editandoItemId = id;
@@ -457,7 +504,8 @@
   function cerrarModalItem(){ document.getElementById('modal-item').classList.remove('show'); }
 
   async function guardarItemModal() {
-    if (!catActualId) { showToast('Selecciona una subcategoría primero.', 'error'); return; }
+    const catId = catEfectiva();
+    if (!catId) { showToast('Selecciona una subcategoría primero.', 'error'); return; }
     const nombre = document.getElementById('mi-nombre').value.trim();
     const descripcion = document.getElementById('mi-desc').value.trim();
     const foto = document.getElementById('mi-foto').value.trim();
@@ -470,9 +518,9 @@
         const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad }).eq('id', editandoItemId);
         if (error) throw error;
       } else {
-        const cat = categorias.find(c => c.id === catActualId);
+        const cat = categorias.find(c => c.id === catId);
         const { error } = await supa.from('products').insert({
-          categoria_id: catActualId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, orden: cat?.productos.length || 0,
+          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, orden: cat?.productos.length || 0,
         });
         if (error) throw error;
       }
