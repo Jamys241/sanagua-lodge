@@ -190,6 +190,9 @@
   function abrirCarrito() { renderDrawer(); document.getElementById('sc-overlay').classList.add('show'); }
   function cerrarCarrito() { document.getElementById('sc-overlay').classList.remove('show'); }
 
+  // Número de WhatsApp del lodge donde llegan las notificaciones de reserva.
+  const WHATSAPP_NUMBER = '50766000000';
+
   async function enviarSolicitud() {
     const items = getItems();
     if (!items.length) return;
@@ -205,10 +208,15 @@
     btn.disabled = true; btn.textContent = 'Enviando...';
     try {
       const { data: profile } = await supaCart.from('profiles')
-        .select('name, email, phone').eq('id', session.user.id).single();
+        .select('name, email, phone, cedula, edad, verificado').eq('id', session.user.id).single();
 
       const t = calcularTotales(items);
       const notas = document.getElementById('sc-notas').value.trim();
+      const contacto = {
+        nombre: profile?.name || '', email: profile?.email || session.user.email,
+        telefono: profile?.phone || '', cedula: profile?.cedula || '', edad: profile?.edad || null,
+        verificado: !!profile?.verificado,
+      };
 
       const { error } = await supaCart.from('solicitudes').insert({
         user_id: session.user.id,
@@ -218,9 +226,22 @@
         itbms: Math.round(t.itbms*100)/100,
         total: Math.round(t.total*100)/100,
         notas_cliente: notas,
-        contacto: { nombre: profile?.name || '', email: profile?.email || session.user.email, telefono: profile?.phone || '' },
+        contacto,
       });
       if (error) throw error;
+
+      // Notificar por WhatsApp — el cliente ya no escribe sus datos a mano,
+      // se toman directo de su perfil verificado.
+      const detalle = items.map(it => `• ${it.categoria ? it.categoria+': ' : ''}${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''}${it.fecha_visita?` (📅 ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}`).join('\n');
+      const msg = encodeURIComponent(
+        `Hola Sanagua Lodge! Quiero hacer la siguiente solicitud de reserva:\n\n${detalle}\n\n`+
+        `💰 Total: $${t.total.toFixed(2)}\n`+
+        `👤 ${contacto.nombre}${contacto.verificado?' ✓ (verificado)':''}\n`+
+        `🪪 ${contacto.cedula||'—'}\n`+
+        `📱 ${contacto.telefono||'—'}\n📧 ${contacto.email}`+
+        `${notas?`\n📝 Notas: ${notas}`:''}`
+      );
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 
       clearItems();
       cerrarCarrito();

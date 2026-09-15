@@ -371,6 +371,42 @@ def upload_image():
     url = f"/static/uploads/{folder}/{filename}"
     return jsonify({'ok': True, 'url': url})
 
+# Foto de cédula/pasaporte del cliente al registrarse. A diferencia de
+# /upload-image (solo admin), aquí basta con estar autenticado — el cliente
+# sube la foto de SU PROPIO documento durante el registro.
+@app.route('/upload-document', methods=['POST'])
+def upload_document():
+    profile = get_authenticated_profile()
+    if not profile:
+        return jsonify({'error': 'No autenticado'}), 401
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió ningún archivo (campo "file")'}), 400
+    file = request.files['file']
+    if not file or not file.filename:
+        return jsonify({'error': 'Archivo vacío'}), 400
+
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTS:
+        return jsonify({'error': f'Formato no permitido (.{ext}). Usa: ' + ', '.join(sorted(ALLOWED_IMAGE_EXTS))}), 400
+
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > MAX_IMAGE_BYTES:
+        return jsonify({'error': f'La imagen supera {MAX_IMAGE_BYTES // (1024*1024)} MB'}), 400
+
+    # Cada cliente sube a su propia subcarpeta (por su user id) — evita
+    # colisiones de nombre y facilita borrar los documentos de alguien si
+    # cierra su cuenta.
+    dest_dir = os.path.join(UPLOAD_FOLDER, 'documentos', profile['id'])
+    os.makedirs(dest_dir, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    file.save(os.path.join(dest_dir, filename))
+
+    url = f"/static/uploads/documentos/{profile['id']}/{filename}"
+    return jsonify({'ok': True, 'url': url})
+
 # Empresa
 @app.route('/empresa', methods=['GET'])
 def get_empresa():

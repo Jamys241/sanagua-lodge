@@ -1514,7 +1514,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0">👥 Gestión de usuarios web</div>
     </div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un usuario por correo para cambiarle la contraseña.</p>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un usuario por correo para ver sus datos, ajustar sus puntos o verificar su identidad.</p>
 
     <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
       <input type="email" id="usr-buscar-email" placeholder="correo@ejemplo.com"
@@ -1527,9 +1527,11 @@
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap">
         <div id="usr-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
         <div style="flex:1">
-          <div id="usr-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="usr-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
+            <span id="usr-verif-badge" style="display:none;font-size:.66rem;font-weight:700;background:#3d8bfd;color:#fff;padding:2px 9px;border-radius:20px;">✓ Verificado</span>
+          </div>
           <div id="usr-email-display" style="font-size:.78rem;color:var(--muted)"></div>
-          <div id="usr-cedula-display" style="font-size:.78rem;color:var(--muted)"></div>
         </div>
         <div style="text-align:center;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;flex-shrink:0">
           <div id="usr-puntos-num" style="font-size:1.6rem;font-weight:700;color:var(--accent)">—</div>
@@ -1537,8 +1539,24 @@
         </div>
       </div>
 
-      <!-- Ajuste manual de puntos -->
+      <!-- Datos de identidad -->
       <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">🪪 Datos de identidad</div>
+        <div class="form-grid" style="margin-bottom:12px">
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Cédula / Pasaporte</label><div id="usr-cedula-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Celular</label><div id="usr-phone-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Edad</label><div id="usr-edad-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+        </div>
+        <div id="usr-doc-wrap" style="margin-bottom:12px;display:none">
+          <label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:6px">Foto de cédula/pasaporte</label>
+          <a id="usr-doc-link" href="#" target="_blank"><img id="usr-doc-img" style="max-width:220px;max-height:140px;border-radius:8px;border:1.5px solid var(--border);object-fit:cover"></a>
+        </div>
+        <button class="btn btn-sm" id="usr-verif-btn" onclick="toggleVerificado()" style="width:100%"></button>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:8px;">Verifica solo si el nombre, cédula y foto del documento coinciden — esta insignia le indica al cliente y a otros admins que sus datos fueron confirmados.</p>
+      </div>
+
+      <!-- Ajuste manual de puntos -->
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px">
         <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">⭐ Ajustar puntos</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="form-group" style="margin:0;flex:1;min-width:90px">
@@ -1556,17 +1574,6 @@
         </div>
         <div id="usr-pts-msg" style="font-size:.78rem;min-height:16px;margin-top:8px;text-align:center"></div>
       </div>
-
-      <div class="form-group">
-        <label>Nueva contraseña</label>
-        <input type="password" id="usr-nueva-pass" class="form-input" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div class="form-group">
-        <label>Confirmar contraseña</label>
-        <input type="password" id="usr-confirmar-pass" class="form-input" placeholder="Repite la contraseña">
-      </div>
-      <div id="usr-msg" style="font-size:.8rem;min-height:18px;margin-bottom:10px"></div>
-      <button class="btn btn-accent" onclick="cambiarPasswordUsuario()">🔑 Cambiar contraseña</button>
     </div>
 
     <div id="usr-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
@@ -5048,9 +5055,11 @@
           <div class="sol-usuario">
             <div class="sol-avatar">${inicial}</div>
             <div>
-              <div class="sol-u-nombre">${sol.contacto?.nombre||'—'}</div>
+              <div class="sol-u-nombre">${sol.contacto?.nombre||'—'}${sol.contacto?.verificado?' <span title="Cliente verificado" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;background:#3d8bfd;border-radius:50%;vertical-align:middle;"><svg viewBox="0 0 24 24" style="width:8px;height:8px;fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"></polyline></svg></span>':''}</div>
               <div class="sol-u-contacto">
-                ${sol.contacto?.telefono?`📱 ${sol.contacto.telefono}`:''}
+                ${sol.contacto?.cedula?`🪪 ${sol.contacto.cedula}`:''}
+                ${sol.contacto?.edad?`· 🎂 ${sol.contacto.edad} años`:''}
+                ${sol.contacto?.telefono?`· 📱 ${sol.contacto.telefono}`:''}
                 ${sol.contacto?.email?`· ✉️ ${sol.contacto.email}`:''}
               </div>
             </div>
@@ -5155,10 +5164,9 @@
 
 
   // ══════════════════════════════════════════════════════════════════════
-  // GESTIÓN DE USUARIOS WEB
+  // GESTIÓN DE USUARIOS WEB (Supabase: tabla profiles)
   // ══════════════════════════════════════════════════════════════════════
   let _usuarioEncontrado = null;
-  let _usersCache = null;
 
   async function buscarUsuario() {
     const email = document.getElementById('usr-buscar-email').value.trim().toLowerCase();
@@ -5166,96 +5174,99 @@
 
     document.getElementById('usr-resultado').style.display      = 'none';
     document.getElementById('usr-no-encontrado').style.display  = 'none';
-    document.getElementById('usr-msg').textContent              = '';
     _usuarioEncontrado = null;
 
     showLoading(true);
     try {
-      const res = await ghRead('users.json');
-      const users = res?.data?.users || [];
-      _usersCache = { users, sha: res?.sha };
-      const user = users.find(u => (u.email||'').toLowerCase() === email);
+      const { data: user, error } = await supa.from('profiles').select('*').ilike('email', email).maybeSingle();
+      if (error) throw error;
       if (!user) {
         document.getElementById('usr-no-encontrado').style.display = 'block';
         return;
       }
       _usuarioEncontrado = user;
-      document.getElementById('usr-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
-      document.getElementById('usr-nombre').textContent        = user.name || '—';
-      document.getElementById('usr-email-display').textContent = user.email || '—';
-      document.getElementById('usr-cedula-display').textContent= user.cedula ? `Cédula: ${user.cedula}` : '';
-      document.getElementById('usr-puntos-num').textContent    = user.puntos || 0;
-      document.getElementById('usr-nueva-pass').value          = '';
-      document.getElementById('usr-confirmar-pass').value      = '';
-      document.getElementById('usr-pts-cantidad').value        = '';
-      document.getElementById('usr-pts-motivo').value          = '';
-      document.getElementById('usr-pts-msg').textContent       = '';
-      document.getElementById('usr-resultado').style.display   = 'block';
-    } catch { showToast('Error al buscar. Verifica la conexión.', 'error'); }
+      document.getElementById('usr-avatar').textContent          = (user.name||'?').charAt(0).toUpperCase();
+      document.getElementById('usr-nombre').textContent          = user.name || '—';
+      document.getElementById('usr-email-display').textContent   = user.email || '—';
+      document.getElementById('usr-cedula-display').textContent  = user.cedula || '—';
+      document.getElementById('usr-phone-display').textContent   = user.phone  || '—';
+      document.getElementById('usr-edad-display').textContent    = user.edad   || '—';
+      document.getElementById('usr-puntos-num').textContent      = user.puntos || 0;
+      document.getElementById('usr-pts-cantidad').value          = '';
+      document.getElementById('usr-pts-motivo').value            = '';
+      document.getElementById('usr-pts-msg').textContent         = '';
+
+      const docWrap = document.getElementById('usr-doc-wrap');
+      if (user.foto_documento) {
+        docWrap.style.display = 'block';
+        document.getElementById('usr-doc-img').src  = `${API_BASE}${user.foto_documento}`;
+        document.getElementById('usr-doc-link').href = `${API_BASE}${user.foto_documento}`;
+      } else {
+        docWrap.style.display = 'none';
+      }
+
+      document.getElementById('usr-verif-badge').style.display = user.verificado ? 'inline-block' : 'none';
+      const vBtn = document.getElementById('usr-verif-btn');
+      if (user.verificado) {
+        vBtn.textContent = '✅ Verificado — quitar verificación';
+        vBtn.className = 'btn btn-sm btn-outline';
+      } else {
+        vBtn.textContent = '🪪 Marcar como verificado';
+        vBtn.className = 'btn btn-sm btn-accent';
+      }
+
+      document.getElementById('usr-resultado').style.display = 'block';
+    } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
     finally  { showLoading(false); }
+  }
+
+  async function toggleVerificado() {
+    if (!_usuarioEncontrado) return;
+    const nuevoValor = !_usuarioEncontrado.verificado;
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ verificado: nuevoValor }).eq('id', _usuarioEncontrado.id);
+      if (error) throw error;
+      _usuarioEncontrado.verificado = nuevoValor;
+      document.getElementById('usr-verif-badge').style.display = nuevoValor ? 'inline-block' : 'none';
+      const vBtn = document.getElementById('usr-verif-btn');
+      vBtn.textContent = nuevoValor ? '✅ Verificado — quitar verificación' : '🪪 Marcar como verificado';
+      vBtn.className = nuevoValor ? 'btn btn-sm btn-outline' : 'btn btn-sm btn-accent';
+      showToast(nuevoValor ? `✅ ${_usuarioEncontrado.name} ahora está verificado.` : `Verificación retirada de ${_usuarioEncontrado.name}.`, 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al actualizar la verificación.', 'error'); }
+    finally { showLoading(false); }
   }
 
   async function ajustarPts(signo) {
     const msgEl   = document.getElementById('usr-pts-msg');
     const cantEl  = document.getElementById('usr-pts-cantidad');
-    const motivoEl= document.getElementById('usr-pts-motivo');
     if (!_usuarioEncontrado) return;
     const cantidad = parseInt(cantEl.value) || 0;
     if (cantidad <= 0) {
       msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa una cantidad válida.'; return;
     }
-    const delta      = signo * cantidad;
-    const motivo     = motivoEl.value.trim() || (delta > 0 ? 'Ajuste manual (+)' : 'Ajuste manual (-)');
-    const descripcion= `[Admin] ${motivo}`;
+    const delta = signo * cantidad;
+    const nuevoPts = Math.max(0, (_usuarioEncontrado.puntos || 0) + delta);
     msgEl.style.color='var(--muted)'; msgEl.textContent='Guardando...';
     showLoading(true);
-    const result = await ajustarPuntosUsuario(_usuarioEncontrado.email, delta, descripcion);
-    showLoading(false);
-    if (result.ok) {
-      document.getElementById('usr-puntos-num').textContent = result.nuevoPts;
+    try {
+      const { error } = await supa.from('profiles').update({ puntos: nuevoPts }).eq('id', _usuarioEncontrado.id);
+      if (error) throw error;
+      _usuarioEncontrado.puntos = nuevoPts;
+      document.getElementById('usr-puntos-num').textContent = nuevoPts;
       msgEl.style.color='var(--success)';
-      msgEl.textContent = `✅ Puntos actualizados: ${result.nuevoPts} pts`;
-      cantEl.value=''; motivoEl.value='';
+      msgEl.textContent = `✅ Puntos actualizados: ${nuevoPts} pts`;
+      cantEl.value=''; document.getElementById('usr-pts-motivo').value='';
       showToast(`⭐ ${delta>0?'+':''}${delta} pts para ${_usuarioEncontrado.name}`, 'success');
       setTimeout(()=>{ msgEl.textContent=''; }, 4000);
-    } else {
+    } catch (e) {
+      console.error(e);
       msgEl.style.color='var(--red)';
       msgEl.textContent='❌ Error al actualizar. Intenta nuevamente.';
-    }
-  }
-
-  async function cambiarPasswordUsuario() {
-    const msgEl = document.getElementById('usr-msg');
-    msgEl.textContent = '';
-    if (!_usuarioEncontrado) return;
-    const nueva    = document.getElementById('usr-nueva-pass').value;
-    const confirma = document.getElementById('usr-confirmar-pass').value;
-    if (!nueva || nueva.length < 6) {
-      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return;
-    }
-    if (nueva !== confirma) {
-      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Las contraseñas no coinciden.'; return;
-    }
-    showLoading(true);
-    try {
-      // Leer users.json fresco para evitar conflicto de SHA
-      const res   = await ghRead('users.json');
-      const users = res?.data?.users || [];
-      const sha   = res?.sha;
-      const idx   = users.findIndex(u => u.email === _usuarioEncontrado.email);
-      if (idx < 0) throw new Error('Usuario no encontrado');
-      users[idx].password = nueva;
-      const ok = await ghWrite('users.json', { users }, sha);
-      if (!ok) throw new Error('Error al escribir');
-      msgEl.style.color  = 'var(--success)';
-      msgEl.textContent  = `✅ Contraseña de ${_usuarioEncontrado.name} actualizada correctamente.`;
-      document.getElementById('usr-nueva-pass').value    = '';
-      document.getElementById('usr-confirmar-pass').value = '';
-      showToast(`✅ Contraseña actualizada para ${_usuarioEncontrado.name}`, 'success');
-    } catch(e) {
-      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Error al guardar. Intenta nuevamente.';
     } finally { showLoading(false); }
   }
+
+
 
   // ══════════════════════════════════════════════════════════════════════
   // CONTROL DE POLLING CENTRALIZADO
@@ -5446,26 +5457,6 @@
       await ghWrite('users.json', { users }, res.sha);
       showToast(`⭐ +${pts} puntos otorgados a ${cot.client.name || cot.client.email}`, 'success');
     } catch(e) { console.warn('Error otorgando puntos:', e); }
-  }
-
-  async function ajustarPuntosUsuario(email, delta, descripcion) {
-    try {
-      const res = await ghRead('users.json');
-      if (!res) throw new Error();
-      const users = res.data?.users || [];
-      const idx   = users.findIndex(u => u.email === email);
-      if (idx < 0) throw new Error('Usuario no encontrado');
-      users[idx].puntos = Math.max(0, (users[idx].puntos || 0) + delta);
-      users[idx].transacciones = users[idx].transacciones || [];
-      users[idx].transacciones.push({
-        fecha:       new Date().toISOString(),
-        puntos:      delta,
-        descripcion: descripcion || (delta > 0 ? 'Ajuste manual (+)' : 'Ajuste manual (-)'),
-      });
-      const ok = await ghWrite('users.json', { users }, res.sha);
-      if (!ok) throw new Error();
-      return { ok: true, nuevoPts: users[idx].puntos };
-    } catch(e) { return { ok: false, error: e.message }; }
   }
 
   // ── Cambiar contraseña del admin / superadmin ─────────────────────────

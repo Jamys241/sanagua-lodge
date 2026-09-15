@@ -177,6 +177,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
 </head>
 <body>
@@ -292,19 +293,6 @@
         <div class="resumen-box" id="resumen-box">
           <div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Nombre del contacto</label>
-        <input type="text" class="form-input" id="nombre-contacto" placeholder="Tu nombre completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">WhatsApp / Teléfono</label>
-        <input type="tel" class="form-input" id="tel-contacto" placeholder="+507 6000-0000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Correo electrónico</label>
-        <input type="email" class="form-input" id="email-contacto" placeholder="tu@correo.com">
       </div>
 
       <button class="btn-confirmar" onclick="enviarSolicitud()">Agregar al carrito</button>

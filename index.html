@@ -1172,6 +1172,15 @@
             <input type="tel" id="reg-phone" placeholder="+507 6000-0000" oninput="limpiarAuthError()">
           </div>
           <div class="auth-field">
+            <label>Edad</label>
+            <input type="number" id="reg-edad" min="18" max="120" placeholder="Ej: 32" oninput="limpiarAuthError()">
+          </div>
+          <div class="auth-field">
+            <label>Foto de tu cédula o pasaporte (opcional)</label>
+            <input type="file" id="reg-documento" accept="image/*" oninput="limpiarAuthError()">
+            <p style="font-size:.72rem;color:#999;margin-top:6px;">Solo la usamos para verificar tu identidad y prevenir fraudes. No se comparte con terceros.</p>
+          </div>
+          <div class="auth-field">
             <label>Correo electrónico</label>
             <input type="email" id="reg-email" placeholder="tu@correo.com" oninput="limpiarAuthError()">
           </div>
@@ -1421,6 +1430,11 @@
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // URL del backend Flask (app.py) en el VPS — usado para subir la foto de
+  // cédula/pasaporte al registrarse. Cambia esto (y el mismo valor en
+  // sanagua-cot/achive.html y assets/js/admin-guard.js) por el dominio real
+  // cuando despliegues.
+  const API_BASE = 'http://localhost:5000';
 
   // Trae el profile (nombre, role, puntos, etc.) del usuario ya autenticado.
   // Devuelve { profile, errorMsg } — si algo falla, errorMsg trae el motivo
@@ -1507,7 +1521,7 @@
         return;
       }
 
-      publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
+      publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', edad: profile.edad || null, verificado: !!profile.verificado, foto_documento: profile.foto_documento || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
       aplicarUsuarioPublico();
       closeAuth();
     } catch {
@@ -1539,10 +1553,13 @@
     const passConfirm = document.getElementById('reg-password-confirm').value;
     const cedula = document.getElementById('reg-cedula').value.trim();
     const phone  = document.getElementById('reg-phone').value.trim();
+    const edad   = document.getElementById('reg-edad').value.trim();
+    const docFile = document.getElementById('reg-documento').files[0];
 
     if (!name)  { showAuthError('Ingresa tu nombre y apellido.'); return; }
     if (!cedula){ showAuthError('Ingresa tu cédula o pasaporte.'); return; }
     if (!phone) { showAuthError('Ingresa tu número de celular.'); return; }
+    if (!edad || parseInt(edad) < 18) { showAuthError('Ingresa tu edad (debes ser mayor de edad).'); return; }
     if (!email) { showAuthError('Ingresa tu correo electrónico.'); return; }
     if (!pass || pass.length < 6) { showAuthError('La contraseña debe tener al menos 6 caracteres.'); return; }
     if (pass !== passConfirm) { showAuthError('Las contraseñas no coinciden.'); return; }
@@ -1576,7 +1593,31 @@
         errEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla antes de ingresar.';
         return;
       }
-      publicUser = { name, email, cedula, phone, puntos: 0, reservas: [] };
+
+      // Subir la foto del documento (opcional) y guardar edad — el trigger
+      // que crea el profile solo copia name/cedula/phone, así que estos dos
+      // campos se completan aquí con una actualización directa.
+      let fotoUrl = '';
+      if (docFile) {
+        btn.textContent = 'Subiendo documento...';
+        try {
+          const formData = new FormData();
+          formData.append('file', docFile);
+          const up = await fetch(`${API_BASE}/upload-document`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${data.session.access_token}` },
+            body: formData,
+          });
+          if (up.ok) { const upData = await up.json(); fotoUrl = upData.url || ''; }
+        } catch (e) { console.warn('No se pudo subir el documento:', e); }
+      }
+
+      await supa.from('profiles').update({
+        edad: parseInt(edad) || null,
+        foto_documento: fotoUrl,
+      }).eq('id', data.session.user.id);
+
+      publicUser = { name, email, cedula, phone, edad: parseInt(edad)||null, verificado: false, puntos: 0, reservas: [] };
       aplicarUsuarioPublico();
       closeAuth();
       setTimeout(() => {
@@ -1614,20 +1655,25 @@
     setTimeout(() => { window.location.href = admin.url; }, 1500);
   }
 
+  function badgeVerificado() {
+    return '<span title="Cuenta verificada" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:#3d8bfd;border-radius:50%;margin-left:6px;vertical-align:middle;"><svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
+  }
+
   function aplicarUsuarioPublico() {
     if (!publicUser) return;
+    const verifBadge = publicUser.verificado ? badgeVerificado() : '';
     // Header
     document.getElementById('btn-login-header').style.display = 'none';
     document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
     document.getElementById('btn-register-header').onclick = () => openUserPanel();
     // Menú lateral
     document.getElementById('nav-user-section').style.display = 'block';
-    document.getElementById('nav-user-name').textContent = publicUser.name;
+    document.getElementById('nav-user-name').innerHTML = `${publicUser.name}${verifBadge}`;
     document.getElementById('nav-user-pts').textContent = `✦ ${publicUser.puntos} puntos de fidelidad`;
     document.getElementById('nav-user-menu').style.display = 'block';
     document.getElementById('nav-auth-btns').style.display = 'none';
     // Panel usuario
-    document.getElementById('user-panel-name').textContent = publicUser.name;
+    document.getElementById('user-panel-name').innerHTML = `${publicUser.name}${verifBadge}`;
     document.getElementById('user-panel-pts').textContent = `✦ ${publicUser.puntos} puntos de fidelidad`;
     document.getElementById('puntos-display').textContent = publicUser.puntos;
   }
@@ -1793,7 +1839,7 @@
       if (session) {
         const { profile } = await fetchOwnProfile();
         if (profile && profile.role === 'cliente') {
-          publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
+          publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', edad: profile.edad || null, verificado: !!profile.verificado, foto_documento: profile.foto_documento || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
           aplicarUsuarioPublico();
         }
         // Si es admin/superadmin y llega a index.html con sesión activa,
