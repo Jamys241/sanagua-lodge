@@ -55,8 +55,9 @@
         opacity:0;pointer-events:none;transition:opacity .3s}
       .sn-overlay.open{opacity:1;pointer-events:auto}
       .sn-drawer{position:fixed;top:0;right:-320px;width:min(320px,86vw);height:100%;
-        background:#fff;z-index:941;transition:right .35s cubic-bezier(.4,0,.2,1);
-        overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.2);font-family:'Jost',sans-serif}
+        background:#12181b;z-index:941;transition:right .35s cubic-bezier(.4,0,.2,1);
+        overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.35);font-family:'Jost',sans-serif;
+        display:block}
       .sn-drawer.open{right:0}
       .sn-drawer-user{background:linear-gradient(135deg,var(--moss,#7fa0ac),var(--water,#566d75));
         padding:26px 24px;color:#fff}
@@ -64,17 +65,17 @@
         display:flex;align-items:center;gap:6px}
       .sn-drawer-user-pts{font-size:.78rem;opacity:.9;margin-top:4px}
       .sn-section-label{font-size:.66rem;font-weight:700;letter-spacing:.12em;
-        text-transform:uppercase;color:#aaa;padding:18px 24px 8px}
-      .sn-item{display:flex;align-items:center;gap:10px;padding:12px 24px;color:#2a2a26;
+        text-transform:uppercase;color:rgba(255,255,255,.35);padding:18px 24px 8px}
+      .sn-item{display:flex;align-items:center;gap:10px;padding:12px 24px;color:rgba(255,255,255,.88);
         text-decoration:none;font-size:.88rem;border:none;background:none;width:100%;
         text-align:left;cursor:pointer;font-family:'Jost',sans-serif}
-      .sn-item:hover{background:#f6f6f3}
-      .sn-divider{height:1px;background:#ececec;margin:8px 0}
+      .sn-item:hover{background:rgba(255,255,255,.06);color:#fff}
+      .sn-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
       .sn-auth-btns{padding:6px 24px 22px;display:flex;flex-direction:column;gap:9px}
       .sn-btn-primary{background:var(--moss,#7fa0ac);color:#fff;border:none;border-radius:8px;
         padding:12px;font-weight:700;cursor:pointer;font-family:'Jost',sans-serif;font-size:.86rem}
-      .sn-btn-outline{background:none;border:1.5px solid #ddd;border-radius:8px;padding:11px;
-        cursor:pointer;font-family:'Jost',sans-serif;font-size:.86rem;color:#333}
+      .sn-btn-outline{background:none;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;
+        padding:11px;cursor:pointer;font-family:'Jost',sans-serif;font-size:.86rem;color:#fff}
       .sn-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);
         border:none;width:30px;height:30px;border-radius:50%;color:#fff;cursor:pointer;
         display:flex;align-items:center;justify-content:center;font-size:1rem}
@@ -136,7 +137,7 @@
     overlay.onclick = () => window.SanaguaNav.close();
     document.body.appendChild(overlay);
 
-    const drawer = document.createElement('nav');
+    const drawer = document.createElement('div');
     drawer.className = 'sn-drawer';
     drawer.id = 'sn-drawer';
     drawer.innerHTML = '<div style="padding:40px 24px;color:#999;font-size:.85rem;">Cargando...</div>';
