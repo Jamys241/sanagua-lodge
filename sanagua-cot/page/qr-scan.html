@@ -7,70 +7,7 @@
   <title>Escanear QR — Sanagua Lodge</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../assets/js/admin-guard.js"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--ink:#1a1814;--accent:#7fa0ac;--success:#2d7a4f;--red:#c0392b;--border:#e0dbd4;--bg:#f5f3ee}
-    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--ink);color:#fff;
-      min-height:100vh;display:flex;flex-direction:column}
-
-    header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.08)}
-    .logo{font-size:1rem;font-weight:700;color:#fff}
-    .btn-back{color:rgba(255,255,255,.5);font-size:.8rem;text-decoration:none;
-      padding:6px 14px;border:1px solid rgba(255,255,255,.15);border-radius:6px;transition:all .2s}
-    .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.4)}
-
-    .main{flex:1;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;padding:24px 16px;gap:16px}
-
-    .title{font-size:1.1rem;font-weight:700;text-align:center}
-    .sub{font-size:.8rem;color:rgba(255,255,255,.5);text-align:center;line-height:1.6;max-width:300px}
-
-    /* Visor de cámara */
-    .cam-wrap{position:relative;width:100%;max-width:320px;border-radius:14px;
-      overflow:hidden;background:#000;aspect-ratio:1}
-    #cam-video{width:100%;height:100%;object-fit:cover;display:block}
-    #cam-canvas{display:none}
-    /* Marco guía */
-    .cam-frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      pointer-events:none}
-    .cam-frame-inner{width:200px;height:200px;border:3px solid var(--accent);border-radius:10px;
-      box-shadow:0 0 0 9999px rgba(0,0,0,.5);animation:pulse-frame 2s ease-in-out infinite}
-    @keyframes pulse-frame{0%,100%{border-color:var(--accent)}50%{border-color:#ff8a50}}
-    /* Esquinas */
-    .cam-frame-inner::before,.cam-frame-inner::after{content:'';position:absolute;
-      width:20px;height:20px;border-color:var(--accent);border-style:solid}
-    .cam-frame-inner::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 0}
-    .cam-frame-inner::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 0}
-
-    /* Estado */
-    .status{font-size:.82rem;font-weight:600;min-height:22px;text-align:center;
-      padding:6px 16px;border-radius:20px;background:rgba(255,255,255,.06)}
-    .status.ok{background:rgba(45,122,79,.25);color:#7de8a0}
-    .status.err{background:rgba(192,57,43,.25);color:#ff8a7a}
-    .status.scan{background:rgba(200,84,26,.2);color:#ffaa80}
-
-    .error-box{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);
-      border-radius:10px;padding:16px 20px;max-width:320px;text-align:center}
-    .error-box .err-icon{font-size:2rem;margin-bottom:8px}
-    .error-box p{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:12px}
-
-    .btn{padding:11px 24px;border-radius:8px;font-family:inherit;font-size:.85rem;
-      font-weight:700;cursor:pointer;border:none;transition:all .2s}
-    .btn-primary{background:var(--accent);color:#fff}
-    .btn-primary:hover{background:#5f7881}
-    .btn-outline{background:none;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7)}
-    .btn-outline:hover{border-color:rgba(255,255,255,.5);color:#fff}
-
-    .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-
-    /* Éxito */
-    .success-box{text-align:center;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
-    @keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-    .success-icon{font-size:3.5rem;margin-bottom:12px}
-    .success-title{font-size:1.2rem;font-weight:700;margin-bottom:6px;color:#7de8a0}
-    .success-sub{font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:20px}
-  </style>
+  <link rel="stylesheet" href="../../assets/css/qr-scan.css">
 </head>
 <body>
 

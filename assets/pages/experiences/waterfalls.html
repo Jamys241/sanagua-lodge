@@ -6,78 +6,7 @@
   <link rel="icon" type="image/png" href="../../images/icon/icon.png">
   <title>Cascadas — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--moss:#7fa0ac;--forest:#5f7881;--sage:#8fabb5;--earth:#7d6a5c;
-      --sand:#c3c3b8;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a2226;--mist:#b8c8cc;
-      --blue:#1a4a6a;--r:12px}
-    html{scroll-behavior:smooth}
-    body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
-
-    nav{position:sticky;top:0;z-index:100;background:rgba(26,34,38,.97);backdrop-filter:blur(10px);
-      padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.06)}
-    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none}
-    .nav-back{color:rgba(255,255,255,.6);font-size:.82rem;text-decoration:none;transition:color .2s}
-    .nav-back:hover{color:var(--sage)}
-
-    .hero{height:65vh;min-height:420px;position:relative;overflow:hidden;
-      background:linear-gradient(160deg,#0a1a2a,#1a3a5a,#0a2a3a);
-      display:flex;align-items:flex-end;padding-bottom:60px}
-    .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;
-      background-image:url('../../images/experiences/waterfalls/hero.jpg')}
-    .hero-bg::after{content:'';position:absolute;inset:0;
-      background:linear-gradient(to bottom,rgba(10,26,42,.3) 0%,rgba(10,26,42,.8) 100%)}
-    .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
-    .hero-badge{font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
-      color:#7ab8e8;margin-bottom:12px;display:flex;align-items:center;gap:10px}
-    .hero-badge::before{content:'';width:28px;height:1px;background:#7ab8e8}
-    h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);
-      font-weight:300;color:#fff;line-height:1.1;margin-bottom:12px}
-    h1 em{font-style:italic;color:#a8d8f8}
-    .hero-sub{font-size:.92rem;color:rgba(255,255,255,.65);max-width:500px;line-height:1.7}
-
-    .pw{max-width:1000px;margin:0 auto;padding:72px 32px}
-    .intro{font-size:1rem;color:#5a6a74;line-height:1.85;margin-bottom:48px;
-      max-width:720px;border-left:3px solid #7ab8e8;padding-left:20px}
-
-    /* Galería principal — tipo masonry */
-    .gallery-masonry{display:grid;grid-template-columns:repeat(3,1fr);
-      grid-template-rows:auto;gap:10px;margin-bottom:48px;border-radius:var(--r);overflow:hidden}
-    .gm-1{grid-column:1/3;grid-row:1/3;min-height:360px}
-    .gm-2,.gm-3,.gm-4,.gm-5{min-height:170px}
-    .gallery-img{width:100%;height:100%;object-fit:cover;display:block}
-    .gallery-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-      font-size:3rem;background:linear-gradient(135deg,#0a2a4a,#1a5a8a)}
-
-    /* Feature items */
-    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:48px}
-    .feat-card{background:#fff;border-radius:var(--r);padding:22px 24px;
-      border:1px solid rgba(0,0,0,.07);box-shadow:0 2px 12px rgba(0,0,0,.04)}
-    .feat-icon{font-size:1.8rem;margin-bottom:10px}
-    .feat-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;
-      color:var(--moss);margin-bottom:6px}
-    .feat-desc{font-size:.83rem;color:#6a7a74;line-height:1.6}
-
-    /* Info práctica */
-    .info-practica{background:linear-gradient(135deg,#0a2a4a,#1a4a6a);border-radius:var(--r);
-      padding:32px;color:#fff;margin-bottom:48px}
-    .info-practica h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:20px;
-      color:#a8d8f8;font-weight:400}
-    .info-row{display:flex;gap:10px;margin-bottom:10px;font-size:.87rem;
-      align-items:flex-start;color:rgba(255,255,255,.85)}
-    .info-row .info-ico{flex-shrink:0;width:20px}
-
-    /* Galería secundaria */
-    .gallery-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-      border-radius:var(--r);overflow:hidden;margin-bottom:16px;height:200px}
-
-    @media(max-width:768px){
-      nav{padding:0 18px}.hero-content{padding:0 20px}.pw{padding:48px 18px}
-      .gallery-masonry{grid-template-columns:1fr 1fr}.gm-1{grid-column:1/-1;grid-row:auto}
-      .gallery-row{grid-template-columns:1fr 1fr}
-    }
-  </style>
+  <link rel="stylesheet" href="../../css/waterfalls.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../js/site-nav.js"></script>
 </head>
