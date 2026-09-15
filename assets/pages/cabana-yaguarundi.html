@@ -468,12 +468,21 @@
     setInterval(()=>slNav(1), 4000);
   }
 
+  // Reservas confirmadas (solo categoría/estado/fechas, sin datos del
+  // cliente) — reemplaza la lectura de history.json/events.json de GitHub,
+  // que siempre devolvía vacío para un visitante normal del sitio.
+  async function cargarOcupacionPublica() {
+    const { data, error } = await supaPrecios.rpc('ocupacion_publica');
+    if (error) { console.warn('ocupacion_publica', error); return []; }
+    return data || [];
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────
   async function init(){
     initSlider();
     await loadHorariosPub();
-    const[p,h,e]=await Promise.all([cargarPreciosCabanas(),ghF('history.json'),ghF('events.json')]);
-    P=p; H=h?.quotes||[]; E=e?.events||[];
+    const[p,ocupacion]=await Promise.all([cargarPreciosCabanas(),cargarOcupacionPublica()]);
+    P=p; H=ocupacion; E=[];
     cabData=P?.cabanas?.cabanas?.[CABANA_KEY];
     if(cabData){
       const it=P.cabanas.itbms||7;
@@ -510,7 +519,7 @@
       const s=new Date(it.visit_date+'T12:00:00');
       // El día de salida queda libre
       const endDay=it.visit_date_end?new Date(new Date(it.visit_date_end+'T12:00:00').getTime()-86400000):s;
-      const nombre=it.client?.name||'Reservado';
+      const nombre='Reservado'; // ya no se expone el nombre del cliente en el calendario público
       const cur=new Date(s);
       while(cur<=endDay){
         const ds=lds(cur);
@@ -825,16 +834,15 @@
 
   let _lastHashCab = null;
   setInterval(async () => {
-    const [p, h, hist, ev] = await Promise.all([
+    const [p, h, ocupacion] = await Promise.all([
       cargarPreciosCabanas(), supaPrecios.from('camping_config').select('value').eq('key','horarios').single().then(r=>r?.data?.value),
-      ghF('history.json'), ghF('events.json')
+      cargarOcupacionPublica()
     ]);
-    const hash = JSON.stringify({p,h,hist,ev});
+    const hash = JSON.stringify({p,h,ocupacion});
     if (hash === _lastHashCab) return;
     _lastHashCab = hash;
     if (h) { DIAS_CERRADOS_PUB = h.dias_cerrados||[2,3]; EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas||[]; }
-    if (hist) H = hist.quotes || [];
-    if (ev)   E = ev.events   || [];
+    H = ocupacion; E = [];
     if (p?.cabanas?.cabanas?.[CABANA_KEY]) {
       cabData = p.cabanas.cabanas[CABANA_KEY];
       const it = p.cabanas.itbms||7;

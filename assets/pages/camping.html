@@ -434,10 +434,19 @@
     return msgs[Math.floor(Math.random() * msgs.length)];
   }
 
+  // Reservas confirmadas (solo categoría/estado/fechas, sin datos del
+  // cliente) — reemplaza la lectura de history.json/events.json de GitHub,
+  // que siempre devolvía vacío para un visitante normal del sitio.
+  async function cargarOcupacionPublica() {
+    const { data, error } = await supaPrecios.rpc('ocupacion_publica');
+    if (error) { console.warn('ocupacion_publica', error); return []; }
+    return data || [];
+  }
+
   async function init(){
-    const[p,h,e]=await Promise.all([cargarPreciosCamping(),ghF('history.json'),ghF('events.json')]);
+    const[p,ocupacion]=await Promise.all([cargarPreciosCamping(),cargarOcupacionPublica()]);
     await loadHorariosPub();
-    P=p; H=h?.quotes||[]; E=e?.events||[];
+    P=p; H=ocupacion; E=[];
     TOTAL_ESP=P?.camping?.espacios_totales||10;
     const lbl=document.getElementById('total-esp-lbl');
     if(lbl)lbl.textContent=TOTAL_ESP;
@@ -783,18 +792,17 @@
 
   let _lastHashCamp = null;
   setInterval(async () => {
-    const [p, horariosRow, hist, ev] = await Promise.all([
+    const [p, horariosRow, ocupacion] = await Promise.all([
       cargarPreciosCamping(), supaPrecios.from('camping_config').select('value').eq('key','horarios').single(),
-      ghF('history.json'), ghF('events.json')
+      cargarOcupacionPublica()
     ]);
     const h = horariosRow?.data?.value;
-    const hash = JSON.stringify({p,h,hist,ev});
+    const hash = JSON.stringify({p,h,ocupacion});
     if (hash === _lastHashCamp) return;
     _lastHashCamp = hash;
     if (p) { P = p; TOTAL_ESP = p.camping?.espacios_totales || 10; renderTar(); renderStock(); }
     if (h) { DIAS_CERRADOS_PUB = h.dias_cerrados||[2,3]; EXCEPCIONES_ABIERTAS_PUB = h.excepciones_abiertas||[]; }
-    if (hist) H = hist.quotes || [];
-    if (ev)   E = ev.events   || [];
+    H = ocupacion; E = [];
     renderCal();
     const lbl = document.getElementById('total-esp-lbl');
     if (lbl) lbl.textContent = TOTAL_ESP;
