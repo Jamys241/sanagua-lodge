@@ -9,7 +9,7 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+      --moss:#7fa0ac;--forest:#5f7881;--sage:#7a9e6e;--earth:#8b6b47;
       --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
       --mist:#a8b8a2;--gold:#c9a84c;--r:10px;--accent:#7a9e6e;
       --red:#c0392b;--blue:#1a5fa8;
@@ -84,7 +84,7 @@
     .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
     /* Toast de actualización */
     .update-toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-80px);
-      z-index:200;background:var(--moss,#2d3e2a);color:#fff;font-size:.78rem;font-weight:600;
+      z-index:200;background:var(--moss,#7fa0ac);color:#fff;font-size:.78rem;font-weight:600;
       padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
       transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
       display:flex;align-items:center;gap:8px;pointer-events:none}
@@ -177,6 +177,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/cart.js"></script>
 </head>
 <body>
 
@@ -280,24 +281,6 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Tipo de pasadía</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="modalidad-selector">
-          <div class="persona-item" id="mod-sencilla" onclick="selectModalidad('sencilla')"
-            style="cursor:pointer;border-color:var(--sage);background:#f0f7ee;">
-            <div class="persona-label">☀️ Sencilla</div>
-            <div class="persona-precio" id="mod-sencilla-precio">Desde $0.00</div>
-            <div style="font-size:.7rem;color:var(--sage);font-weight:600;margin-top:4px;">✓ Seleccionada</div>
-          </div>
-          <div class="persona-item" id="mod-completa" onclick="selectModalidad('completa')"
-            style="cursor:pointer;">
-            <div class="persona-label">🌟 Completa</div>
-            <div class="persona-precio" id="mod-completa-precio">Desde $0.00</div>
-            <div style="font-size:.7rem;color:#ccc;margin-top:4px;">Seleccionar</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
         <label class="form-label">Cantidad de personas</label>
         <div class="personas-grid" id="personas-grid">
           <!-- Se genera dinámicamente -->
@@ -324,7 +307,7 @@
         <input type="email" class="form-input" id="email-contacto" placeholder="tu@correo.com">
       </div>
 
-      <button class="btn-confirmar" onclick="enviarSolicitud()">Enviar solicitud de reserva</button>
+      <button class="btn-confirmar" onclick="enviarSolicitud()">Agregar al carrito</button>
       <div class="modal-footer-note">Tu solicitud será confirmada por WhatsApp o correo en menos de 24 horas.</div>
     </div>
   </div>
@@ -354,38 +337,30 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
-  const TARIFA_KEY_MAP_PAS = { 'Adulto':'adulto', 'Niño (3-11 años)':'nino', 'Menor de 3 años':'menor3', 'Jubilado':'jubilado' };
-  const PASADIA_CATEGORIAS = { sencilla: 'Pasadía Sencilla', completa: 'Pasadía Completa' };
+  const TARIFA_KEY_MAP_PAS = { 'Adulto':'adulto', 'Niño':'nino', 'Jubilado':'jubilado' };
 
   // Arma el mismo objeto { pasadia: {...} } de siempre, leído ahora desde
-  // el catálogo genérico de Mis Productos (product_categories + products).
+  // el catálogo genérico de Mis Servicios (product_categories + products).
+  // "Pasadías" es una categoría plana (Adulto/Niño/Jubilado), sin modalidades.
   async function cargarPreciosPasadia() {
-    const { data: cats } = await supaPrecios.from('product_categories')
-      .select('*').in('nombre', Object.values(PASADIA_CATEGORIAS)).eq('activo', true);
-    const catIds = (cats||[]).map(c => c.id);
-    const { data: prods } = catIds.length
-      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true)
+    const { data: cat } = await supaPrecios.from('product_categories')
+      .select('*').eq('nombre','Pasadías').eq('activo', true).single();
+    const { data: prods } = cat
+      ? await supaPrecios.from('products').select('*').eq('categoria_id', cat.id).eq('activo', true)
       : { data: [] };
-    const { data: settingsRow } = await supaPrecios.from('company_settings').select('value').eq('key','pasadia').single();
-    const settings = settingsRow?.value || {};
 
-    const modalidades = {};
-    Object.entries(PASADIA_CATEGORIAS).forEach(([mod, nombreCat]) => {
-      const cat = (cats||[]).find(c => c.nombre === nombreCat);
-      const tarifas = {};
-      if (cat) (prods||[]).filter(p => p.categoria_id === cat.id).forEach(p => {
-        const k = TARIFA_KEY_MAP_PAS[p.nombre];
-        if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
-      });
-      modalidades[mod] = { label: nombreCat, tarifas };
+    const tarifas = {};
+    (prods||[]).forEach(p => {
+      const k = TARIFA_KEY_MAP_PAS[p.nombre];
+      if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0 };
     });
 
     return {
       pasadia: {
-        itbms: settings.itbms || 7,
-        descripcion: settings.descripcion || '',
-        incluye: settings.incluye || [],
-        modalidades,
+        itbms: 7,
+        descripcion: cat?.descripcion || '',
+        incluye: [],
+        tarifas,
       },
     };
   }
@@ -448,7 +423,7 @@
       ov.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
       ov.innerHTML = `
         <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)">
-          <div style="background:#2d3e2a;padding:24px 28px;text-align:center">
+          <div style="background:#7fa0ac;padding:24px 28px;text-align:center">
             <div style="font-size:2rem;margin-bottom:8px">🌿</div>
             <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
           </div>
@@ -456,10 +431,10 @@
             <p style="font-size:.9rem;color:#6a7a64;line-height:1.65;margin-bottom:20px;text-align:center">
               Para realizar una solicitud de reserva necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
             </p>
-            <a href="${INDEX_URL}?action=login" style="display:block;background:#2d3e2a;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
+            <a href="${INDEX_URL}?action=login" style="display:block;background:#7fa0ac;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
               Iniciar sesión →
             </a>
-            <a href="${INDEX_URL}?action=register" style="display:block;background:#f4efe6;color:#2d3e2a;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
+            <a href="${INDEX_URL}?action=register" style="display:block;background:#f4efe6;color:#7fa0ac;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
               Crear cuenta gratis
             </a>
             <button onclick="document.getElementById('login-required-ov').remove()" style="width:100%;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;padding:4px">
@@ -551,6 +526,19 @@
         // Iniciar con sencilla
         modalidadActual = 'sencilla';
         contadores = Object.fromEntries(Object.keys(mods.sencilla?.tarifas||{}).map(k=>[k,0]));
+      } else if (s.tarifas) {
+        // Estructura plana (sin modalidades): un solo set de tarifas
+        // Adulto/Niño/Jubilado directamente bajo la categoría "Pasadías".
+        const vals = Object.values(s.tarifas).filter(t=>t.precio>0).map(t=>t.precio*(1+itbms/100));
+        const desde = vals.length ? Math.min(...vals) : 0;
+        document.getElementById('price-main').textContent = `$${desde.toFixed(2)}`;
+        document.getElementById('tarifas-list').innerHTML = Object.values(s.tarifas).map(t=>`
+          <div class="tarifa-row">
+            <span class="tarifa-label">${t.label}</span>
+            <span class="tarifa-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span class="tarifa-itbms">ITBMS inc.</span>`}</span>
+          </div>`).join('');
+        modalidadActual = null;
+        contadores = Object.fromEntries(Object.keys(s.tarifas).map(k=>[k,0]));
       }
     }
 
@@ -712,9 +700,10 @@
   }
 
   function renderPersonasGrid() {
-    if (!precios?.[SERVICIO]?.modalidades?.[modalidadActual]) return;
-    const mod    = precios[SERVICIO].modalidades[modalidadActual];
+    if (!precios?.[SERVICIO]) return;
+    const mod     = precios[SERVICIO].modalidades?.[modalidadActual] || precios[SERVICIO];
     const tarifas = mod.tarifas;
+    if (!tarifas) return;
     const itbms   = precios[SERVICIO].itbms || 7;
     document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
       <div class="persona-item">
@@ -764,50 +753,38 @@
       <div class="resumen-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
-  async function enviarSolicitud() {
+  function enviarSolicitud() {
     const fecha   = document.getElementById('fecha-visita').value;
     const hoyStr=localDateStr(new Date());
     if(fecha && fecha<hoyStr){alert('Esta fecha ya pasó. Por favor selecciona una fecha futura.');return;}
     if(fecha && esDiaCerradoPub(fecha)){alert(mensajeDiaCerrado(fecha));return;}
-    const nombre  = document.getElementById('nombre-contacto').value.trim();
-    const tel     = document.getElementById('tel-contacto').value.trim();
-    const email   = document.getElementById('email-contacto').value.trim();
     if (!fecha)  { alert('Selecciona una fecha de visita.'); return; }
-    if (!nombre) { alert('Ingresa tu nombre.'); return; }
-    if (!tel && !email) { alert('Ingresa al menos un medio de contacto.'); return; }
     const totalPersonas = Object.values(contadores).reduce((a,b)=>a+b,0);
     if (totalPersonas === 0) { alert('Selecciona al menos una persona.'); return; }
 
-    // Armar mensaje para WhatsApp
-    const modTarifas = precios?.[SERVICIO]?.modalidades?.[modalidadActual]?.tarifas || precios?.[SERVICIO]?.tarifas || {};
-    const detalle = Object.entries(contadores)
-      .filter(([,q])=>q>0)
-      .map(([k,q])=>`${modTarifas[k]?.label||k}: ${q}`)
-      .join(', ');
-    const modalidadLabel = precios?.[SERVICIO]?.modalidades?.[modalidadActual]?.label || modalidadActual;
-    // Guardar solicitud
-    const datos = {
-      servicio:  'Pasadía',
-      categoria: modalidadLabel,
-      fecha:     fecha,
-      personas:  detalle,
-      contacto:  { nombre, telefono: tel, email }
-    };
-    const guardado = await guardarSolicitud(datos);
-    // Notificar por WhatsApp
-    const msg = encodeURIComponent(
-      `Hola Sanagua Lodge! Quiero reservar una Pasadía ${modalidadLabel}.\n\n`+
-      `📅 Fecha: ${fecha}\n👥 Personas: ${detalle}\n`+
-      `👤 Nombre: ${nombre}\n📧 ${email||'Sin correo'}`
-    );
-    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
-    if (guardado) {
-      const t=document.createElement('div');
-      t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
-      t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';
-      document.body.appendChild(t);
-      setTimeout(()=>t.remove(),4000);
-    }
+    const mod = precios?.[SERVICIO]?.modalidades?.[modalidadActual] || precios?.[SERVICIO] || {};
+    const tarifas = mod.tarifas || {};
+    const itbms = precios?.[SERVICIO]?.itbms || 7;
+
+    let agregados = 0;
+    Object.entries(contadores).forEach(([key, qty]) => {
+      if (qty > 0 && tarifas[key]) {
+        const t = tarifas[key];
+        SanaguaCart.add({
+          producto_id: null,
+          categoria: 'Pasadía',
+          nombre: t.label,
+          precio: t.precio,
+          itbms,
+          cantidad: qty,
+          fecha_visita: fecha,
+          fecha_visita_fin: fecha,
+          notas: '',
+          puntos_fidelidad: t.puntos_fidelidad || 0,
+        });
+        agregados++;
+      }
+    });
     closeModal();
   }
 

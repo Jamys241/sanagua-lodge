@@ -12,7 +12,7 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --bg:#f5f3ee;--surface:#fff;--ink:#1a1814;--muted:#6b6660;
-      --accent:#c8541a;--border:#e0dbd4;--success:#2d7a4f;--gold:#c9923a;
+      --accent:#7fa0ac;--border:#e0dbd4;--success:#2d7a4f;--gold:#c9923a;
       --earth:#8b5e3c;--sage:#6b8f6b;--red:#c0392b;--r:8px;
     }
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
@@ -79,7 +79,7 @@
       font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;
       align-items:center;gap:6px}
     .btn-accent{background:var(--accent);color:#fff}
-    .btn-accent:hover{background:#b34816}
+    .btn-accent:hover{background:#5f7881}
     .btn-outline{background:none;color:var(--ink);border:1.5px solid var(--border)}
     .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
     .btn-danger{background:none;color:var(--red);border:1.5px solid rgba(192,57,43,.3)}
@@ -218,6 +218,8 @@
             <option value="0">Sin ITBMS</option>
           </select></div>
       </div>
+      <div class="form-group"><label>Puntos de fidelidad (al confirmar la reserva)</label>
+        <input class="form-input" type="number" step="1" min="0" id="mi-puntos" placeholder="0"></div>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="cerrarModalItem()">Cancelar</button>
         <button class="btn btn-accent" onclick="guardarItemModal()">💾 Guardar</button>
@@ -265,21 +267,29 @@
     } finally { showLoading(false); }
   }
 
+  function catHijos(id) { return categorias.filter(c => c.parent_id === id).sort((a,b)=>(a.orden||0)-(b.orden||0)); }
+  function catPadres() { return categorias.filter(c => !c.parent_id).sort((a,b)=>(a.orden||0)-(b.orden||0)); }
+
   function renderSidebar() {
     const el = document.getElementById('sidebar-cats');
-    if (!categorias.length) {
+    const padres = catPadres();
+    if (!padres.length) {
       el.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.8rem;padding:0 20px">Sin subcategorías aún.</p>';
       return;
     }
-    el.innerHTML = categorias.map(c => `
-      <div class="cat-btn-wrap ${c.id===catActualId?'active':''}">
-        <button class="cat-btn" onclick="seleccionarCategoria('${c.id}')">
-          <span class="cat-nombre-txt">${esc(c.nombre)}</span>
-          <span class="cat-count">${c.productos.length}</span>
+    function fila(c, indent) {
+      const totalItems = c.productos.length;
+      return `
+      <div class="cat-btn-wrap ${c.id===catActualId?'active':''}" style="${indent?'padding-left:'+indent+'px':''}">
+        <button class="cat-btn" style="${indent?'padding-left:'+(17+indent)+'px':''}" onclick="seleccionarCategoria('${c.id}')">
+          <span class="cat-nombre-txt">${indent?'└ ':''}${esc(c.nombre)}</span>
+          <span class="cat-count">${totalItems}</span>
         </button>
         <button class="cat-eye ${c.activo?'':'off'}" title="${c.activo?'Visible en la web':'Oculta en la web'}"
           onclick="toggleCategoriaActivo('${c.id}', event)">${c.activo?'👁️':'🚫'}</button>
-      </div>`).join('');
+      </div>`;
+    }
+    el.innerHTML = padres.map(p => fila(p,0) + catHijos(p.id).map(h => fila(h,14)).join('')).join('');
   }
 
   function seleccionarCategoria(id) { catActualId = id; renderSidebar(); renderMain(); }
@@ -291,6 +301,7 @@
       main.innerHTML = `<div class="empty-cat"><div class="empty-icon">🛎️</div><p>Crea tu primera subcategoría de Servicios (ej. "Pasadías").</p></div>`;
       return;
     }
+    const hijos = catHijos(cat.id);
     main.innerHTML = `
       <div class="cat-header">
         <div class="cat-header-main">
@@ -303,11 +314,13 @@
         <div class="cat-header-actions">
           <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${cat.id}')">${cat.activo?'👁️ Visible':'🚫 Oculta'}</button>
           <button class="btn btn-outline btn-sm" onclick="editarCategoria('${cat.id}')">✏️ Editar</button>
+          ${!cat.parent_id ? `<button class="btn btn-outline btn-sm" onclick="crearSubcategoria('${cat.id}')">+ Añadir dentro de "${esc(cat.nombre)}"</button>` : ''}
           <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${cat.id}')">🗑 Eliminar</button>
         </div>
       </div>
-      <div class="items-grid" id="items-grid"></div>`;
-    renderItems(cat);
+      ${hijos.length ? `<div class="empty-cat" style="padding:30px 20px"><div class="empty-icon">📂</div><p>"${esc(cat.nombre)}" agrupa ${hijos.length} subcategoría${hijos.length===1?'':'s'} (${hijos.map(h=>esc(h.nombre)).join(', ')}). Selecciónalas en el menú de la izquierda para ver y editar sus ítems.</p></div>`
+        : `<div class="items-grid" id="items-grid"></div>`}`;
+    if (!hijos.length) renderItems(cat);
   }
 
   function itbmsBadge(v) {
@@ -331,6 +344,7 @@
             <span class="item-precio">$${parseFloat(p.precio).toFixed(2)}</span>
             ${itbmsBadge(p.itbms)}
           </div>
+          ${p.puntos_fidelidad>0?`<div style="font-size:.74rem;color:var(--gold);font-weight:600">⭐ ${p.puntos_fidelidad} pts al confirmar</div>`:''}
         </div>
         <div class="item-actions">
           <button class="btn btn-outline" onclick="toggleItemActivo('${p.id}')">${p.activo?'👁️':'🚫'}</button>
@@ -344,16 +358,20 @@
   }
 
   // ── Categorías (subcategorías de Servicios) ─────────────────────────
-  async function crearSubcategoria() {
-    const nombre = prompt('Nombre de la nueva subcategoría (ej. "Tours guiados"):');
+  async function crearSubcategoria(parentId) {
+    const esHija = !!parentId && typeof parentId === 'string';
+    const padre = esHija ? categorias.find(c => c.id === parentId) : null;
+    const nombre = prompt(esHija
+      ? `Nombre de la nueva cabaña/opción dentro de "${padre?.nombre}" (ej. "Cabaña Jaguar"):`
+      : 'Nombre de la nueva subcategoría de Servicios (ej. "Tours guiados"):');
     if (!nombre || !nombre.trim()) return;
     try {
       const { data, error } = await supa.from('product_categories')
-        .insert({ nombre: nombre.trim(), orden: categorias.length }).select().single();
+        .insert({ nombre: nombre.trim(), parent_id: esHija ? parentId : null, orden: categorias.length }).select().single();
       if (error) throw error;
       catActualId = data.id;
       await cargarTodo();
-      showToast(`✅ Subcategoría "${nombre.trim()}" creada.`, 'success');
+      showToast(`✅ "${nombre.trim()}" creada.`, 'success');
     } catch (e) { console.error(e); showToast('❌ Error al crear la subcategoría.', 'error'); }
   }
 
@@ -418,6 +436,7 @@
     document.getElementById('mi-foto').value = '';
     document.getElementById('mi-precio').value = '';
     document.getElementById('mi-itbms').value = '7';
+    document.getElementById('mi-puntos').value = '0';
     document.getElementById('modal-item').classList.add('show');
   }
 
@@ -432,6 +451,7 @@
     document.getElementById('mi-foto').value = p.foto || '';
     document.getElementById('mi-precio').value = p.precio;
     document.getElementById('mi-itbms').value = p.itbms;
+    document.getElementById('mi-puntos').value = p.puntos_fidelidad || 0;
     document.getElementById('modal-item').classList.add('show');
   }
   function cerrarModalItem(){ document.getElementById('modal-item').classList.remove('show'); }
@@ -443,15 +463,16 @@
     const foto = document.getElementById('mi-foto').value.trim();
     const precio = parseFloat(document.getElementById('mi-precio').value) || 0;
     const itbms = parseInt(document.getElementById('mi-itbms').value) || 0;
+    const puntos_fidelidad = parseInt(document.getElementById('mi-puntos').value) || 0;
     if (!nombre) { showToast('Ingresa el nombre del ítem.', 'error'); return; }
     try {
       if (editandoItemId) {
-        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms }).eq('id', editandoItemId);
+        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad }).eq('id', editandoItemId);
         if (error) throw error;
       } else {
         const cat = categorias.find(c => c.id === catActualId);
         const { error } = await supa.from('products').insert({
-          categoria_id: catActualId, nombre, descripcion, foto, precio, itbms, orden: cat?.productos.length || 0,
+          categoria_id: catActualId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, orden: cat?.productos.length || 0,
         });
         if (error) throw error;
       }

@@ -16,7 +16,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #f5f3ee; --surface: #fff; --ink: #1a1814; --ink-muted: #6b6660;
-      --accent: #c8541a; --accent-light: #f9ede5; --border: #e0dbd4;
+      --accent: #7fa0ac; --accent-light: #f9ede5; --border: #e0dbd4;
       --success: #2d7a4f; --success-light: #eaf5ee;
       --blue: #1a5fa8; --blue-light: #e8f0fa;
       --purple: #6b3fa0; --purple-light: #f0eaf9;
@@ -124,7 +124,7 @@
 
     /* ── BADGE ── */
     .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:.7rem; font-weight:700; }
-    .badge-7  { background:#fff3e0; color:#c8541a; }
+    .badge-7  { background:#fff3e0; color:#7fa0ac; }
     .badge-10 { background:#fce4ec; color:#c62828; }
     .badge-no { background:var(--bg); color:var(--ink-muted); border:1px solid var(--border); }
     .badge-ok { background:var(--success-light); color:var(--success); }
@@ -288,7 +288,9 @@
     .sol-badge{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
       padding:3px 10px;border-radius:20px}
     .sol-badge.pendiente{background:#fff8e1;color:#b45309}
-    .sol-badge.aprobada{background:#f0f7ee;color:var(--success)}
+    .sol-badge.en_proceso{background:#f0f0f0;color:var(--muted)}
+    .sol-badge.confirmada{background:#f0f7ee;color:var(--success)}
+    .sol-badge.completada{background:#f0f7ee;color:var(--success)}
     .sol-badge.rechazada{background:#fff5f5;color:var(--red)}
     .sol-servicio{font-size:.8rem;font-weight:700;color:var(--ink)}
     .sol-card-body{padding:14px 16px}
@@ -1084,11 +1086,11 @@
     <!-- Leyenda de estados -->
     <div class="cal-legend">
       <span><span class="cal-legend-dot" style="background:#aaa"></span>Pendiente</span>
-      <span><span class="cal-legend-dot" style="background:#c8541a"></span>Confirmada (color categoría)</span>
+      <span><span class="cal-legend-dot" style="background:#7fa0ac"></span>Confirmada (color categoría)</span>
       <span><span class="cal-legend-dot" style="background:#2d7a4f"></span>Completada</span>
       <span><span class="cal-legend-dot" style="background:#e09000"></span>Aplazada</span>
       <span><span class="cal-legend-dot" style="background:#888"></span>Cancelada</span>
-      <span><span class="cal-legend-dot" style="background:#c8541a;outline:2px dashed #c8541a;outline-offset:2px;border-radius:50%"></span>Evento manual ✦</span>
+      <span><span class="cal-legend-dot" style="background:#7fa0ac;outline:2px dashed #7fa0ac;outline-offset:2px;border-radius:50%"></span>Evento manual ✦</span>
     </div>
     <!-- Filtros -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
@@ -1481,7 +1483,9 @@
         <select id="sol-filtro" onchange="filtrarSolicitudes()" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface)">
           <option value="todas">Todas</option>
           <option value="pendiente">⏳ Pendientes</option>
-          <option value="aprobada">✅ Aprobadas</option>
+          <option value="en_proceso">🔄 En proceso</option>
+          <option value="confirmada">✅ Confirmadas</option>
+          <option value="completada">✅ Completadas</option>
           <option value="rechazada">❌ Rechazadas</option>
         </select>
         <button class="btn btn-outline btn-sm" onclick="loadSolicitudes()">🔄 Recargar</button>
@@ -1502,35 +1506,6 @@
   </div>
 </div>
 </div><!-- /tab-solicitudes -->
-
-<!-- Modal confirmación borrado solicitud -->
-<div class="del-modal-ov" id="del-sol-ov">
-  <div class="del-modal">
-    <div class="del-modal-head">
-      <span>🗑️ Eliminar solicitud</span>
-    </div>
-    <div class="del-modal-body">
-      <p>¿Cómo deseas eliminar esta solicitud?</p>
-      <div class="del-modal-btns">
-        <button class="btn-del-local" onclick="borrarSolicitudLocal()">
-          <span>🗂️</span>
-          <div>
-            <div>Solo del sistema</div>
-            <div style="font-size:.75rem;font-weight:400;opacity:.7">Borra de solicitudes.json. El usuario aún la ve en su perfil web.</div>
-          </div>
-        </button>
-        <button class="btn-del-total" onclick="borrarSolicitudCompleta()">
-          <span>⚠️</span>
-          <div>
-            <div>Eliminar completamente</div>
-            <div style="font-size:.75rem;font-weight:400;opacity:.85">Borra de solicitudes.json, history.json y del calendario. Desaparece de todo.</div>
-          </div>
-        </button>
-        <button class="btn-del-cancel" onclick="cerrarDelModal()">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ════════════════════════ TAB USUARIOS ══════════════════════════════ -->
 <div id="tab-usuarios" class="tab-panel">
@@ -2489,9 +2464,9 @@
       const [newHist, newEvts, rS] = await Promise.all([
         sbListQuotes(),
         sbListEvents(),
-        ghRead('solicitudes.json'),
+        supa.from('solicitudes').select('*').order('created_at', { ascending: false }),
       ]);
-      const newSols = rS?.data?.solicitudes || [];
+      const newSols = rS?.data || [];
       const newHashH = simpleHash(newHist);
       const newHashE = simpleHash(newEvts);
       const newHashS = simpleHash(newSols);
@@ -4290,7 +4265,7 @@
     if (e === 'Cancelada')  return '#888';
     if (e === 'Completada') return '#2d7a4f';
     if (e === 'Aplazada')   return '#e09000';
-    return CAT_DOT_COLOR[q.categoria] || '#c8541a';
+    return CAT_DOT_COLOR[q.categoria] || '#7fa0ac';
   }
 
   function calEventLabel(q) {
@@ -4986,14 +4961,18 @@
   // MÓDULO DE SOLICITUDES DE RESERVA
   // ══════════════════════════════════════════════════════════════════════
   let solicitudesData = [];
-  let solicitudesSha  = null;
 
   async function loadSolicitudes() {
     document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando...</div>';
-    const res = await ghRead('solicitudes.json');
-    if (!res) { document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">No se encontró solicitudes.json</div>'; return; }
-    solicitudesData = res.data?.solicitudes || [];
-    solicitudesSha  = res.sha;
+    try {
+      const { data, error } = await supa.from('solicitudes').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      solicitudesData = data || [];
+    } catch (e) {
+      console.error(e);
+      document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">Error al cargar las solicitudes.</div>';
+      return;
+    }
     renderSolicitudes();
   }
 
@@ -5005,21 +4984,21 @@
     let lista = filtro === 'todas' ? solicitudesData : solicitudesData.filter(s => s.estado === filtro);
     if (buscar) {
       lista = lista.filter(s =>
-        (s.usuario?.nombre||'').toLowerCase().includes(buscar) ||
-        (s.usuario?.email||'').toLowerCase().includes(buscar)  ||
-        (s.contacto?.email||'').toLowerCase().includes(buscar) ||
-        (s.contacto?.nombre||'').toLowerCase().includes(buscar)
+        (s.contacto?.nombre||'').toLowerCase().includes(buscar) ||
+        (s.contacto?.email||'').toLowerCase().includes(buscar)
       );
     }
 
     // Stats
     const pend = solicitudesData.filter(s=>s.estado==='pendiente').length;
-    const apro = solicitudesData.filter(s=>s.estado==='aprobada').length;
+    const proc = solicitudesData.filter(s=>s.estado==='en_proceso').length;
+    const done = solicitudesData.filter(s=>['confirmada','completada'].includes(s.estado)).length;
     const rech = solicitudesData.filter(s=>s.estado==='rechazada').length;
     document.getElementById('sol-stats').innerHTML = `
       <div class="sol-stat-card"><div class="sol-stat-n">${solicitudesData.length}</div><div class="sol-stat-l">Total</div></div>
       <div class="sol-stat-card" style="border-color:#f0d060"><div class="sol-stat-n" style="color:#b45309">${pend}</div><div class="sol-stat-l">Pendientes</div></div>
-      <div class="sol-stat-card" style="border-color:#c0ddb8"><div class="sol-stat-n" style="color:var(--success)">${apro}</div><div class="sol-stat-l">Aprobadas</div></div>
+      <div class="sol-stat-card" style="border-color:#e0e0e0"><div class="sol-stat-n" style="color:var(--muted)">${proc}</div><div class="sol-stat-l">En proceso</div></div>
+      <div class="sol-stat-card" style="border-color:#c0ddb8"><div class="sol-stat-n" style="color:var(--success)">${done}</div><div class="sol-stat-l">Confirmadas</div></div>
       <div class="sol-stat-card" style="border-color:#f0c0c0"><div class="sol-stat-n" style="color:var(--red)">${rech}</div><div class="sol-stat-l">Rechazadas</div></div>`;
 
     if (!lista.length) {
@@ -5034,299 +5013,146 @@
       return new Date(b.created_at) - new Date(a.created_at);
     });
 
-    document.getElementById('sol-lista').innerHTML = ordenadas.map(sol => {
-      const emoji    = {Pasadía:'☀️',Camping:'⛺',Cabaña:'🏡',Picnic:'🧀'}[sol.servicio] || '📋';
-      const badgeCls = sol.estado;
-      const badgeTxt = {pendiente:'⏳ Pendiente',aprobada:'✅ Aprobada',rechazada:'❌ Rechazada'}[sol.estado] || sol.estado;
-      const inicial  = (sol.usuario?.nombre||'?').charAt(0).toUpperCase();
-      const fecha    = sol.created_at ? new Date(sol.created_at).toLocaleString('es-PA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-      const isPend   = sol.estado === 'pendiente';
+    const BADGE_TXT = { pendiente:'⏳ Pendiente', en_proceso:'🔄 En proceso', confirmada:'✅ Confirmada', completada:'✅ Completada', rechazada:'❌ Rechazada' };
 
-      // Datos de la solicitud
-      const rows = [];
-      if (sol.categoria)     rows.push(['Tipo',     sol.categoria]);
-      if (sol.fecha)         rows.push(['Fecha',     sol.fecha]);
-      if (sol.fecha_entrada) rows.push(['Entrada',   sol.fecha_entrada]);
-      if (sol.fecha_salida)  rows.push(['Salida',    sol.fecha_salida]);
-      if (sol.noches)        rows.push(['Noches',    sol.noches]);
-      if (sol.personas)      rows.push(['Personas',  sol.personas]);
-      if (sol.carpa)         rows.push(['Carpa',     sol.carpa]);
-      if (sol.precio)        rows.push(['Precio',    sol.precio]);
-      if (sol.hora)          rows.push(['Hora',      sol.hora]);
-      if (sol.notas)         rows.push(['Notas',     sol.notas]);
+    document.getElementById('sol-lista').innerHTML = ordenadas.map(sol => {
+      const badgeTxt = BADGE_TXT[sol.estado] || sol.estado;
+      const inicial  = (sol.contacto?.nombre||'?').charAt(0).toUpperCase();
+      const fecha    = sol.created_at ? new Date(sol.created_at).toLocaleString('es-PA',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+      const items    = Array.isArray(sol.items) ? sol.items : [];
+      const puntosTotal = items.reduce((acc,it)=>acc + (parseInt(it.puntos_fidelidad)||0) * (parseInt(it.cantidad)||1), 0);
+
+      const itemsHtml = items.map(it => `
+        <div class="sol-dato"><span class="sol-dato-lbl">${it.categoria||'Ítem'}</span>
+          <span class="sol-dato-val">${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''} — $${(parseFloat(it.precio)||0).toFixed(2)}${it.fecha_visita?` (📅 ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}</span>
+        </div>`).join('');
+
+      let acciones;
+      if (sol.estado === 'pendiente') {
+        acciones = `<button class="btn-sol-done" onclick="cambiarEstadoAdmin('${sol.id}','en_proceso')">🔄 Marcar en proceso</button>
+          <button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')">✅ Confirmar</button>
+          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')">❌ Rechazar</button>`;
+      } else if (sol.estado === 'en_proceso') {
+        acciones = `<button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')">✅ Confirmar</button>
+          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')">❌ Rechazar</button>`;
+      } else {
+        acciones = `<button class="btn-sol-done">${badgeTxt}${sol.puntos_otorgados>0?` · ⭐ ${sol.puntos_otorgados} pts otorgados`:''}</button>`;
+      }
 
       return `<div class="sol-card" id="sol-card-${sol.id}">
         <div class="sol-card-head">
-          <div class="sol-servicio">${emoji} ${sol.servicio||'Reserva'}</div>
-          <span class="sol-badge ${badgeCls}">${badgeTxt}</span>
+          <div class="sol-servicio">🛒 Solicitud (${items.length} ítem${items.length===1?'':'s'})</div>
+          <span class="sol-badge ${sol.estado}">${badgeTxt}</span>
         </div>
         <div class="sol-card-body">
           <div class="sol-usuario">
             <div class="sol-avatar">${inicial}</div>
             <div>
-              <div class="sol-u-nombre">${sol.usuario?.nombre||'—'}</div>
+              <div class="sol-u-nombre">${sol.contacto?.nombre||'—'}</div>
               <div class="sol-u-contacto">
-                ${sol.contacto?.telefono?`📱 ${sol.contacto.telefono}`:''} 
+                ${sol.contacto?.telefono?`📱 ${sol.contacto.telefono}`:''}
                 ${sol.contacto?.email?`· ✉️ ${sol.contacto.email}`:''}
               </div>
             </div>
           </div>
           <div class="sol-datos">
-            ${rows.map(([l,v])=>`<div class="sol-dato"><span class="sol-dato-lbl">${l}</span><span class="sol-dato-val">${v}</span></div>`).join('')}
+            ${itemsHtml}
+            ${sol.notas_cliente?`<div class="sol-dato"><span class="sol-dato-lbl">Notas</span><span class="sol-dato-val">${sol.notas_cliente}</span></div>`:''}
+            <div class="sol-dato"><span class="sol-dato-lbl">Total</span><span class="sol-dato-val">$${parseFloat(sol.total||0).toFixed(2)}</span></div>
+            ${puntosTotal>0?`<div class="sol-dato"><span class="sol-dato-lbl">Puntos al confirmar</span><span class="sol-dato-val">⭐ ${puntosTotal}</span></div>`:''}
           </div>
           <div class="sol-fecha">Recibida: ${fecha}</div>
         </div>
         <div class="sol-actions">
-          ${isPend
-            ? `<button class="btn-aprobar" onclick="aprobarSolicitud('${sol.id}')">✅ Aprobar</button>
-               <button class="btn-rechazar" onclick="rechazarSolicitud('${sol.id}')">❌ Rechazar</button>`
-            : `<button class="btn-sol-done">${badgeTxt}</button>`
-          }
-          <button class="btn-sol-del" onclick="confirmarBorrarSolicitud('${sol.id}')" title="Eliminar solicitud">🗑</button>
+          ${acciones}
+          <button class="btn-sol-del" onclick="eliminarSolicitud('${sol.id}')" title="Eliminar solicitud">🗑</button>
         </div>
       </div>`;
     }).join('');
   }
 
-  async function actualizarEstadoSolicitud(id, nuevoEstado) {
-    // Leer siempre la versión más reciente de GitHub para evitar conflictos de SHA
-    const res = await ghRead('solicitudes.json');
-    if (!res) return false;
-    const lista = res.data?.solicitudes || [];
-    const sha   = res.sha;
-    const idx   = lista.findIndex(s => s.id === id);
-    if (idx < 0) return false;
-    lista[idx].estado     = nuevoEstado;
-    lista[idx].updated_at = new Date().toISOString();
-    const ok = await ghWrite('solicitudes.json', { solicitudes: lista }, sha);
-    if (ok) {
-      // Sincronizar memoria local
-      solicitudesData = lista;
-    }
-    return ok;
-  }
-
-  // Arma un objeto con la misma forma que antes tenía precios.json, pero
-  // leyendo del catálogo genérico de "Mis Productos" (product_categories +
-  // products). Se usa para calcular el monto de una solicitud aprobada.
-  async function construirPreciosDesdeCatalogo() {
-    const CABANA_TIPO_MAP = { 'Lunes – Jueves':'semana', 'Viernes – Domingo':'finsemana', 'Persona adicional':'adicional' };
-    const TARIFA_KEY_MAP  = { 'Adulto':'adulto', 'Niño (3-11 años)':'nino', 'Menor de 3 años':'menor3', 'Jubilado':'jubilado' };
-    const CABANAS_MAP  = { yaguarundi:'Cabaña Yaguarundí', ocelot:'Cabaña Ocelot', motmot:'Cabaña Motmot' };
-    const CAMPING_MAP  = { propio:'Camping Propio', suministro:'Camping Suministro' };
-    const PASADIA_MAP  = { sencilla:'Pasadía Sencilla', completa:'Pasadía Completa' };
-
-    const { data: cats } = await supa.from('product_categories').select('*').eq('activo', true);
-    const { data: prods } = await supa.from('products').select('*').eq('activo', true);
-    const catByName = nombre => (cats||[]).find(c => c.nombre === nombre);
-    const prodsOf   = catId   => (prods||[]).filter(p => p.categoria_id === catId);
-
-    const cabanasObj = {};
-    Object.entries(CABANAS_MAP).forEach(([key, nombreCat]) => {
-      const cat = catByName(nombreCat); if (!cat) return;
-      const tarifas = {};
-      prodsOf(cat.id).forEach(p => { const t = CABANA_TIPO_MAP[p.nombre]; if (t) tarifas[t] = { label: p.nombre, precio: parseFloat(p.precio)||0 }; });
-      cabanasObj[key] = { label: cat.nombre, tarifas };
-    });
-
-    const campModalidades = {};
-    Object.entries(CAMPING_MAP).forEach(([mod, nombreCat]) => {
-      const cat = catByName(nombreCat); if (!cat) return;
-      const tarifas = {};
-      prodsOf(cat.id).forEach(p => { const k = TARIFA_KEY_MAP[p.nombre]; if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 }; });
-      campModalidades[mod] = { label: cat.nombre, tarifas };
-    });
-    const catCarpas = catByName('Carpas');
-    if (catCarpas && campModalidades.suministro) {
-      campModalidades.suministro.carpas = {};
-      prodsOf(catCarpas.id).forEach(p => campModalidades.suministro.carpas[p.id] = { label: p.nombre, precio: parseFloat(p.precio)||0 });
-    }
-
-    const pasModalidades = {};
-    Object.entries(PASADIA_MAP).forEach(([mod, nombreCat]) => {
-      const cat = catByName(nombreCat); if (!cat) return;
-      const tarifas = {};
-      prodsOf(cat.id).forEach(p => { const k = TARIFA_KEY_MAP[p.nombre]; if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 }; });
-      pasModalidades[mod] = { label: cat.nombre, tarifas };
-    });
-
-    return {
-      cabanas: { itbms: 7, cabanas: cabanasObj },
-      camping: { itbms: 7, modalidades: campModalidades },
-      pasadia: { itbms: 7, modalidades: pasModalidades },
-    };
-  }
-
-  async function aprobarSolicitud(id) {
+  // Cambia el estado de una solicitud. Si el nuevo estado es "confirmada" o
+  // "completada", genera la cotización a partir de sus items (ya vienen con
+  // precio/itbms resueltos desde el carrito) y otorga los puntos de
+  // fidelidad correspondientes. Si es "rechazada" o "en_proceso", no se
+  // otorgan puntos.
+  async function cambiarEstadoAdmin(id, nuevoEstado) {
     const sol = solicitudesData.find(s => s.id === id);
     if (!sol) return;
-    clearInterval(_pollTimer);
+    if (nuevoEstado === 'rechazada' && !confirm('¿Rechazar esta solicitud? El cliente no recibirá notificación automática.')) return;
+    if (nuevoEstado === 'confirmada' && !confirm('¿Confirmar esta solicitud? Se creará la cotización y se otorgarán los puntos de fidelidad al cliente.')) return;
+
     showLoading(true);
     try {
-      // 1. Marcar solicitud como aprobada
-      const ok = await actualizarEstadoSolicitud(id, 'aprobada');
-      if (!ok) throw new Error('No se pudo actualizar solicitud');
+      const { error: errUpd } = await supa.from('solicitudes')
+        .update({ estado: nuevoEstado, updated_at: new Date().toISOString() }).eq('id', id);
+      if (errUpd) throw errUpd;
 
-      // 2. Obtener número #web correlativo (atómico, en Supabase)
-      const quoteStr = await sbNextWebNum();
-
-      // 3. Obtener precios reales del servicio desde el catálogo de "Mis Productos"
-      const preciosData = await construirPreciosDesdeCatalogo();
-      let items = [];
-      let subtotal = 0;
-
-      const servicio  = sol.servicio  || '';
-      const categoria = sol.categoria || '';
-      const itbms     = 7;
-
-      if (servicio === 'Pasadía') {
-        const mods = preciosData.pasadia?.modalidades || {};
-        const modKey = Object.keys(mods).find(k => mods[k].label === categoria) || Object.keys(mods)[0];
-        const mod = mods[modKey];
-        if (mod) {
-          // Parsear personas del string "Adulto: 2, Niño: 1"
-          (sol.personas||'').split(',').forEach(part => {
-            const [lbl, qty] = part.split(':').map(s=>s.trim());
-            const tarifa = Object.values(mod.tarifas||{}).find(t=>t.label===lbl);
-            if (tarifa && qty) {
-              const q = parseInt(qty)||1;
-              const p = tarifa.precio * q;
-              subtotal += p;
-              items.push({ description:`${lbl} × ${q}`, quantity:q, unit_price:tarifa.precio, total:p });
-            }
-          });
+      if (nuevoEstado === 'confirmada' || nuevoEstado === 'completada') {
+        // 1. Crear la cotización a partir de los items de la solicitud
+        if (!sol.quote_num) {
+          const items = Array.isArray(sol.items) ? sol.items : [];
+          const quoteStr = await sbNextWebNum();
+          const nuevaCotizacion = {
+            quote_num: quoteStr,
+            id: `hist_sol_${id}`,
+            tipo: 'cotizacion',
+            plataforma: 'web',
+            categoria: items.map(i => i.categoria || i.nombre).join(', '),
+            estado: 'Confirmada',
+            created_at: new Date().toISOString(),
+            visit_date: items[0]?.fecha_visita || new Date().toISOString().slice(0,10),
+            visit_date_end: items[0]?.fecha_visita_fin || items[0]?.fecha_visita || new Date().toISOString().slice(0,10),
+            notes: `Solicitud web #${id.slice(-6)}${sol.notas_cliente ? ' | ' + sol.notas_cliente : ''}`,
+            sol_id: id,
+            client: {
+              name: sol.contacto?.nombre || '—',
+              phone: sol.contacto?.telefono || '',
+              email: sol.contacto?.email || '',
+            },
+            items: items.map(i => ({ description: `${i.nombre}${i.cantidad>1?` × ${i.cantidad}`:''}`, quantity: i.cantidad||1, unit_price: parseFloat(i.precio)||0, total: (parseFloat(i.precio)||0)*(i.cantidad||1) })),
+            subtotal: sol.subtotal, itbms: sol.itbms, total: sol.total,
+            abono: 0, pendiente: sol.total,
+          };
+          const savedCot = await sbInsertQuote(nuevaCotizacion, quoteStr);
+          allHistory.unshift(savedCot);
+          buildCalIndex(); renderCalendario();
+          await supa.from('solicitudes').update({ quote_num: savedCot.quote_num }).eq('id', id);
         }
-      } else if (servicio === 'Camping') {
-        const mods = preciosData.camping?.modalidades || {};
-        const modKey = Object.keys(mods).find(k => mods[k].label === categoria) || Object.keys(mods)[0];
-        const mod = mods[modKey];
-        if (mod) {
-          (sol.personas||'').split(',').forEach(part => {
-            const [lbl, qty] = part.split(':').map(s=>s.trim());
-            const tarifa = Object.values(mod.tarifas||{}).find(t=>t.label===lbl);
-            if (tarifa && qty) {
-              const q = parseInt(qty)||1, noches = sol.noches||1;
-              const p = tarifa.precio * q * noches;
-              subtotal += p;
-              items.push({ description:`${lbl} × ${q} × ${noches} noche${noches===1?'':'s'}`, quantity:q, unit_price:tarifa.precio, total:p });
-            }
-          });
-          if (sol.carpa && mod.carpas) {
-            const carpaKey = Object.keys(mod.carpas).find(k=>mod.carpas[k].label===sol.carpa);
-            const carpa = carpaKey ? mod.carpas[carpaKey] : null;
-            if (carpa) {
-              const noches = sol.noches||1, p = carpa.precio * noches;
-              subtotal += p;
-              items.push({ description:`${carpa.label} × ${noches} noche${noches===1?'':'s'}`, quantity:noches, unit_price:carpa.precio, total:p });
-            }
-          }
-        }
-      } else if (servicio === 'Cabaña') {
-        const cabanas = preciosData.cabanas?.cabanas || {};
-        const cabKey  = Object.keys(cabanas).find(k=>cabanas[k].label===categoria);
-        const cab     = cabKey ? cabanas[cabKey] : null;
-        const itbmsCab = preciosData.cabanas?.itbms || 7;
-        if (cab) {
-          const noches = sol.noches || 1;
-          // Calcular semana/fin de semana
-          const entrada = new Date((sol.fecha_entrada||sol.fecha)+'T12:00:00');
-          let nSem=0, nFin=0;
-          for(let i=0;i<noches;i++){
-            const d=new Date(entrada); d.setDate(d.getDate()+i);
-            const dow=d.getDay();
-            if(dow>=1&&dow<=4) nSem++; else nFin++;
-          }
-          if(nSem>0&&cab.tarifas?.semana){const p=cab.tarifas.semana.precio*nSem;subtotal+=p;items.push({description:`Tarifa semana × ${nSem} noche${nSem===1?'':'s'}`,quantity:nSem,unit_price:cab.tarifas.semana.precio,total:p});}
-          if(nFin>0&&cab.tarifas?.finsemana){const p=cab.tarifas.finsemana.precio*nFin;subtotal+=p;items.push({description:`Tarifa fin de semana × ${nFin} noche${nFin===1?'':'s'}`,quantity:nFin,unit_price:cab.tarifas.finsemana.precio,total:p});}
-          if((sol.personas_adicionales||0)>0&&cab.tarifas?.adicional){const p=cab.tarifas.adicional.precio*(sol.personas_adicionales)*noches;subtotal+=p;items.push({description:`Personas adicionales × ${sol.personas_adicionales} × ${noches} noche${noches===1?'':'s'}`,quantity:sol.personas_adicionales,unit_price:cab.tarifas.adicional.precio,total:p});}
-        }
-      } else if (servicio === 'Picnic') {
-        // Extraer precio del string "$28.00 · ITBMS incluido"
-        const priceMatch = (sol.precio||'').match(/\$([\d.]+)/);
-        const precio = priceMatch ? parseFloat(priceMatch[1]) : 0;
-        const precioBase = precio / (1 + itbms/100);
-        items.push({ description: categoria, quantity:1, unit_price:precioBase, total:precioBase });
-        subtotal = precioBase;
+
+        // 2. Otorgar puntos de fidelidad (vía RPC — no duplica si ya se otorgaron)
+        const { data: puntos, error: errPts } = await supa.rpc('otorgar_puntos_solicitud', { p_solicitud_id: id });
+        if (errPts) console.warn('otorgar_puntos_solicitud', errPts);
+        else if (puntos > 0) showToast(`⭐ ${puntos} puntos de fidelidad otorgados al cliente.`, 'success');
       }
 
-      if (!items.length) items.push({ description: categoria, quantity:1, unit_price:0, total:0 });
-      const itbmsAmt = Math.round(subtotal * itbms) / 100;
-      const total    = subtotal + itbmsAmt;
-
-      // 4. Crear cotización completa
-      const fechaEvento = sol.fecha || sol.fecha_entrada || new Date().toISOString().slice(0,10);
-      const nuevaCotizacion = {
-        quote_num:     quoteStr,
-        id:            `hist_sol_${id}`,
-        tipo:          'cotizacion',
-        plataforma:    'web',
-        categoria,
-        estado:        'Pendiente',
-        created_at:    new Date().toISOString(),
-        visit_date:    fechaEvento,
-        visit_date_end: sol.fecha_salida || fechaEvento,
-        notes:         `Solicitud web #${id.slice(-6)}${sol.notas ? ' | ' + sol.notas : ''}`,
-        sol_id:        id,
-        client: {
-          name:   sol.usuario?.nombre || '—',
-          cedula: sol.usuario?.cedula || '',
-          phone:  sol.contacto?.telefono || '',
-          email:  sol.contacto?.email    || sol.usuario?.email || '',
-        },
-        items,
-        subtotal:  Math.round(subtotal * 100) / 100,
-        itbms:     itbmsAmt,
-        total:     Math.round(total * 100) / 100,
-        abono:     0,
-        pendiente: Math.round(total * 100) / 100,
-      };
-
-      const savedCot = await sbInsertQuote(nuevaCotizacion, quoteStr);
-      allHistory.unshift(savedCot);
-      buildCalIndex();
-      renderCalendario();
-
-      showToast(`✅ Aprobada — Cotización #${quoteStr} creada con precios calculados`, 'success');
-      renderSolicitudes();
-    } catch(e) {
+      await loadSolicitudes();
+      showToast('✅ Solicitud actualizada.', 'success');
+    } catch (e) {
       console.error(e);
-      showToast('❌ Error al aprobar. Intenta nuevamente.', 'error');
+      showToast('❌ Error al actualizar la solicitud.', 'error');
     } finally {
       showLoading(false);
-      // Recargar solicitudes para sincronizar SHA y reanudar polling
-      const resFinal = await ghRead('solicitudes.json');
-      if (resFinal) {
-        solicitudesData = resFinal.data?.solicitudes || [];
-        solicitudesSha  = resFinal.sha;
-        _lastHashSols   = simpleHash(solicitudesData);
-      }
-      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     }
   }
 
-  async function rechazarSolicitud(id) {
-    if (!confirm('¿Rechazar esta solicitud? El cliente no recibirá notificación automática.')) return;
-    clearInterval(_pollTimer);
+  async function eliminarSolicitud(id) {
+    if (!confirm('¿Eliminar esta solicitud? Esta acción no se puede deshacer. La cotización ya generada (si existe) NO se borra.')) return;
     showLoading(true);
     try {
-      const ok = await actualizarEstadoSolicitud(id, 'rechazada');
-      if (!ok) throw new Error();
-      // Recargar desde GitHub para sincronizar SHA y datos
-      const res = await ghRead('solicitudes.json');
-      if (res) {
-        solicitudesData = res.data?.solicitudes || [];
-        solicitudesSha  = res.sha;
-        _lastHashSols   = simpleHash(solicitudesData);
-      }
-      showToast('Solicitud rechazada correctamente.', 'success');
-      renderSolicitudes();
-    } catch {
-      showToast('❌ Error al rechazar. Intenta nuevamente.', 'error');
+      const { error } = await supa.from('solicitudes').delete().eq('id', id);
+      if (error) throw error;
+      await loadSolicitudes();
+      showToast('Solicitud eliminada.', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Error al eliminar la solicitud.', 'error');
     } finally {
       showLoading(false);
-      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
     }
   }
+
+
 
   // ══════════════════════════════════════════════════════════════════════
   // GESTIÓN DE USUARIOS WEB
@@ -5429,88 +5255,6 @@
     } catch(e) {
       msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Error al guardar. Intenta nuevamente.';
     } finally { showLoading(false); }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // BORRADO DE SOLICITUDES
-  // ══════════════════════════════════════════════════════════════════════
-  let _solIdABorrar = null;
-
-  function confirmarBorrarSolicitud(id) {
-    _solIdABorrar = id;
-    document.getElementById('del-sol-ov').classList.add('open');
-  }
-
-  function cerrarDelModal() {
-    document.getElementById('del-sol-ov').classList.remove('open');
-    _solIdABorrar = null;
-  }
-
-  async function borrarSolicitudLocal() {
-    if (!_solIdABorrar) return;
-    const idABorrar = _solIdABorrar;
-    cerrarDelModal();
-    clearInterval(_pollTimer);
-    showLoading(true);
-    try {
-      // Leer fresco para obtener SHA actual
-      const res = await ghRead('solicitudes.json');
-      if (!res) throw new Error('No se pudo leer solicitudes.json');
-      const lista = (res.data?.solicitudes || []).filter(s => s.id !== idABorrar);
-      const ok    = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
-      if (!ok) throw new Error('Error al escribir');
-      // Recargar para sincronizar SHA nuevo
-      const resNuevo = await ghRead('solicitudes.json');
-      solicitudesData = resNuevo?.data?.solicitudes || lista;
-      _lastHashSols   = simpleHash(solicitudesData);
-      showToast('Solicitud eliminada del sistema.', 'success');
-      renderSolicitudes();
-    } catch(e) {
-      console.error(e);
-      showToast('❌ Error al eliminar. Intenta nuevamente.', 'error');
-    } finally {
-      showLoading(false);
-      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
-    }
-  }
-
-  async function borrarSolicitudCompleta() {
-    if (!_solIdABorrar) return;
-    const idABorrar = _solIdABorrar;
-    const sol = solicitudesData.find(s => s.id === idABorrar);
-    cerrarDelModal();
-    clearInterval(_pollTimer);
-    showLoading(true);
-    try {
-      // 1. Eliminar de solicitudes.json
-      const res = await ghRead('solicitudes.json');
-      if (!res) throw new Error('No se pudo leer solicitudes.json');
-      const lista = (res.data?.solicitudes || []).filter(s => s.id !== idABorrar);
-      const ok1   = await ghWrite('solicitudes.json', { solicitudes: lista }, res.sha);
-      if (!ok1) throw new Error('Error al escribir solicitudes.json');
-      // Recargar para sincronizar SHA nuevo
-      const resNuevo = await ghRead('solicitudes.json');
-      solicitudesData = resNuevo?.data?.solicitudes || lista;
-      _lastHashSols   = simpleHash(solicitudesData);
-
-      // 2. Eliminar cotización asociada en Supabase (si existe)
-      if (sol?.id) {
-        await supa.from('quotes').delete().eq('data->>sol_id', sol.id);
-      }
-
-      // Recargar historial local
-      allHistory = await sbListQuotes();
-      buildCalIndex();
-      renderCalendario();
-      showToast('✅ Solicitud eliminada completamente.', 'success');
-      renderSolicitudes();
-    } catch(e) {
-      console.error(e);
-      showToast('❌ Error al eliminar completamente.', 'error');
-    } finally {
-      showLoading(false);
-      _pollTimer = setInterval(pollChanges, POLL_INTERVAL);
-    }
   }
 
   // ══════════════════════════════════════════════════════════════════════

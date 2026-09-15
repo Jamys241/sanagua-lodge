@@ -171,6 +171,7 @@
     .update-toast.show{transform:translateX(-50%) translateY(0)}
   </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/cart.js"></script>
 </head>
 <body>
 
@@ -273,7 +274,7 @@
         </div>
         <div class="tabla-footer">
           <div class="tabla-precio">$28.00 <span>ITBMS inc.</span></div>
-          <button class="btn-tabla" onclick="openModal('pequeña','🧀','$28.00')">Reserva la tuya</button>
+          <button class="btn-tabla" onclick="openModal('pequeña','🧀','$28.00')">Agregar al carrito</button>
         </div>
       </div>
     </div>
@@ -305,7 +306,7 @@
         </div>
         <div class="tabla-footer">
           <div class="tabla-precio">$48.00 <span>ITBMS inc.</span></div>
-          <button class="btn-tabla" onclick="openModal('mediana','🍇','$48.00')">Reserva la tuya</button>
+          <button class="btn-tabla" onclick="openModal('mediana','🍇','$48.00')">Agregar al carrito</button>
         </div>
       </div>
     </div>
@@ -338,7 +339,7 @@
         </div>
         <div class="tabla-footer">
           <div class="tabla-precio">$78.00 <span>ITBMS inc.</span></div>
-          <button class="btn-tabla" onclick="openModal('grande','🥂','$78.00')">Reserva la tuya</button>
+          <button class="btn-tabla" onclick="openModal('grande','🥂','$78.00')">Agregar al carrito</button>
         </div>
       </div>
     </div>
@@ -395,7 +396,7 @@
         <label class="fl">Notas especiales (alergias, ocasión, etc.)</label>
         <input type="text" class="fi" id="f-notas" placeholder="Ej: es un aniversario, sin nueces...">
       </div>
-      <button class="btn-confirmar" onclick="enviar()">Enviar solicitud por WhatsApp</button>
+      <button class="btn-confirmar" onclick="enviar()">Agregar al carrito</button>
       <div class="fn">Tu solicitud será confirmada en menos de 2 horas.<br>Disponible de 8:00 AM a 7:00 PM · Todos los días abiertos.</div>
     </div>
   </div>
@@ -591,33 +592,24 @@
   async function enviar(){
     const fecha=document.getElementById('f-fecha').value;
     const hora=document.getElementById('f-hora').value;
-    const nom=document.getElementById('f-nom').value.trim();
-    const tel=document.getElementById('f-tel').value.trim();
-    const ema=document.getElementById('f-ema').value.trim();
     const notas=document.getElementById('f-notas').value.trim();
     if(!fecha||!hora){alert('Selecciona fecha y hora.');return;}
-    if(!nom){alert('Ingresa tu nombre.');return;}
-    if(!tel&&!ema){alert('Ingresa al menos un medio de contacto.');return;}
     const nombreTabla=`Tabla de Picnic ${tablaActual.charAt(0).toUpperCase()+tablaActual.slice(1)}`;
-    const precio=document.getElementById('st-precio').textContent.split('·')[0].trim();
-    const datos = {
-      servicio:  'Picnic',
-      categoria: nombreTabla,
-      precio:    document.getElementById('st-precio').textContent,
-      fecha,
-      hora,
-      notas,
-      contacto:  { nombre: nom, telefono: tel, email: ema }
-    };
-    const guardado = await guardarSolicitud(datos);
-    const msg=encodeURIComponent(
-      `Hola Sanagua Lodge! Quiero reservar una ${nombreTabla}.\n\n`+
-      `📅 Fecha: ${fecha}\n⏰ Hora: ${hora}\n💰 Precio: ${precio}\n`+
-      `👤 Nombre: ${nom}\n📧 ${ema||'Sin correo'}`+
-      `${notas?`\n📝 Notas: ${notas}`:''}`
-    );
-    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
-    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1410;color:#fff;padding:12px 24px;border-radius:40px;font-family:DM Sans,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
+    const precioTxt=document.getElementById('st-precio').textContent.split('·')[0].trim();
+    const precio=parseFloat(precioTxt.replace(/[^0-9.]/g,''))||0;
+
+    SanaguaCart.add({
+      producto_id: null,
+      categoria: 'Picnic',
+      nombre: nombreTabla,
+      precio,
+      itbms: 0, // los precios de picnic ya incluyen ITBMS
+      cantidad: 1,
+      fecha_visita: fecha,
+      fecha_visita_fin: fecha,
+      notas: hora ? `Hora: ${hora}${notas?' — '+notas:''}` : notas,
+      puntos_fidelidad: 0,
+    });
     closeModal();
   }
 

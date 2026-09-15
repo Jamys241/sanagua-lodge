@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--moss:#2d3e2a;--forest:#3d5c38;--sage:#7a9e6e;--earth:#8b6b47;
+    :root{--moss:#7fa0ac;--forest:#5f7881;--sage:#7a9e6e;--earth:#8b6b47;
       --sand:#c9b08a;--cream:#f4efe6;--linen:#faf7f2;--ink:#1a1f18;
       --mist:#a8b8a2;--gold:#c9a84c;--r:10px;--accent:#7a9e6e;--red:#c0392b}
     html{scroll-behavior:smooth}
@@ -54,7 +54,7 @@
     .cday.cerrado .cl{font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;color:#ccc}
     /* Toast de actualización */
     .update-toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-80px);
-      z-index:200;background:var(--moss,#2d3e2a);color:#fff;font-size:.78rem;font-weight:600;
+      z-index:200;background:var(--moss,#7fa0ac);color:#fff;font-size:.78rem;font-weight:600;
       padding:8px 20px;border-radius:0 0 8px 8px;box-shadow:0 4px 16px rgba(0,0,0,.2);
       transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
       display:flex;align-items:center;gap:8px;pointer-events:none}
@@ -151,6 +151,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/cart.js"></script>
 </head>
 <body>
 <nav>
@@ -258,7 +259,7 @@
       <div class="fg"><label class="fl">Nombre</label><input type="text" class="fi" id="nom" placeholder="Tu nombre completo"></div>
       <div class="fg"><label class="fl">WhatsApp</label><input type="tel" class="fi" id="tel" placeholder="+507 6000-0000"></div>
       <div class="fg"><label class="fl">Correo</label><input type="email" class="fi" id="ema" placeholder="tu@correo.com"></div>
-      <button class="bc" onclick="enviar()">Enviar solicitud de reserva</button>
+      <button class="bc" onclick="enviar()">Agregar al carrito</button>
       <div class="fn">Confirmación por WhatsApp o correo en menos de 24 horas.</div>
     </div>
   </div>
@@ -377,7 +378,7 @@
       ov.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
       ov.innerHTML = `
         <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.3)">
-          <div style="background:#2d3e2a;padding:24px 28px;text-align:center">
+          <div style="background:#7fa0ac;padding:24px 28px;text-align:center">
             <div style="font-size:2rem;margin-bottom:8px">🌿</div>
             <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#fff;font-weight:400">Inicia sesión para reservar</div>
           </div>
@@ -385,10 +386,10 @@
             <p style="font-size:.9rem;color:#6a7a64;line-height:1.65;margin-bottom:20px;text-align:center">
               Para realizar una solicitud de reserva necesitas iniciar sesión o crear una cuenta gratuita en Sanagua Lodge.
             </p>
-            <a href="${INDEX_URL}?action=login" style="display:block;background:#2d3e2a;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
+            <a href="${INDEX_URL}?action=login" style="display:block;background:#7fa0ac;color:#fff;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s">
               Iniciar sesión →
             </a>
-            <a href="${INDEX_URL}?action=register" style="display:block;background:#f4efe6;color:#2d3e2a;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
+            <a href="${INDEX_URL}?action=register" style="display:block;background:#f4efe6;color:#7fa0ac;text-align:center;padding:13px;border-radius:8px;font-family:'Jost',sans-serif;font-size:.92rem;font-weight:600;text-decoration:none;margin-bottom:16px">
               Crear cuenta gratis
             </a>
             <button onclick="document.getElementById('login-required-ov').remove()" style="width:100%;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;padding:4px">
@@ -748,33 +749,46 @@
       <div class="rr tot"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
-  async function enviar(){
+  function enviar(){
     const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;
-    const nom=document.getElementById('nom').value.trim(), tel=document.getElementById('tel').value.trim(), ema=document.getElementById('ema').value.trim();
     if(!ent||!sal){alert('Selecciona las fechas.');return;}
     if(esDiaCerradoPub(ent)){alert(mensajeDiaCerrado(ent));return;}
-    if(!nom){alert('Ingresa tu nombre.');return;}
-    if(!tel&&!ema){alert('Ingresa un medio de contacto.');return;}
     if(Object.values(CNT).reduce((a,b)=>a+b,0)===0){alert('Selecciona al menos una persona.');return;}
     if(MOD==='suministro'&&!CARPA){alert('Selecciona el tipo de carpa.');return;}
     const m=P.camping.modalidades[MOD];
-    const dp=Object.entries(CNT).filter(([,q])=>q>0).map(([k,q])=>`${m.tarifas[k].label}: ${q}`).join(', ');
-    const ci=CARPA?`\nCarpa: ${m.carpas[CARPA].label}`:'';
+    const itbms=P.camping.itbms||7;
     const nn=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
-    const datos = {
-      servicio:  'Camping',
-      categoria: m.label,
-      fecha_entrada: ent,
-      fecha_salida:  sal,
-      noches:    nn,
-      carpa:     CARPA ? m.carpas?.[CARPA]?.label : null,
-      personas:  dp,
-      contacto:  { nombre: nom, telefono: tel, email: ema }
-    };
-    const guardado = await guardarSolicitud(datos);
-    const msg=encodeURIComponent(`Hola Sanagua Lodge! Quiero reservar ${m.label}.\n\n📅 Entrada: ${ent} | Salida: ${sal} (${nn} noche${nn===1?'':'s'})${ci}\n👥 ${dp}\n👤 ${nom}\n📧 ${ema||'Sin correo'}`);
-    window.open(`https://wa.me/50766000000?text=${msg}`,'_blank');
-    if(guardado){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#2d3e2a;color:#fff;padding:12px 24px;border-radius:40px;font-family:Jost,sans-serif;font-size:.88rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';t.textContent='✅ Solicitud enviada. Te contactaremos pronto.';document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
+
+    Object.entries(CNT).filter(([,q])=>q>0).forEach(([k,q])=>{
+      const t=m.tarifas[k];
+      SanaguaCart.add({
+        producto_id: null,
+        categoria: m.label,
+        nombre: t.label,
+        precio: t.precio,
+        itbms,
+        cantidad: q*nn,
+        fecha_visita: ent,
+        fecha_visita_fin: sal,
+        notas: '',
+        puntos_fidelidad: t.puntos_fidelidad || 0,
+      });
+    });
+    if (CARPA && m.carpas?.[CARPA]) {
+      const c = m.carpas[CARPA];
+      SanaguaCart.add({
+        producto_id: null,
+        categoria: m.label,
+        nombre: c.label,
+        precio: c.precio,
+        itbms,
+        cantidad: nn,
+        fecha_visita: ent,
+        fecha_visita_fin: sal,
+        notas: '',
+        puntos_fidelidad: 0,
+      });
+    }
     closeModal();
   }
 
