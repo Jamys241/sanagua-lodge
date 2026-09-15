@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+import uuid
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -24,6 +26,14 @@ except ImportError:
 
 app = Flask(__name__)
 CORS(app)
+
+# ── Subida de imágenes (fotos de menú/productos) al propio VPS ─────────────
+# Antes las fotos se subían a un repo público de GitHub Pages; ahora se
+# guardan directamente en el disco del servidor, en static/uploads/<carpeta>/,
+# y Flask las sirve como archivos estáticos normales en /static/uploads/...
+UPLOAD_FOLDER      = os.path.join(app.root_path, 'static', 'uploads')
+ALLOWED_IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
+MAX_IMAGE_BYTES    = 6 * 1024 * 1024  # 6 MB
 
 # ── Supabase Auth — identidad única para clientes y administradores ─────────
 # El login/registro ya NO se hace comparando contraseñas a mano: todo pasa
@@ -324,6 +334,42 @@ def update_logo():
     data = request.get_json()
     save_logo(data.get('logo', ''))
     return jsonify({'ok': True})
+
+# ── Subida de imágenes ────────────────────────────────────────────────────
+# El frontend manda un multipart/form-data con el archivo en 'file' y,
+# opcionalmente, un campo 'folder' (ej. 'restaurante', 'servicios') para
+# organizar las imágenes por sección. Devuelve la URL pública relativa
+# (ej. /static/uploads/restaurante/xxxxx.jpg) para guardar en Supabase.
+@app.route('/upload-image', methods=['POST'])
+@require_role('admin', 'superadmin')
+def upload_image():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió ningún archivo (campo "file")'}), 400
+    file = request.files['file']
+    if not file or not file.filename:
+        return jsonify({'error': 'Archivo vacío'}), 400
+
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTS:
+        return jsonify({'error': f'Formato no permitido (.{ext}). Usa: ' + ', '.join(sorted(ALLOWED_IMAGE_EXTS))}), 400
+
+    # Límite de tamaño (Flask ya leyó el stream a memoria/temp; medimos aquí)
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > MAX_IMAGE_BYTES:
+        return jsonify({'error': f'La imagen supera {MAX_IMAGE_BYTES // (1024*1024)} MB'}), 400
+
+    # Subcarpeta opcional (saneada para evitar path traversal)
+    folder = secure_filename(request.form.get('folder', 'general')) or 'general'
+    dest_dir = os.path.join(UPLOAD_FOLDER, folder)
+    os.makedirs(dest_dir, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    file.save(os.path.join(dest_dir, filename))
+
+    url = f"/static/uploads/{folder}/{filename}"
+    return jsonify({'ok': True, 'url': url})
 
 # Empresa
 @app.route('/empresa', methods=['GET'])
