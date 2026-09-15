@@ -18,7 +18,7 @@
     body{font-family:'Jost',sans-serif;background:var(--linen);color:var(--ink);overflow-x:hidden}
 
     /* ── NAV ── */
-    nav{position:sticky;top:0;z-index:100;background:rgba(26,31,24,.97);backdrop-filter:blur(10px);
+    nav{position:sticky;top:0;z-index:100;background:rgba(26,34,38,.97);backdrop-filter:blur(10px);
       padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;
       border-bottom:1px solid rgba(255,255,255,.06);}
     .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
@@ -33,7 +33,7 @@
     .hero{height:55vh;min-height:380px;position:relative;display:flex;align-items:flex-end;padding-bottom:60px;
       background:linear-gradient(160deg,#263840,#3d5c68,#567e8a)}
     .hero::before{content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(26,31,24,.7) 0%,transparent 60%)}
+      background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(26,34,38,.7) 0%,transparent 60%)}
     .hero-content{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 40px;width:100%}
     .hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:600;
       letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px}
@@ -106,7 +106,7 @@
       position:relative;font-weight:500}
     .cal-day.empty{color:#ddd}
     .cal-day.disponible{color:var(--ink);cursor:pointer}
-    .cal-day.disponible:hover{background:rgba(122,158,110,.12);color:var(--forest)}
+    .cal-day.disponible:hover{background:rgba(143,171,181,.12);color:var(--forest)}
     .cal-day.ocupado{background:#f0f0f0;color:#bbb;font-size:.65rem;cursor:not-allowed;
       flex-direction:column;gap:1px;height:38px;width:100%;border-radius:6px;padding:2px 0}
     .cal-day.ocupado .ocp-num{font-size:.72rem;font-weight:600}
@@ -120,10 +120,10 @@
     /* ── STICKY CARD ── */
     .sticky-col{position:sticky;top:80px}
     .price-summary{background:var(--moss);border-radius:var(--r);padding:24px;color:#fff}
-    .price-from{font-size:.72rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
-    .price-main{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--sand)}
-    .price-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px}
-    .btn-reservar-big{width:100%;background:var(--sage);color:#fff;border:none;border-radius:8px;
+    .price-from{font-size:.72rem;color:rgba(255,255,255,.8);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+    .price-main{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:#f2e2b0}
+    .price-sub{font-size:.78rem;color:rgba(255,255,255,.8);margin-top:2px}
+    .btn-reservar-big{width:100%;background:var(--ink);color:#fff;border:none;border-radius:8px;
       padding:14px;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
       margin-top:18px;transition:background .2s;letter-spacing:.05em}
     .btn-reservar-big:hover{background:var(--forest)}
