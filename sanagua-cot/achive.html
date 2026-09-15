@@ -455,7 +455,7 @@
       🛎️ Mis Servicios <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-servicios">
-      <button onclick="abrirMisProductos();closeMenu()">📦 Mis Productos</button>
+      <button onclick="window.open('mis-servicios.html','_blank');closeMenu()">🛎️ Mis Servicios</button>
       <button onclick="switchTab('popular');closeMenu()">⭐ Populares Web</button>
       <button onclick="abrirMenuEditor();closeMenu()">🍽️ Editor de Menú Web</button>
     </div>
@@ -1687,68 +1687,6 @@
     <div style="padding:20px">
       <div id="selector-productos-list"></div>
       <button class="btn btn-accent" onclick="agregarSeleccionados()" style="width:100%;margin-top:8px;">+ Agregar seleccionados a la cotización</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Mis Productos -->
-<div id="productos-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:760px;max-height:90vh;
-    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
-      justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
-      <span style="font-weight:700;color:#fff;font-size:.95rem">📦 Mis Productos</span>
-      <button onclick="cerrarMisProductos()" style="background:none;border:none;
-        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:20px">
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">
-        Estas categorías y productos son los que verán tus clientes en las páginas públicas
-        (cabañas, camping, carpas, pasadía, etc.) y los que puedes seleccionar al armar una cotización.
-      </p>
-
-      <!-- Categorías -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);">Categorías</div>
-        <button class="btn btn-outline btn-sm" onclick="crearCategoriaProducto()">+ Nueva categoría</button>
-      </div>
-      <div id="mp-cat-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;"></div>
-
-      <!-- Productos de la categoría seleccionada -->
-      <div id="mp-productos-wrap" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);" id="mp-cat-titulo"></div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-outline btn-sm" onclick="editarCategoriaProducto()">✏️ Editar categoría</button>
-            <button class="btn btn-danger btn-sm" onclick="eliminarCategoriaProducto()">🗑 Eliminar categoría</button>
-          </div>
-        </div>
-        <div id="mp-productos-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
-
-        <div style="background:var(--bg);border-radius:8px;padding:16px;">
-          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">➕ Nuevo producto en esta categoría</div>
-          <div class="form-grid">
-            <div class="form-group"><label>Nombre</label>
-              <input type="text" id="mp-new-nombre" class="form-input" placeholder="Ej: Adulto, Viernes – Domingo, Carpa Doble..."></div>
-            <div class="form-group"><label>Precio (USD)</label>
-              <input type="number" id="mp-new-precio" class="form-input" placeholder="0.00" step="0.01" min="0"></div>
-            <div class="form-group"><label>ITBMS</label>
-              <select id="mp-new-itbms" class="form-input">
-                <option value="7">7%</option>
-                <option value="10">10%</option>
-                <option value="0">Sin ITBMS</option>
-              </select></div>
-            <div class="form-group" style="grid-column:1/-1"><label>Descripción (opcional)</label>
-              <input type="text" id="mp-new-desc" class="form-input" placeholder="Breve descripción para la página pública"></div>
-            <div class="form-group" style="grid-column:1/-1"><label>URL de la foto (opcional)</label>
-              <input type="text" id="mp-new-foto" class="form-input" placeholder="https://..."></div>
-            <div class="form-group" style="grid-column:1/-1">
-              <button class="btn btn-accent" onclick="agregarProductoModal()" style="width:100%">+ Agregar producto</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -6064,183 +6002,31 @@
     return null;
   }
 
-  // ── Modal Mis Productos: catálogo genérico (categorías + productos) ─────
+  // ── Catálogo de "Mis Servicios" (categorías + productos) ────────────────
+  // La gestión (crear/editar/eliminar/ocultar) ahora vive en la página
+  // standalone mis-servicios.html. Aquí solo se lee para alimentar el
+  // selector multi-selección de la cotización.
   let categoriasProductos = [];   // [{id,nombre,descripcion,foto,productos:[...]}]
-  let categoriaSeleccionadaId = null;
 
-  async function abrirMisProductos() {
-    await loadCategoriasProductos();
-    document.getElementById('productos-ov').style.display = 'flex';
-  }
-
-  function cerrarMisProductos() {
-    document.getElementById('productos-ov').style.display = 'none';
-    renderProductSelect(); // refresca el picker de la cotización
-  }
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   async function loadCategoriasProductos() {
     try {
       const [{ data: cats, error: e1 }, { data: prods, error: e2 }] = await Promise.all([
-        supa.from('product_categories').select('*').order('orden', { ascending: true }),
-        supa.from('products').select('*').order('orden', { ascending: true }),
+        supa.from('product_categories').select('*').eq('activo', true).order('orden', { ascending: true }),
+        supa.from('products').select('*').eq('activo', true).order('orden', { ascending: true }),
       ]);
       if (e1) throw e1; if (e2) throw e2;
       categoriasProductos = (cats||[]).map(c => ({
         ...c,
         productos: (prods||[]).filter(p => p.categoria_id === c.id),
       }));
-      if (!categoriaSeleccionadaId || !categoriasProductos.find(c=>c.id===categoriaSeleccionadaId)) {
-        categoriaSeleccionadaId = categoriasProductos[0]?.id || null;
-      }
-      renderCatList();
-      renderProductosDeCategoria();
       products = (prods||[]); // catálogo plano usado por el picker de cotización
     } catch (e) {
       console.error(e);
-      showToast('❌ Error al cargar el catálogo de productos.', 'error');
+      showToast('❌ Error al cargar el catálogo de servicios.', 'error');
     }
   }
-
-  function renderCatList() {
-    const el = document.getElementById('mp-cat-list');
-    if (!categoriasProductos.length) {
-      el.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">No hay categorías aún. Crea la primera arriba.</p>';
-      return;
-    }
-    el.innerHTML = categoriasProductos.map(c => `
-      <button class="btn btn-sm ${c.id===categoriaSeleccionadaId?'btn-accent':'btn-outline'}"
-        onclick="seleccionarCategoriaProducto('${c.id}')">${esc(c.nombre)} <span style="opacity:.7">(${c.productos.length})</span></button>
-    `).join('');
-  }
-
-  function seleccionarCategoriaProducto(id) {
-    categoriaSeleccionadaId = id;
-    renderCatList();
-    renderProductosDeCategoria();
-  }
-
-  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-  function renderProductosDeCategoria() {
-    const wrap = document.getElementById('mp-productos-wrap');
-    const cat = categoriasProductos.find(c => c.id === categoriaSeleccionadaId);
-    if (!cat) { wrap.style.display = 'none'; return; }
-    wrap.style.display = '';
-    document.getElementById('mp-cat-titulo').textContent = cat.nombre;
-    const list = document.getElementById('mp-productos-list');
-    if (!cat.productos.length) {
-      list.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">Sin productos en esta categoría. Agrega uno abajo.</p>';
-      return;
-    }
-    list.innerHTML = cat.productos.map(p => `
-      <div style="display:flex;gap:10px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);align-items:flex-start;flex-wrap:wrap;">
-        ${p.foto ? `<img src="${esc(p.foto)}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">` : ''}
-        <div style="flex:1;min-width:220px;display:grid;grid-template-columns:1fr 100px 90px;gap:8px;">
-          <input class="form-input" value="${esc(p.nombre)}" id="mp-p-nombre-${p.id}" placeholder="Nombre">
-          <input class="form-input" type="number" step="0.01" min="0" value="${p.precio}" id="mp-p-precio-${p.id}" placeholder="Precio">
-          <select class="form-input" id="mp-p-itbms-${p.id}">
-            <option value="7"  ${p.itbms==7?'selected':''}>7%</option>
-            <option value="10" ${p.itbms==10?'selected':''}>10%</option>
-            <option value="0"  ${p.itbms==0?'selected':''}>Sin ITBMS</option>
-          </select>
-          <input class="form-input" style="grid-column:1/3" value="${esc(p.descripcion||'')}" id="mp-p-desc-${p.id}" placeholder="Descripción (opcional)">
-          <input class="form-input" value="${esc(p.foto||'')}" id="mp-p-foto-${p.id}" placeholder="URL de foto (opcional)">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn btn-accent btn-sm" onclick="guardarProductoModal('${p.id}')">💾</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarProductoModal('${p.id}')">🗑</button>
-        </div>
-      </div>`).join('');
-  }
-
-  async function crearCategoriaProducto() {
-    const nombre = prompt('Nombre de la nueva categoría (ej. "Cabaña Jaguar", "Tour en Kayak"):');
-    if (!nombre || !nombre.trim()) return;
-    try {
-      const { data, error } = await supa.from('product_categories').insert({ nombre: nombre.trim(), orden: categoriasProductos.length }).select().single();
-      if (error) throw error;
-      await loadCategoriasProductos();
-      categoriaSeleccionadaId = data.id;
-      renderCatList(); renderProductosDeCategoria();
-      showToast(`✅ Categoría "${nombre.trim()}" creada.`, 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al crear la categoría.', 'error'); }
-  }
-
-  async function editarCategoriaProducto() {
-    const cat = categoriasProductos.find(c => c.id === categoriaSeleccionadaId);
-    if (!cat) return;
-    const nombre = prompt('Nombre de la categoría:', cat.nombre);
-    if (!nombre || !nombre.trim()) return;
-    const descripcion = prompt('Descripción (se muestra en la página pública):', cat.descripcion||'') || '';
-    try {
-      const { error } = await supa.from('product_categories').update({ nombre: nombre.trim(), descripcion }).eq('id', cat.id);
-      if (error) throw error;
-      await loadCategoriasProductos();
-      showToast('✅ Categoría actualizada.', 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al actualizar la categoría.', 'error'); }
-  }
-
-  async function eliminarCategoriaProducto() {
-    const cat = categoriasProductos.find(c => c.id === categoriaSeleccionadaId);
-    if (!cat) return;
-    if (!confirm(`¿Eliminar la categoría "${cat.nombre}" y sus ${cat.productos.length} producto(s)? Esta acción no se puede deshacer.`)) return;
-    try {
-      const { error } = await supa.from('product_categories').delete().eq('id', cat.id);
-      if (error) throw error;
-      categoriaSeleccionadaId = null;
-      await loadCategoriasProductos();
-      showToast('Categoría eliminada.', 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al eliminar la categoría.', 'error'); }
-  }
-
-  async function agregarProductoModal() {
-    const cat = categoriasProductos.find(c => c.id === categoriaSeleccionadaId);
-    if (!cat) { showToast('Selecciona o crea una categoría primero.', 'error'); return; }
-    const nombre = document.getElementById('mp-new-nombre').value.trim();
-    const precio = parseFloat(document.getElementById('mp-new-precio').value) || 0;
-    const itbms  = parseInt(document.getElementById('mp-new-itbms').value) || 0;
-    const descripcion = document.getElementById('mp-new-desc').value.trim();
-    const foto  = document.getElementById('mp-new-foto').value.trim();
-    if (!nombre) { showToast('Ingresa el nombre del producto.', 'error'); return; }
-    try {
-      const { error } = await supa.from('products').insert({
-        categoria_id: cat.id, nombre, precio, itbms, descripcion, foto, orden: cat.productos.length,
-      });
-      if (error) throw error;
-      ['mp-new-nombre','mp-new-precio','mp-new-desc','mp-new-foto'].forEach(id => document.getElementById(id).value = '');
-      await loadCategoriasProductos();
-      showToast(`✅ "${nombre}" agregado.`, 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al agregar el producto.', 'error'); }
-  }
-
-  async function guardarProductoModal(id) {
-    const nombre = document.getElementById(`mp-p-nombre-${id}`).value.trim();
-    const precio = parseFloat(document.getElementById(`mp-p-precio-${id}`).value) || 0;
-    const itbms  = parseInt(document.getElementById(`mp-p-itbms-${id}`).value) || 0;
-    const descripcion = document.getElementById(`mp-p-desc-${id}`).value.trim();
-    const foto  = document.getElementById(`mp-p-foto-${id}`).value.trim();
-    if (!nombre) { showToast('El nombre no puede quedar vacío.', 'error'); return; }
-    try {
-      const { error } = await supa.from('products').update({ nombre, precio, itbms, descripcion, foto }).eq('id', id);
-      if (error) throw error;
-      await loadCategoriasProductos();
-      showToast('✅ Producto guardado.', 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al guardar el producto.', 'error'); }
-  }
-
-  async function eliminarProductoModal(id) {
-    if (!confirm('¿Eliminar este producto?')) return;
-    try {
-      const { error } = await supa.from('products').delete().eq('id', id);
-      if (error) throw error;
-      await loadCategoriasProductos();
-      showToast('Producto eliminado.', 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al eliminar el producto.', 'error'); }
-  }
-
-  document.getElementById('productos-ov')?.addEventListener('click', e => {
-    if (e.target === document.getElementById('productos-ov')) cerrarMisProductos();
-  });
 
   // ── Grupos desplegables del menú ──────────────────────────────────────────
   function toggleMenuGroup(id, btn) {
@@ -6258,6 +6044,7 @@
   // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN
   // ══════════════════════════════════════════════════════════════════════
   let _suscripData  = null;
+
   let _suscripTimer = null;
 
   // Mostrar el botón "Suscrip." solo para SuperAdmin

@@ -40,17 +40,43 @@
 
   (async function verificar() {
     try {
-      const { data: { session } } = await supaGuard.auth.getSession();
-      if (!session) { irAIndex(); return; }
+      // Espera a que supabase-js termine de leer la sesión guardada en
+      // localStorage antes de decidir que "no hay sesión". En una pestaña
+      // recién abierta (ej. al hacer clic en "Editor de Menú" o
+      // "Mis Productos"), getSession() a veces se resuelve antes de que
+      // el cliente termine de hidratarse — este pequeño margen evita un
+      // falso negativo que mandaría al admin de vuelta al index.
+      let { data: { session } } = await supaGuard.auth.getSession();
+      if (!session) {
+        session = await new Promise(resolve => {
+          const { data: sub } = supaGuard.auth.onAuthStateChange((event, s) => {
+            if (event === 'INITIAL_SESSION' || s) { sub.subscription.unsubscribe(); resolve(s); }
+          });
+          setTimeout(() => { sub.subscription.unsubscribe(); resolve(null); }, 1500);
+        });
+      }
+      if (!session) {
+        console.warn('admin-guard: no hay sesión activa de Supabase Auth — redirigiendo a index.');
+        irAIndex();
+        return;
+      }
 
       // Leemos el profile directamente de Supabase (protegido por RLS).
       // No depende de que el backend Flask esté desplegado — el backend
       // sigue protegiendo cada acción de escritura por su cuenta.
       const { data: { user } } = await supaGuard.auth.getUser();
       const { data: profile, error } = await supaGuard.from('profiles').select('*').eq('id', user.id).single();
-      if (error || !profile) { await supaGuard.auth.signOut(); irAIndex(); return; }
+      if (error || !profile) {
+        // OJO: ya no cerramos la sesión aquí — un error transitorio de red
+        // o de RLS no debería desloguear al admin de todas sus pestañas.
+        console.error('admin-guard: no se pudo leer el perfil de administrador.', error);
+        irAIndex();
+        return;
+      }
       if (profile.role !== 'admin' && profile.role !== 'superadmin') {
-        await supaGuard.auth.signOut(); irAIndex(); return;
+        console.warn('admin-guard: la cuenta autenticada no tiene rol admin/superadmin (role="'+profile.role+'").');
+        irAIndex();
+        return;
       }
 
       window.currentAdmin = {
