@@ -19,10 +19,21 @@
   if (!window.supabase) { console.error('site-nav.js requiere que @supabase/supabase-js esté cargado antes.'); return; }
   const supaNav = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ── Rutas relativas según la profundidad de la página actual ───────────
+  // ── Rutas relativas ──────────────────────────────────────────────────
+  // En vez de adivinar la profundidad a partir de location.pathname (que
+  // se rompe al abrir los archivos con file:// o si el sitio se sirve
+  // desde una subcarpeta), leemos el href que ya tiene el logo "🌿 Sanagua
+  // Lodge" de cada página — ese siempre apunta correctamente a index.html.
   function computeRoot() {
-    const path = window.location.pathname;
-    const dir  = path.substring(0, path.lastIndexOf('/'));
+    const logo = document.querySelector('nav .nav-logo, nav a[href$="index.html"]');
+    if (logo) {
+      const href = logo.getAttribute('href');
+      const idx  = href.lastIndexOf('index.html');
+      if (idx !== -1) return href.slice(0, idx);
+    }
+    // Fallback: calcular por profundidad de carpetas (menos confiable)
+    const path  = window.location.pathname;
+    const dir   = path.substring(0, path.lastIndexOf('/'));
     const parts = dir.split('/').filter(Boolean);
     return '../'.repeat(parts.length);
   }
