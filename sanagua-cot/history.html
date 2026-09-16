@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Historial — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/pdf-generators.js"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">📁 Historial de Cotizaciones</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">Historial de Cotizaciones</div>
+      <button class="btn btn-outline" onclick="loadHistory()">🔄 Actualizar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <input type="text" id="hist-search" placeholder="🔍 Nombre, cédula, #..." oninput="filterHistory()" style="grid-column:1/-1;">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Desde</label>
+        <input type="date" id="hist-date-from" onchange="filterHistory()">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Hasta</label>
+        <input type="date" id="hist-date-to" onchange="filterHistory()">
+      </div>
+      <select id="hist-estado" onchange="filterHistory()">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Aplazada">Aplazada</option>
+        <option value="Completada">Completada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      <select id="hist-plataforma" onchange="filterHistory()">
+        <option value="">Todas las plataformas</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Instagram">Instagram</option>
+        <option value="Booking">Booking</option>
+        <option value="Airbnb">Airbnb</option>
+      </select>
+      <select id="hist-categoria" onchange="filterHistory()" style="grid-column:1/-1;">
+        <option value="">Todas las categorías</option>
+        <option value="Pasadia Sencilla">Pasadia Sencilla</option>
+        <option value="Pasadia Completa">Pasadia Completa</option>
+        <option value="Camping Propio">Camping Propio</option>
+        <option value="Camping Suministro">Camping Suministro</option>
+        <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
+        <option value="Cabaña Ocelot">Cabaña Ocelot</option>
+        <option value="Cabaña Motmot">Cabaña Motmot</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn btn-outline btn-sm" onclick="clearHistFilters()">✕ Limpiar filtros</button>
+    </div>
+    <div id="history-container"><div class="empty-hist">Cargando historial...</div></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function showLoading(v){ document.getElementById('loading').classList.toggle('show', v); }
+  function hideLoading(){ showLoading(false); }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.className='toast', 3000);
+  }
+
+  // ── Empresa / logo (para el membrete del PDF) — versión ligera, sin
+  //    tocar formularios de Configuración que aquí no existen ───────────
+  let empresaData = { nombre:'Sanagua Lodge S.A.', ruc:'155761744-2-2025', tel:'+507 6166-0114', email:'sanagualodge@gmail.com' };
+  let logoBase64 = '';
+  async function loadEmpresa() {
+    try {
+      const { data } = await supa.from('company_settings').select('value').eq('key','empresa').maybeSingle();
+      if (data?.value?.nombre) empresaData = data.value;
+    } catch {}
+  }
+  async function loadLogo() {
+    try {
+      const { data } = await supa.from('company_settings').select('value').eq('key','logo').maybeSingle();
+      if (data?.value?.logo) logoBase64 = data.value.logo;
+    } catch {}
+  }
+
+  function _quoteRowToRecord(row) {
+    return {
+      ...row.data,
+      quote_num:          row.quote_num,
+      estado:             row.estado,
+      categoria:          row.categoria,
+      plataforma:         row.plataforma,
+      visit_date:         row.visit_date,
+      visit_date_end:     row.visit_date_end,
+      total:              Number(row.total)              || 0,
+      abono_pagado:       Number(row.abono_pagado)        || 0,
+      cancelacion_pagada: Number(row.cancelacion_pagada)  || 0,
+      created_at:         row.created_at,
+      updated_at:         row.updated_at,
+    };
+  }
+  function _eventRowToRecord(row) {
+    return {
+      ...row.data,
+      id:                 row.id,
+      type:               'event',
+      estado:             row.estado,
+      categoria:          row.categoria,
+      plataforma:         row.plataforma,
+      visit_date:         row.visit_date,
+      visit_date_end:     row.visit_date_end,
+      total:              Number(row.total) || 0,
+      created_at:          row.created_at,
+      updated_at:          row.updated_at,
+    };
+  }
+  async function sbListQuotes() {
+    const { data, error } = await supa.from('quotes').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListQuotes', error); return []; }
+    return data.map(_quoteRowToRecord);
+  }
+  async function sbListEvents() {
+    const { data, error } = await supa.from('events').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListEvents', error); return []; }
+    return data.map(_eventRowToRecord);
+  }
+
+  let allHistory = [];
+  let allEvents  = [];
+
+  async function loadHistory() {
+    document.getElementById('history-container').innerHTML='<div class="empty-hist">Cargando...</div>';
+    try {
+      const [newHist, newEvts] = await Promise.all([
+        sbListQuotes(),
+        sbListEvents(),
+      ]);
+      allHistory = newHist;
+      allEvents  = newEvts;
+      renderHistory(allHistory);
+    } catch {
+      document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>';
+    }
+  }
+
+  function getHistFilters() {
+    return {
+      txt:        (document.getElementById('hist-search')?.value     || '').toLowerCase().trim(),
+      dateFrom:    document.getElementById('hist-date-from')?.value  || '',
+      dateTo:      document.getElementById('hist-date-to')?.value    || '',
+      estado:      document.getElementById('hist-estado')?.value     || '',
+      plataforma:  document.getElementById('hist-plataforma')?.value || '',
+      categoria:   document.getElementById('hist-categoria')?.value  || '',
+    };
+  }
+
+  function matchesHistFilter(item, f) {
+    // Búsqueda de texto
+    if (f.txt) {
+      const name  = (item.client?.name  || '').toLowerCase();
+      const ruc   = (item.client?.ruc   || '').toLowerCase();
+      const phone = (item.client?.phone || '').toLowerCase();
+      const num   = String(item.quote_num || item.id || '').toLowerCase();
+      if (!name.includes(f.txt) && !ruc.includes(f.txt) &&
+          !phone.includes(f.txt) && !num.includes(f.txt)) return false;
+    }
+    // Rango de fechas (fecha de visita tiene prioridad, si no fecha de creación)
+    const fechaRef = (item.visit_date || item.date || item.created_at || '').slice(0,10);
+    if (f.dateFrom && fechaRef && fechaRef < f.dateFrom) return false;
+    if (f.dateTo   && fechaRef && fechaRef > f.dateTo)   return false;
+    // Estado
+    if (f.estado     && (item.estado     || 'Pendiente') !== f.estado)     return false;
+    if (f.plataforma && (item.plataforma || '')           !== f.plataforma) return false;
+    if (f.categoria  && (item.categoria  || '')           !== f.categoria)  return false;
+    return true;
+  }
+
+  function filterHistory() {
+    const f = getHistFilters();
+    const filteredQ = allHistory.filter(h => matchesHistFilter(h, f));
+    renderHistory(filteredQ, f);
+  }
+
+  function clearHistFilters() {
+    ['hist-search','hist-date-from','hist-date-to'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    ['hist-estado','hist-plataforma','hist-categoria'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    renderHistory(allHistory);
+  }
+
+  function estadoBadge(e) {
+    const map = {
+      'Pendiente':  'badge-pend',
+      'Confirmada': 'badge-ok',
+      'Cancelada':  'badge badge-no',
+      'Completada': 'badge-ok',
+    };
+    return `<span class="badge ${map[e]||'badge-no'}">${e||'Pendiente'}</span>`;
+  }
+
+  function renderHistory(listQ, filters) {
+    const el = document.getElementById('history-container');
+    // Aplicar el mismo filtro a los eventos si viene del filterHistory
+    const filteredEvts = filters
+      ? allEvents.filter(e => matchesHistFilter(e, filters))
+      : allEvents;
+
+    // Combinar cotizaciones + eventos ordenados por fecha de creación desc
+    const combined = [
+      ...listQ.map(q => ({...q, _type:'quote'})),
+      ...filteredEvts.map(e => ({...e, _type:'event'})),
+    ].sort((a,b) => {
+      // Ordenar por created_at primero, si no por date/visit_date
+      const da = (a.created_at || a.date || a.visit_date || '').slice(0,19);
+      const db = (b.created_at || b.date || b.visit_date || '').slice(0,19);
+      return db.localeCompare(da);
+    });
+
+    if (!combined.length) { el.innerHTML = '<div class="empty-hist">No hay registros aún.</div>'; return; }
+
+    const numLabel = item => item._type==='event'
+      ? `<span style="color:var(--purple);font-weight:700">Evento</span>`
+      : `<strong style="color:var(--accent)">#${item.quote_num}</strong>`;
+
+    const actionsCell = (item) => {
+      if (item._type==='event') return `
+        <div class="hist-actions">
+          <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')">🗑 Eliminar</button>
+        </div>`;
+      const qnum = item.quote_num;
+      return `
+        <div class="hist-actions">
+          <button class="btn btn-outline btn-sm" onclick="openEditByNum('${qnum}')">✏️ Editar</button>
+          <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${qnum}')">📄 PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="reGeneratePDFv2ByNum('${qnum}')" title="Formato nuevo (Pantone)">📄 PDF (v3)</button>
+          <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${qnum}')">📋 Conf.</button>
+        </div>`;
+    };
+
+    // Vista escritorio: tabla
+    const tableHTML = `
+      <div class="hist-table-wrap">
+      <table class="hist-table">
+        <thead><tr>
+          <th>#</th><th>Cliente</th><th>Categoría</th><th>Fecha visita</th><th>Total</th><th>Abono</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>
+          ${combined.map((item, i) => {
+            return `
+          <tr style="${item._type==='event'?'background:#fdf8ff':''}">
+            <td>${numLabel(item)}</td>
+            <td>
+              <div style="font-weight:600">${item.client?.name||'—'}</div>
+              <div style="font-size:.76rem;color:var(--ink-muted)">${item.client?.phone||item.client?.email||''}</div>
+            </td>
+            <td>
+              <div style="font-size:.8rem">${item.categoria||'—'}</div>
+              ${item.plataforma?`<div style="font-size:.72rem;color:var(--blue);font-weight:600">${item.plataforma}</div>`:''}
+            </td>
+            <td style="white-space:nowrap;font-size:.83rem">${item.visit_date ? fmtDateShort(item.visit_date) : '—'}</td>
+            <td>
+              <strong>$${Number(item.total||0).toFixed(2)}</strong>
+              <div style="font-size:.74rem;color:var(--blue)">50%: $${Number(item.abono_50||item.total*.5||0).toFixed(2)}</div>
+            </td>
+            <td>${Number(item.abono_pagado||0)>0
+              ? `<strong style="color:var(--success)">$${Number(item.abono_pagado).toFixed(2)}</strong>`
+              : '<span style="color:var(--ink-muted)">—</span>'}</td>
+            <td>${estadoBadge(item.estado)}</td>
+            <td>${actionsCell(item)}</td>
+          </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>`;
+
+    // Vista móvil: tarjetas
+    const cardsHTML = `
+      <div class="hist-cards">
+        ${combined.map((item, i) => {
+          const total      = Number(item.total||0);
+          const abono      = Number(item.abono_pagado||0);
+          const cancelacion= Number(item.cancelacion_pagada||0);
+          const recibido   = abono + cancelacion;
+          const saldo      = Math.max(0, total - recibido);
+          const isEv       = item._type === 'event';
+          return `
+          <div class="hist-card" style="${isEv?'border-color:var(--purple-light);background:#fdf8ff':''}">
+            <div class="hist-card-head">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  ${isEv
+                    ? '<span style="color:var(--purple);font-weight:700;font-size:.9rem">✦ Evento</span>'
+                    : `<span class="hist-card-num">#${item.quote_num}</span>`}
+                  ${estadoBadge(item.estado)}
+                </div>
+                <div class="hist-card-name">${item.client?.name||'—'}</div>
+                ${item.categoria ? `<div class="hist-card-cat">${item.categoria}</div>` : ''}
+                ${item.plataforma ? `<div style="font-size:.72rem;color:var(--blue);font-weight:600">${item.plataforma}</div>` : ''}
+                <div class="hist-card-meta">
+                  ${item.visit_date ? `📅 ${fmtDateShort(item.visit_date)}` : ''}
+                  ${item.client?.phone ? ` · ${item.client.phone}` : ''}
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div class="hist-card-total">$${total.toFixed(2)}</div>
+                <div style="font-size:.74rem;color:var(--blue);font-weight:600">Recibido: $${recibido.toFixed(2)}</div>
+                <div style="font-size:.74rem;color:${saldo===0?'var(--success)':'var(--accent)'};font-weight:600">Saldo: $${saldo.toFixed(2)}</div>
+              </div>
+            </div>
+            <div class="hist-card-actions">
+              ${isEv ? `
+                <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')">🗑 Eliminar</button>
+              ` : `
+                <button class="btn btn-outline btn-sm" onclick="openEditByNum('${item.quote_num}')">✏️ Editar</button>
+                <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${item.quote_num}')">📄 PDF</button>
+                <button class="btn btn-outline btn-sm" onclick="reGeneratePDFv2ByNum('${item.quote_num}')" title="Formato nuevo (Pantone)">📄 PDF (v3)</button>
+                <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${item.quote_num}')">📋 Confirmación</button>
+              `}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    el.innerHTML = tableHTML + cardsHTML;
+    // Aplicar permisos de viewer después de renderizar
+    // (sin permisos por fila en esta página independiente)
+  }
+
+  // ── MODAL EDICIÓN ────────────────────────────────────────────────────────────
+
+  // ── Editar: se abre en achive.html (el editor completo vive ahí) ──────
+  function openEditByNum(qnum) {
+    window.open(`achive.html?edit=${encodeURIComponent(qnum)}`, '_blank');
+  }
+  function openEditEvent(evId) {
+    window.open(`achive.html?editEvent=${encodeURIComponent(evId)}`, '_blank');
+  }
+
+  async function deleteEventById(evId) {
+    const ev = allEvents.find(e => e.id === evId);
+    if (!ev) { showToast('Evento no encontrado.', 'error'); return; }
+    if (!confirm(`¿Eliminar el evento de "${ev.client?.name}"?`)) return;
+    showLoading(true);
+    try {
+      const { error } = await supa.from('events').delete().eq('id', evId);
+      if (error) throw error;
+      allEvents = allEvents.filter(e => e.id !== evId);
+      renderHistory(allHistory);
+      showToast('Evento eliminado.', 'success');
+    } catch { showToast('❌ Error al eliminar.', 'error'); }
+    finally { hideLoading(); }
+  }
+
+  async function reGeneratePDFByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) await reGeneratePDF(idx);
+  }
+  async function reGeneratePDFv2ByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) await reGeneratePDFv2(idx);
+  }
+  async function quickExportConfByNum(qnum) {
+    const idx = allHistory.findIndex(q => String(q.quote_num) === String(qnum));
+    if (idx >= 0) await quickExportConfirmation(idx);
+  }
+
+  async function quickExportConfirmation(idx) {
+    const q = allHistory[idx];
+    if (!q) return;
+    const num = String(q.quote_num).padStart(4,'0');
+    showLoading(true);
+    try {
+      generatePDFlocal({...q, logo: logoBase64||null, empresa: empresaData}, num, 'confirmacion');
+      showToast(`✅ Confirmación #${num} exportada`, 'success');
+    } catch(e) { showToast('❌ Error al generar la confirmación.','error'); }
+    finally { showLoading(false); }
+  }
+
+  async function reGeneratePDF(idx) {
+    const q = allHistory[idx];
+    if (!q) return;
+    const num = String(q.quote_num).padStart(4,'0');
+    showLoading(true);
+    try {
+      generatePDFlocal({...q, logo: logoBase64||null, empresa: empresaData}, num, 'cotizacion');
+      showToast(`✅ Cotización #${num} regenerada`, 'success');
+    } catch(e) { showToast('❌ Error al regenerar.','error'); }
+    finally { showLoading(false); }
+  }
+
+  async function reGeneratePDFv2(idx) {
+    const q = allHistory[idx];
+    if (!q) return;
+    const num = String(q.quote_num).padStart(4,'0');
+    showLoading(true);
+    try {
+      generatePDFlocalV2({...q, logo: logoBase64||null, empresa: empresaData}, num, 'cotizacion');
+      showToast(`✅ Cotización #${num} regenerada (formato nuevo)`, 'success');
+    } catch(e) { showToast('❌ Error al regenerar.','error'); }
+    finally { showLoading(false); }
+  }
+
+  // ── Arranque ────────────────────────────────────────────────────────
+  document.addEventListener('admin-ready', async (e) => {
+    const perms = e.detail?.permisos || {};
+    const role  = e.detail?.role;
+    if (role !== 'superadmin' && role !== 'desarrollador' && !perms.ver_historial) {
+      document.body.innerHTML = '<div style="padding:60px;text-align:center;font-family:sans-serif;color:#888">No tienes permiso para ver el historial.</div>';
+      return;
+    }
+    await Promise.all([loadEmpresa(), loadLogo()]);
+    await loadHistory();
+  });
+</script>
+</body>
+</html>

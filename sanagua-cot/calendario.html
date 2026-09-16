@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Calendario — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/pdf-generators.js"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">📅 Calendario</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="card">
+    <div class="cal-toolbar">
+      <div class="cal-nav-row">
+        <button class="cal-nav-btn" onclick="calNav(-1)">&#8249;</button>
+        <span id="cal-title" class="cal-title"></span>
+        <button class="cal-nav-btn" onclick="calNav(1)">&#8250;</button>
+        <button class="cal-nav-btn" onclick="calToday()" style="font-size:.75rem;padding:5px 10px;">Hoy</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-accent btn-sm" onclick="openNewEvent()" style="font-size:.82rem;">+ Nuevo evento</button>
+        <div class="cal-view-btns">
+          <button class="cal-view-btn active" onclick="setCalView('mes',this)">Mes</button>
+          <button class="cal-view-btn" onclick="setCalView('semana',this)">Semana</button>
+          <button class="cal-view-btn" onclick="setCalView('dia',this)">Día</button>
+        </div>
+      </div>
+    </div>
+    <div class="cal-legend">
+      <span><span class="cal-legend-dot" style="background:#aaa"></span>Pendiente</span>
+      <span><span class="cal-legend-dot" style="background:#7fa0ac"></span>Confirmada (color categoría)</span>
+      <span><span class="cal-legend-dot" style="background:#2d7a4f"></span>Completada</span>
+      <span><span class="cal-legend-dot" style="background:#e09000"></span>Aplazada</span>
+      <span><span class="cal-legend-dot" style="background:#888"></span>Cancelada</span>
+      <span><span class="cal-legend-dot" style="background:#7fa0ac;outline:2px dashed #7fa0ac;outline-offset:2px;border-radius:50%"></span>Evento manual ✦</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Filtrar:</span>
+      <select id="cal-filter-estado" onchange="renderCalendario()" style="font-size:.82rem;padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Aplazada">Aplazada</option>
+        <option value="Completada">Completada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      <select id="cal-filter-categoria" onchange="renderCalendario()" style="font-size:.82rem;padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);">
+        <option value="">Todas las categorías</option>
+        <option value="Pasadia Sencilla">Pasadia Sencilla</option>
+        <option value="Pasadia Completa">Pasadia Completa</option>
+        <option value="Camping Propio">Camping Propio</option>
+        <option value="Camping Suministro">Camping Suministro</option>
+        <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
+        <option value="Cabaña Ocelot">Cabaña Ocelot</option>
+        <option value="Cabaña Motmot">Cabaña Motmot</option>
+      </select>
+      <button class="cal-nav-btn" onclick="clearCalFilters()" style="font-size:.75rem;padding:4px 10px;color:var(--muted);">✕ Limpiar</button>
+    </div>
+    <div id="cal-body"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function showLoading(v){ document.getElementById('loading').classList.toggle('show', v); }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.className='toast', 3000);
+  }
+
+  // ── Crear/editar sigue viviendo en achive.html — aquí solo se navega ────
+  function openEdit(idx) {
+    const q = allHistory[idx];
+    if (q) window.open(`achive.html?edit=${encodeURIComponent(q.quote_num)}`, '_blank');
+  }
+  function openEditEvent(evId) {
+    window.open(`achive.html?editEvent=${encodeURIComponent(evId)}`, '_blank');
+  }
+  function openNewEvent(prefillDate) {
+    window.open(`achive.html?newEvent=${encodeURIComponent(prefillDate || localDateStr(calDate))}`, '_blank');
+  }
+
+  function _quoteRowToRecord(row) {
+    return {
+      ...row.data, quote_num: row.quote_num, estado: row.estado, categoria: row.categoria,
+      plataforma: row.plataforma, visit_date: row.visit_date, visit_date_end: row.visit_date_end,
+      total: Number(row.total)||0, abono_pagado: Number(row.abono_pagado)||0,
+      cancelacion_pagada: Number(row.cancelacion_pagada)||0, created_at: row.created_at, updated_at: row.updated_at,
+    };
+  }
+  function _eventRowToRecord(row) {
+    return {
+      ...row.data, id: row.id, type: 'event', estado: row.estado, categoria: row.categoria,
+      plataforma: row.plataforma, visit_date: row.visit_date, visit_date_end: row.visit_date_end,
+      total: Number(row.total)||0, created_at: row.created_at, updated_at: row.updated_at,
+    };
+  }
+  async function sbListQuotes() {
+    const { data, error } = await supa.from('quotes').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListQuotes', error); return []; }
+    return data.map(_quoteRowToRecord);
+  }
+  async function sbListEvents() {
+    const { data, error } = await supa.from('events').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListEvents', error); return []; }
+    return data.map(_eventRowToRecord);
+  }
+
+  let allHistory = [];
+  let allEvents  = [];
+  async function loadHistory() {
+    try { allHistory = await sbListQuotes(); } catch { allHistory = []; }
+  }
+  async function loadEvents() {
+    try { allEvents = await sbListEvents(); } catch { allEvents = []; }
+  }
+
+  function localDateStr(date) {
+    const d = date || new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function calcNights(startStr, endStr) {
+    if (!startStr || !endStr) return 0;
+    const s = new Date(startStr + 'T12:00:00');
+    const e = new Date(endStr   + 'T12:00:00');
+    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  }
+  function nightsText(n) {
+    if (n === 0) return '';
+    if (n === 1) return '1 noche';
+    return `${n} noches`;
+  }
+
+  // Categorías que bloquean por noches (el día de salida queda libre)
+  const CABANAS  = ['Cabaña Yaguarundi','Cabaña Ocelot','Cabaña Motmot'];
+  const CAMPINGS = ['Camping Propio','Camping Suministro'];
+  const BLOQUEA_NOCHES = [...CABANAS, ...CAMPINGS];
+  // Pasadías bloquean solo el día de inicio (sin fecha fin)
+  const PASADIAS = ['Pasadia Sencilla','Pasadia Completa'];
+  const BLOQUEA_DIA    = [...PASADIAS];
+
+  // Convierte una fecha string a número de días desde epoch para comparar
+  function toDay(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T12:00:00');
+    return Math.floor(d.getTime() / 86400000);
+  }
+
+  // Devuelve el rango de días OCUPADOS [firstDay, lastDay] inclusive
+  // Para noches: ocupa desde start hasta end-1 (salida libre)
+  // Para pasadías: ocupa solo start
+  function occupiedRange(item) {
+    const start = toDay(item.visit_date);
+    if (start === null) return null;
+    const cat = item.categoria || '';
+    if (BLOQUEA_NOCHES.includes(cat)) {
+      // Si hay fecha fin, el último día ocupado es end-1
+      const end = item.visit_date_end ? toDay(item.visit_date_end) - 1 : start;
+      return { first: start, last: Math.max(start, end) };
+    }
+    // Pasadías y sin categoría: solo el día de inicio
+    return { first: start, last: start };
+  }
+
+  let calView = 'mes';
+  let calDate = new Date();
+
+  const CAL_MESES   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const CAL_DIAS_C  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const CAL_DIAS_L  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+  // Colores CSS por categoría (solo para estado Confirmada)
+  const CAT_CLASS = {
+    'Pasadia Sencilla':   'ev-ps',
+    'Pasadia Completa':   'ev-pc',
+    'Camping Propio':     'ev-cp',
+    'Camping Suministro': 'ev-cs',
+    'Cabaña Yaguarundi':  'ev-cy',
+    'Cabaña Ocelot':      'ev-co',
+    'Cabaña Motmot':      'ev-cm',
+  };
+
+  // Colores del dot en vista día por estado/categoría
+  const CAT_DOT_COLOR = {
+    'Pasadia Sencilla':   '#b45309',
+    'Pasadia Completa':   '#2d7a4f',
+    'Camping Propio':     '#1a5fa8',
+    'Camping Suministro': '#6b3fa0',
+    'Cabaña Yaguarundi':  '#d97706',
+    'Cabaña Ocelot':      '#c62828',
+    'Cabaña Motmot':      '#00695c',
+  };
+
+  function evClass(q) {
+    const e = q.estado || 'Pendiente';
+    if (e === 'Pendiente')  return 'ev-pendiente';
+    if (e === 'Cancelada')  return 'ev-cancelada';
+    if (e === 'Completada') return 'ev-completada';
+    if (e === 'Aplazada')   return 'ev-aplazada';
+    // Confirmada → color de categoría
+    return CAT_CLASS[q.categoria] || 'ev-def';
+  }
+
+  function dotColor(q) {
+    const e = q.estado || 'Pendiente';
+    if (e === 'Pendiente')  return '#aaa';
+    if (e === 'Cancelada')  return '#888';
+    if (e === 'Completada') return '#2d7a4f';
+    if (e === 'Aplazada')   return '#e09000';
+    return CAT_DOT_COLOR[q.categoria] || '#7fa0ac';
+  }
+
+  function calEventLabel(q) {
+    const cat  = q.categoria || 'Sin categoría';
+    const name = q.client?.name || '—';
+    const num  = String(q.quote_num).padStart(4,'0');
+    const n    = calcNights(q.visit_date, q.visit_date_end);
+    const suffix = n > 0 ? ` (${nightsText(n)})` : '';
+    return `${cat} - ${name} - #${num}${suffix}`;
+  }
+
+  function quotesForDate(dateStr) {
+    return allHistory.filter(q =>
+      q.visit_date && q.visit_date.slice(0,10) === dateStr
+    );
+  }
+
+  function calEventHTML(q) {
+    const cls   = evClass(q);
+    const idx   = allHistory.indexOf(q);
+    const label = calEventLabel(q);
+    return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openEdit(${idx})" title="${label}">${label}</div>`;
+  }
+
+  // Navegar al día al hacer click en una celda
+  function calGoDay(dateStr) {
+    calDate = new Date(dateStr + 'T12:00:00');
+    // Activar botón "Día" visualmente
+    document.querySelectorAll('.cal-view-btn').forEach((b,i) => {
+      b.classList.toggle('active', i === 2);
+    });
+    calView = 'dia';
+    renderCalendario();
+  }
+
+  function getCalFilters() {
+    return {
+      estado:    document.getElementById('cal-filter-estado')?.value    || '',
+      categoria: document.getElementById('cal-filter-categoria')?.value || '',
+    };
+  }
+
+  function clearCalFilters() {
+    document.getElementById('cal-filter-estado').value    = '';
+    document.getElementById('cal-filter-categoria').value = '';
+    renderCalendario();
+  }
+
+  function setCalView(v, btn) {
+    calView = v;
+    if (btn) {
+      document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    renderCalendario();
+  }
+
+  function calNav(dir) {
+    if (calView === 'mes') {
+      calDate = new Date(calDate.getFullYear(), calDate.getMonth() + dir, 1);
+    } else if (calView === 'semana') {
+      calDate = new Date(calDate); calDate.setDate(calDate.getDate() + dir * 7);
+    } else {
+      calDate = new Date(calDate); calDate.setDate(calDate.getDate() + dir);
+    }
+    renderCalendario();
+  }
+
+  function calToday() { calDate = new Date(); renderCalendario(); }
+
+  function renderCalendario() {
+    buildCalIndex(); // precalcular índice una sola vez
+    if (calView === 'mes')         renderCalMes();
+    else if (calView === 'semana') renderCalSemana();
+    else                           renderCalDia();
+  }
+
+  // ── VISTA MES ─────────────────────────────────────────────────────────
+  function renderCalMes() {
+    const y = calDate.getFullYear(), m = calDate.getMonth();
+    document.getElementById('cal-title').textContent = `${CAL_MESES[m]} ${y}`;
+    const todayStr = localDateStr();
+    const firstDow = new Date(y, m, 1).getDay();
+    const daysInM  = new Date(y, m+1, 0).getDate();
+    const daysInP  = new Date(y, m, 0).getDate();
+
+    let html = `<table class="cal-grid"><thead><tr>`;
+    CAL_DIAS_C.forEach(d => html += `<th>${d}</th>`);
+    html += `</tr></thead><tbody><tr>`;
+
+    let cell = 0;
+    for (let i = firstDow - 1; i >= 0; i--) {
+      html += `<td class="cal-other-month"><span class="cal-day-num">${daysInP - i}</span></td>`;
+      cell++;
+    }
+    for (let d = 1; d <= daysInM; d++) {
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isT    = ds === todayStr;
+      const cerrado = esDiaCerrado(ds);
+      const esExcep = EXCEPCIONES_ABIERTAS.includes(ds);
+      const evts   = allItemsForDate(ds);
+      const tdCls  = cerrado ? 'cal-cerrado' : (esExcep ? 'cal-excepcion' : '');
+      html += `<td class="${tdCls}" onclick="calGoDay('${ds}')">`;
+      html += `<span class="cal-day-num${isT?' is-today':''}">${d}</span>`;
+      if (cerrado) html += `<div class="cal-cerrado-label">Cerrado</div>`;
+      if (esExcep) html += `<div class="cal-cerrado-label" style="color:var(--accent);opacity:1">✓ Abierto</div>`;
+      evts.forEach(q => { html += itemEventHTML(q); });
+      html += `</td>`;
+      cell++;
+      if (cell % 7 === 0 && d < daysInM) html += `</tr><tr>`;
+    }
+    const rem = (7 - cell % 7) % 7;
+    for (let d = 1; d <= rem; d++) {
+      html += `<td class="cal-other-month"><span class="cal-day-num">${d}</span></td>`;
+    }
+    html += `</tr></tbody></table>`;
+    document.getElementById('cal-body').innerHTML = html;
+  }
+
+  // ── VISTA SEMANA ──────────────────────────────────────────────────────
+  function renderCalSemana() {
+    const dow = calDate.getDay();
+    const sun = new Date(calDate); sun.setDate(calDate.getDate() - dow);
+    const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+    const fmt = d => `${d.getDate()} ${CAL_MESES[d.getMonth()].slice(0,3)}`;
+    document.getElementById('cal-title').textContent =
+      `${fmt(sun)} – ${fmt(sat)}, ${sat.getFullYear()}`;
+    const todayStr = localDateStr();
+
+    let html = `<div style="overflow-x:auto"><table class="cal-week"><thead><tr>`;
+    for (let i = 0; i < 7; i++) {
+      const d  = new Date(sun); d.setDate(sun.getDate() + i);
+      const ds = localDateStr(d);
+      const isT = ds === todayStr;
+      html += `<th onclick="calGoDay('${ds}')" style="${isT?'color:var(--accent)':''}">
+        ${CAL_DIAS_C[i]}<br><span style="font-size:.95rem;font-weight:700">${d.getDate()}</span>
+      </th>`;
+    }
+    html += `</tr></thead><tbody><tr>`;
+    for (let i = 0; i < 7; i++) {
+      const d  = new Date(sun); d.setDate(sun.getDate() + i);
+      const ds = localDateStr(d);
+      const isT = ds === todayStr;
+      const evts   = allItemsForDate(ds);
+      const cerrado = esDiaCerrado(ds);
+      const esExcep = EXCEPCIONES_ABIERTAS.includes(ds);
+      const tdCls   = [isT?'is-today-col':'', cerrado?'cal-cerrado':'', esExcep?'cal-excepcion':''].filter(Boolean).join(' ');
+      html += `<td class="${tdCls}">`;
+      if (cerrado) html += `<div class="cal-cerrado-label">Cerrado</div>`;
+      if (esExcep) html += `<div class="cal-cerrado-label" style="color:var(--accent);opacity:1">✓ Abierto</div>`;
+      evts.forEach(q => { html += itemEventHTML(q); });
+      html += `</td>`;
+    }
+    html += `</tr></tbody></table></div>`;
+    document.getElementById('cal-body').innerHTML = html;
+  }
+
+  // ── VISTA DÍA ─────────────────────────────────────────────────────────
+  function renderCalDia() {
+    const ds = localDateStr(calDate);
+    document.getElementById('cal-title').textContent =
+      `${CAL_DIAS_L[calDate.getDay()]}, ${calDate.getDate()} de ${CAL_MESES[calDate.getMonth()]} de ${calDate.getFullYear()}`;
+    const evts = allItemsForDate(ds);
+
+    if (!evts.length) {
+      document.getElementById('cal-body').innerHTML =
+        `<div class="cal-empty-day">📭 Sin reservaciones para este día.</div>`;
+      return;
+    }
+
+    let html = `<div class="cal-dia-wrap">
+      <div class="cal-dia-header">${evts.length} reservación${evts.length>1?'es':''} para este día</div>`;
+    evts.forEach(q => {
+      const idx   = allHistory.indexOf(q);
+      const label = calEventLabel(q);
+      const total      = q.total || 0;
+      const abono      = q.abono_pagado || 0;
+      const cancelacion= q.cancelacion_pagada || 0;
+      const recibido   = abono + cancelacion;
+      const saldo      = Math.max(0, total - recibido);
+      const dc    = dotColor(q);
+      const estado = q.estado || 'Pendiente';
+      const estadoBadge = estado === 'Confirmada'  ? `<span class="badge s-conf">${estado}</span>`
+                        : estado === 'Completada'  ? `<span class="badge" style="background:#e8f5ee;color:#2d7a4f">${estado}</span>`
+                        : estado === 'Aplazada'    ? `<span class="badge" style="background:#fff3e0;color:#c07000">${estado}</span>`
+                        : estado === 'Cancelada'   ? `<span class="badge" style="background:#ddd;color:#444">${estado}</span>`
+                        : `<span class="badge s-pend">${estado}</span>`;
+      html += `
+        <div class="cal-dia-item" onclick="openEdit(${idx})">
+          <div class="cal-dia-dot" style="background:${dc}"></div>
+          <div class="cal-dia-info">
+            <div class="cal-dia-name">${label}</div>
+            <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
+            <div class="cal-dia-sub">
+              ${q.visit_date_end && q.visit_date_end !== q.visit_date
+                ? `📅 Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · 🌙 ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
+                : q.visit_date ? `📅 ${fmtDateShort(q.visit_date)}` : ''}
+            </div>
+            <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
+          </div>
+          ${estadoBadge}
+        </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('cal-body').innerHTML = html;
+  }
+
+
+  let DIAS_CERRADOS    = [2, 3]; // Martes y Miércoles por defecto
+  let EXCEPCIONES_ABIERTAS = []; // Fechas específicas habilitadas aunque sean día cerrado
+  // Se guardan en Data/json/horarios.json
+
+  function esDiaCerrado(ds) {
+    if (EXCEPCIONES_ABIERTAS.includes(ds)) return false; // excepción abierta
+    const dow = new Date(ds + 'T12:00:00').getDay();
+    return DIAS_CERRADOS.includes(dow);
+  }
+
+  async function loadHorarios() {
+    try {
+      const { data, error } = await supa.from('camping_config').select('value').eq('key', 'horarios').single();
+      if (error) throw error;
+      DIAS_CERRADOS        = data?.value?.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS = data?.value?.excepciones_abiertas || [];
+    } catch (e) { console.warn('loadHorarios', e); /* usar defaults */ }
+  }
+
+  async function saveHorarios() {
+    try {
+      const { error } = await supa.from('camping_config').upsert({
+        key: 'horarios',
+        value: { dias_cerrados: DIAS_CERRADOS, excepciones_abiertas: EXCEPCIONES_ABIERTAS },
+      }, { onConflict: 'key' });
+      if (error) throw error;
+      showToast('✅ Horarios guardados correctamente.', 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar horarios en Supabase.', 'error'); }
+  }
+
+  function buildCalIndex() {
+    const f = getCalFilters();
+    _calIndex = {};
+    const passFilter = item => {
+      if (f.estado    && (item.estado    || 'Pendiente') !== f.estado)    return false;
+      if (f.categoria && (item.categoria || '')          !== f.categoria) return false;
+      return true;
+    };
+    const all = [
+      ...allHistory.filter(passFilter),
+      ...allEvents.filter(passFilter),
+    ];
+
+    all.forEach(item => {
+      if (!item.visit_date) {
+  
+        return;
+      }
+      // Usar occupiedRange para respetar la lógica de cada categoría
+      const range = occupiedRange(item);
+      if (!range) return;
+      // Generar array de fechas ocupadas desde first hasta last
+      const cur = new Date(item.visit_date + 'T12:00:00');
+      const last = new Date(cur); last.setDate(cur.getDate() + (range.last - range.first));
+      let safety = 0;
+      const tmp = new Date(cur);
+      while (tmp <= last && safety < 60) {
+        const ds = localDateStr(tmp);
+        if (!_calIndex[ds]) _calIndex[ds] = [];
+        _calIndex[ds].push(item);
+        tmp.setDate(tmp.getDate() + 1);
+        safety++;
+      }
+    });
+
+  }
+
+  // Ahora simplemente consulta el índice — O(1) por celda
+  function allItemsForDate(dateStr) {
+    return _calIndex[dateStr] || [];
+  }
+
+  function isEvent(item) { return item.type === 'event'; }
+
+  function itemEventHTML(item) {
+    const cls   = evClass(item);
+    const label = isEvent(item)
+      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} ✦`
+      : calEventLabel(item);
+    if (isEvent(item)) {
+      return `<div class="cal-event ${cls}" style="border-style:dashed;opacity:.9"
+        onclick="event.stopPropagation();openEditEvent('${item.id}')"
+        title="${label} (Evento manual)">${label}</div>`;
+    }
+    const idx = allHistory.indexOf(item);
+    return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openEdit(${idx})"
+      title="${label}">${label}</div>`;
+  }
+
+
+  document.addEventListener('admin-ready', async (e) => {
+    const perms = e.detail?.permisos || {};
+    const role  = e.detail?.role;
+    if (role !== 'superadmin' && role !== 'desarrollador' && !perms.ver_calendario && perms.ver_calendario !== undefined) {
+      // (si no existe el permiso ver_calendario en este perfil, se deja pasar
+      // por compatibilidad — solo se bloquea si viene explícitamente en false)
+    }
+    showLoading(true);
+    await Promise.all([loadHistory(), loadEvents(), loadHorarios()]);
+    buildCalIndex();
+    renderCalendario();
+    showLoading(false);
+  });
+</script>
+</body>
+</html>

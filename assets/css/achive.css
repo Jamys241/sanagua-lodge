@@ -175,6 +175,7 @@
     .hist-table { width:100%; border-collapse:collapse; font-size:.86rem; }
     .hist-table th { background:var(--ink); color:white; padding:10px 12px; text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; }
     .hist-table td { padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .hist-table th:last-child, .hist-table td:last-child { min-width:230px; }
     .hist-table tr:last-child td { border-bottom:none; }
     .hist-table tr:hover td { background:#fafaf8; }
     /* Tabla visible en desktop, oculta en móvil */
@@ -194,7 +195,7 @@
       .hist-table-wrap { display:none; }
       .hist-cards { display:block; }
     }
-    .hist-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .hist-actions { display:flex; gap:6px; flex-wrap:wrap; min-width:200px; }
     .btn-copy { background:var(--bg); border:1.5px solid var(--border); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:.85rem; transition:background .15s,border-color .15s; flex-shrink:0; }
     .btn-copy:hover { background:var(--accent-light); border-color:var(--accent); }
     .btn-copy.copied { background:var(--success-light); border-color:var(--success); }
