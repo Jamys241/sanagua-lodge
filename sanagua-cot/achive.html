@@ -37,6 +37,8 @@
 <div class="side-menu" id="side-menu">
   <nav>
 
+    <button onclick="switchTab('dashboard');closeMenu()" style="font-weight:700">🏠 Dashboard</button>
+
     <!-- Reservas -->
     <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
       📅 Reservas <span class="menu-group-arrow">▼</span>
@@ -661,8 +663,51 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════ DASHBOARD -->
+<div id="tab-dashboard" class="tab-panel active">
+<div class="container">
+  <div class="card">
+    <div class="card-title" id="dash-saludo">👋 Bienvenido/a</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:22px;">Este es el resumen de tu operación hoy.</p>
+
+    <div class="dash-stats">
+      <div class="dash-stat-card" onclick="switchTab('solicitudes')" style="cursor:pointer">
+        <div class="dash-stat-icon">📬</div>
+        <div class="dash-stat-num" id="dash-pendientes">—</div>
+        <div class="dash-stat-lbl">Solicitudes pendientes</div>
+      </div>
+      <div class="dash-stat-card" onclick="switchTab('calendario')" style="cursor:pointer">
+        <div class="dash-stat-icon">📅</div>
+        <div class="dash-stat-num" id="dash-hoy">—</div>
+        <div class="dash-stat-lbl">Reservas activas hoy</div>
+      </div>
+      <div class="dash-stat-card" onclick="switchTab('historial')" style="cursor:pointer">
+        <div class="dash-stat-icon">📁</div>
+        <div class="dash-stat-num" id="dash-mes">—</div>
+        <div class="dash-stat-lbl">Cotizaciones este mes</div>
+      </div>
+      <div class="dash-stat-card" onclick="switchTab('resumen')" style="cursor:pointer">
+        <div class="dash-stat-icon">💰</div>
+        <div class="dash-stat-num" id="dash-ingresos">—</div>
+        <div class="dash-stat-lbl">Ingresos confirmados (mes)</div>
+      </div>
+    </div>
+
+    <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 12px;">Accesos rápidos</div>
+    <div class="dash-quicklinks">
+      <button class="dash-qlink" onclick="switchTab('nueva')">📋<span>Nueva Cotización</span></button>
+      <button class="dash-qlink" onclick="switchTab('calendario')">📅<span>Calendario</span></button>
+      <button class="dash-qlink" onclick="switchTab('solicitudes')">📬<span>Solicitudes</span></button>
+      <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')">🛎️<span>Mis Servicios</span></button>
+      <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')">🍽️<span>Editor de Menú</span></button>
+      <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')">👁️<span>Ver como usuario</span></button>
+    </div>
+  </div>
+</div>
+</div><!-- /tab-dashboard -->
+
 <!-- ═══════════════════════════════════════════════════ CONFIGURACIÓN -->
-<div id="tab-calendario" class="tab-panel active">
+<div id="tab-calendario" class="tab-panel">
 <div class="container">
   <div class="card">
     <div class="cal-toolbar">
@@ -1742,6 +1787,7 @@
     // Cargar datos
     (async () => {
       aplicarPermisos();
+      loadDashboard();
       try { await loadHorarios(); } catch(e) { console.warn('Horarios load error:', e); }
       try {
         await Promise.all([loadCounter(), loadCategoriasProductos(), loadLogo(), loadEmpresa(), loadEvents()]);
@@ -2045,6 +2091,28 @@
     if (e.key === 'Escape') { closeMenu(); closeModal(); }
   });
 
+  async function loadDashboard() {
+    const nombre = currentUser?.name || currentUser?.email || '';
+    document.getElementById('dash-saludo').textContent = `👋 Bienvenido/a${nombre ? ', ' + nombre.split(' ')[0] : ''}`;
+
+    try {
+      const hoy = new Date(); const hoyStr = hoy.toISOString().slice(0,10);
+      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+
+      const [{ count: pendCount }, { data: activas }, { data: cotizMes }] = await Promise.all([
+        supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+        supa.from('quotes').select('total').eq('estado', 'Confirmada').lte('visit_date', hoyStr).gte('visit_date_end', hoyStr),
+        supa.from('quotes').select('total').gte('created_at', inicioMes),
+      ]);
+
+      document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
+      document.getElementById('dash-hoy').textContent = (activas || []).length;
+      document.getElementById('dash-mes').textContent = (cotizMes || []).length;
+      const ingresos = (cotizMes || []).reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
+      document.getElementById('dash-ingresos').textContent = `$${ingresos.toFixed(0)}`;
+    } catch (e) { console.warn('loadDashboard', e); }
+  }
+
   function switchTab(name) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-'+name).classList.add('active');
@@ -2058,6 +2126,7 @@
         )
       );
     });
+    if (name === 'dashboard') loadDashboard();
     if (name === 'historial') loadHistory();
     if (name === 'resumen')   loadHistory().then(() => renderResumen());
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());

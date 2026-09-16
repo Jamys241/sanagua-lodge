@@ -66,7 +66,7 @@
   <div id="nav-user-menu" style="display:none;">
     <div class="nav-divider"></div>
     <div class="nav-section-label">Mi cuenta</div>
-    <button class="nav-item" onclick="openUserPanel();closeNav()"><span class="nav-icon">👤</span> Mi perfil y reservas</button>
+    <a class="nav-item" href="assets/pages/perfil.html"><span class="nav-icon">👤</span> Mi perfil y reservas</a>
     <button class="nav-item" onclick="cerrarSesionPublic();closeNav()" style="color:#e88;"><span class="nav-icon">🚪</span> Cerrar sesión</button>
   </div>
 
@@ -669,6 +669,30 @@
   // Configura aquí la URL de tu sistema de cotizaciones
   const SISTEMA_URL = 'sanagua-cot/achive.html';
 
+  // ── Vista previa de administrador ────────────────────────────────────
+  // Se activa desde el Dashboard del panel ("👁️ Ver como usuario"). Se
+  // guarda en sessionStorage (no en la URL) para que el banner y el modo
+  // "navegar como usuario" persistan aunque el admin visite otras páginas
+  // del sitio (cada una lo muestra vía site-nav.js).
+  function mostrarBannerPreviewAdmin() {
+    sessionStorage.setItem('admin_preview', '1');
+    if (document.getElementById('admin-preview-banner')) return;
+    const b = document.createElement('div');
+    b.id = 'admin-preview-banner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#1a2226;color:#fff;'
+      + 'padding:9px 16px;font-size:.8rem;display:flex;align-items:center;justify-content:center;gap:14px;'
+      + 'font-family:Jost,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.2)';
+    b.innerHTML = '👁️ Estás viendo el sitio como lo vería un cliente'
+      + ' <button id="admin-preview-exit" style="background:#7fa0ac;color:#fff;border:none;border-radius:20px;'
+      + 'padding:5px 14px;font-size:.76rem;cursor:pointer;font-family:inherit;">Salir de vista previa</button>';
+    document.body.prepend(b);
+    document.body.style.paddingTop = b.offsetHeight + 'px';
+    document.getElementById('admin-preview-exit').onclick = () => {
+      sessionStorage.removeItem('admin_preview');
+      window.location.href = SISTEMA_URL;
+    };
+  }
+
   // ── Supabase Auth — identidad única para clientes y administradores ─
   // La "anon key" es pública a propósito: Supabase la protege con Row
   // Level Security (ver supabase/01_auth_setup.sql). Todo el login,
@@ -879,7 +903,7 @@
     // Header
     document.getElementById('btn-login-header').style.display = 'none';
     document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
-    document.getElementById('btn-register-header').onclick = () => openUserPanel();
+    document.getElementById('btn-register-header').onclick = () => { window.location.href = 'assets/pages/perfil.html'; };
     // Menú lateral
     document.getElementById('nav-user-section').style.display = 'block';
     document.getElementById('nav-user-name').innerHTML = `${publicUser.name}${verifBadge}`;
@@ -1052,13 +1076,15 @@
       const { data: { session } } = await supa.auth.getSession();
       if (session) {
         const { profile } = await fetchOwnProfile();
-        if (profile && profile.role === 'cliente') {
+        const esAdminPreview = new URLSearchParams(window.location.search).get('admin_preview') === '1' || sessionStorage.getItem('admin_preview') === '1';
+        if (profile && (profile.role === 'cliente' || esAdminPreview)) {
           publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', edad: profile.edad || null, verificado: !!profile.verificado, foto_documento: profile.foto_documento || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
           aplicarUsuarioPublico();
+          if (esAdminPreview && (profile.role === 'admin' || profile.role === 'superadmin')) mostrarBannerPreviewAdmin();
         }
-        // Si es admin/superadmin y llega a index.html con sesión activa,
-        // lo dejamos navegar la web pública normalmente (no se le fuerza
-        // a entrar al panel), pero no se le trata como "cliente".
+        // Si es admin/superadmin y llega a index.html con sesión activa
+        // (sin modo vista previa), lo dejamos navegar la web pública
+        // normalmente, pero no se le trata como "cliente".
       }
     } catch {}
     // Abrir modal si viene de una página de servicio con ?action=login o ?action=register

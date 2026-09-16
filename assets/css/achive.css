@@ -439,3 +439,23 @@
       .card { padding:18px 14px; }
       .side-menu { width:240px; }
     }
+
+/* ── DASHBOARD ── */
+.dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.dash-stat-card {
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 18px; text-align: center; transition: border-color .2s, transform .2s;
+}
+.dash-stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.dash-stat-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.dash-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--ink); }
+.dash-stat-lbl { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+
+.dash-quicklinks { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.dash-qlink {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 16px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 1.3rem; cursor: pointer; transition: all .2s; color: var(--ink); font-family: inherit;
+}
+.dash-qlink span { font-size: .74rem; font-weight: 600; text-align: center; }
+.dash-qlink:hover { border-color: var(--accent); background: var(--bg); }

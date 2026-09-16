@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mi Perfil — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/perfil.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/site-nav.js"></script>
+  <script src="../js/cart.js"></script>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
+</nav>
+
+<div id="app" class="wrap">
+  <div class="loading-state" id="loading-state">⏳ Cargando tu perfil...</div>
+</div>
+
+<template id="tpl-perfil">
+  <div class="profile-hero">
+    <div class="profile-avatar" id="pf-avatar">?</div>
+    <div class="profile-id">
+      <div class="profile-name" id="pf-name">—</div>
+      <div class="profile-meta" id="pf-meta"></div>
+    </div>
+    <div class="profile-pts-card">
+      <div class="pts-num" id="pf-pts">0</div>
+      <div class="pts-label">Puntos de fidelidad</div>
+      <a href="points/points.html" class="pts-link">Ver beneficios →</a>
+    </div>
+  </div>
+
+  <div class="profile-tabs" id="profile-tabs">
+    <button class="ptab active" data-tab="activas">⏳ Pendientes</button>
+    <button class="ptab" data-tab="en-proceso">🔄 En proceso</button>
+    <button class="ptab" data-tab="historial">🗂️ Historial</button>
+    <button class="ptab" data-tab="editar">✏️ Editar perfil</button>
+  </div>
+
+  <div class="profile-body">
+    <div class="pcontent active" id="pc-activas"></div>
+    <div class="pcontent" id="pc-en-proceso"></div>
+    <div class="pcontent" id="pc-historial"></div>
+    <div class="pcontent" id="pc-editar">
+      <div class="edit-card">
+        <div class="edit-section-label">Datos personales</div>
+        <div class="edit-grid">
+          <div class="field"><label>Nombre completo</label><input id="edit-name" type="text"></div>
+          <div class="field"><label>Cédula / Pasaporte</label><input id="edit-cedula" type="text"></div>
+          <div class="field"><label>Celular</label><input id="edit-phone" type="tel"></div>
+          <div class="field"><label>Correo</label><input id="edit-email" type="email" disabled></div>
+        </div>
+
+        <div class="edit-section-label" style="margin-top:26px">Cambiar contraseña (opcional)</div>
+        <div class="edit-grid">
+          <div class="field"><label>Contraseña actual</label><input id="edit-pass-actual" type="password"></div>
+          <div class="field"><label>Nueva contraseña</label><input id="edit-pass-nueva" type="password"></div>
+        </div>
+
+        <button class="btn-save" onclick="guardarPerfil()">Guardar cambios</button>
+        <div id="edit-perfil-msg" class="edit-msg"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let publicUser = null;
+
+  function badgeVerificado() {
+    return '<span class="verif-badge" title="Cuenta verificada"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
+  }
+
+  async function init() {
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session) { window.location.href = '../../index.html?action=login'; return; }
+
+    const { data: profile } = await supa.from('profiles').select('*').eq('id', session.user.id).single();
+    if (!profile) { window.location.href = '../../index.html'; return; }
+    publicUser = profile;
+
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    app.appendChild(document.getElementById('tpl-perfil').content.cloneNode(true));
+
+    document.getElementById('pf-avatar').textContent = (profile.name || '?').charAt(0).toUpperCase();
+    document.getElementById('pf-name').innerHTML = `${profile.name || 'Usuario'} ${profile.verificado ? badgeVerificado() : ''}`;
+    document.getElementById('pf-meta').textContent = [profile.email, profile.phone].filter(Boolean).join(' · ');
+    document.getElementById('pf-pts').textContent = profile.puntos || 0;
+
+    document.querySelectorAll('.ptab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn)));
+    preLlenarPerfil();
+    await cargarReservas(session.user.id);
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.pcontent').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const map = { activas: 'pc-activas', 'en-proceso': 'pc-en-proceso', historial: 'pc-historial', editar: 'pc-editar' };
+    document.getElementById(map[tab]).classList.add('active');
+  }
+
+  function preLlenarPerfil() {
+    if (!publicUser) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    set('edit-name', publicUser.name);
+    set('edit-cedula', publicUser.cedula);
+    set('edit-phone', publicUser.phone);
+    set('edit-email', publicUser.email);
+  }
+
+  async function guardarPerfil() {
+    const msgEl = document.getElementById('edit-perfil-msg');
+    msgEl.className = 'edit-msg'; msgEl.textContent = 'Guardando...';
+
+    const nuevoNombre = document.getElementById('edit-name').value.trim();
+    const nuevaCedula = document.getElementById('edit-cedula').value.trim();
+    const nuevoPhone  = document.getElementById('edit-phone').value.trim();
+    const passActual  = document.getElementById('edit-pass-actual').value;
+    const passNueva   = document.getElementById('edit-pass-nueva').value;
+
+    if (!nuevoNombre) { msgEl.classList.add('err'); msgEl.textContent = 'El nombre no puede estar vacío.'; return; }
+    if (passNueva && !passActual) { msgEl.classList.add('err'); msgEl.textContent = 'Ingresa tu contraseña actual para cambiarla.'; return; }
+    if (passNueva && passNueva.length < 6) { msgEl.classList.add('err'); msgEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.'; return; }
+
+    try {
+      if (passNueva) {
+        const { error: reauthErr } = await supa.auth.signInWithPassword({ email: publicUser.email, password: passActual });
+        if (reauthErr) { msgEl.classList.add('err'); msgEl.textContent = 'La contraseña actual no es correcta.'; return; }
+        const { error: updErr } = await supa.auth.updateUser({ password: passNueva });
+        if (updErr) { msgEl.classList.add('err'); msgEl.textContent = 'No se pudo actualizar la contraseña: ' + updErr.message; return; }
+      }
+
+      const { error: profErr } = await supa.from('profiles')
+        .update({ name: nuevoNombre, cedula: nuevaCedula, phone: nuevoPhone })
+        .eq('id', publicUser.id);
+      if (profErr) { msgEl.classList.add('err'); msgEl.textContent = 'Error al guardar. Intenta nuevamente.'; return; }
+
+      publicUser.name = nuevoNombre; publicUser.cedula = nuevaCedula; publicUser.phone = nuevoPhone;
+      document.getElementById('pf-name').innerHTML = `${nuevoNombre} ${publicUser.verificado ? badgeVerificado() : ''}`;
+      document.getElementById('pf-meta').textContent = [publicUser.email, nuevoPhone].filter(Boolean).join(' · ');
+
+      msgEl.classList.add('ok'); msgEl.textContent = '✅ Perfil actualizado correctamente.';
+      document.getElementById('edit-pass-actual').value = '';
+      document.getElementById('edit-pass-nueva').value  = '';
+    } catch { msgEl.classList.add('err'); msgEl.textContent = 'Error de conexión.'; }
+  }
+
+  async function cargarReservas(userId) {
+    try {
+      const { data: mias, error } = await supa.from('solicitudes')
+        .select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) throw error;
+
+      const activas   = (mias || []).filter(s => s.estado === 'pendiente');
+      const enProceso = (mias || []).filter(s => s.estado === 'en_proceso');
+      const historial = (mias || []).filter(s => ['confirmada', 'completada', 'rechazada'].includes(s.estado));
+
+      const BADGE = { pendiente: '⏳ Pendiente', en_proceso: '🔄 En Proceso', rechazada: '❌ Rechazada', confirmada: '✅ Confirmada', completada: '✅ Completada' };
+      const COLOR = { pendiente: '#b45309', en_proceso: '#6b6b6b', rechazada: '#c0392b', confirmada: '#2d7a4f', completada: '#2d7a4f' };
+
+      function renderCard(s) {
+        const items = Array.isArray(s.items) ? s.items : [];
+        const badge = BADGE[s.estado] || s.estado;
+        const color = COLOR[s.estado] || '#888';
+        const itemsHtml = items.map(it => `<div class="sol-item">${it.categoria ? `<strong>${it.categoria}:</strong> ` : ''}${it.nombre}${it.cantidad > 1 ? ` × ${it.cantidad}` : ''}${it.fecha_visita ? ` — 📅 ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin !== it.fecha_visita ? ' → ' + it.fecha_visita_fin : ''}` : ''}</div>`).join('');
+        return `<div class="sol-card">
+          <div class="sol-head">
+            <span>🛒 Solicitud (${items.length} ítem${items.length === 1 ? '' : 's'})</span>
+            <span class="sol-badge" style="background:${color}18;color:${color}">${badge}</span>
+          </div>
+          <div class="sol-items">${itemsHtml}</div>
+          <div class="sol-total">Total: $${parseFloat(s.total || 0).toFixed(2)}</div>
+          <div class="sol-date">${new Date(s.created_at).toLocaleDateString('es-PA', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+        </div>`;
+      }
+
+      const empty = (icon, txt, link) => `<div class="empty-state"><div class="empty-icon">${icon}</div><div>${txt}</div>${link || ''}</div>`;
+
+      document.getElementById('pc-activas').innerHTML = activas.length
+        ? activas.map(renderCard).join('')
+        : empty('📭', 'No tienes solicitudes pendientes', '<a href="../../index.html#servicios">Ver servicios →</a>');
+
+      document.getElementById('pc-en-proceso').innerHTML = enProceso.length
+        ? enProceso.map(renderCard).join('')
+        : empty('🔄', 'No tienes reservas en proceso');
+
+      document.getElementById('pc-historial').innerHTML = historial.length
+        ? historial.map(renderCard).join('')
+        : empty('🗂️', 'Aún no tienes reservas anteriores');
+    } catch (e) { console.error(e); }
+  }
+
+  init();
+</script>
+</body>
+</html>
