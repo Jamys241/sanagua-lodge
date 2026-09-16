@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cotizaciones — Sanagua Lodge</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -47,7 +46,7 @@
       <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
       <button onclick="switchTab('historial');closeMenu()">📁 Historial</button>
       <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
-      <button onclick="window.location.href='page/new-requests.html';closeMenu()">📬 Solicitudes</button>
+      <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -83,7 +82,6 @@
       <button onclick="switchTab('config');closeMenu()">⚙️ Configuración</button>
       <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
       <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
-      <button onclick="abrirModalQR();closeMenu()">📲 Generar QR de sesión</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -755,50 +753,6 @@
   <div id="logo-status" style="display:none;" class="card" style="padding:12px 20px;">
   </div>
 
-  <!-- Configuración GitHub -->
-  <div class="card">
-    <div class="card-title">Conexión a GitHub</div>
-    <p style="font-size:.82rem;color:var(--ink-muted);margin-bottom:18px;">
-      Los datos se guardan directamente en tu repositorio privado de GitHub.<br>
-      El token se guarda solo en este navegador — debes configurarlo en cada dispositivo.
-    </p>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Personal Access Token (repo scope)</label>
-        <input type="password" id="cfg-gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      </div>
-      <div class="form-group">
-        <label>Repositorio (usuario/repo)</label>
-        <input type="text" id="cfg-gh-repo" placeholder="sanagua/sanagua-datos">
-      </div>
-      <div class="form-group">
-        <label>Rama</label>
-        <input type="text" id="cfg-gh-branch" placeholder="main" value="main">
-      </div>
-    </div>
-    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <button class="btn btn-accent" onclick="saveGHConfig()">💾 Guardar configuración</button>
-      <button class="btn btn-outline btn-sm" onclick="testGHConfig()">🔍 Probar conexión</button>
-      <span id="gh-config-status" style="font-size:.82rem;"></span>
-    </div>
-    <div id="gh-config-current" style="margin-top:10px;font-size:.78rem;color:var(--ink-muted);"></div>
-  </div>
-
-  <!-- Migración a Supabase -->
-  <div class="card">
-    <div class="card-title">☁️ Cotizaciones y eventos → Supabase</div>
-    <p style="font-size:.82rem;color:var(--ink-muted);margin-bottom:14px;">
-      Las cotizaciones nuevas y los eventos manuales ya se guardan directamente en Supabase.
-      Usa este botón <strong>una sola vez</strong> para copiar lo que ya tenías en GitHub
-      (history.json y events.json) hacia Supabase. Es seguro ejecutarlo varias veces:
-      lo que ya esté migrado se actualiza en vez de duplicarse.
-    </p>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <button class="btn btn-accent" onclick="migrarHistorialAsupabase()">☁️ Migrar historial y eventos a Supabase</button>
-      <span id="migra-sb-status" style="font-size:.82rem;"></span>
-    </div>
-  </div>
-
   <!-- Días de cierre y excepciones -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
@@ -886,26 +840,6 @@
     </div>
     <div style="margin-top:14px;">
       <button class="btn btn-accent" onclick="crearNuevoAdmin()">➕ Crear administrador</button>
-    </div>
-  </div>
-
-  <!-- QR de sesión -->
-  <div class="card" id="card-qr-sesion">
-    <div class="card-title">📱 QR de sesión</div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
-      Genera un código QR temporal para configurar automáticamente un dispositivo nuevo sin escribir el token de GitHub. El QR expira en <strong>5 minutos</strong>.
-    </p>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-      <div>
-        <button class="btn btn-accent" onclick="generarQRSesion()" id="btn-gen-qr">
-          📲 Generar QR de sesión
-        </button>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:8px" id="qr-expire-lbl"></div>
-      </div>
-      <div id="qr-container" style="display:none;text-align:center">
-        <canvas id="qr-canvas" style="border-radius:8px;border:4px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.15)"></canvas>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:6px">Escanea desde el dispositivo nuevo</div>
-      </div>
     </div>
   </div>
 
@@ -1220,37 +1154,6 @@
   </div>
 </div>
 
-<!-- Modal QR de sesión -->
-<div id="qr-modal-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.65);
-  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:16px;width:100%;max-width:340px;
-    box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
-    <div style="background:var(--ink);padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-weight:700;color:#fff;font-size:.95rem">📲 QR de sesión</span>
-      <button onclick="cerrarModalQR()" style="background:none;border:none;color:rgba(255,255,255,.5);
-        font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
-    </div>
-    <div style="padding:22px;text-align:center">
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
-        Escanea este código desde el dispositivo nuevo para transferir la configuración. Expira en <strong>2 minutos</strong>.
-      </p>
-      <!-- QR -->
-      <div id="qr-output" style="display:flex;align-items:center;justify-content:center;
-        min-height:220px;background:var(--bg);border-radius:10px;margin-bottom:12px;border:1.5px solid var(--border)">
-        <div id="qr-generating" style="color:var(--muted);font-size:.85rem">⏳ Generando QR...</div>
-        <canvas id="qr-main-canvas" style="display:none;border-radius:6px"></canvas>
-      </div>
-      <!-- Contador -->
-      <div id="qr-countdown" style="font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:16px;min-height:22px"></div>
-      <!-- Botones -->
-      <div style="display:flex;gap:8px">
-        <button onclick="regenerarQR()" class="btn btn-outline btn-sm" style="flex:1">
-          🔄 Recargar QR
-        </button>
-        <button onclick="cerrarModalQR()" class="btn btn-outline btn-sm" style="flex:1">
-          Cerrar
-        </button>
-      </div>
     </div>
   </div>
 </div>
@@ -1296,32 +1199,6 @@
           ✅ Activo
         </div>
         <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
-      </div>
-
-      <!-- Configuración JSONBin (bloqueo público sin token) -->
-      <div id="jsonbin-config-box" style="background:var(--bg);border:1.5px solid var(--border);
-        border-radius:10px;padding:16px;margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
-          🌐 Bloqueo público (JSONBin)
-        </div>
-        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
-          Permite que TODOS los visitantes (sin necesitar token) vean la pantalla de bloqueo. Crea una cuenta gratis en
-          <a href="https://jsonbin.io" target="_blank" rel="noopener" style="color:var(--accent)">jsonbin.io</a>,
-          copia tu <strong>X-Master-Key</strong> y, si ya tienes un Bin creado, su ID.
-        </p>
-        <div class="form-group" style="margin-bottom:8px">
-          <label>X-Master-Key</label>
-          <input type="password" id="jsonbin-key" class="form-input" placeholder="$2a$10$...">
-        </div>
-        <div class="form-group" style="margin-bottom:8px">
-          <label>Bin ID (déjalo vacío para crear uno nuevo)</label>
-          <input type="text" id="jsonbin-id" class="form-input" placeholder="65f1...">
-        </div>
-        <button class="btn btn-accent" style="width:100%" onclick="guardarConfigJSONBin()">
-          💾 Guardar configuración
-        </button>
-        <div id="jsonbin-msg" style="font-size:.76rem;min-height:16px;margin-top:8px;text-align:center"></div>
-        <div id="jsonbin-status" style="font-size:.74rem;margin-top:6px;text-align:center;color:var(--muted)"></div>
       </div>
 
       <!-- Bloqueo inmediato -->
@@ -1445,7 +1322,6 @@
   // AUTENTICACIÓN Y PERMISOS
   // ══════════════════════════════════════════════════════════════════════
   let currentUser = null;
-  let authData    = null;
 
 
 
@@ -1486,20 +1362,6 @@
     gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
     ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
   };
-
-  async function loadAuth() {
-    try {
-      const res = await ghRead('auth.json');
-      authData = res?.data || null;
-    } catch { authData = null; }
-    if (!authData) {
-      authData = {
-        superadmin: { username:'superadmin', password:'super123' },
-        admin:      { username:'admin',      password:'admin123' },
-        permisos:   { ...PERMISOS_DEFAULT },
-      };
-    }
-  }
 
   function verificarSesion() {
     // Compatibilidad hacia atrás: algunos sitios llaman verificarSesion()
@@ -1678,11 +1540,6 @@
     finally { showLoading(false); }
   }
 
-  // ── Configuración GitHub ───────────────────────────────────────────────
-  // GH_TOKEN y GH_REPO se configuran en la pestaña ⚙️ Configuración
-  // Se guardan en localStorage para persistir entre dispositivos del mismo navegador
-  // Para compartir entre dispositivos, cada uno debe configurar su token
-
   // ── Supabase Auth — sesión del panel administrativo ─────────────────────
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
@@ -1824,154 +1681,6 @@
     if (error) throw error;
   }
 
-  // Migración única: copia lo que hoy vive en GitHub (history.json y
-  // events.json) hacia las tablas de Supabase. Segura de correr más de una
-  // vez — usa upsert, así que lo ya migrado simplemente se actualiza.
-  async function migrarHistorialAsupabase() {
-    const statusEl = document.getElementById('migra-sb-status');
-    if (!ghConfigured()) {
-      statusEl.textContent = '⚠️ Configura GitHub arriba primero (para poder leer los datos viejos).';
-      return;
-    }
-    statusEl.textContent = '⏳ Migrando...';
-    try {
-      const [histRes, evtsRes] = await Promise.all([
-        ghRead('history.json'),
-        ghRead('events.json'),
-      ]);
-      const quotesGH = histRes?.data?.quotes || [];
-      const eventsGH = evtsRes?.data?.events || [];
-
-      let migradas = 0, migradosEv = 0, errores = 0;
-
-      for (const q of quotesGH) {
-        const quoteNum = String(q.quote_num);
-        const row = {
-          quote_num:          quoteNum,
-          estado:              q.estado || 'Pendiente',
-          categoria:           q.categoria  || null,
-          plataforma:          q.plataforma || null,
-          client_name:         q.client?.name || null,
-          visit_date:          q.visit_date     || null,
-          visit_date_end:      q.visit_date_end || null,
-          total:               q.total || 0,
-          abono_pagado:        q.abono_pagado || 0,
-          cancelacion_pagada:  q.cancelacion_pagada || 0,
-          data:                q,
-          created_at:          q.created_at || new Date().toISOString(),
-          updated_at:          q.updated_at || q.created_at || new Date().toISOString(),
-        };
-        const { error } = await supa.from('quotes').upsert(row);
-        if (error) { console.warn('migración cotización', quoteNum, error); errores++; }
-        else migradas++;
-      }
-
-      for (const ev of eventsGH) {
-        const row = {
-          id:            ev.id,
-          estado:        ev.estado || 'Confirmada',
-          categoria:     ev.categoria  || null,
-          plataforma:    ev.plataforma || null,
-          client_name:   ev.client?.name || null,
-          visit_date:    ev.visit_date     || null,
-          visit_date_end: ev.visit_date_end || null,
-          total:         ev.total || 0,
-          data:          ev,
-          created_at:    ev.created_at || new Date().toISOString(),
-          updated_at:    ev.created_at || new Date().toISOString(),
-        };
-        const { error } = await supa.from('events').upsert(row);
-        if (error) { console.warn('migración evento', ev.id, error); errores++; }
-        else migradosEv++;
-      }
-
-      // Sincronizar contadores para que las próximas cotizaciones no choquen
-      // con números ya migrados (0001, 0002... y WEB01, WEB02...).
-      const numericos = quotesGH.map(q => String(q.quote_num)).filter(s => /^\d+$/.test(s)).map(s => parseInt(s, 10));
-      const webNums    = quotesGH.map(q => String(q.quote_num)).filter(s => /^WEB\d+$/i.test(s)).map(s => parseInt(s.replace(/\D/g,''), 10));
-      const maxQuote = numericos.length ? Math.max(...numericos) : 0;
-      const maxWeb   = webNums.length   ? Math.max(...webNums)   : 0;
-      await supa.from('counters').update({ value: maxQuote }).eq('name', 'quote');
-      await supa.from('counters').update({ value: maxWeb   }).eq('name', 'web');
-
-      allHistory = await sbListQuotes();
-      allEvents  = await sbListEvents();
-      renderHistory(allHistory);
-      loadCounter();
-
-      const resumen = `✅ Migradas ${migradas} cotizaciones y ${migradosEv} eventos.` + (errores ? ` (${errores} con error — revisa la consola)` : '');
-      statusEl.textContent = resumen;
-      showToast(resumen, errores ? 'error' : 'success');
-    } catch (e) {
-      console.error(e);
-      statusEl.textContent = '❌ Error en la migración. Revisa la consola.';
-      showToast('❌ Error al migrar. Revisa la consola.', 'error');
-    }
-  }
-
-  let GH_TOKEN  = localStorage.getItem('gh_token')  || '';
-  let GH_REPO   = localStorage.getItem('gh_repo')   || '';
-  let GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
-  const GH_BASE = 'https://api.github.com';
-  const DATA_PATH = 'Data/json';
-
-  function ghHeaders() {
-    return {
-      'Authorization': `token ${GH_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    };
-  }
-
-  async function ghRead(filename) {
-    if (!GH_TOKEN || !GH_REPO) return null;
-    try {
-      const url = `${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}?ref=${GH_BRANCH}`;
-      const r = await fetch(url, {headers: ghHeaders()});
-      if (!r.ok) {
-        console.warn(`ghRead ${filename}: HTTP ${r.status}`);
-        return null;
-      }
-      const d = await r.json();
-      // Decodificar base64 → bytes → UTF-8 (soporta tildes, ñ, etc.)
-      const b64 = d.content.replace(/\s/g, '');
-      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-      const content = new TextDecoder('utf-8').decode(bytes);
-      const parsed = JSON.parse(content);
-      return { data: parsed, sha: d.sha };
-    } catch(e) {
-      console.warn(`ghRead ${filename} error:`, e.message);
-      return null;
-    }
-  }
-
-  async function ghWrite(filename, data, sha) {
-    if (!GH_TOKEN || !GH_REPO) return false;
-    try {
-      // Codificar correctamente UTF-8 → base64 (soporta tildes, ñ, etc.)
-      const json = JSON.stringify(data, null, 2);
-      const bytes = new TextEncoder().encode(json);
-      let binary = '';
-      bytes.forEach(b => binary += String.fromCharCode(b));
-      const content = btoa(binary);
-      const payload = { message: `update ${filename}`, content, branch: GH_BRANCH };
-      if (sha) payload.sha = sha;
-      const r = await fetch(`${GH_BASE}/repos/${GH_REPO}/contents/${DATA_PATH}/${filename}`, {
-        method: 'PUT', headers: ghHeaders(), body: JSON.stringify(payload)
-      });
-      return r.ok;
-    } catch { return false; }
-  }
-
-  async function ghReadWrite(filename, newData) {
-    const existing = await ghRead(filename);
-    return ghWrite(filename, newData, existing?.sha || null);
-  }
-
-  // Verifica si GitHub está configurado
-  function ghConfigured() {
-    return !!(GH_TOKEN && GH_REPO);
-  }
 
   const DISCOUNT_MAP = {
     none:   { pct:0,    label:null,                           color:'none'   },
@@ -2032,8 +1741,6 @@
 
     // Cargar datos
     (async () => {
-      try { await loadAuth(); } catch(e) { console.warn('Auth load error:', e); }
-      // Re-aplicar permisos ahora que authData está cargado
       aplicarPermisos();
       try { await loadHorarios(); } catch(e) { console.warn('Horarios load error:', e); }
       try {
@@ -2160,8 +1867,9 @@
 
   async function loadEmpresa() {
     try {
-      const res = await ghRead('empresa.json');
-      if (res?.data?.nombre) empresaData = res.data;
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'empresa').maybeSingle();
+      if (error) throw error;
+      if (data?.value?.nombre) empresaData = data.value;
     } catch { /* usar defaults */ }
     document.getElementById('emp-nombre').value = empresaData.nombre || '';
     document.getElementById('emp-ruc').value    = empresaData.ruc    || '';
@@ -2179,83 +1887,14 @@
     if (!data.nombre) { showToast('El nombre de la empresa es obligatorio.', 'error'); return; }
     showLoading(true);
     try {
-      const ok = await ghReadWrite('empresa.json', data);
-      if (ok) {
-        empresaData = data;
-        showToast('✅ Datos de empresa guardados correctamente.', 'success');
-      } else {
-        showToast('❌ Error al guardar. Intenta nuevamente.', 'error');
-      }
-    } catch { showToast('❌ Sin conexión con el servidor.', 'error'); }
+      const { error } = await supa.from('company_settings').upsert({ key: 'empresa', value: data });
+      if (error) throw error;
+      empresaData = data;
+      showToast('✅ Datos de empresa guardados correctamente.', 'success');
+    } catch { showToast('❌ Error al guardar. Intenta nuevamente.', 'error'); }
     finally { showLoading(false); }
   }
 
-  // ── Configuración GitHub ───────────────────────────────────────────────────
-  function _loadGHConfigUI() {
-    document.getElementById('cfg-gh-token').value  = GH_TOKEN  || '';
-    document.getElementById('cfg-gh-repo').value   = GH_REPO   || '';
-    document.getElementById('cfg-gh-branch').value = GH_BRANCH || 'main';
-    document.getElementById('gh-config-current').textContent =
-      GH_REPO ? `✅ Conectado a: ${GH_REPO} (rama: ${GH_BRANCH})` : '⚠️ No configurado aún.';
-  }
-
-  function saveGHConfig() {
-    const token  = document.getElementById('cfg-gh-token').value.trim();
-    const repo   = document.getElementById('cfg-gh-repo').value.trim();
-    const branch = document.getElementById('cfg-gh-branch').value.trim() || 'main';
-    if (!token || !repo) { showToast('Completa el token y el repositorio.', 'error'); return; }
-    GH_TOKEN  = token;
-    GH_REPO   = repo;
-    GH_BRANCH = branch;
-    localStorage.setItem('gh_token',  token);
-    localStorage.setItem('gh_repo',   repo);
-    localStorage.setItem('gh_branch', branch);
-    _loadGHConfigUI();
-    showToast('✅ Configuración de GitHub guardada', 'success');
-    // Recargar datos con la nueva configuración
-    Promise.all([loadCounter(), loadCategoriasProductos(), loadLogo(), loadEmpresa(), loadEvents()])
-      .then(() => loadHistory().then(() => renderCalendario()));
-  }
-
-  async function testGHConfig() {
-    const token  = document.getElementById('cfg-gh-token').value.trim() || GH_TOKEN;
-    const repo   = document.getElementById('cfg-gh-repo').value.trim()  || GH_REPO;
-    const branch = document.getElementById('cfg-gh-branch').value.trim()|| GH_BRANCH || 'main';
-    const status = document.getElementById('gh-config-status');
-    status.innerHTML = '⏳ Probando...'; status.style.color = 'var(--muted)';
-
-    const hdrs = {'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json'};
-
-    // 1. Verificar repo
-    const rRepo = await fetch(`https://api.github.com/repos/${repo}`, {headers: hdrs});
-    if (!rRepo.ok) {
-      status.innerHTML = `❌ Repo no encontrado o token sin permisos (${rRepo.status})`;
-      status.style.color = 'var(--red)'; return;
-    }
-
-    // 2. Verificar carpeta Data/json
-    const rFolder = await fetch(`https://api.github.com/repos/${repo}/contents/Data/json?ref=${branch}`, {headers: hdrs});
-    if (!rFolder.ok) {
-      status.innerHTML = `⚠️ Repo OK pero carpeta <code>Data/json</code> no existe (${rFolder.status}). Créala y sube los JSON.`;
-      status.style.color = 'var(--gold)'; return;
-    }
-
-    // 3. Listar archivos encontrados
-    const files = await rFolder.json();
-    const names = Array.isArray(files) ? files.map(f=>f.name) : [];
-
-    // 4. Probar leer history.json
-    // counter.json, history.json y events.json ya no viven en GitHub (ahora en Supabase)
-    const EXPECTED = ['products.json','logo.json','empresa.json','solicitudes.json'];
-    const missing  = EXPECTED.filter(f => !names.includes(f));
-    const found    = EXPECTED.filter(f =>  names.includes(f));
-
-    let msg = `✅ Carpeta encontrada<br>`;
-    msg += `📁 Archivos: <strong>${found.join(', ')||'ninguno'}</strong><br>`;
-    if (missing.length) msg += `⚠️ Faltan: <em>${missing.join(', ')}</em>`;
-    status.innerHTML = msg;
-    status.style.color = missing.length ? 'var(--gold)' : 'var(--success)';
-  }
   let _adminsCache = [];
 
   async function openPermisosModal() {
@@ -2329,8 +1968,9 @@
 
   async function loadLogo() {
     try {
-      const res = await ghRead('logo.json');
-      if (res?.data?.logo) { logoBase64 = res.data.logo; _applyLogoPreview(res.data.logo); }
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'logo').maybeSingle();
+      if (error) throw error;
+      if (data?.value?.logo) { logoBase64 = data.value.logo; _applyLogoPreview(data.value.logo); }
     } catch { /* sin logo */ }
   }
 
@@ -2365,8 +2005,8 @@
       _applyLogoPreview(logoBase64);
       showToast('Subiendo logo...', 'success');
       try {
-        const ok = await ghReadWrite('logo.json', {logo: logoBase64});
-        showToast(ok ? '✅ Logo guardado en GitHub.' : '⚠️ Logo visible pero no guardado.', ok ? 'success' : 'error');
+        const { error } = await supa.from('company_settings').upsert({ key: 'logo', value: { logo: logoBase64 } });
+        showToast(error ? '⚠️ Logo visible pero no guardado.' : '✅ Logo guardado.', error ? 'error' : 'success');
       } catch {
         showToast('⚠️ Error al guardar el logo.', 'error');
       }
@@ -2379,7 +2019,7 @@
     logoBase64 = '';
     _applyLogoPreview('');
     document.getElementById('logo-upload').value = '';
-    try { await ghReadWrite('logo.json', {logo:''}); } catch { /* silencioso */ }
+    try { await supa.from('company_settings').upsert({ key: 'logo', value: { logo: '' } }); } catch { /* silencioso */ }
     showToast('Logo eliminado.', 'success');
   }
 
@@ -2422,7 +2062,6 @@
     if (name === 'resumen')   loadHistory().then(() => renderResumen());
     if (name === 'calendario') Promise.all([loadHistory(), loadEvents()]).then(() => renderCalendario());
     if (name === 'config') {
-      _loadGHConfigUI();
       setTimeout(initPollControls, 100);
       // Mostrar/ocultar sección de sincronización según permiso
       const isSuper = currentUser?.role === 'superadmin';
@@ -5041,21 +4680,14 @@
     const pts = calcularPuntos(cot);
     if (pts <= 0) return;
     try {
-      const res   = await ghRead('users.json');
-      if (!res) return;
-      const users = res.data?.users || [];
-      const idx   = users.findIndex(u => u.email === cot.client.email);
-      if (idx < 0) return; // usuario no encontrado
-      users[idx].puntos = (users[idx].puntos || 0) + pts;
-      users[idx].transacciones = users[idx].transacciones || [];
-      users[idx].transacciones.push({
-        fecha:       new Date().toISOString(),
-        puntos:      pts,
-        descripcion: `Reserva confirmada: ${cot.categoria} #${cot.quote_num}`,
-        quote_num:   cot.quote_num,
-      });
-      await ghWrite('users.json', { users }, res.sha);
-      showToast(`⭐ +${pts} puntos otorgados a ${cot.client.name || cot.client.email}`, 'success');
+      const { data: user, error: e1 } = await supa.from('profiles')
+        .select('id, puntos, name').ilike('email', cot.client.email).maybeSingle();
+      if (e1) throw e1;
+      if (!user) return; // no tiene cuenta registrada — no hay a quién otorgarle puntos
+      const { error: e2 } = await supa.from('profiles')
+        .update({ puntos: (user.puntos || 0) + pts }).eq('id', user.id);
+      if (e2) throw e2;
+      showToast(`⭐ +${pts} puntos otorgados a ${user.name || cot.client.email}`, 'success');
     } catch(e) { console.warn('Error otorgando puntos:', e); }
   }
 
@@ -5114,164 +4746,6 @@
     if (e.target === document.getElementById('chpass-ov')) cerrarCambiarPass();
   });
 
-  // ══════════════════════════════════════════════════════════════════════
-  // QR DE SESIÓN — usando QRCode.js correctamente
-  // ══════════════════════════════════════════════════════════════════════
-  let _qrExpireTimer  = null;
-  let _qrExpireAt     = 0;
-  let _qrCountdown    = null;
-
-  function abrirModalQR() {
-    const token = localStorage.getItem('gh_token')  || '';
-    const repo  = localStorage.getItem('gh_repo')   || '';
-    if (!token || !repo) {
-      showToast('No hay token/repo configurado en este dispositivo.', 'error');
-      return;
-    }
-    document.getElementById('qr-modal-ov').style.display = 'flex';
-    generarQR();
-  }
-
-  function cerrarModalQR() {
-    document.getElementById('qr-modal-ov').style.display = 'none';
-    clearInterval(_qrExpireTimer);
-    clearInterval(_qrCountdown);
-    document.getElementById('qr-main-canvas').style.display = 'none';
-    document.getElementById('qr-generating').style.display  = 'block';
-    document.getElementById('qr-countdown').textContent     = '';
-  }
-
-  function regenerarQR() {
-    clearInterval(_qrExpireTimer);
-    clearInterval(_qrCountdown);
-    document.getElementById('qr-main-canvas').style.display = 'none';
-    document.getElementById('qr-generating').style.display  = 'block';
-    document.getElementById('qr-countdown').textContent     = '';
-    generarQR();
-  }
-
-  function generarQR() {
-    const token   = localStorage.getItem('gh_token')        || '';
-    const repo    = localStorage.getItem('gh_repo')         || '';
-    const branch  = localStorage.getItem('gh_branch')       || 'main';
-    const repoPub = localStorage.getItem('gh_repo_public')  || '';
-
-    _qrExpireAt = Date.now() + 2 * 60 * 1000; // 2 minutos
-    const payload = JSON.stringify({ token, repo, branch, repoPub, expiry: _qrExpireAt });
-
-    // Cifrado XOR — clave = expiry como string
-    const key = String(_qrExpireAt);
-    let enc = '';
-    for (let i = 0; i < payload.length; i++) {
-      enc += String.fromCharCode(payload.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    // Prefijo: expiry en texto plano + ":" + payload cifrado en base64
-    // Así el descifrador no necesita iterar — lee la clave directamente
-    const qrData = 'SANAGUA_SESSION:' + _qrExpireAt + ':' + btoa(enc);
-
-    // Generar QR con QRCode.js en un div temporal y luego copiar al canvas
-    const tmpDiv = document.createElement('div');
-    tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
-    document.body.appendChild(tmpDiv);
-
-    try {
-      const qr = new QRCode(tmpDiv, {
-        text:        qrData,
-        width:       200,
-        height:      200,
-        colorDark:   '#1a1814',
-        colorLight:  '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-
-      // Esperar a que QRCode.js renderice
-      const intentar = (intentos) => {
-        const img = tmpDiv.querySelector('img');
-        const cv  = tmpDiv.querySelector('canvas');
-
-        if (cv && cv.width > 0) {
-          // Copiar canvas directamente
-          const mainCanvas = document.getElementById('qr-main-canvas');
-          mainCanvas.width  = 200;
-          mainCanvas.height = 200;
-          mainCanvas.getContext('2d').drawImage(cv, 0, 0, 200, 200);
-          mostrarQR(mainCanvas);
-          document.body.removeChild(tmpDiv);
-        } else if (img && img.complete && img.naturalWidth > 0) {
-          // Copiar imagen
-          const mainCanvas = document.getElementById('qr-main-canvas');
-          mainCanvas.width  = 200;
-          mainCanvas.height = 200;
-          const tempImg = new Image();
-          tempImg.onload = () => {
-            mainCanvas.getContext('2d').drawImage(tempImg, 0, 0, 200, 200);
-            mostrarQR(mainCanvas);
-            document.body.removeChild(tmpDiv);
-          };
-          tempImg.onerror = () => { if (intentos > 0) setTimeout(() => intentar(intentos-1), 150); };
-          tempImg.src = img.src;
-        } else if (intentos > 0) {
-          setTimeout(() => intentar(intentos - 1), 150);
-        } else {
-          document.getElementById('qr-generating').textContent = '❌ Error al generar QR. Pulsa Recargar.';
-          document.body.removeChild(tmpDiv);
-        }
-      };
-      setTimeout(() => intentar(20), 100);
-
-    } catch(e) {
-      console.error('QR error:', e);
-      document.getElementById('qr-generating').textContent = '❌ Error: ' + e.message;
-      document.body.removeChild(tmpDiv);
-    }
-  }
-
-  function mostrarQR(canvas) {
-    document.getElementById('qr-generating').style.display  = 'none';
-    canvas.style.display = 'block';
-    iniciarCuentaRegresiva();
-  }
-
-  function iniciarCuentaRegresiva() {
-    clearInterval(_qrCountdown);
-    actualizarCuentaRegresiva();
-    _qrCountdown = setInterval(() => {
-      if (!actualizarCuentaRegresiva()) {
-        clearInterval(_qrCountdown);
-        // QR expirado — limpiar canvas
-        const canvas = document.getElementById('qr-main-canvas');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#f5f3ee';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#c0392b';
-        ctx.font = 'bold 14px DM Sans, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('QR EXPIRADO', 100, 105);
-      }
-    }, 1000);
-  }
-
-  function actualizarCuentaRegresiva() {
-    const el = document.getElementById('qr-countdown');
-    if (!el) return false;
-    const left = Math.max(0, Math.ceil((_qrExpireAt - Date.now()) / 1000));
-    if (left <= 0) {
-      el.textContent = '⚠️ QR expirado — pulsa Recargar';
-      el.style.color = 'var(--red)';
-      return false;
-    }
-    const min  = Math.floor(left / 60);
-    const segs = left % 60;
-    el.textContent = `⏱ Expira en ${min}:${String(segs).padStart(2,'0')}`;
-    el.style.color = left < 30 ? 'var(--red)' : 'var(--accent)';
-    return true;
-  }
-
-  // Cerrar modal al hacer clic fuera
-  document.getElementById('qr-modal-ov')?.addEventListener('click', e => {
-    if (e.target === document.getElementById('qr-modal-ov')) cerrarModalQR();
-  });
 
   // ══════════════════════════════════════════════════════════════════════
   // TIPO DE CLIENTE
@@ -5391,11 +4865,11 @@
   // Cargar estado de suscripción — llamado al iniciar sesión
   async function cargarSuscripcion() {
     try {
-      const res = await ghRead('suscripcion.json');
-      _suscripData = res?.data || { bloqueado:false, expira_en:null, codigo_temporal:null };
-      _suscripData.sha = res?.sha;
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'suscripcion').maybeSingle();
+      if (error) throw error;
+      _suscripData = data?.value || { bloqueado:false, expira_en:null, codigo_temporal:null, unlock_password:'' };
     } catch {
-      _suscripData = { bloqueado:false, expira_en:null, codigo_temporal:null, sha:null };
+      _suscripData = { bloqueado:false, expira_en:null, codigo_temporal:null, unlock_password:'' };
     }
     aplicarEstadoSuscripcion();
   }
@@ -5469,7 +4943,6 @@
   function abrirModalSuscripcion() {
     renderSuscripEstado();
     cargarPasswordMaestra();
-    initJsonbinUI();
     document.getElementById('suscrip-ov').style.display = 'flex';
   }
   function cerrarModalSuscripcion() {
@@ -5517,14 +4990,13 @@
   async function guardarSuscripcion(data) {
     showLoading(true);
     try {
-      const ok = await ghWrite('suscripcion.json', data, _suscripData?.sha);
-      if (!ok) throw new Error();
-      const res = await ghRead('suscripcion.json');
-      _suscripData = res?.data || data;
-      _suscripData.sha = res?.sha;
+      const merged = { ..._suscripData, ...data };
+      delete merged.sha;
+      const { error } = await supa.from('company_settings').upsert({ key: 'suscripcion', value: merged });
+      if (error) throw error;
+      _suscripData = merged;
       renderSuscripEstado();
       aplicarEstadoSuscripcion();
-      sincronizarJSONBin();
       return true;
     } catch {
       showToast('❌ Error al guardar la configuración.', 'error');
@@ -5569,11 +5041,7 @@
 
   // ── Contraseña permanente del SuperAdmin ────────────────────────────────
   async function cargarPasswordMaestra() {
-    try {
-      const res = await ghRead('auth.json');
-      const pass = res?.data?.superadmin?.unlock_password || '';
-      document.getElementById('suscrip-master-pass').value = pass;
-    } catch {}
+    document.getElementById('suscrip-master-pass').value = _suscripData?.unlock_password || '';
   }
 
   async function guardarPasswordMaestra() {
@@ -5586,15 +5054,10 @@
     }
     showLoading(true);
     try {
-      const res = await ghRead('auth.json');
-      const auth = res?.data || {};
-      auth.superadmin = auth.superadmin || {};
-      auth.superadmin.unlock_password = pass;
-      const ok = await ghWrite('auth.json', auth, res?.sha);
+      const ok = await guardarSuscripcion({ unlock_password: pass });
       if (!ok) throw new Error();
       msgEl.style.color = 'var(--success)';
       msgEl.textContent = '✅ Guardada correctamente.';
-      sincronizarJSONBin();
       setTimeout(()=>{ msgEl.textContent=''; }, 3000);
     } catch {
       msgEl.style.color = 'var(--red)';
@@ -5621,35 +5084,19 @@
     if (!valor) { errEl.textContent = 'Ingresa un código.'; return; }
 
     try {
-      const [authRes, suscripRes] = await Promise.all([
-        ghRead('auth.json'),
-        ghRead('suscripcion.json'),
-      ]);
-      const authData2 = authRes?.data || {};
-      const suscrip2  = suscripRes?.data || {};
-      const masterPass = authData2.superadmin?.unlock_password || '';
+      const { data, error } = await supa.rpc('intentar_desbloqueo_suscripcion', { p_valor: valor });
+      if (error) throw error;
 
-      // 1. Contraseña permanente del SuperAdmin — solo permite ACCESO, no desbloquea para los demás
-      if (masterPass && valor === masterPass) {
+      if (data?.ok && data.tipo === 'password') {
         document.getElementById('lock-screen').style.display = 'none';
         document.body.style.overflow = '';
         showToast('✅ Acceso de SuperAdmin concedido. El sistema sigue bloqueado para otros.', 'success');
         return;
       }
-
-      // 2. Código temporal del Admin — desbloquea para todos y se consume
-      if (suscrip2.codigo_temporal && valor === suscrip2.codigo_temporal) {
-        const nuevaData = { bloqueado: false, expira_en: null, codigo_temporal: null };
-        const ok = await ghWrite('suscripcion.json', nuevaData, suscripRes?.sha);
-        if (!ok) { errEl.textContent = '❌ Error al desbloquear. Intenta de nuevo.'; return; }
-
-        const res = await ghRead('suscripcion.json');
-        _suscripData = res?.data || nuevaData;
-        _suscripData.sha = res?.sha;
+      if (data?.ok && data.tipo === 'codigo') {
+        await cargarSuscripcion(); // refresca _suscripData con el nuevo estado ya desbloqueado
         document.getElementById('lock-screen').style.display = 'none';
         document.body.style.overflow = '';
-        aplicarEstadoSuscripcion();
-        sincronizarJSONBin();
         showToast('✅ Sistema desbloqueado.', 'success');
         return;
       }
@@ -5659,116 +5106,6 @@
     } catch {
       errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
     }
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // SINCRONIZACIÓN PÚBLICA VÍA JSONBIN (bloqueo visible sin token)
-  // ══════════════════════════════════════════════════════════════════════
-  const JSONBIN_API = 'https://api.jsonbin.io/v3';
-
-  function getJsonbinConfig() {
-    return {
-      key: localStorage.getItem('jsonbin_key') || '',
-      id:  localStorage.getItem('jsonbin_id')  || '',
-    };
-  }
-
-  function initJsonbinUI() {
-    const cfg = getJsonbinConfig();
-    const keyEl = document.getElementById('jsonbin-key');
-    const idEl  = document.getElementById('jsonbin-id');
-    if (keyEl) keyEl.value = cfg.key;
-    if (idEl)  idEl.value  = cfg.id;
-    const statusEl = document.getElementById('jsonbin-status');
-    if (statusEl) {
-      if (cfg.key && cfg.id) {
-        statusEl.innerHTML = `✅ Configurado · Bin ID: <strong>${cfg.id}</strong>`
-          + `<br><span style="color:var(--muted)">⚠️ IMPORTANTE: para que el bloqueo afecte a TODOS los visitantes (sin token), `
-          + `copia este Bin ID y pégalo en la constante <code>JSONBIN_BIN_ID_FALLBACK</code> dentro de <code>index.html</code> (página pública). `
-          + `Esto solo se hace una vez.</span>`;
-        statusEl.style.color = 'var(--success)';
-      } else {
-        statusEl.textContent = '⚠️ No configurado — el bloqueo solo afecta a dispositivos con token.';
-        statusEl.style.color = 'var(--muted)';
-      }
-    }
-  }
-
-  async function guardarConfigJSONBin() {
-    const msgEl = document.getElementById('jsonbin-msg');
-    const key = document.getElementById('jsonbin-key').value.trim();
-    let   id  = document.getElementById('jsonbin-id').value.trim();
-
-    if (!key) { msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa tu X-Master-Key.'; return; }
-
-    msgEl.style.color='var(--muted)'; msgEl.textContent='Verificando...';
-    showLoading(true);
-    try {
-      if (!id) {
-        const payload = {
-          bloqueado: _suscripData?.bloqueado || false,
-          expira_en: _suscripData?.expira_en || null,
-          codigo_temporal: _suscripData?.codigo_temporal || null,
-          unlock_password: '',
-        };
-        const r = await fetch(`${JSONBIN_API}/b`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': key,
-            'X-Bin-Name': 'sanagua-suscripcion',
-            'X-Bin-Private': 'false',
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!r.ok) throw new Error('No se pudo crear el Bin. Verifica tu X-Master-Key.');
-        const data = await r.json();
-        id = data?.metadata?.id;
-        if (!id) throw new Error('Respuesta inesperada de JSONBin.');
-        document.getElementById('jsonbin-id').value = id;
-      } else {
-        const r = await fetch(`${JSONBIN_API}/b/${id}/latest`, {
-          headers: { 'X-Master-Key': key },
-        });
-        if (!r.ok) throw new Error('No se pudo acceder al Bin con ese ID/Key.');
-      }
-
-      localStorage.setItem('jsonbin_key', key);
-      localStorage.setItem('jsonbin_id',  id);
-      msgEl.style.color='var(--success)';
-      msgEl.textContent='✅ Configuración guardada correctamente.';
-      initJsonbinUI();
-      sincronizarJSONBin();
-    } catch(e) {
-      msgEl.style.color='var(--red)';
-      msgEl.textContent='❌ ' + (e.message || 'Error al configurar JSONBin.');
-    } finally { showLoading(false); }
-  }
-
-  async function sincronizarJSONBin() {
-    const cfg = getJsonbinConfig();
-    if (!cfg.key || !cfg.id) return;
-
-    try {
-      const authRes = await ghRead('auth.json');
-      const masterPass = authRes?.data?.superadmin?.unlock_password || '';
-
-      const payload = {
-        bloqueado:       _suscripData?.bloqueado || false,
-        expira_en:       _suscripData?.expira_en || null,
-        codigo_temporal: _suscripData?.codigo_temporal || null,
-        unlock_password: masterPass,
-      };
-
-      await fetch(`${JSONBIN_API}/b/${cfg.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': cfg.key,
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch(e) { console.warn('Error sincronizando JSONBin:', e); }
   }
 
 </script>

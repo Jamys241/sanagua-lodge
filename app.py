@@ -94,16 +94,16 @@ def require_role(*roles):
     return decorator
 
 
-# ── GitHub como base de datos ────────────────────────────────────────────────
+# ── GitHub como base de datos (legacy — la mayoría ya vive en Supabase) ─────
 # Variables de entorno — se configuran en Render (Dashboard → Environment),
 # NUNCA en este archivo ni en el repo. Ver render.yaml y .env.example.
 #   GH_TOKEN  → GitHub Personal Access Token (repo scope)
 #   GH_REPO   → usuario/repositorio  ej: sanagua/datos
 #   GH_BRANCH → rama donde se guardan los datos (default: main)
 #
-# Los datos se guardan como archivos JSON en el repo:
-#   data/counter.json   data/history.json   data/products.json
-#   data/logo.json      data/empresa.json   data/events.json
+# counter/history/events/products/logo/empresa/solicitudes ya se migraron a
+# Supabase. Lo que queda en GitHub (auth.json, suscripcion.json) es del
+# sistema de credenciales/bloqueo previo a Supabase Auth.
 
 GH_TOKEN  = os.environ.get('GH_TOKEN', '')
 GH_REPO   = os.environ.get('GH_REPO', '')
@@ -200,13 +200,20 @@ def save_products(products):
 
 # ── Logo ───────────────────────────────────────────────────────────────────────
 def load_logo():
-    data, _ = _load('logo.json', {'logo': ''})
-    return data.get('logo', '')
+    if sb is None:
+        return ''
+    try:
+        res = sb.table('company_settings').select('value').eq('key', 'logo').limit(1).execute()
+        if res.data:
+            return res.data[0]['value'].get('logo', '')
+    except Exception as e:
+        print('load_logo error:', e)
+    return ''
 
 def save_logo(logo_b64):
-    result = gh_read('logo.json')
-    sha = result[1] if result else None
-    gh_write('logo.json', {'logo': logo_b64}, sha)
+    if sb is None:
+        return
+    sb.table('company_settings').upsert({'key': 'logo', 'value': {'logo': logo_b64}}).execute()
 
 # ── Rutas ──────────────────────────────────────────────────────────────────────
 @app.route('/')
@@ -541,13 +548,20 @@ EMPRESA_DEFAULT = {
 }
 
 def load_empresa():
-    data, _ = _load('empresa.json', EMPRESA_DEFAULT)
-    return data if data.get('nombre') else EMPRESA_DEFAULT.copy()
+    if sb is None:
+        return EMPRESA_DEFAULT.copy()
+    try:
+        res = sb.table('company_settings').select('value').eq('key', 'empresa').limit(1).execute()
+        if res.data and res.data[0]['value'].get('nombre'):
+            return res.data[0]['value']
+    except Exception as e:
+        print('load_empresa error:', e)
+    return EMPRESA_DEFAULT.copy()
 
 def save_empresa(data):
-    result = gh_read('empresa.json')
-    sha = result[1] if result else None
-    gh_write('empresa.json', data, sha)
+    if sb is None:
+        return
+    sb.table('company_settings').upsert({'key': 'empresa', 'value': data}).execute()
 
 # ── Eventos manuales ───────────────────────────────────────────────────────────
 def load_events():

@@ -696,39 +696,6 @@
     return { profile: data, errorMsg: null };
   }
 
-  // ── Populares ─────────────────────────────────────────────────────────
-  async function loadPopulares() {
-    const res = await webGhRead('populares.json');
-    const lista = res?.data?.populares || [];
-    // Mapa de id → tarjeta(s) que afecta
-    const MAP = {
-      'pasadia-sencilla':   ['card-pasadia'],
-      'pasadia-completa':   ['card-pasadia'],
-      'camping-propio':     ['card-camping'],
-      'camping-suministro': ['card-camping'],
-      'cabana-yaguarundi':  ['card-cabanas'],
-      'cabana-ocelot':      ['card-cabanas'],
-      'cabana-motmot':      ['card-cabanas'],
-      'restaurante':        ['card-restaurante'],
-    };
-    // Limpiar insignias previas
-    document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
-    lista.forEach(id => {
-      const targets = MAP[id] || [];
-      targets.forEach(cardId => {
-        const card = document.getElementById(cardId);
-        if (!card) return;
-        // Solo agregar una vez por tarjeta
-        if (card.querySelector('.pop-badge')) return;
-        const badge = document.createElement('div');
-        badge.className = 'pop-badge';
-        badge.innerHTML = '⭐ Más popular';
-        card.style.position = 'relative';
-        card.prepend(badge);
-      });
-    });
-  }
-
   // NOTA: las credenciales de administrador ya NO se cargan desde GitHub.
   // Se verifican en el backend contra Supabase (ver doPublicLogin más abajo).
 
@@ -1147,7 +1114,8 @@
 
 <script>
   // ══════════════════════════════════════════════════════════════════════
-  // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN (lectura — solo si hay token configurado)
+  // SISTEMA DE BLOQUEO POR SUSCRIPCIÓN — 100% Supabase (lectura pública,
+  // sin necesidad de token de GitHub ni de JSONBin)
   // ══════════════════════════════════════════════════════════════════════
   let _suscripDataPub  = null;
   let _suscripTimerPub = null;
@@ -1166,38 +1134,13 @@
     return parts.join(' ');
   }
 
-  const JSONBIN_API_PUB = 'https://api.jsonbin.io/v3';
-  // Bin ID público de solo-lectura para el estado del sistema.
-  // Se rellena automáticamente cuando el SuperAdmin configura JSONBin desde el panel
-  // de administración (Suscrip. → Bloqueo público). Es un identificador, no una clave secreta.
-  const JSONBIN_BIN_ID_FALLBACK = '6a300dbeda38895dfec424cf';
-
   async function cargarSuscripcionPub() {
-    // 1. Prioridad: leer desde JSONBin (sin token, accesible para todos)
-    const binId = localStorage.getItem('jsonbin_id') || JSONBIN_BIN_ID_FALLBACK;
-    if (binId) {
-      try {
-        const r = await fetch(`${JSONBIN_API_PUB}/b/${binId}/latest`, {
-          headers: { 'X-Bin-Meta': 'false' },
-          cache: 'no-store',
-        });
-        if (r.ok) {
-          const data = await r.json();
-          _suscripDataPub = data?.record || data;
-          aplicarEstadoSuscripcionPub();
-          return;
-        }
-      } catch {}
-    }
-
-    // 2. Fallback: si el dispositivo tiene token (Admin/SuperAdmin), leer de GitHub
-    if (!WEB_GH_TOKEN || !WEB_GH_REPO) return;
     try {
-      const res = await webGhRead('suscripcion.json');
-      _suscripDataPub = res?.data || { bloqueado:false, expira_en:null, codigo_temporal:null };
-      _suscripDataPub.sha = res?.sha;
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'suscripcion').maybeSingle();
+      if (error) throw error;
+      _suscripDataPub = data?.value || { bloqueado:false, expira_en:null, codigo_temporal:null };
       aplicarEstadoSuscripcionPub();
-    } catch {}
+    } catch (e) { console.warn('cargarSuscripcionPub', e); }
   }
 
   function aplicarEstadoSuscripcionPub() {
@@ -1215,14 +1158,6 @@
       if (lockScreen) lockScreen.style.display = 'flex';
       if (banner) banner.style.display = 'none';
       document.body.style.overflow = 'hidden';
-      // Mostrar formulario de código solo si el dispositivo tiene token (Admin/SuperAdmin)
-      const tieneToken = !!(WEB_GH_TOKEN && WEB_GH_REPO);
-      const formBox  = document.getElementById('lock-form-box');
-      const msgToken = document.getElementById('lock-msg-token');
-      const msgNo    = document.getElementById('lock-msg-notoken');
-      if (formBox)  formBox.style.display  = tieneToken ? 'block' : 'none';
-      if (msgToken) msgToken.style.display = tieneToken ? 'inline' : 'none';
-      if (msgNo)    msgNo.style.display    = tieneToken ? 'none' : 'inline';
       return;
     }
 
@@ -1250,40 +1185,13 @@
     if (!valor) { errEl.textContent = 'Ingresa un código.'; return; }
 
     try {
-      const [authRes, suscripRes] = await Promise.all([
-        webGhRead('auth.json'),
-        webGhRead('suscripcion.json'),
-      ]);
-      const authData2 = authRes?.data || {};
-      const suscrip2  = suscripRes?.data || {};
-      const masterPass = authData2.superadmin?.unlock_password || '';
+      const { data, error } = await supa.rpc('intentar_desbloqueo_suscripcion', { p_valor: valor });
+      if (error) throw error;
 
-      // 1. Contraseña permanente SuperAdmin — solo acceso, no desbloquea para otros
-      if (masterPass && valor === masterPass) {
+      if (data?.ok) {
+        if (data.tipo === 'codigo') await cargarSuscripcionPub();
         document.getElementById('lock-screen').style.display = 'none';
         document.body.style.overflow = '';
-        return;
-      }
-
-      // 2. Código temporal — desbloquea para todos y se consume
-      if (suscrip2.codigo_temporal && valor === suscrip2.codigo_temporal) {
-        const nuevaData = { bloqueado:false, expira_en:null, codigo_temporal:null };
-        const ok = await webGhWrite('suscripcion.json', nuevaData, suscripRes?.sha);
-        if (!ok) { errEl.textContent = '❌ Error al desbloquear. Intenta de nuevo.'; return; }
-        _suscripDataPub = nuevaData;
-        document.getElementById('lock-screen').style.display = 'none';
-        document.body.style.overflow = '';
-        aplicarEstadoSuscripcionPub();
-        // Sincronizar JSONBin para que el bloqueo público desaparezca para todos
-        const binId = localStorage.getItem('jsonbin_id') || '';
-        const binKey = localStorage.getItem('jsonbin_key') || '';
-        if (binId && binKey) {
-          fetch(`${JSONBIN_API_PUB}/b/${binId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': binKey },
-            body: JSON.stringify({ ...nuevaData, unlock_password: masterPass }),
-          }).catch(()=>{});
-        }
         return;
       }
 

@@ -37,19 +37,22 @@
     const parts = dir.split('/').filter(Boolean);
     return '../'.repeat(parts.length);
   }
-  const ROOT = computeRoot();
-  const LINKS = {
-    inicio:      ROOT + 'index.html',
-    pasadia:     ROOT + 'assets/pages/pasadia.html',
-    camping:     ROOT + 'assets/pages/camping.html',
-    cabanas:     ROOT + 'assets/pages/cabanas.html',
-    restaurante: ROOT + 'assets/pages/restaurante.html',
-    sobre:       ROOT + 'index.html#sobre',
-    experiencias:ROOT + 'index.html#experiencias',
-    contacto:    ROOT + 'index.html#footer',
-    login:       ROOT + 'index.html?action=login',
-    registro:    ROOT + 'index.html?action=register',
-  };
+  let ROOT, LINKS;
+  function buildLinks() {
+    ROOT = computeRoot();
+    LINKS = {
+      inicio:      ROOT + 'index.html',
+      pasadia:     ROOT + 'assets/pages/pasadia.html',
+      camping:     ROOT + 'assets/pages/camping.html',
+      cabanas:     ROOT + 'assets/pages/cabanas.html',
+      restaurante: ROOT + 'assets/pages/restaurante.html',
+      sobre:       ROOT + 'index.html#sobre',
+      experiencias:ROOT + 'index.html#experiencias',
+      contacto:    ROOT + 'index.html#footer',
+      login:       ROOT + 'index.html?action=login',
+      registro:    ROOT + 'index.html?action=register',
+    };
+  }
 
   function injectStyles() {
     const css = `
@@ -187,6 +190,7 @@
   async function logout() { await supaNav.auth.signOut(); window.location.href = LINKS.inicio; }
 
   function init() {
+    buildLinks();
     injectStyles();
     injectDom();
     refrescar();

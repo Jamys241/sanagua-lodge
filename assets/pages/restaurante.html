@@ -107,9 +107,11 @@
 </div>
 
 <script>
-  const GT=localStorage.getItem('gh_token')||'', GR=localStorage.getItem('gh_repo')||'', GB=localStorage.getItem('gh_branch')||'main';
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaMenu = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Menú por defecto — se usa cuando no hay conexión a GitHub
+  // Menú por defecto — se usa solo si Supabase no responde (sin conexión, etc.)
   const MENU_DEFAULT = {
     categorias:[
       {id:'desayunos',platos:[
@@ -152,16 +154,22 @@
     ]
   };
 
-  async function ghF(fn){
-    if(!GT||!GR)return null;
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GR}/contents/Data/json/${fn}?ref=${GB}`,
-        {headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'}});
-      if(!r.ok)return null;
-      const d=await r.json();
-      const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
-      return JSON.parse(new TextDecoder('utf-8').decode(b));
-    }catch{return null;}
+  // Lee el menú real (categorías + platos) desde Supabase, armado por el
+  // admin en "Editor de Menú Web" — reemplaza el viejo menu.json de GitHub.
+  async function cargarMenuSupabase() {
+    const [{ data: cats, error: e1 }, { data: prods, error: e2 }] = await Promise.all([
+      supaMenu.from('restaurant_categories').select('*').eq('activo', true).order('orden', { ascending: true }),
+      supaMenu.from('restaurant_products').select('*').eq('activo', true).order('orden', { ascending: true }),
+    ]);
+    if (e1 || e2 || !cats?.length) return null;
+    return {
+      categorias: cats.map(c => ({
+        id: c.key || c.id,
+        platos: (prods||[]).filter(p => p.categoria_id === c.id).map(p => ({
+          nombre: p.nombre, descripcion: p.descripcion || '', precio: parseFloat(p.precio)||0, foto: p.foto || '',
+        })),
+      })),
+    };
   }
 
   const PLACEHOLDER_SVG=`<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="30" r="14" stroke="#a09080" stroke-width="2.2" fill="none"/><line x1="32" y1="8" x2="32" y2="16" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="32" y1="44" x2="32" y2="52" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="30" x2="18" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/><line x1="46" y1="30" x2="54" y2="30" stroke="#a09080" stroke-width="2.2" stroke-linecap="round"/></svg>`;
@@ -195,8 +203,8 @@
   async function init(){
     // Mostrar platos por defecto de inmediato
     renderMenu(MENU_DEFAULT);
-    // Intentar cargar desde GitHub (actualiza si hay datos más recientes)
-    const menu=await ghF('menu.json');
+    // Cargar el menú real desde Supabase (actualiza si hay datos)
+    const menu=await cargarMenuSupabase();
     if(menu?.categorias) renderMenu(menu);
   }
 
@@ -214,7 +222,7 @@
 
   let _lastMenu = null;
   setInterval(async () => {
-    const menu = await ghF('menu.json');
+    const menu = await cargarMenuSupabase();
     if (!menu?.categorias) return;
     const hash = JSON.stringify(menu);
     if (hash === _lastMenu) return;

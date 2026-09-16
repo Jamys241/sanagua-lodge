@@ -55,12 +55,6 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ── Config GitHub (ya no se usa para fotos — ver API_BASE abajo) ──────
-  // ── Config repos ────────────────────────────────────────────────────
-  const GT = localStorage.getItem('gh_token')  || '';
-  const GR = localStorage.getItem('gh_repo')   || '';  // repo privado (datos, ya no se usa para el menú)
-  const GB = localStorage.getItem('gh_branch') || 'main';
-
   // URL del backend Flask (app.py) en el VPS. Ahí se suben y sirven las
   // fotos del menú (ver /upload-image en app.py). Cambia este valor por el
   // dominio real cuando despliegues (el mismo que en achive.html y
@@ -72,34 +66,6 @@
   // La verificación real ahora la hace assets/js/admin-guard.js (Supabase
   // Auth + confirmación server-side), cargado en <head>. Si no hay sesión
   // de admin/superadmin válida, ya redirigió antes de llegar aquí.
-
-  // ── GitHub helpers ──────────────────────────────────────────────────
-  async function ghRead(filename) {
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${GR}/contents/Data/json/${filename}?ref=${GB}`,
-        { headers: { 'Authorization': `token ${GT}`, 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      if (!r.ok) return null;
-      const d = await r.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
-      return { data: JSON.parse(new TextDecoder('utf-8').decode(bytes)), sha: d.sha };
-    } catch { return null; }
-  }
-
-  async function ghWrite(filename, data, sha) {
-    const json    = JSON.stringify(data, null, 2);
-    const bytes   = new TextEncoder().encode(json);
-    let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
-    const content = btoa(bin);
-    const payload = { message: `update ${filename}`, content, branch: GB };
-    if (sha) payload.sha = sha;
-    const r = await fetch(
-      `https://api.github.com/repos/${GR}/contents/Data/json/${filename}`,
-      { method:'PUT', headers:{ 'Authorization':`token ${GT}`, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json' }, body: JSON.stringify(payload) }
-    );
-    return r.ok;
-  }
 
   // ── Estado ──────────────────────────────────────────────────────────
   let menuData  = null;

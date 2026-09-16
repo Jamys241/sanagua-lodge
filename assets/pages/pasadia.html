@@ -133,25 +133,6 @@
 </div>
 
 <script>
-  // ── Config GitHub ─────────────────────────────────────────────────────
-  const GH_TOKEN  = localStorage.getItem('gh_token')  || '';
-  const GH_REPO   = localStorage.getItem('gh_repo')   || '';
-  const GH_BRANCH = localStorage.getItem('gh_branch') || 'main';
-
-  async function ghFetch(filename) {
-    if (!GH_TOKEN || !GH_REPO) return null;
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/${filename}?ref=${GH_BRANCH}`,
-        { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      if (!r.ok) return null;
-      const d = await r.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c => c.charCodeAt(0));
-      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    } catch { return null; }
-  }
-
   const SUPABASE_URL_PRECIOS      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
@@ -190,8 +171,6 @@
 
   // ── Estado ────────────────────────────────────────────────────────────
   let precios    = null;
-  let historial  = [];
-  let eventos    = [];
   let contadores = {}; // { adulto:0, nino:0, ... }
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -304,14 +283,8 @@
 
   // ── Inicializar ───────────────────────────────────────────────────────
   async function init() {
-    const [p, h, e] = await Promise.all([
-      cargarPreciosPasadia(),
-      ghFetch('history.json'),
-      ghFetch('events.json'),
-    ]);
-    precios   = p;
-    historial = h?.quotes || [];
-    eventos   = e?.events || [];
+    const p = await cargarPreciosPasadia();
+    precios = p;
 
     if (precios?.[SERVICIO]) {
       const s = precios[SERVICIO];
@@ -435,88 +408,11 @@
 
   // ── Modal ─────────────────────────────────────────────────────────────
 
-  // ── Guardar solicitud en GitHub ───────────────────────────────────────
-  async function guardarSolicitud(datos) {
-    const sesion = getSesionPublica();
-    if (!sesion) return false;
-    const solicitud = {
-      id:         `sol_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
-      estado:     'pendiente',
-      created_at: new Date().toISOString(),
-      usuario:    { nombre: sesion.name||sesion.username||'Usuario', email: sesion.email||'', tipo: sesion.tipo },
-      ...datos
-    };
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/solicitudes.json?ref=${GH_BRANCH}`,
-        { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
-      );
-      let lista=[], sha=null;
-      if (r.ok) {
-        const d=await r.json(); sha=d.sha;
-        const b=Uint8Array.from(atob(d.content.replace(/\s/g,'')),c=>c.charCodeAt(0));
-        lista=JSON.parse(new TextDecoder('utf-8').decode(b)).solicitudes||[];
-      }
-      lista.push(solicitud);
-      const json=JSON.stringify({solicitudes:lista},null,2);
-      let bin=''; new TextEncoder().encode(json).forEach(b=>bin+=String.fromCharCode(b));
-      const content=btoa(bin);
-      const payload={message:`solicitud ${solicitud.id}`,content,branch:GH_BRANCH};
-      if(sha)payload.sha=sha;
-      const wr=await fetch(
-        `https://api.github.com/repos/${GH_REPO}/contents/Data/json/solicitudes.json`,
-        {method:'PUT',headers:{'Authorization':`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)}
-      );
-      return wr.ok;
-    } catch { return false; }
-  }
-
-  function openModal(){ verificarYReservar(() => { document.getElementById('modal-overlay').classList.add('open'); loadYMostrarPopulares(); setTimeout(autorellenarDatos,100); }); }
+  function openModal(){ verificarYReservar(() => { document.getElementById('modal-overlay').classList.add('open'); setTimeout(autorellenarDatos,100); }); }
   function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
   document.getElementById('modal-overlay').addEventListener('click',e=>{
     if(e.target===document.getElementById('modal-overlay'))closeModal();
   });
-
-  async function loadYMostrarPopulares(){
-    try {
-      const pop = await ghFetch('populares.json');
-      const lista = pop?.populares || [];
-      ['sencilla','completa'].forEach(mod => {
-        const el = document.getElementById(`mod-${mod}`);
-        if (!el) return;
-        // Quitar badge previo
-        el.querySelector('.pop-badge')?.remove();
-        if (lista.includes(`pasadia-${mod}`)) {
-          el.style.position = 'relative';
-          const b = document.createElement('div');
-          b.className = 'pop-badge';
-          b.textContent = '⭐ Más popular';
-          el.prepend(b);
-        }
-      });
-    } catch {}
-  }
-
-  function selectModalidad(key) {
-    if (!precios?.[SERVICIO]?.modalidades?.[key]) return;
-    modalidadActual = key;
-    // Estilos visuales
-    ['sencilla','completa'].forEach(k => {
-      const el = document.getElementById(`mod-${k}`);
-      const lbl = el?.querySelector('div:last-child');
-      if (k === key) {
-        el.style.borderColor = 'var(--sage)'; el.style.background = '#eef4f5';
-        if (lbl) { lbl.textContent = '✓ Seleccionada'; lbl.style.color = 'var(--sage)'; }
-      } else {
-        el.style.borderColor = '#e8e8e8'; el.style.background = '#fafafa';
-        if (lbl) { lbl.textContent = 'Seleccionar'; lbl.style.color = '#ccc'; }
-      }
-    });
-    const s = precios[SERVICIO];
-    const mod = s.modalidades[key];
-    contadores = Object.fromEntries(Object.keys(mod.tarifas||{}).map(k=>[k,0]));
-    renderPersonasGrid();
-  }
 
   function renderPersonasGrid() {
     if (!precios?.[SERVICIO]) return;

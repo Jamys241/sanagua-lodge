@@ -22,25 +22,6 @@
 </div>
 
 <script>
-  // ── Config ───────────────────────────────────────────────────────────
-  const GT = localStorage.getItem('gh_token')  || '';
-  const GR = localStorage.getItem('gh_repo')   || '';
-  const GB = localStorage.getItem('gh_branch') || 'main';
-
-  async function ghRead(fn, repo) {
-    const r = repo || GR;
-    try {
-      const res = await fetch(
-        `https://api.github.com/repos/${r}/contents/Data/json/${fn}?ref=${GB}`,
-        { headers:{'Authorization':`token ${GT}`,'Accept':'application/vnd.github.v3+json'} }
-      );
-      if (!res.ok) return null;
-      const d = await res.json();
-      const b = Uint8Array.from(atob(d.content.replace(/\s/g,'')), c=>c.charCodeAt(0));
-      return { data: JSON.parse(new TextDecoder('utf-8').decode(b)), sha: d.sha };
-    } catch { return null; }
-  }
-
   // ── Niveles y beneficios ─────────────────────────────────────────────
   const NIVELES = [
     { nombre:'Explorador',  min:0,    max:249,  icon:'🌿', color:'#8fabb5' },
