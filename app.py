@@ -595,17 +595,17 @@ def _get_company(data):
 
 def _colors():
     return {
-        'BRAND':      colors.HexColor('#c8541a'),
-        'DARK':       colors.HexColor('#1a1814'),
+        'BRAND':      colors.HexColor('#7fa0ac'),  # Pantone 2177 C — color insignia
+        'DARK':       colors.HexColor('#1a2226'),
         'LIGHT_GRAY': colors.HexColor('#f5f3ee'),
-        'MID_GRAY':   colors.HexColor('#6b6660'),
-        'GREEN':      colors.HexColor('#2d7a4f'),
-        'BLUE':       colors.HexColor('#1a5fa8'),
-        'PURPLE':     colors.HexColor('#6b3fa0'),
+        'MID_GRAY':   colors.HexColor('#6b6670'),
+        'GREEN':      colors.HexColor('#2d7a4f'),  # éxito / descuentos — se deja igual a propósito
+        'BLUE':       colors.HexColor('#566d75'),  # tono oscuro de la misma familia del insignia
+        'PURPLE':     colors.HexColor('#5f7881'),
         'WHITE':      colors.white,
-        'RED10':      colors.HexColor('#c62828'),
-        'TEAL':       colors.HexColor('#0e7490'),
-        'GOLD':       colors.HexColor('#b45309'),
+        'RED10':      colors.HexColor('#c0392b'),
+        'TEAL':       colors.HexColor('#4d6b75'),
+        'GOLD':       colors.HexColor('#c9a84c'),
     }
 
 def S(name, **kw):
@@ -634,7 +634,23 @@ def _header_block(story, W, C, quote_label, quote_num, logo_b64=None, empresa=No
                 logo_b64 = logo_b64.split(',', 1)[1]
             logo_bytes = base64.b64decode(logo_b64)
             logo_buf = io.BytesIO(logo_bytes)
-            logo_img = Image(logo_buf, width=1.5*inch, height=0.6*inch)
+
+            # Calcular el tamaño real del logo para no deformarlo: lo
+            # encajamos dentro de una caja máxima (1.5in x 0.6in)
+            # respetando su proporción original.
+            max_w, max_h = 1.5 * inch, 0.6 * inch
+            try:
+                from PIL import Image as PILImage
+                logo_buf.seek(0)
+                with PILImage.open(logo_buf) as im:
+                    orig_w, orig_h = im.size
+                logo_buf.seek(0)
+                escala = min(max_w / orig_w, max_h / orig_h)
+                draw_w, draw_h = orig_w * escala, orig_h * escala
+            except Exception:
+                draw_w, draw_h = max_w, max_h  # si PIL no puede leerlo, usar la caja completa
+
+            logo_img = Image(logo_buf, width=draw_w, height=draw_h)
             logo_img.hAlign = 'LEFT'
         except Exception:
             logo_img = None
@@ -642,7 +658,7 @@ def _header_block(story, W, C, quote_label, quote_num, logo_b64=None, empresa=No
     if logo_img:
         left_cell = Table([
             [logo_img],
-            [Paragraph(f'<font color="#c8541a"><b>{company_name}</b></font>',
+            [Paragraph(f'<font color="#7fa0ac"><b>{company_name}</b></font>',
                        S('cn', fontSize=14, fontName='Helvetica-Bold'))]
         ], colWidths=[W*0.6])
         left_cell.setStyle(TableStyle([
@@ -653,14 +669,14 @@ def _header_block(story, W, C, quote_label, quote_num, logo_b64=None, empresa=No
             ('BOTTOMPADDING',(0,0),(-1,-1),2),
         ]))
     else:
-        left_cell = Paragraph(f'<font color="#c8541a"><b>{company_name}</b></font>',
+        left_cell = Paragraph(f'<font color="#7fa0ac"><b>{company_name}</b></font>',
                               S('cn', fontSize=18, fontName='Helvetica-Bold'))
 
     hdr = Table([[
         left_cell,
         Paragraph(
             f'<font size="9">{quote_label}</font><br/>'
-            f'<font color="#c8541a" size="24"><b>#{quote_num}</b></font>',
+            f'<font color="#7fa0ac" size="24"><b>#{quote_num}</b></font>',
             S('qn', fontSize=9, alignment=TA_RIGHT, leading=28)
         )
     ]], colWidths=[W*0.6, W*0.4])
@@ -825,7 +841,7 @@ def _totals_block(story, W, C, data, show_abono=True):
     if show_abono:
         ts += [
             ('LINEABOVE',(1,len(td_list)-1),(-1,len(td_list)-1),0.5,C['BLUE']),
-            ('BACKGROUND',(0,len(td_list)-1),(-1,len(td_list)-1),colors.HexColor('#e8f0fa')),
+            ('BACKGROUND',(0,len(td_list)-1),(-1,len(td_list)-1),colors.HexColor('#eef4f5')),
         ]
     tot_table.setStyle(TableStyle(ts))
     story.append(tot_table)
@@ -931,7 +947,7 @@ def _build_confirmation_pdf(buffer, data, quote_num):
         ('ROWBACKGROUNDS',(0,1),(-1,-1),[C['WHITE'], C['LIGHT_GRAY']]),
         ('GRID',(0,0),(-1,-1),0.4,colors.HexColor('#e0dbd4')),
         ('LINEABOVE',(0,len(pago_data)-1),(-1,len(pago_data)-1),1.5,C['BRAND']),
-        ('BACKGROUND',(0,len(pago_data)-1),(-1,len(pago_data)-1),colors.HexColor('#fef2e8')),
+        ('BACKGROUND',(0,len(pago_data)-1),(-1,len(pago_data)-1),colors.HexColor('#f0f5f6')),
         ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
         ('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),8),
         ('LEFTPADDING',(0,0),(-1,-1),10),('RIGHTPADDING',(0,0),(-1,-1),10),

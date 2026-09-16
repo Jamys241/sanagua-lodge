@@ -798,6 +798,21 @@
   <div id="logo-status" style="display:none;" class="card" style="padding:12px 20px;">
   </div>
 
+  <!-- Notas y condiciones del PDF -->
+  <div class="card" id="card-condiciones-pdf" style="display:none">
+    <div class="card-title">📝 Notas y Condiciones del PDF</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
+      Este texto aparece por defecto en la sección "Notas y Condiciones" de cada cotización nueva.
+      Puedes seguir editándolo por cotización individual si hace falta un caso especial.
+    </p>
+    <textarea id="condiciones-pdf-texto" class="form-input" rows="6" style="width:100%;font-family:inherit;resize:vertical"
+      placeholder="Ej: Precios sujetos a disponibilidad. Reserva se confirma con el 50% de abono..."></textarea>
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-accent" onclick="guardarCondicionesPdf()">💾 Guardar</button>
+      <span id="condiciones-pdf-msg" style="font-size:.82rem"></span>
+    </div>
+  </div>
+
   <!-- Contraseña del panel de Estadísticas -->
   <div class="card" id="card-pass-stats" style="display:none">
     <div class="card-title">🔒 Contraseña del panel de Estadísticas</div>
@@ -1228,8 +1243,13 @@
     </div>
     <div style="padding:22px">
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;">Ingresa la contraseña de acceso para ver las estadísticas de operación.</p>
-      <input type="password" id="stats-lock-pass" class="form-input" placeholder="Contraseña"
-        style="width:100%;margin-bottom:8px" onkeydown="if(event.key==='Enter')confirmarPasswordEstadisticas()">
+      <div style="position:relative;margin-bottom:8px">
+        <input type="password" id="stats-lock-pass" class="form-input" placeholder="Contraseña"
+          style="width:100%;padding-right:40px" onkeydown="if(event.key==='Enter')confirmarPasswordEstadisticas()">
+        <button type="button" onclick="toggleVerPasswordEstadisticas()" id="stats-lock-eye"
+          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+          cursor:pointer;font-size:1rem;color:var(--muted);padding:4px">👁️</button>
+      </div>
       <div id="stats-lock-error" style="color:var(--red);font-size:.8rem;min-height:16px;margin-bottom:10px"></div>
       <button class="btn btn-accent" style="width:100%" onclick="confirmarPasswordEstadisticas()">Entrar</button>
     </div>
@@ -1414,6 +1434,15 @@
     return user?.role === 'superadmin' || user?.role === 'desarrollador';
   }
 
+  // A diferencia del resto de permisos, este NO se otorga automáticamente a
+  // superadmin — es información delicada (condiciones legales/comerciales
+  // del PDF). Solo el desarrollador lo tiene siempre; superadmin y admin
+  // necesitan que se lo activen explícitamente desde "Configurar permisos".
+  function puedeEditarCondiciones() {
+    if (currentUser?.role === 'desarrollador') return true;
+    return !!currentUser?.permisos?.editar_condiciones_pdf;
+  }
+
 
 
   const PERMISOS_DEFAULT = {
@@ -1433,6 +1462,7 @@
     ver_solicitudes:     true,
     gestionar_usuarios:  true,
     ver_sincronizacion:  true,
+    editar_condiciones_pdf: false,
   };
 
   const PERMISOS_LABELS = {
@@ -1452,6 +1482,7 @@
     ver_solicitudes:     { label:'Ver solicitudes web',       desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
     gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
     ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
+    editar_condiciones_pdf: { label:'Editar notas y condiciones del PDF', desc:'Puede cambiar el texto legal/condiciones que aparece en las cotizaciones. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
   };
 
   function verificarSesion() {
@@ -2161,6 +2192,30 @@
     if (e.key === 'Escape') { closeMenu(); closeModal(); }
   });
 
+  async function cargarCondicionesPdf() {
+    try {
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'condiciones_pdf').maybeSingle();
+      if (error) throw error;
+      document.getElementById('condiciones-pdf-texto').value = data?.value?.texto || '';
+    } catch (e) { console.warn('cargarCondicionesPdf', e); }
+  }
+
+  async function guardarCondicionesPdf() {
+    if (!puedeEditarCondiciones()) { showToast('No tienes permiso para editar esto.', 'error'); return; }
+    const texto = document.getElementById('condiciones-pdf-texto').value;
+    const msgEl = document.getElementById('condiciones-pdf-msg');
+    try {
+      const { error } = await supa.from('company_settings').upsert({ key: 'condiciones_pdf', value: { texto } });
+      if (error) throw error;
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = '✅ Guardado correctamente.';
+      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
+    } catch (e) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ Error al guardar.';
+    }
+  }
+
   async function cargarPasswordStatsUI() {
     const box = document.getElementById('stats-pass-actual');
     if (currentUser?.role !== 'desarrollador') { box.style.display = 'none'; return; }
@@ -2192,9 +2247,18 @@
 
   function abrirEstadisticas() {
     document.getElementById('stats-lock-pass').value = '';
+    document.getElementById('stats-lock-pass').type = 'password';
+    document.getElementById('stats-lock-eye').textContent = '👁️';
     document.getElementById('stats-lock-error').textContent = '';
     document.getElementById('stats-lock-ov').style.display = 'flex';
     setTimeout(() => document.getElementById('stats-lock-pass').focus(), 100);
+  }
+  function toggleVerPasswordEstadisticas() {
+    const input = document.getElementById('stats-lock-pass');
+    const eye   = document.getElementById('stats-lock-eye');
+    const verlo = input.type === 'password';
+    input.type = verlo ? 'text' : 'password';
+    eye.textContent = verlo ? '🙈' : '👁️';
   }
   function cerrarModalEstadisticas() {
     document.getElementById('stats-lock-ov').style.display = 'none';
@@ -2261,6 +2325,8 @@
       if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
       document.getElementById('card-pass-stats').style.display = '';
       cargarPasswordStatsUI();
+      document.getElementById('card-condiciones-pdf').style.display = puedeEditarCondiciones() ? '' : 'none';
+      if (puedeEditarCondiciones()) cargarCondicionesPdf();
       // Los campos quedan vacíos a propósito: las contraseñas ya no se
       // guardan ni se leen en texto plano (viven hasheadas en Supabase).
       renderDowBtns();
@@ -3468,8 +3534,13 @@
     document.getElementById('nights-label-wrap').style.display='none';
   }
 
-  function insertCondicionesSanagua() {
-    const txt=`Para realizar la confirmación de su reservación se deberá realizar un abono del 50% del total, de lo contrario la confirmación no se haría efectiva. Métodos de pago disponibles: Transferencia, ACH y Link de Pago.\n\nEn Sanagua Lodge ofrecemos la posibilidad de realizar cambios de fecha o modificaciones en las reservas dentro de un plazo máximo de tres (3) meses a partir de la fecha original, manteniendo el monto pagado como abono disponible únicamente durante ese período y aplicable a una nueva fecha confirmada.\n\nUna vez transcurridos los tres (3) meses, el abono caduca automáticamente y no podrá utilizarse como crédito ni aplicarse a futuras reservaciones, bajo una política de no devolución.\n\nSANAGUA LODGE, S.A.\nBanco BAC\nNúmero de cuenta: 100492040\nCuenta corriente`;
+  async function insertCondicionesSanagua() {
+    const fallback=`Para realizar la confirmación de su reservación se deberá realizar un abono del 50% del total, de lo contrario la confirmación no se haría efectiva. Métodos de pago disponibles: Transferencia, ACH y Link de Pago.\n\nEn Sanagua Lodge ofrecemos la posibilidad de realizar cambios de fecha o modificaciones en las reservas dentro de un plazo máximo de tres (3) meses a partir de la fecha original, manteniendo el monto pagado como abono disponible únicamente durante ese período y aplicable a una nueva fecha confirmada.\n\nUna vez transcurridos los tres (3) meses, el abono caduca automáticamente y no podrá utilizarse como crédito ni aplicarse a futuras reservaciones, bajo una política de no devolución.\n\nSANAGUA LODGE, S.A.\nBanco BAC\nNúmero de cuenta: 100492040\nCuenta corriente`;
+    let txt = fallback;
+    try {
+      const { data } = await supa.from('company_settings').select('value').eq('key','condiciones_pdf').maybeSingle();
+      if (data?.value?.texto) txt = data.value.texto;
+    } catch {}
     const ta=document.getElementById('quote-notes');
     ta.value=txt; ta.style.minHeight='240px';
     showToast('✅ Condiciones insertadas','success');
