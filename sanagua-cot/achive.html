@@ -2175,7 +2175,7 @@
       if (error) throw error;
       if (!ok) { showToast('❌ Contraseña incorrecta.', 'error'); return; }
       sessionStorage.setItem('stats_unlocked', '1');
-      window.open('estadisticas.html', '_blank');
+      window.location.href = 'estadisticas.html';
     } catch (e) { console.error(e); showToast('❌ Error al verificar la contraseña.', 'error'); }
   }
 
