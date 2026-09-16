@@ -1218,6 +1218,29 @@
   </div>
 </div>
 
+<!-- Modal contraseña de Estadísticas -->
+<div id="stats-lock-ov" style="position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="background:var(--ink);padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-weight:700;color:#fff;font-size:.95rem">🔒 Panel de Estadísticas</span>
+      <button onclick="cerrarModalEstadisticas()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <div style="padding:22px">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;">Ingresa la contraseña de acceso para ver las estadísticas de operación.</p>
+      <input type="password" id="stats-lock-pass" class="form-input" placeholder="Contraseña"
+        style="width:100%;margin-bottom:8px" onkeydown="if(event.key==='Enter')confirmarPasswordEstadisticas()">
+      <div id="stats-lock-error" style="color:var(--red);font-size:.8rem;min-height:16px;margin-bottom:10px"></div>
+      <button class="btn btn-accent" style="width:100%" onclick="confirmarPasswordEstadisticas()">Entrar</button>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('stats-lock-ov')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('stats-lock-ov')) cerrarModalEstadisticas();
+  });
+</script>
+
 <!-- Modal Selector de Productos (multi-selección para la cotización) -->
 <div id="selector-productos-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
   backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
@@ -2167,16 +2190,27 @@
     }
   }
 
-  async function abrirEstadisticas() {
-    const intento = prompt('🔒 Panel de Estadísticas — ingresa la contraseña de acceso:');
-    if (intento === null) return;
+  function abrirEstadisticas() {
+    document.getElementById('stats-lock-pass').value = '';
+    document.getElementById('stats-lock-error').textContent = '';
+    document.getElementById('stats-lock-ov').style.display = 'flex';
+    setTimeout(() => document.getElementById('stats-lock-pass').focus(), 100);
+  }
+  function cerrarModalEstadisticas() {
+    document.getElementById('stats-lock-ov').style.display = 'none';
+  }
+  async function confirmarPasswordEstadisticas() {
+    const intento = document.getElementById('stats-lock-pass').value;
+    const errEl = document.getElementById('stats-lock-error');
+    errEl.textContent = '';
+    if (!intento) { errEl.textContent = 'Ingresa la contraseña.'; return; }
     try {
       const { data: ok, error } = await supa.rpc('verificar_password_estadisticas', { p_intento: intento });
       if (error) throw error;
-      if (!ok) { showToast('❌ Contraseña incorrecta.', 'error'); return; }
+      if (!ok) { errEl.textContent = '❌ Contraseña incorrecta.'; return; }
       sessionStorage.setItem('stats_unlocked', '1');
       window.location.href = 'estadisticas.html';
-    } catch (e) { console.error(e); showToast('❌ Error al verificar la contraseña.', 'error'); }
+    } catch (e) { console.error(e); errEl.textContent = '❌ Error al verificar. Intenta de nuevo.'; }
   }
 
   async function loadDashboard() {
