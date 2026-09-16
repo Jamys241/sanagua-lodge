@@ -80,6 +80,13 @@
     return '<span class="verif-badge" title="Cuenta verificada"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
   }
 
+  // Forzar recarga real si la página se restaura desde el bfcache del
+  // navegador (botón "atrás") — evita ver el perfil "congelado" con la
+  // sesión anterior si mientras tanto se cerró sesión en otra pestaña/página.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) window.location.reload();
+  });
+
   async function init() {
     let { data: { session } } = await supa.auth.getSession();
     if (!session) {

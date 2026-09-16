@@ -1414,6 +1414,15 @@
     return !!currentUser;
   }
 
+  // Si el navegador restaura esta página desde su caché (bfcache) al usar
+  // "atrás"/"adelante" — típicamente después de cerrar sesión — el JS no se
+  // vuelve a ejecutar y se vería el panel "congelado" tal como estaba antes
+  // de salir. Forzamos una recarga real para que la sesión se verifique de
+  // nuevo siempre contra el estado actual.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) window.location.reload();
+  });
+
   async function verificarSesionAsync() {
     try {
       let { data: { session } } = await supa.auth.getSession();

@@ -1070,6 +1070,13 @@
     }
   });
 
+  // Forzar recarga real si la página se restaura desde el bfcache del
+  // navegador (botón "atrás") — así el header/menú siempre refleja el
+  // estado real de sesión, incluso si se cerró sesión en otra página.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) window.location.reload();
+  });
+
   (async function(){
     try {
       // Restaura la sesión real desde Supabase (persistida por supabase-js
