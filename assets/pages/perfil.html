@@ -81,7 +81,15 @@
   }
 
   async function init() {
-    const { data: { session } } = await supa.auth.getSession();
+    let { data: { session } } = await supa.auth.getSession();
+    if (!session) {
+      session = await new Promise(resolve => {
+        const { data: sub } = supa.auth.onAuthStateChange((event, s) => {
+          if (event === 'INITIAL_SESSION' || s) { sub.subscription.unsubscribe(); resolve(s); }
+        });
+        setTimeout(() => { sub.subscription.unsubscribe(); resolve(null); }, 1500);
+      });
+    }
     if (!session) { window.location.href = '../../index.html?action=login'; return; }
 
     const { data: profile } = await supa.from('profiles').select('*').eq('id', session.user.id).single();

@@ -1416,7 +1416,19 @@
 
   async function verificarSesionAsync() {
     try {
-      const { data: { session } } = await supa.auth.getSession();
+      let { data: { session } } = await supa.auth.getSession();
+      if (!session) {
+        // Al volver con el botón "atrás" del navegador, o en una pestaña
+        // recién restaurada, supabase-js a veces todavía no terminó de leer
+        // la sesión guardada — sin este margen, eso se veía como "se cerró
+        // la sesión" cuando en realidad seguía activa.
+        session = await new Promise(resolve => {
+          const { data: sub } = supa.auth.onAuthStateChange((event, s) => {
+            if (event === 'INITIAL_SESSION' || s) { sub.subscription.unsubscribe(); resolve(s); }
+          });
+          setTimeout(() => { sub.subscription.unsubscribe(); resolve(null); }, 1500);
+        });
+      }
       if (!session) { window.location.href = '../index.html'; return false; }
 
       // Leemos el profile directamente de Supabase (protegido por RLS: cada

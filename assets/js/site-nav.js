@@ -195,14 +195,13 @@
     if (document.getElementById('admin-preview-banner')) return;
     const b = document.createElement('div');
     b.id = 'admin-preview-banner';
-    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#1a2226;color:#fff;'
+    b.style.cssText = 'position:relative;z-index:2000;background:#1a2226;color:#fff;'
       + 'padding:9px 16px;font-size:.8rem;display:flex;align-items:center;justify-content:center;gap:14px;'
       + 'font-family:Jost,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.2)';
     b.innerHTML = '👁️ Estás viendo el sitio como lo vería un cliente'
       + ' <button id="admin-preview-exit" style="background:#7fa0ac;color:#fff;border:none;border-radius:20px;'
       + 'padding:5px 14px;font-size:.76rem;cursor:pointer;font-family:inherit;">Salir de vista previa</button>';
     document.body.prepend(b);
-    document.body.style.paddingTop = b.offsetHeight + 'px';
     document.getElementById('admin-preview-exit').onclick = () => {
       sessionStorage.removeItem('admin_preview');
       window.location.href = ROOT + 'sanagua-cot/achive.html';
