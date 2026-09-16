@@ -3555,7 +3555,7 @@
     const success = [45,  122, 79];
 
     // ── Encabezado: franja de color insignia de borde a borde ──────────────
-    const bandH = 32;
+    const bandH = 38;
     doc.setFillColor(...accent);
     doc.rect(0, 0, W, bandH, 'F');
 
@@ -3566,7 +3566,7 @@
         const ext = logo.includes('png') ? 'PNG' : 'JPEG';
         // Respetar la proporción real del logo en vez de estirarlo — se
         // encaja dentro de una caja más grande (46x20mm) que antes.
-        const maxW = 46, maxH = 20;
+        const maxW = 62, maxH = 30;
         const props = doc.getImageProperties(logo);
         const escala = Math.min(maxW / props.width, maxH / props.height);
         const drawW = props.width * escala, drawH = props.height * escala;
@@ -3686,8 +3686,8 @@
       if (items.length) {
         doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...dark);
         doc.text('Servicios reservados:', margin, y); y += 5;
-        doc.setFillColor(...dark); doc.rect(margin, y, cW, 6, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+        doc.setFillColor(244, 239, 230); doc.rect(margin, y, cW, 6, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...dark);
         doc.text('Descripción', margin+3, y+4.2);
         doc.text('Cant.', margin+cW*0.55, y+4.2);
         doc.text('Precio', margin+cW*0.66, y+4.2);
@@ -3769,8 +3769,8 @@
       const items = data.items || [];
       if (items.length) {
         // Cabecera
-        doc.setFillColor(...dark); doc.rect(margin, y, cW, 7, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+        doc.setFillColor(244, 239, 230); doc.rect(margin, y, cW, 7, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...dark);
         doc.text('Descripción', margin+3, y+5);
         doc.text('Cant.', margin+cW*0.55, y+5);
         doc.text('P. Unit.', margin+cW*0.65, y+5);
