@@ -3549,50 +3549,58 @@
     let y = 20;
 
     const accent  = [127, 160, 172];
+    const gold    = [201, 168, 76];
     const dark    = [26,  34, 38];
     const muted   = [107, 102, 112];
     const success = [45,  122, 79];
 
-    // ── Logo ──────────────────────────────────────────────────────────────
+    // ── Encabezado: franja de color insignia de borde a borde ──────────────
+    const bandH = 32;
+    doc.setFillColor(...accent);
+    doc.rect(0, 0, W, bandH, 'F');
+
     const logo = data.logo || logoBase64;
     let logoDrawnWidth = 0;
     if (logo && logo.startsWith('data:image')) {
       try {
         const ext = logo.includes('png') ? 'PNG' : 'JPEG';
-        // Respetar la proporción real del logo en vez de estirarlo a un
-        // tamaño fijo — se encaja dentro de una caja máxima de 40x14mm.
-        const maxW = 40, maxH = 14;
+        // Respetar la proporción real del logo en vez de estirarlo — se
+        // encaja dentro de una caja más grande (46x20mm) que antes.
+        const maxW = 46, maxH = 20;
         const props = doc.getImageProperties(logo);
         const escala = Math.min(maxW / props.width, maxH / props.height);
         const drawW = props.width * escala, drawH = props.height * escala;
-        doc.addImage(logo, ext, margin, y, drawW, drawH);
+        doc.addImage(logo, ext, margin, (bandH - drawH) / 2, drawW, drawH);
         logoDrawnWidth = drawW;
       } catch {}
     }
 
-    // ── Encabezado ────────────────────────────────────────────────────────
+    const textX = margin + (logo ? logoDrawnWidth + 6 : 0);
     doc.setFont('helvetica','bold');
-    doc.setFontSize(14);
-    doc.setTextColor(...accent);
-    doc.text(emp.nombre || 'Sanagua Lodge S.A.', margin + (logo?logoDrawnWidth+4:0), y+8);
+    doc.setFontSize(17);
+    doc.setTextColor(255,255,255);
+    doc.text(emp.nombre || 'Sanagua Lodge S.A.', textX, bandH/2 - 2);
 
-    const titulo = tipo === 'confirmacion'
-      ? `Confirmación de Reserva\n#${quoteNum}`
-      : `Cotización Sanagua Lodge\n#${quoteNum}`;
-    doc.setFontSize(10);
-    doc.setTextColor(...dark);
-    doc.text(titulo, W - margin, y+4, {align:'right'});
-
-    y += 18;
     doc.setFont('helvetica','normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...muted);
-    doc.text(`RUC: ${emp.ruc||''} | Tel: ${emp.tel||''} | ${emp.email||''}`, margin, y);
-    y += 4;
-    doc.setDrawColor(...accent);
-    doc.setLineWidth(0.8);
-    doc.line(margin, y, W-margin, y);
-    y += 6;
+    doc.setFontSize(8.5);
+    doc.setTextColor(230,238,240);
+    doc.text(`RUC: ${emp.ruc||''}  |  Tel: ${emp.tel||''}  |  ${emp.email||''}`, textX, bandH/2 + 6);
+
+    const titulo = tipo === 'confirmacion' ? 'Confirmación de Reserva' : 'Cotización Sanagua Lodge';
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(230,238,240);
+    doc.text(titulo, W - margin, bandH/2 - 3, {align:'right'});
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(21);
+    doc.setTextColor(255,255,255);
+    doc.text(`#${quoteNum}`, W - margin, bandH/2 + 7, {align:'right'});
+
+    // Línea dorada de cierre de la franja
+    doc.setFillColor(...gold);
+    doc.rect(0, bandH, W, 1.3, 'F');
+
+    y = bandH + 10;
 
     // ── Datos cliente ─────────────────────────────────────────────────────
     const cl = data.client || {};
