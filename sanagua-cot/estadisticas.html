@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <title>Estadísticas — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="../assets/css/estadisticas.css">
+</head>
+<body>
+
+<header>
+  <span class="logo">📊 Estadísticas de operación</span>
+  <a class="btn-back" href="achive.html">← Volver al sistema</a>
+</header>
+
+<div id="lock-wrap" class="lock-wrap">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Panel protegido</div>
+    <p>Ingresa la contraseña de acceso para ver las estadísticas.</p>
+    <input type="password" id="lock-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')desbloquear()">
+    <button class="btn btn-accent" onclick="desbloquear()">Entrar</button>
+    <div id="lock-error" class="lock-error"></div>
+  </div>
+</div>
+
+<div id="panel-wrap" class="main" style="display:none">
+
+  <div class="filters card">
+    <div class="filters-row">
+      <select id="f-tipo" onchange="onTipoChange()">
+        <option value="dia">Día</option>
+        <option value="semana">Semana</option>
+        <option value="mes" selected>Mes</option>
+        <option value="anio">Año</option>
+        <option value="rango">Rango de años</option>
+      </select>
+      <input type="date" id="f-dia" style="display:none">
+      <input type="week" id="f-semana" style="display:none">
+      <input type="month" id="f-mes" style="display:block">
+      <select id="f-anio" style="display:none"></select>
+      <div id="f-rango-wrap" style="display:none;gap:8px;align-items:center">
+        <select id="f-rango-desde"></select><span>—</span><select id="f-rango-hasta"></select>
+      </div>
+      <button class="btn btn-accent" onclick="cargarEstadisticas()">🔍 Aplicar</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Ocupación por cabaña</div><canvas id="chart-cabanas"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Reservas por servicio</div><canvas id="chart-servicios"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Campings realizados en el periodo</div><canvas id="chart-camping"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Tablas de picnic vendidas</div><canvas id="chart-picnic"></canvas></div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let charts = {};
+
+  async function desbloquear() {
+    const val = document.getElementById('lock-pass').value.trim();
+    const errEl = document.getElementById('lock-error');
+    if (!val) return;
+    try {
+      const { data: ok, error } = await supa.rpc('verificar_password_estadisticas', { p_intento: val });
+      if (error) throw error;
+      if (!ok) { errEl.textContent = '❌ Contraseña incorrecta.'; return; }
+      sessionStorage.setItem('stats_unlocked', '1');
+      mostrarPanel();
+    } catch { errEl.textContent = '❌ Error al verificar. Intenta de nuevo.'; }
+  }
+
+  function mostrarPanel() {
+    document.getElementById('lock-wrap').style.display = 'none';
+    document.getElementById('panel-wrap').style.display = 'block';
+    initFiltros();
+    cargarEstadisticas();
+  }
+
+  function initFiltros() {
+    const anioSel = document.getElementById('f-anio');
+    const desde = document.getElementById('f-rango-desde');
+    const hasta = document.getElementById('f-rango-hasta');
+    const anioActual = new Date().getFullYear();
+    for (let y = anioActual; y >= anioActual - 8; y--) {
+      anioSel.innerHTML += `<option value="${y}">${y}</option>`;
+      desde.innerHTML   += `<option value="${y}">${y}</option>`;
+      hasta.innerHTML   += `<option value="${y}">${y}</option>`;
+    }
+    document.getElementById('f-mes').value = new Date().toISOString().slice(0,7);
+    document.getElementById('f-dia').value = new Date().toISOString().slice(0,10);
+  }
+
+  function onTipoChange() {
+    const tipo = document.getElementById('f-tipo').value;
+    document.getElementById('f-dia').style.display    = tipo === 'dia'    ? '' : 'none';
+    document.getElementById('f-semana').style.display = tipo === 'semana' ? '' : 'none';
+    document.getElementById('f-mes').style.display    = tipo === 'mes'    ? '' : 'none';
+    document.getElementById('f-anio').style.display   = tipo === 'anio'   ? '' : 'none';
+    document.getElementById('f-rango-wrap').style.display = tipo === 'rango' ? 'flex' : 'none';
+  }
+
+  function calcularRango() {
+    const tipo = document.getElementById('f-tipo').value;
+    let desde, hasta;
+    if (tipo === 'dia') {
+      desde = document.getElementById('f-dia').value;
+      hasta = desde;
+    } else if (tipo === 'semana') {
+      const [y, w] = document.getElementById('f-semana').value.split('-W').map(Number);
+      const d = new Date(y, 0, 1 + (w - 1) * 7);
+      desde = d.toISOString().slice(0,10);
+      d.setDate(d.getDate() + 6);
+      hasta = d.toISOString().slice(0,10);
+    } else if (tipo === 'mes') {
+      const [y, m] = document.getElementById('f-mes').value.split('-').map(Number);
+      desde = `${y}-${String(m).padStart(2,'0')}-01`;
+      hasta = new Date(y, m, 0).toISOString().slice(0,10);
+    } else if (tipo === 'anio') {
+      const y = document.getElementById('f-anio').value;
+      desde = `${y}-01-01`; hasta = `${y}-12-31`;
+    } else {
+      const y1 = document.getElementById('f-rango-desde').value;
+      const y2 = document.getElementById('f-rango-hasta').value;
+      desde = `${Math.min(y1,y2)}-01-01`; hasta = `${Math.max(y1,y2)}-12-31`;
+    }
+    return { desde, hasta };
+  }
+
+  function catBucket(categoria) {
+    const c = (categoria || '').toLowerCase();
+    if (c.includes('cabaña') || c.includes('cabana')) return 'Cabañas';
+    if (c.includes('camping')) return 'Camping';
+    if (c.includes('pasadía') || c.includes('pasadia')) return 'Pasadías';
+    if (c.includes('picnic')) return 'Picnic';
+    return 'Otro';
+  }
+
+  async function cargarEstadisticas() {
+    const { desde, hasta } = calcularRango();
+    try {
+      const { data: quotes, error } = await supa.from('quotes')
+        .select('categoria, total, visit_date, data')
+        .eq('estado', 'Confirmada')
+        .gte('visit_date', desde)
+        .lte('visit_date', hasta);
+      if (error) throw error;
+
+      renderKPIs(quotes || [], desde, hasta);
+      renderChartCabanas(quotes || []);
+      renderChartServicios(quotes || []);
+      renderChartCamping(quotes || [], desde, hasta);
+      renderChartPicnic(quotes || []);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('kpis').innerHTML = '<p style="color:#c0392b">Error al cargar los datos. Revisa la consola.</p>';
+    }
+  }
+
+  function renderKPIs(quotes, desde, hasta) {
+    const totalReservas = quotes.length;
+    const totalIngresos = quotes.reduce((s,q) => s + (parseFloat(q.total)||0), 0);
+    const porCabana = {};
+    quotes.forEach(q => {
+      if (catBucket(q.categoria) === 'Cabañas') porCabana[q.categoria] = (porCabana[q.categoria]||0) + 1;
+    });
+    const masVendida = Object.entries(porCabana).sort((a,b)=>b[1]-a[1])[0];
+    const totalCamping = quotes.filter(q => catBucket(q.categoria) === 'Camping').length;
+
+    document.getElementById('kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-num">${totalReservas}</div><div class="kpi-lbl">Reservas confirmadas</div></div>
+      <div class="kpi-card"><div class="kpi-num">$${totalIngresos.toFixed(0)}</div><div class="kpi-lbl">Ingresos confirmados</div></div>
+      <div class="kpi-card"><div class="kpi-num" style="font-size:1.1rem">${masVendida ? masVendida[0] : '—'}</div><div class="kpi-lbl">Cabaña más vendida</div></div>
+      <div class="kpi-card"><div class="kpi-num">${totalCamping}</div><div class="kpi-lbl">Campings realizados</div></div>
+      <div class="kpi-period">Periodo: ${desde} → ${hasta}</div>`;
+  }
+
+  function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+  function renderChartCabanas(quotes) {
+    const counts = {};
+    quotes.forEach(q => { if (catBucket(q.categoria) === 'Cabañas') counts[q.categoria] = (counts[q.categoria]||0) + 1; });
+    destroyChart('cabanas');
+    charts.cabanas = new Chart(document.getElementById('chart-cabanas'), {
+      type: 'bar',
+      data: { labels: Object.keys(counts), datasets: [{ label: 'Reservas', data: Object.values(counts), backgroundColor: '#7fa0ac' }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  function renderChartServicios(quotes) {
+    const buckets = { 'Pasadías': 0, 'Camping': 0, 'Cabañas': 0, 'Picnic': 0, 'Otro': 0 };
+    quotes.forEach(q => buckets[catBucket(q.categoria)]++);
+    destroyChart('servicios');
+    charts.servicios = new Chart(document.getElementById('chart-servicios'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: ['#7fa0ac','#5f7881','#c9a84c','#8fabb5','#c3c3b8'] } ] },
+    });
+  }
+
+  function renderChartCamping(quotes, desde, hasta) {
+    const campingQ = quotes.filter(q => catBucket(q.categoria) === 'Camping');
+    const porMes = {};
+    campingQ.forEach(q => {
+      const mes = (q.visit_date || '').slice(0,7);
+      porMes[mes] = (porMes[mes]||0) + 1;
+    });
+    const meses = Object.keys(porMes).sort();
+    destroyChart('camping');
+    charts.camping = new Chart(document.getElementById('chart-camping'), {
+      type: 'line',
+      data: { labels: meses, datasets: [{ label: 'Campings', data: meses.map(m=>porMes[m]), borderColor: '#5f7881', backgroundColor: 'rgba(95,120,129,.15)', fill: true, tension: .3 }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  function renderChartPicnic(quotes) {
+    const counts = {};
+    quotes.forEach(q => {
+      if (catBucket(q.categoria) !== 'Picnic') return;
+      const items = q.data?.items || [];
+      items.forEach(it => {
+        const nombre = (it.description || it.nombre || 'Tabla de Picnic').replace(/×.*/,'').trim();
+        counts[nombre] = (counts[nombre]||0) + (it.quantity || 1);
+      });
+    });
+    destroyChart('picnic');
+    charts.picnic = new Chart(document.getElementById('chart-picnic'), {
+      type: 'bar',
+      data: { labels: Object.keys(counts), datasets: [{ label: 'Vendidas', data: Object.values(counts), backgroundColor: '#c9a84c' }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  document.addEventListener('admin-ready', () => {
+    if (sessionStorage.getItem('stats_unlocked') === '1') mostrarPanel();
+  });
+</script>
+</body>
+</html>

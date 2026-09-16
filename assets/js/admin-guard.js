@@ -81,7 +81,7 @@
         irAIndex();
         return;
       }
-      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
+      if (!['admin','superadmin','desarrollador'].includes(profile.role)) {
         console.warn('admin-guard: la cuenta autenticada no tiene rol admin/superadmin (role="'+profile.role+'").');
         irAIndex();
         return;

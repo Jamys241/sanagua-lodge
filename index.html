@@ -24,7 +24,6 @@
 
   <div class="header-right">
     <button class="btn-login" onclick="openAuth('login')" id="btn-login-header">Iniciar sesión</button>
-    <button class="btn-register" onclick="openAuth('register')" id="btn-register-header">Reservar</button>
     <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
@@ -753,8 +752,8 @@
         return;
       }
 
-      if (profile.role === 'admin' || profile.role === 'superadmin') {
-        const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador' };
+      if (['admin','superadmin','desarrollador'].includes(profile.role)) {
+        const labels = { superadmin: '⭐ Super Administrador', admin: '👑 Administrador', desarrollador: '🛠️ Desarrollador' };
         closeAuth();
         showAdminRedirect({ role: profile.role, user: profile.name || profile.email, label: labels[profile.role], url: SISTEMA_URL });
         return;
@@ -902,9 +901,8 @@
     if (!publicUser) return;
     const verifBadge = publicUser.verificado ? badgeVerificado() : '';
     // Header
-    document.getElementById('btn-login-header').style.display = 'none';
-    document.getElementById('btn-register-header').textContent = publicUser.name.split(' ')[0];
-    document.getElementById('btn-register-header').onclick = () => { window.location.href = 'assets/pages/perfil.html'; };
+    document.getElementById('btn-login-header').textContent = publicUser.name.split(' ')[0];
+    document.getElementById('btn-login-header').onclick = () => { window.location.href = 'assets/pages/perfil.html'; };
     // Menú lateral
     document.getElementById('nav-user-section').style.display = 'block';
     document.getElementById('nav-user-name').innerHTML = `${publicUser.name}${verifBadge}`;
@@ -920,9 +918,8 @@
   async function cerrarSesionPublic() {
     await supa.auth.signOut();
     publicUser = null;
-    document.getElementById('btn-login-header').style.display = '';
-    document.getElementById('btn-register-header').textContent = 'Reservar';
-    document.getElementById('btn-register-header').onclick = () => openAuth('register');
+    document.getElementById('btn-login-header').textContent = 'Iniciar sesión';
+    document.getElementById('btn-login-header').onclick = () => openAuth('login');
     document.getElementById('nav-user-section').style.display = 'none';
     document.getElementById('nav-user-menu').style.display = 'none';
     document.getElementById('nav-auth-btns').style.display = '';
@@ -1088,7 +1085,7 @@
         if (profile && (profile.role === 'cliente' || esAdminPreview)) {
           publicUser = { name: profile.name, email: profile.email, cedula: profile.cedula || '', phone: profile.phone || '', edad: profile.edad || null, verificado: !!profile.verificado, foto_documento: profile.foto_documento || '', puntos: profile.puntos || 0, reservas: profile.reservas || [] };
           aplicarUsuarioPublico();
-          if (esAdminPreview && (profile.role === 'admin' || profile.role === 'superadmin')) mostrarBannerPreviewAdmin();
+          if (esAdminPreview && ['admin','superadmin','desarrollador'].includes(profile.role)) mostrarBannerPreviewAdmin();
         }
         // Si es admin/superadmin y llega a index.html con sesión activa
         // (sin modo vista previa), lo dejamos navegar la web pública

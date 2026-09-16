@@ -686,10 +686,10 @@
         <div class="dash-stat-num" id="dash-mes">—</div>
         <div class="dash-stat-lbl">Cotizaciones este mes</div>
       </div>
-      <div class="dash-stat-card" onclick="switchTab('resumen')" style="cursor:pointer">
-        <div class="dash-stat-icon">💰</div>
-        <div class="dash-stat-num" id="dash-ingresos">—</div>
-        <div class="dash-stat-lbl">Ingresos confirmados (mes)</div>
+      <div class="dash-stat-card" onclick="abrirEstadisticas()" style="cursor:pointer">
+        <div class="dash-stat-icon">🔒</div>
+        <div class="dash-stat-num" style="font-size:1.1rem">Estadísticas</div>
+        <div class="dash-stat-lbl">Panel de operaciones (protegido)</div>
       </div>
     </div>
 
@@ -796,6 +796,21 @@
 
   <!-- Indicador de estado del logo -->
   <div id="logo-status" style="display:none;" class="card" style="padding:12px 20px;">
+  </div>
+
+  <!-- Contraseña del panel de Estadísticas -->
+  <div class="card" id="card-pass-stats" style="display:none">
+    <div class="card-title">🔒 Contraseña del panel de Estadísticas</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
+      Esta contraseña protege el panel de operaciones (ingresos, ocupación, etc.).
+      Admin, superadmin y desarrollador pueden cambiarla — pero solo el <strong>desarrollador</strong> puede ver cuál es la actual.
+    </p>
+    <div id="stats-pass-actual" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.9rem;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="stats-pass-nueva" class="form-input" placeholder="Nueva contraseña" style="max-width:220px">
+      <button class="btn btn-accent" onclick="cambiarPasswordStats()">💾 Guardar contraseña</button>
+      <span id="stats-pass-msg" style="font-size:.82rem;"></span>
+    </div>
   </div>
 
   <!-- Días de cierre y excepciones -->
@@ -1368,6 +1383,14 @@
   // ══════════════════════════════════════════════════════════════════════
   let currentUser = null;
 
+  // "Desarrollador" tiene los mismos privilegios que superadmin en todo el
+  // panel (acceso total), y además puede administrar los permisos y ver la
+  // lista de superadmins. Este helper reemplaza los chequeos que antes solo
+  // miraban 'superadmin'.
+  function esNivelSuperior(user) {
+    return user?.role === 'superadmin' || user?.role === 'desarrollador';
+  }
+
 
 
   const PERMISOS_DEFAULT = {
@@ -1453,7 +1476,7 @@
         window.location.href = '../index.html';
         return false;
       }
-      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
+      if (!['admin','superadmin','desarrollador'].includes(profile.role)) {
         alert('Esta cuenta no tiene permisos de administrador (role actual: "' + profile.role + '").');
         await supa.auth.signOut();
         window.location.href = '../index.html';
@@ -1495,7 +1518,7 @@
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-admin'}`;
     badge.style.display = 'inline-block';
     document.getElementById('btn-permisos').style.display =
-      currentUser.role === 'superadmin' ? 'block' : 'none';
+      esNivelSuperior(currentUser) ? 'block' : 'none';
     document.getElementById('menu-user-info').textContent =
       `${currentUser.username} · ${roleNames[currentUser.role]||currentUser.role}`;
     aplicarPermisos();
@@ -1509,7 +1532,7 @@
 
 
   function getPermisos() {
-    if (currentUser?.role === 'superadmin')
+    if (esNivelSuperior(currentUser))
       return Object.fromEntries(Object.keys(PERMISOS_DEFAULT).map(k=>[k,true]));
     // Los permisos ahora viven en profiles.permisos (Supabase), cargados en
     // verificarSesionAsync() vía /auth/me — ya no en auth.json de GitHub.
@@ -1518,7 +1541,7 @@
 
   function aplicarPermisos() {
     const p = getPermisos();
-    const isSuper = currentUser?.role === 'superadmin';
+    const isSuper = esNivelSuperior(currentUser);
     document.querySelectorAll('.side-menu nav button').forEach(btn => {
       const t = btn.textContent;
       if (t.includes('Historial'))        btn.style.display = isSuper||p.ver_historial     ? '' : 'none';
@@ -1537,7 +1560,7 @@
   }
 
   function aplicarPermisosHistorial() {
-    if (currentUser?.role === 'superadmin') return;
+    if (esNivelSuperior(currentUser)) return;
     const p = getPermisos();
     if (!p.editar_cotizacion)   document.querySelectorAll('[onclick^="openEditByNum"]').forEach(b=>b.style.display='none');
     if (!p.editar_evento)       document.querySelectorAll('[onclick^="openEditEvent"]').forEach(b=>b.style.display='none');
@@ -1803,7 +1826,7 @@
     // Mostrar el sistema con la sesión activa
     iniciarSesion();
     document.getElementById('card-crear-admin').style.display =
-      currentUser.role === 'superadmin' ? '' : 'none';
+      esNivelSuperior(currentUser) ? '' : 'none';
 
     // Cargar datos
     (async () => {
@@ -1965,16 +1988,17 @@
   let _adminsCache = [];
 
   async function openPermisosModal() {
-    if (currentUser?.role !== 'superadmin') { showToast('Solo el super administrador puede configurar permisos.','error'); return; }
+    if (!esNivelSuperior(currentUser)) { showToast('No tienes permiso para configurar permisos.','error'); return; }
     showLoading(true);
     try {
-      // Lectura directa a Supabase (permitida por RLS: un superadmin puede
-      // ver todos los profiles). No depende de que el backend Flask esté
-      // desplegado.
+      // Un desarrollador administra a superadmin y admin; un superadmin
+      // solo puede ver/administrar a los admin (no a otros superadmins ni
+      // al desarrollador).
+      const rolesVisibles = currentUser.role === 'desarrollador' ? ['admin','superadmin'] : ['admin'];
       const { data, error } = await supa
         .from('profiles')
         .select('id, email, name, role, permisos')
-        .in('role', ['admin', 'superadmin']);
+        .in('role', rolesVisibles);
       if (error) throw error;
       _adminsCache = data || [];
     } catch (e) { showToast('❌ No se pudo cargar la lista de administradores: ' + e.message, 'error'); showLoading(false); return; }
@@ -1993,9 +2017,11 @@
     if (!admin) return;
     const permisos = { ...PERMISOS_DEFAULT, ...(admin.permisos||{}) };
     document.getElementById('perm-admin-name').textContent = admin.name || admin.email;
-    const esSuper = admin.role === 'superadmin';
+    // Un superadmin es de nivel superior a "admin" — solo el desarrollador
+    // puede configurar los permisos de un superadmin.
+    const esSuper = admin.role === 'superadmin' && currentUser.role !== 'desarrollador';
     document.getElementById('permisos-lista').innerHTML = (esSuper
-      ? `<p style="font-size:.85rem;color:var(--muted);">Este usuario es Super Administrador: tiene todos los permisos siempre.</p>`
+      ? `<p style="font-size:.85rem;color:var(--muted);">Este usuario es Super Administrador: solo el desarrollador puede editar sus permisos.</p>`
       : Object.entries(PERMISOS_LABELS).map(([key,info])=>`
       <div class="perm-row">
         <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
@@ -2014,7 +2040,7 @@
     const sel = document.getElementById('perm-admin-select');
     const admin = _adminsCache.find(a => a.id === sel.value);
     if (!admin) return;
-    if (admin.role === 'superadmin') { closePermisosModal(); return; }
+    if (admin.role === 'superadmin' && currentUser.role !== 'desarrollador') { closePermisosModal(); return; }
     const permisos = {};
     Object.keys(PERMISOS_LABELS).forEach(key => {
       permisos[key] = document.getElementById('perm-'+key)?.checked || false;
@@ -2112,6 +2138,47 @@
     if (e.key === 'Escape') { closeMenu(); closeModal(); }
   });
 
+  async function cargarPasswordStatsUI() {
+    const box = document.getElementById('stats-pass-actual');
+    if (currentUser?.role !== 'desarrollador') { box.style.display = 'none'; return; }
+    try {
+      const { data, error } = await supa.rpc('ver_password_estadisticas');
+      if (error) throw error;
+      box.style.display = 'block';
+      box.innerHTML = `Contraseña actual: <strong>${data}</strong>`;
+    } catch (e) { console.warn(e); box.style.display = 'none'; }
+  }
+
+  async function cambiarPasswordStats() {
+    const nueva = document.getElementById('stats-pass-nueva').value.trim();
+    const msgEl = document.getElementById('stats-pass-msg');
+    if (!nueva || nueva.length < 4) { msgEl.style.color='var(--red)'; msgEl.textContent='Mínimo 4 caracteres.'; return; }
+    try {
+      const { error } = await supa.rpc('cambiar_password_estadisticas', { p_nueva: nueva });
+      if (error) throw error;
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = '✅ Contraseña actualizada.';
+      document.getElementById('stats-pass-nueva').value = '';
+      cargarPasswordStatsUI();
+      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
+    } catch (e) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ Error al guardar.';
+    }
+  }
+
+  async function abrirEstadisticas() {
+    const intento = prompt('🔒 Panel de Estadísticas — ingresa la contraseña de acceso:');
+    if (intento === null) return;
+    try {
+      const { data: ok, error } = await supa.rpc('verificar_password_estadisticas', { p_intento: intento });
+      if (error) throw error;
+      if (!ok) { showToast('❌ Contraseña incorrecta.', 'error'); return; }
+      sessionStorage.setItem('stats_unlocked', '1');
+      window.open('estadisticas.html', '_blank');
+    } catch (e) { console.error(e); showToast('❌ Error al verificar la contraseña.', 'error'); }
+  }
+
   async function loadDashboard() {
     const nombre = currentUser?.name || currentUser?.email || '';
     document.getElementById('dash-saludo').textContent = `👋 Bienvenido/a${nombre ? ', ' + nombre.split(' ')[0] : ''}`;
@@ -2123,14 +2190,12 @@
       const [{ count: pendCount }, { data: activas }, { data: cotizMes }] = await Promise.all([
         supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
         supa.from('quotes').select('total').eq('estado', 'Confirmada').lte('visit_date', hoyStr).gte('visit_date_end', hoyStr),
-        supa.from('quotes').select('total').gte('created_at', inicioMes),
+        supa.from('quotes').select('id').gte('created_at', inicioMes),
       ]);
 
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
       document.getElementById('dash-hoy').textContent = (activas || []).length;
       document.getElementById('dash-mes').textContent = (cotizMes || []).length;
-      const ingresos = (cotizMes || []).reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
-      document.getElementById('dash-ingresos').textContent = `$${ingresos.toFixed(0)}`;
     } catch (e) { console.warn('loadDashboard', e); }
   }
 
@@ -2154,12 +2219,14 @@
     if (name === 'config') {
       setTimeout(initPollControls, 100);
       // Mostrar/ocultar sección de sincronización según permiso
-      const isSuper = currentUser?.role === 'superadmin';
+      const isSuper = esNivelSuperior(currentUser);
       const puedeSync = isSuper || getPermisos().ver_sincronizacion;
       const syncCard = document.getElementById('sync-control-card');
       if (syncCard) syncCard.style.display = puedeSync ? '' : 'none';
       const cardCred = document.getElementById('card-credenciales');
       if (cardCred) cardCred.style.display = currentUser?.role==='superadmin' ? '' : 'none';
+      document.getElementById('card-pass-stats').style.display = '';
+      cargarPasswordStatsUI();
       // Los campos quedan vacíos a propósito: las contraseñas ya no se
       // guardan ni se leen en texto plano (viven hasheadas en Supabase).
       renderDowBtns();
@@ -4949,7 +5016,7 @@
   // Mostrar el botón "Suscrip." solo para SuperAdmin
   function initSuscripVisibility() {
     const btn = document.getElementById('btn-grp-suscrip');
-    if (btn) btn.style.display = currentUser?.role === 'superadmin' ? '' : 'none';
+    if (btn) btn.style.display = esNivelSuperior(currentUser) ? '' : 'none';
   }
 
   // Cargar estado de suscripción — llamado al iniciar sesión
@@ -4966,7 +5033,7 @@
 
   // Aplicar el estado: bloquear pantalla o mostrar cintillo
   function aplicarEstadoSuscripcion() {
-    const isSuper = currentUser?.role === 'superadmin';
+    const isSuper = esNivelSuperior(currentUser);
     const data = _suscripData || {};
     const ahora = Date.now();
     const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
