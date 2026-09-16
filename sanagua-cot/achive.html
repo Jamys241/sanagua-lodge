@@ -1494,10 +1494,17 @@
   // Si el navegador restaura esta página desde su caché (bfcache) al usar
   // "atrás"/"adelante" — típicamente después de cerrar sesión — el JS no se
   // vuelve a ejecutar y se vería el panel "congelado" tal como estaba antes
-  // de salir. Forzamos una recarga real para que la sesión se verifique de
-  // nuevo siempre contra el estado actual.
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) window.location.reload();
+  // de salir. Antes forzábamos una recarga SIEMPRE que esto pasaba, pero
+  // resultó demasiado agresivo: cualquier demora mínima al revalidar la
+  // sesión (más común en móviles) hacía parecer que se había cerrado la
+  // sesión aunque siguiera activa. Ahora solo recargamos si, al comprobar,
+  // la sesión ya no es válida de verdad.
+  window.addEventListener('pageshow', async (e) => {
+    if (!e.persisted) return;
+    try {
+      const { data: { session } } = await supa.auth.getSession();
+      if (!session) window.location.reload();
+    } catch { /* si falla la comprobación, dejamos la página como está */ }
   });
 
   async function verificarSesionAsync() {

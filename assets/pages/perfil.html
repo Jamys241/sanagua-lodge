@@ -83,8 +83,15 @@
   // Forzar recarga real si la página se restaura desde el bfcache del
   // navegador (botón "atrás") — evita ver el perfil "congelado" con la
   // sesión anterior si mientras tanto se cerró sesión en otra pestaña/página.
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) window.location.reload();
+  // Solo recargamos si al comprobar la sesión (en el cliente ya existente,
+  // sin recrear nada) resulta que ya no es válida — recargar siempre era
+  // demasiado agresivo y podía parecer un cierre de sesión que no era real.
+  window.addEventListener('pageshow', async (e) => {
+    if (!e.persisted) return;
+    try {
+      const { data: { session } } = await supa.auth.getSession();
+      if (!session) window.location.reload();
+    } catch { /* dejamos la página como está si falla la comprobación */ }
   });
 
   async function init() {

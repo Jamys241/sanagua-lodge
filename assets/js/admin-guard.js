@@ -9,14 +9,6 @@
 //   window.authFetch(url, opts) → fetch con el JWT del admin ya adjunto
 
 (function () {
-  // Si esta página se restaura desde el bfcache del navegador (botón
-  // "atrás"/"adelante"), forzamos una recarga real para que la sesión se
-  // vuelva a verificar — evita que, tras cerrar sesión, "atrás" muestre el
-  // panel tal como quedó congelado, sin re-chequear si sigue siendo válido.
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) window.location.reload();
-  });
-
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   // URL del backend Flask (app.py). Este proyecto ya no usa Render.
@@ -30,6 +22,19 @@
     return;
   }
   const supaGuard = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Si esta página se restaura desde el bfcache del navegador ("atrás"/
+  // "adelante"), comprobamos si la sesión sigue siendo válida en el cliente
+  // ya existente (sin recrear nada, así que no hay carrera de hidratación)
+  // y solo recargamos si de verdad ya no lo es — recargar siempre resultaba
+  // demasiado agresivo y a veces parecía cerrar una sesión que seguía activa.
+  window.addEventListener('pageshow', async (e) => {
+    if (!e.persisted) return;
+    try {
+      const { data: { session } } = await supaGuard.auth.getSession();
+      if (!session) window.location.reload();
+    } catch { /* dejamos la página como está si falla la comprobación */ }
+  });
 
   function urlIndex() {
     // Funciona sin importar la profundidad (sanagua-cot/ o sanagua-cot/page/)
