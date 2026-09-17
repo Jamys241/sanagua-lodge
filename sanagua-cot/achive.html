@@ -715,6 +715,7 @@
     gestionar_usuarios:  true,
     ver_sincronizacion:  true,
     editar_condiciones_pdf: false,
+    editar_datos_usuarios: false,
   };
 
   const PERMISOS_LABELS = {
@@ -735,6 +736,7 @@
     gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
     ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
     editar_condiciones_pdf: { label:'Editar notas y condiciones del PDF', desc:'Puede cambiar el texto legal/condiciones que aparece en las cotizaciones. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
+    editar_datos_usuarios: { label:'Editar datos de usuarios', desc:'Puede corregir los datos (nombre, cédula, teléfono, edad, rol) de administradores y clientes en la página de Usuarios. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
   };
 
   function verificarSesion() {

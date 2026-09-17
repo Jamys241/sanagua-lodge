@@ -50,7 +50,18 @@
           <div id="adm-email-display" style="font-size:.78rem;color:var(--muted)"></div>
           <span id="adm-role-badge" style="display:inline-block;margin-top:4px;font-size:.66rem;font-weight:700;background:var(--accent);color:#fff;padding:2px 9px;border-radius:20px;"></span>
         </div>
+        <button class="btn btn-outline btn-sm" id="adm-editar-btn" onclick="toggleEditarAdmin()" style="display:none">✏️ Editar datos</button>
         <button class="btn btn-danger btn-sm" id="adm-quitar-btn" onclick="quitarPermisoAdmin()">🚫 Quitar permiso de administrador</button>
+      </div>
+      <div id="adm-edit-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="form-grid" style="margin-bottom:10px">
+          <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Nombre</label><input type="text" id="adm-edit-name" class="form-input"></div>
+          <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Cédula</label><input type="text" id="adm-edit-cedula" class="form-input"></div>
+          <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Teléfono</label><input type="text" id="adm-edit-phone" class="form-input"></div>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">El correo no se puede editar aquí porque es la credencial de inicio de sesión (vive en Supabase Auth).</p>
+        <button class="btn btn-accent btn-sm" onclick="guardarEdicionAdmin()">💾 Guardar cambios</button>
+        <span id="adm-edit-msg" style="font-size:.8rem;margin-left:8px"></span>
       </div>
     </div>
     <div id="adm-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
@@ -87,11 +98,26 @@
       </div>
 
       <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">🪪 Datos de identidad</div>
-        <div class="form-grid" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">🪪 Datos de identidad</div>
+          <button class="btn btn-outline btn-sm" id="usr-editar-btn" onclick="toggleEditarUsuario()" style="display:none">✏️ Editar</button>
+        </div>
+        <div class="form-grid" style="margin-bottom:12px" id="usr-datos-view">
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Nombre</label><div id="usr-nombre-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
           <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Cédula / Pasaporte</label><div id="usr-cedula-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
           <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Celular</label><div id="usr-phone-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
           <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Edad</label><div id="usr-edad-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+        </div>
+        <div id="usr-edit-form" style="display:none;margin-bottom:12px">
+          <div class="form-grid" style="margin-bottom:10px">
+            <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Nombre</label><input type="text" id="usr-edit-name" class="form-input"></div>
+            <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Cédula</label><input type="text" id="usr-edit-cedula" class="form-input"></div>
+            <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Teléfono</label><input type="text" id="usr-edit-phone" class="form-input"></div>
+            <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Edad</label><input type="number" id="usr-edit-edad" class="form-input" min="0" max="120"></div>
+          </div>
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">El correo no se puede editar aquí porque es la credencial de inicio de sesión (vive en Supabase Auth).</p>
+          <button class="btn btn-accent btn-sm" onclick="guardarEdicionUsuario()">💾 Guardar cambios</button>
+          <span id="usr-edit-msg" style="font-size:.8rem;margin-left:8px"></span>
         </div>
         <div id="usr-doc-wrap" style="margin-bottom:12px;display:none">
           <label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:6px">Foto de cédula/pasaporte</label>
@@ -143,6 +169,12 @@
   function esNivelSuperior(user) {
     return user?.role === 'superadmin' || user?.role === 'desarrollador';
   }
+  // Igual que editar_condiciones_pdf: no se otorga automáticamente a
+  // superadmin, es delicado. Solo el desarrollador lo tiene siempre.
+  function puedeEditarDatosUsuarios() {
+    if (window.currentAdmin?.role === 'desarrollador') return true;
+    return !!window.currentAdmin?.permisos?.editar_datos_usuarios;
+  }
 
   let _adminEncontrado = null;
 
@@ -178,8 +210,43 @@
       document.getElementById('adm-nombre').textContent        = user.name || '—';
       document.getElementById('adm-email-display').textContent = user.email || '—';
       document.getElementById('adm-role-badge').textContent    = labels[user.role] || user.role;
+      document.getElementById('adm-editar-btn').style.display  = puedeEditarDatosUsuarios() ? '' : 'none';
+      document.getElementById('adm-edit-form').style.display   = 'none';
+      document.getElementById('adm-edit-msg').textContent      = '';
       document.getElementById('adm-resultado').style.display   = 'block';
     } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  function toggleEditarAdmin() {
+    if (!_adminEncontrado) return;
+    const form = document.getElementById('adm-edit-form');
+    const abrir = form.style.display === 'none';
+    if (abrir) {
+      document.getElementById('adm-edit-name').value   = _adminEncontrado.name   || '';
+      document.getElementById('adm-edit-cedula').value = _adminEncontrado.cedula || '';
+      document.getElementById('adm-edit-phone').value  = _adminEncontrado.phone  || '';
+    }
+    form.style.display = abrir ? 'block' : 'none';
+  }
+
+  async function guardarEdicionAdmin() {
+    if (!_adminEncontrado || !puedeEditarDatosUsuarios()) return;
+    const nombre = document.getElementById('adm-edit-name').value.trim();
+    const cedula = document.getElementById('adm-edit-cedula').value.trim();
+    const phone  = document.getElementById('adm-edit-phone').value.trim();
+    const msgEl  = document.getElementById('adm-edit-msg');
+    if (!nombre) { msgEl.style.color='var(--red)'; msgEl.textContent='El nombre no puede estar vacío.'; return; }
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ name: nombre, cedula, phone }).eq('id', _adminEncontrado.id);
+      if (error) throw error;
+      _adminEncontrado.name = nombre; _adminEncontrado.cedula = cedula; _adminEncontrado.phone = phone;
+      document.getElementById('adm-nombre').textContent = nombre;
+      document.getElementById('adm-avatar').textContent = (nombre||'?').charAt(0).toUpperCase();
+      msgEl.style.color = 'var(--success)'; msgEl.textContent = '✅ Datos actualizados.';
+      showToast('✅ Datos del administrador actualizados.', 'success');
+    } catch (e) { console.error(e); msgEl.style.color='var(--red)'; msgEl.textContent='❌ Error al guardar.'; }
     finally { showLoading(false); }
   }
 
@@ -227,6 +294,7 @@
       document.getElementById('usr-avatar').textContent          = (user.name||'?').charAt(0).toUpperCase();
       document.getElementById('usr-nombre').textContent          = user.name || '—';
       document.getElementById('usr-email-display').textContent   = user.email || '—';
+      document.getElementById('usr-nombre-display').textContent  = user.name   || '—';
       document.getElementById('usr-cedula-display').textContent  = user.cedula || '—';
       document.getElementById('usr-phone-display').textContent   = user.phone  || '—';
       document.getElementById('usr-edad-display').textContent    = user.edad   || '—';
@@ -234,6 +302,10 @@
       document.getElementById('usr-pts-cantidad').value          = '';
       document.getElementById('usr-pts-motivo').value            = '';
       document.getElementById('usr-pts-msg').textContent         = '';
+      document.getElementById('usr-editar-btn').style.display    = puedeEditarDatosUsuarios() ? '' : 'none';
+      document.getElementById('usr-edit-form').style.display     = 'none';
+      document.getElementById('usr-datos-view').style.display    = 'grid';
+      document.getElementById('usr-edit-msg').textContent        = '';
 
       const docWrap = document.getElementById('usr-doc-wrap');
       if (user.foto_documento) {
@@ -257,6 +329,46 @@
       document.getElementById('usr-resultado').style.display = 'block';
     } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
     finally  { showLoading(false); }
+  }
+
+  function toggleEditarUsuario() {
+    if (!_usuarioEncontrado) return;
+    const form = document.getElementById('usr-edit-form');
+    const view = document.getElementById('usr-datos-view');
+    const abrir = form.style.display === 'none';
+    if (abrir) {
+      document.getElementById('usr-edit-name').value   = _usuarioEncontrado.name   || '';
+      document.getElementById('usr-edit-cedula').value = _usuarioEncontrado.cedula || '';
+      document.getElementById('usr-edit-phone').value  = _usuarioEncontrado.phone  || '';
+      document.getElementById('usr-edit-edad').value   = _usuarioEncontrado.edad   || '';
+    }
+    form.style.display = abrir ? 'block' : 'none';
+    view.style.display = abrir ? 'none' : 'grid';
+  }
+
+  async function guardarEdicionUsuario() {
+    if (!_usuarioEncontrado || !puedeEditarDatosUsuarios()) return;
+    const nombre = document.getElementById('usr-edit-name').value.trim();
+    const cedula = document.getElementById('usr-edit-cedula').value.trim();
+    const phone  = document.getElementById('usr-edit-phone').value.trim();
+    const edad   = parseInt(document.getElementById('usr-edit-edad').value) || null;
+    const msgEl  = document.getElementById('usr-edit-msg');
+    if (!nombre) { msgEl.style.color='var(--red)'; msgEl.textContent='El nombre no puede estar vacío.'; return; }
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ name: nombre, cedula, phone, edad }).eq('id', _usuarioEncontrado.id);
+      if (error) throw error;
+      Object.assign(_usuarioEncontrado, { name: nombre, cedula, phone, edad });
+      document.getElementById('usr-nombre').textContent         = nombre;
+      document.getElementById('usr-nombre-display').textContent = nombre || '—';
+      document.getElementById('usr-cedula-display').textContent = cedula || '—';
+      document.getElementById('usr-phone-display').textContent  = phone  || '—';
+      document.getElementById('usr-edad-display').textContent   = edad   || '—';
+      document.getElementById('usr-avatar').textContent = (nombre||'?').charAt(0).toUpperCase();
+      toggleEditarUsuario();
+      showToast('✅ Datos del cliente actualizados.', 'success');
+    } catch (e) { console.error(e); msgEl.style.color='var(--red)'; msgEl.textContent='❌ Error al guardar.'; }
+    finally { showLoading(false); }
   }
 
   async function toggleVerificado() {
