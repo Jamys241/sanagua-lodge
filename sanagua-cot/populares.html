@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Populares Web — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">⭐ Populares Web</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">⭐ Servicios populares</div>
+      <button class="btn btn-accent" onclick="savePopulares()">💾 Guardar</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:24px;">
+      Marca los servicios que quieres destacar con la insignia <strong>"Más popular"</strong> en el sitio web. Se mostrará una cinta dorada en la tarjeta del servicio.
+    </p>
+
+    <div class="form-grid">
+
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px;">☀️ Pasadías</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" id="lbl-pop-pasadia-sencilla">
+            <input type="checkbox" id="pop-pasadia-sencilla" onchange="updatePopLabel('pasadia-sencilla')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Pasadía Sencilla</div>
+              <div style="font-size:.75rem;color:var(--muted)">Aparece en la tarjeta de Pasadías en el sitio web</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" id="lbl-pop-pasadia-completa">
+            <input type="checkbox" id="pop-pasadia-completa" onchange="updatePopLabel('pasadia-completa')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Pasadía Completa</div>
+              <div style="font-size:.75rem;color:var(--muted)">Aparece en la tarjeta de Pasadías en el sitio web</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">⛺ Camping</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-camping-propio">
+            <input type="checkbox" id="pop-camping-propio" onchange="updatePopLabel('camping-propio')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Camping Propio</div>
+              <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta de Camping</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-camping-suministro">
+            <input type="checkbox" id="pop-camping-suministro" onchange="updatePopLabel('camping-suministro')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Camping con Suministro</div>
+              <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta de Camping</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🏡 Cabañas</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-yaguarundi">
+            <input type="checkbox" id="pop-cabana-yaguarundi" onchange="updatePopLabel('cabana-yaguarundi')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Yaguarundi</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 4 personas</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-ocelot">
+            <input type="checkbox" id="pop-cabana-ocelot" onchange="updatePopLabel('cabana-ocelot')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Ocelot</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 6 personas</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-motmot">
+            <input type="checkbox" id="pop-cabana-motmot" onchange="updatePopLabel('cabana-motmot')" style="width:18px;height:18px;accent-color:var(--accent)">
+            <div>
+              <div style="font-weight:600;font-size:.9rem">Cabaña Motmot</div>
+              <div style="font-size:.75rem;color:var(--muted)">Hasta 8 personas</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🍽️ Restaurante</div>
+        <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-restaurante">
+          <input type="checkbox" id="pop-restaurante" onchange="updatePopLabel('restaurante')" style="width:18px;height:18px;accent-color:var(--accent)">
+          <div>
+            <div style="font-weight:600;font-size:.9rem">Restaurante Sanagua</div>
+            <div style="font-size:.75rem;color:var(--muted)">Insignia en la tarjeta del restaurante</div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+
+    <div style="margin-top:24px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;">Vista previa de la insignia</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(201,168,76,.4)">
+        ⭐ Más popular
+      </div>
+      <span style="font-size:.8rem;color:var(--muted);margin-left:12px">Así se verá en las tarjetas del sitio web</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function showLoading(v){ document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  const POPULARES_IDS = [
+    'pasadia-sencilla','pasadia-completa',
+    'camping-propio','camping-suministro',
+    'cabana-yaguarundi','cabana-ocelot','cabana-motmot',
+    'restaurante',
+  ];
+
+  async function loadPopulares() {
+    const { data, error } = await supa.from('populares').select('*');
+    if (error) { console.error(error); showToast('❌ Error al cargar populares.', 'error'); return; }
+    const lista = (data||[]).filter(r => r.activo).map(r => r.item_key);
+    POPULARES_IDS.forEach(id => {
+      const cb = document.getElementById(`pop-${id}`);
+      if (cb) cb.checked = lista.includes(id);
+      updatePopLabel(id);
+    });
+  }
+
+  function updatePopLabel(id) {
+    const cb  = document.getElementById(`pop-${id}`);
+    const lbl = document.getElementById(`lbl-pop-${id}`);
+    if (!cb || !lbl) return;
+    lbl.style.borderColor = cb.checked ? 'var(--gold)' : 'var(--border)';
+    lbl.style.background  = cb.checked ? '#fffbf0'     : '';
+    lbl.style.boxShadow   = cb.checked ? '0 0 0 3px rgba(201,168,76,.15)' : '';
+  }
+
+  async function savePopulares() {
+    const activos = new Set(POPULARES_IDS.filter(id => document.getElementById(`pop-${id}`)?.checked));
+    showLoading(true);
+    try {
+      const rows = POPULARES_IDS.map(id => ({ item_key: id, activo: activos.has(id) }));
+      const { error } = await supa.from('populares').upsert(rows, { onConflict: 'item_key' });
+      if (error) throw error;
+      showToast(`✅ ${activos.size} servicio${activos.size===1?'':'s'} marcado${activos.size===1?'':'s'} como popular${activos.size===1?'':'es'}.`, 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar en Supabase.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  document.addEventListener('admin-ready', () => { loadPopulares(); });
+</script>
+</body>
+</html>

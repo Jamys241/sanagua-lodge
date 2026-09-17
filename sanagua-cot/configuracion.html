@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Configuración — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/pdf-generators.js"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">⚙️ Configuración</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+  <!-- Logo -->
+  <div class="card">
+    <div class="card-title">Logo de la empresa</div>
+    <p style="font-size:.85rem;color:var(--ink-muted);margin-bottom:20px;">
+      El logo aparece en el encabezado de todas las cotizaciones y confirmaciones PDF.<br>
+      Se guarda en la nube y estará disponible desde cualquier dispositivo.
+    </p>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div id="logo-preview-wrap" style="display:none;background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;min-width:140px;text-align:center;">
+        <img id="logo-preview" style="max-height:80px;max-width:200px;display:block;margin:0 auto;" />
+        <span style="font-size:.72rem;color:var(--ink-muted);margin-top:6px;display:block;">Vista previa</span>
+      </div>
+      <div id="logo-empty-state" style="background:#f8f8f8;border:2px dashed var(--border);border-radius:8px;padding:24px 32px;text-align:center;color:var(--ink-muted);font-size:.85rem;">
+        📷 Sin logo cargado
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label for="logo-upload" class="btn btn-accent" style="cursor:pointer;margin:0;">📁 Seleccionar logo</label>
+        <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="handleLogoUpload(event)">
+        <button class="btn btn-danger" id="logo-remove-btn" style="display:none;" onclick="removeLogo()">✕ Eliminar logo</button>
+        <p style="font-size:.75rem;color:var(--ink-muted);margin:0;">PNG o JPG · Máx. 500 KB<br>Recomendado: fondo transparente</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notas y condiciones del PDF -->
+  <div class="card" id="card-condiciones-pdf" style="display:none">
+    <div class="card-title">📝 Notas y Condiciones del PDF</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
+      Este texto aparece por defecto en la sección "Notas y Condiciones" de cada cotización nueva.
+      Puedes seguir editándolo por cotización individual si hace falta un caso especial.
+    </p>
+    <textarea id="condiciones-pdf-texto" class="form-input" rows="6" style="width:100%;font-family:inherit;resize:vertical"
+      placeholder="Ej: Precios sujetos a disponibilidad. Reserva se confirma con el 50% de abono..."></textarea>
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-accent" onclick="guardarCondicionesPdf()">💾 Guardar</button>
+      <span id="condiciones-pdf-msg" style="font-size:.82rem"></span>
+    </div>
+  </div>
+
+  <!-- Contraseña del panel de Estadísticas -->
+  <div class="card" id="card-pass-stats">
+    <div class="card-title">🔒 Contraseña del panel de Estadísticas</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
+      Esta contraseña protege el panel de operaciones (ingresos, ocupación, etc.).
+      Admin, superadmin y desarrollador pueden cambiarla — pero solo el <strong>desarrollador</strong> puede ver cuál es la actual.
+    </p>
+    <div id="stats-pass-actual" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.9rem;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="stats-pass-nueva" class="form-input" placeholder="Nueva contraseña" style="max-width:220px">
+      <button class="btn btn-accent" onclick="cambiarPasswordStats()">💾 Guardar contraseña</button>
+      <span id="stats-pass-msg" style="font-size:.82rem;"></span>
+    </div>
+  </div>
+
+  <!-- Días de cierre y excepciones -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0;">🗓️ Días de cierre</div>
+      <button class="btn btn-accent" onclick="guardarHorarios()">💾 Guardar horarios</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Los días marcados aparecen con patrón rayado en el calendario. Puedes habilitar fechas específicas aunque caigan en día de cierre.
+    </p>
+    <div class="form-group">
+      <label>Días cerrados regularmente</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="dias-cerrados-btns"></div>
+      <small style="font-size:.72rem;color:var(--muted);margin-top:6px;display:block">Los resaltados en naranja se marcan como Cerrado en el calendario.</small>
+    </div>
+    <div class="form-group" style="margin-top:18px">
+      <label>Fechas de excepción — días cerrados que estarán abiertos</label>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="excepcion-fecha" class="form-input" style="max-width:200px">
+        <button class="btn btn-outline btn-sm" onclick="addExcepcion()">+ Añadir fecha</button>
+      </div>
+      <div id="excepcion-lista" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0;">Datos de la empresa en PDF</div>
+      <button class="btn btn-accent" onclick="saveEmpresa()">💾 Guardar cambios</button>
+    </div>
+    <p style="font-size:.82rem;color:var(--ink-muted);margin-bottom:18px;">
+      Estos datos aparecen en el encabezado de todas las cotizaciones y confirmaciones PDF.
+      Los cambios se guardan en la nube y aplican desde cualquier dispositivo.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre de la empresa</label><input type="text" id="emp-nombre" placeholder="Sanagua Lodge S.A."></div>
+      <div class="form-group"><label>RUC</label><input type="text" id="emp-ruc" placeholder="155761744-2-2025"></div>
+      <div class="form-group"><label>Teléfono</label><input type="tel" id="emp-tel" placeholder="+507 6166-0114"></div>
+      <div class="form-group full"><label>Correo electrónico</label><input type="email" id="emp-email" placeholder="sanagualodge@gmail.com"></div>
+    </div>
+  </div>
+
+  <!-- Credenciales de acceso -->
+  <div class="card">
+    <div class="card-title">Mi contraseña</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">Cambia tu propia contraseña de acceso (Supabase Auth).</p>
+    <div class="form-group"><label>Contraseña actual</label><input type="password" id="mypass-actual" placeholder="••••••••"></div>
+    <div class="form-group"><label>Contraseña nueva</label><input type="password" id="mypass-nueva" placeholder="Mínimo 6 caracteres"></div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-accent" onclick="cambiarMiPassword()">💾 Cambiar mi contraseña</button>
+    </div>
+  </div>
+
+  <!-- Crear administrador (solo nivel superior) -->
+  <div class="card" id="card-crear-admin" style="display:none;">
+    <div class="card-title">Crear nuevo administrador</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
+      Se crea directamente en Supabase Auth. Comparte la contraseña con la persona por un canal seguro; podrá cambiarla desde "Mi contraseña".<br>
+      <strong>Solo visible para Super Administrador y Desarrollador.</strong>
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group"><label>Nombre</label><input type="text" id="newadmin-name" placeholder="Nombre completo"></div>
+      <div class="form-group"><label>Correo</label><input type="email" id="newadmin-email" placeholder="correo@ejemplo.com"></div>
+      <div class="form-group"><label>Contraseña temporal</label><input type="password" id="newadmin-pass" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="newadmin-role" style="width:100%;padding:8px;border-radius:6px;">
+          <option value="admin">Administrador</option>
+          <option value="superadmin">Super Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-accent" onclick="crearNuevoAdmin()">➕ Crear administrador</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // URL del backend Flask (app.py) — solo lo usa "Crear nuevo administrador".
+  // Mientras no despliegues app.py en algún servidor, esa acción mostrará un
+  // aviso; el resto de esta página no depende de él.
+  const API_BASE = 'http://localhost:5000';
+
+  function showLoading(v){ document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  function esNivelSuperior(user) {
+    return user?.role === 'superadmin' || user?.role === 'desarrollador';
+  }
+  function puedeEditarCondiciones() {
+    if (window.currentAdmin?.role === 'desarrollador') return true;
+    return !!window.currentAdmin?.permisos?.editar_condiciones_pdf;
+  }
+  function authFetch(url, options = {}) {
+    const headers = { ...(options.headers || {}), 'Authorization': `Bearer ${window.currentAdmin?.accessToken || ''}` };
+    return fetch(url, { ...options, headers });
+  }
+
+  let empresaData = { nombre:'Sanagua Lodge S.A.', ruc:'155761744-2-2025', tel:'+507 6166-0114', email:'sanagualodge@gmail.com' };
+  let logoBase64 = '';
+  let DIAS_CERRADOS = [2, 3];
+  let EXCEPCIONES_ABIERTAS = [];
+
+  async function loadEmpresa() {
+    try {
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'empresa').maybeSingle();
+      if (error) throw error;
+      if (data?.value?.nombre) empresaData = data.value;
+    } catch { /* usar defaults */ }
+    document.getElementById('emp-nombre').value = empresaData.nombre || '';
+    document.getElementById('emp-ruc').value    = empresaData.ruc    || '';
+    document.getElementById('emp-tel').value    = empresaData.tel    || '';
+    document.getElementById('emp-email').value  = empresaData.email  || '';
+  }
+
+  async function saveEmpresa() {
+    const data = {
+      nombre: document.getElementById('emp-nombre').value.trim(),
+      ruc:    document.getElementById('emp-ruc').value.trim(),
+      tel:    document.getElementById('emp-tel').value.trim(),
+      email:  document.getElementById('emp-email').value.trim(),
+    };
+    if (!data.nombre) { showToast('El nombre de la empresa es obligatorio.', 'error'); return; }
+    showLoading(true);
+    try {
+      const { error } = await supa.from('company_settings').upsert({ key: 'empresa', value: data });
+      if (error) throw error;
+      empresaData = data;
+      showToast('✅ Datos de empresa guardados correctamente.', 'success');
+    } catch { showToast('❌ Error al guardar. Intenta nuevamente.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  async function loadLogo() {
+    try {
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'logo').maybeSingle();
+      if (error) throw error;
+      if (data?.value?.logo) { logoBase64 = data.value.logo; _applyLogoPreview(data.value.logo); }
+    } catch { /* sin logo */ }
+  }
+
+  function _applyLogoPreview(b64) {
+    const img   = document.getElementById('logo-preview');
+    const wrap  = document.getElementById('logo-preview-wrap');
+    const empty = document.getElementById('logo-empty-state');
+    const rmBtn = document.getElementById('logo-remove-btn');
+    if (b64) {
+      img.src = b64;
+      wrap.style.display  = 'block';
+      empty.style.display = 'none';
+      rmBtn.style.display = 'block';
+    } else {
+      img.src = '';
+      wrap.style.display  = 'none';
+      empty.style.display = 'block';
+      rmBtn.style.display = 'none';
+    }
+  }
+
+  async function handleLogoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) { showToast('El logo debe pesar menos de 500 KB.', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      logoBase64 = ev.target.result;
+      _applyLogoPreview(logoBase64);
+      showToast('Subiendo logo...', 'success');
+      try {
+        const { error } = await supa.from('company_settings').upsert({ key: 'logo', value: { logo: logoBase64 } });
+        showToast(error ? '⚠️ Logo visible pero no guardado.' : '✅ Logo guardado.', error ? 'error' : 'success');
+      } catch { showToast('⚠️ Error al guardar el logo.', 'error'); }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function removeLogo() {
+    if (!confirm('¿Eliminar el logo de la empresa?')) return;
+    logoBase64 = '';
+    _applyLogoPreview('');
+    document.getElementById('logo-upload').value = '';
+    try { await supa.from('company_settings').upsert({ key: 'logo', value: { logo: '' } }); } catch {}
+    showToast('Logo eliminado.', 'success');
+  }
+
+  async function cargarCondicionesPdf() {
+    try {
+      const { data, error } = await supa.from('company_settings').select('value').eq('key', 'condiciones_pdf').maybeSingle();
+      if (error) throw error;
+      document.getElementById('condiciones-pdf-texto').value = data?.value?.texto || '';
+    } catch (e) { console.warn('cargarCondicionesPdf', e); }
+  }
+
+  async function guardarCondicionesPdf() {
+    if (!puedeEditarCondiciones()) { showToast('No tienes permiso para editar esto.', 'error'); return; }
+    const texto = document.getElementById('condiciones-pdf-texto').value;
+    const msgEl = document.getElementById('condiciones-pdf-msg');
+    try {
+      const { error } = await supa.from('company_settings').upsert({ key: 'condiciones_pdf', value: { texto } });
+      if (error) throw error;
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = '✅ Guardado correctamente.';
+      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
+    } catch (e) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ Error al guardar.';
+    }
+  }
+
+  async function cargarPasswordStatsUI() {
+    const box = document.getElementById('stats-pass-actual');
+    if (window.currentAdmin?.role !== 'desarrollador') { box.style.display = 'none'; return; }
+    try {
+      const { data, error } = await supa.rpc('ver_password_estadisticas');
+      if (error) throw error;
+      box.style.display = 'block';
+      box.innerHTML = `Contraseña actual: <strong>${data}</strong>`;
+    } catch (e) { console.warn(e); box.style.display = 'none'; }
+  }
+
+  async function cambiarPasswordStats() {
+    const nueva = document.getElementById('stats-pass-nueva').value.trim();
+    const msgEl = document.getElementById('stats-pass-msg');
+    if (!nueva || nueva.length < 4) { msgEl.style.color='var(--red)'; msgEl.textContent='Mínimo 4 caracteres.'; return; }
+    try {
+      const { error } = await supa.rpc('cambiar_password_estadisticas', { p_nueva: nueva });
+      if (error) throw error;
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = '✅ Contraseña actualizada.';
+      document.getElementById('stats-pass-nueva').value = '';
+      cargarPasswordStatsUI();
+      setTimeout(()=>{ msgEl.textContent=''; }, 3000);
+    } catch (e) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ Error al guardar.';
+    }
+  }
+
+  const DOW_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  function renderDowBtns() {
+    document.getElementById('dias-cerrados-btns').innerHTML =
+      DOW_LABELS.map((lbl,i) => `
+        <button class="cal-dow-btn${DIAS_CERRADOS.includes(i)?' active':''}"
+          data-dow="${i}" onclick="toggleDow(${i})">${lbl}</button>`).join('');
+  }
+
+  function toggleDow(dow) {
+    if (DIAS_CERRADOS.includes(dow)) {
+      DIAS_CERRADOS = DIAS_CERRADOS.filter(d => d !== dow);
+    } else {
+      DIAS_CERRADOS = [...DIAS_CERRADOS, dow].sort();
+    }
+    renderDowBtns();
+  }
+
+  function renderExcepcionLista() {
+    const el = document.getElementById('excepcion-lista');
+    if (!el) return;
+    if (!EXCEPCIONES_ABIERTAS.length) {
+      el.innerHTML = '<span style="font-size:.8rem;color:var(--muted)">Sin excepciones añadidas.</span>';
+      return;
+    }
+    el.innerHTML = [...EXCEPCIONES_ABIERTAS].sort().map(ds => `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(127,160,172,.1);
+        border:1px solid rgba(127,160,172,.3);border-radius:6px;padding:4px 10px;font-size:.8rem;">
+        <span style="color:var(--accent);font-weight:600">${fmtDateShort(ds)}</span>
+        <button onclick="removeExcepcion('${ds}')"
+          style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;line-height:1;padding:0">×</button>
+      </div>`).join('');
+  }
+
+  function addExcepcion() {
+    const fecha = document.getElementById('excepcion-fecha').value;
+    if (!fecha) { showToast('Selecciona una fecha.', 'error'); return; }
+    if (EXCEPCIONES_ABIERTAS.includes(fecha)) { showToast('Esa fecha ya está en la lista.', 'error'); return; }
+    EXCEPCIONES_ABIERTAS.push(fecha);
+    document.getElementById('excepcion-fecha').value = '';
+    renderExcepcionLista();
+  }
+
+  function removeExcepcion(ds) {
+    EXCEPCIONES_ABIERTAS = EXCEPCIONES_ABIERTAS.filter(d => d !== ds);
+    renderExcepcionLista();
+  }
+
+  async function loadHorarios() {
+    try {
+      const { data, error } = await supa.from('camping_config').select('value').eq('key', 'horarios').single();
+      if (error) throw error;
+      DIAS_CERRADOS        = data?.value?.dias_cerrados        || [2, 3];
+      EXCEPCIONES_ABIERTAS = data?.value?.excepciones_abiertas || [];
+    } catch (e) { console.warn('loadHorarios', e); }
+  }
+
+  async function saveHorarios() {
+    try {
+      const { error } = await supa.from('camping_config').upsert({
+        key: 'horarios',
+        value: { dias_cerrados: DIAS_CERRADOS, excepciones_abiertas: EXCEPCIONES_ABIERTAS },
+      }, { onConflict: 'key' });
+      if (error) throw error;
+      showToast('✅ Horarios guardados correctamente.', 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al guardar horarios en Supabase.', 'error'); }
+  }
+
+  async function guardarHorarios() {
+    showLoading(true);
+    try { await saveHorarios(); } finally { showLoading(false); }
+  }
+
+  async function cambiarMiPassword() {
+    const actual = document.getElementById('mypass-actual').value;
+    const nueva  = document.getElementById('mypass-nueva').value;
+    if (!actual || !nueva) { showToast('Completa ambos campos.', 'error'); return; }
+    if (nueva.length < 6) { showToast('La nueva contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+    showLoading(true);
+    try {
+      const { error: reauthErr } = await supa.auth.signInWithPassword({ email: window.currentAdmin.email, password: actual });
+      if (reauthErr) { showToast('❌ ' + reauthErr.message + ' (correo usado: ' + window.currentAdmin.email + ')', 'error'); return; }
+      const { error } = await supa.auth.updateUser({ password: nueva });
+      if (error) throw new Error(error.message);
+      document.getElementById('mypass-actual').value = '';
+      document.getElementById('mypass-nueva').value  = '';
+      showToast('✅ Contraseña actualizada.', 'success');
+    } catch (e) { showToast('❌ ' + (e.message || 'Error al guardar.'), 'error'); }
+    finally { showLoading(false); }
+  }
+
+  async function crearNuevoAdmin() {
+    if (!esNivelSuperior(window.currentAdmin)) { showToast('No tienes permiso para crear administradores.', 'error'); return; }
+    const name  = document.getElementById('newadmin-name').value.trim();
+    const email = document.getElementById('newadmin-email').value.trim();
+    const pass  = document.getElementById('newadmin-pass').value;
+    const role  = document.getElementById('newadmin-role').value;
+    if (!name || !email || !pass) { showToast('Completa nombre, correo y contraseña.', 'error'); return; }
+    if (pass.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+    showLoading(true);
+    try {
+      const resp = await authFetch(`${API_BASE}/auth/admins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password: pass, role }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'Error al crear el administrador.');
+      document.getElementById('newadmin-name').value  = '';
+      document.getElementById('newadmin-email').value = '';
+      document.getElementById('newadmin-pass').value  = '';
+      showToast(`✅ Administrador ${email} creado.`, 'success');
+    } catch (e) {
+      showToast('❌ ' + e.message + ' — ¿ya desplegaste el backend en ' + API_BASE + '? Mientras tanto puedes crear la cuenta manualmente desde el dashboard de Supabase.', 'error');
+    } finally { showLoading(false); }
+  }
+
+  document.addEventListener('admin-ready', async () => {
+    document.getElementById('card-crear-admin').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
+    document.getElementById('card-condiciones-pdf').style.display = puedeEditarCondiciones() ? '' : 'none';
+    await Promise.all([loadEmpresa(), loadLogo(), loadHorarios()]);
+    if (puedeEditarCondiciones()) cargarCondicionesPdf();
+    cargarPasswordStatsUI();
+    renderDowBtns();
+    renderExcepcionLista();
+  });
+
+</script>
+</body>
+</html>

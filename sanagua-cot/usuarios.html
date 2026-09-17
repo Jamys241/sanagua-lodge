@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Usuarios — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">👥 Gestión de usuarios web</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">👥 Gestión de usuarios web</div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un usuario por correo para ver sus datos, ajustar sus puntos o verificar su identidad.</p>
+
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <input type="email" id="usr-buscar-email" placeholder="correo@ejemplo.com"
+        class="form-input" style="flex:1;min-width:220px"
+        onkeydown="if(event.key==='Enter')buscarUsuario()">
+      <button class="btn btn-accent" onclick="buscarUsuario()">🔍 Buscar</button>
+    </div>
+
+    <div id="usr-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap">
+        <div id="usr-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="usr-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
+            <span id="usr-verif-badge" style="display:none;font-size:.66rem;font-weight:700;background:#3d8bfd;color:#fff;padding:2px 9px;border-radius:20px;">✓ Verificado</span>
+          </div>
+          <div id="usr-email-display" style="font-size:.78rem;color:var(--muted)"></div>
+        </div>
+        <div style="text-align:center;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;flex-shrink:0">
+          <div id="usr-puntos-num" style="font-size:1.6rem;font-weight:700;color:var(--accent)">—</div>
+          <div style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">puntos</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">🪪 Datos de identidad</div>
+        <div class="form-grid" style="margin-bottom:12px">
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Cédula / Pasaporte</label><div id="usr-cedula-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Celular</label><div id="usr-phone-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+          <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Edad</label><div id="usr-edad-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
+        </div>
+        <div id="usr-doc-wrap" style="margin-bottom:12px;display:none">
+          <label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:6px">Foto de cédula/pasaporte</label>
+          <a id="usr-doc-link" href="#" target="_blank"><img id="usr-doc-img" style="max-width:220px;max-height:140px;border-radius:8px;border:1.5px solid var(--border);object-fit:cover"></a>
+        </div>
+        <button class="btn btn-sm" id="usr-verif-btn" onclick="toggleVerificado()" style="width:100%"></button>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:8px;">Verifica solo si el nombre, cédula y foto del documento coinciden — esta insignia le indica al cliente y a otros admins que sus datos fueron confirmados.</p>
+      </div>
+
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px">
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">⭐ Ajustar puntos</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="form-group" style="margin:0;flex:1;min-width:90px">
+            <label>Cantidad</label>
+            <input type="number" id="usr-pts-cantidad" class="form-input" placeholder="50" min="1" step="1">
+          </div>
+          <div class="form-group" style="margin:0;flex:2;min-width:160px">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="usr-pts-motivo" class="form-input" placeholder="Compensación...">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-accent" onclick="ajustarPts(1)" style="flex:1">➕ Añadir</button>
+          <button class="btn btn-danger" onclick="ajustarPts(-1)" style="flex:1">➖ Restar</button>
+        </div>
+        <div id="usr-pts-msg" style="font-size:.78rem;min-height:16px;margin-top:8px;text-align:center"></div>
+      </div>
+    </div>
+
+    <div id="usr-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
+      ❌ No se encontró ningún usuario con ese correo.
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const API_BASE = 'http://localhost:5000';
+
+  function showLoading(v){ document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  let _usuarioEncontrado = null;
+
+  async function buscarUsuario() {
+    const email = document.getElementById('usr-buscar-email').value.trim().toLowerCase();
+    if (!email) { showToast('Ingresa un correo para buscar.', 'error'); return; }
+
+    document.getElementById('usr-resultado').style.display      = 'none';
+    document.getElementById('usr-no-encontrado').style.display  = 'none';
+    _usuarioEncontrado = null;
+
+    showLoading(true);
+    try {
+      const { data: user, error } = await supa.from('profiles').select('*').ilike('email', email).maybeSingle();
+      if (error) throw error;
+      if (!user) {
+        document.getElementById('usr-no-encontrado').style.display = 'block';
+        return;
+      }
+      _usuarioEncontrado = user;
+      document.getElementById('usr-avatar').textContent          = (user.name||'?').charAt(0).toUpperCase();
+      document.getElementById('usr-nombre').textContent          = user.name || '—';
+      document.getElementById('usr-email-display').textContent   = user.email || '—';
+      document.getElementById('usr-cedula-display').textContent  = user.cedula || '—';
+      document.getElementById('usr-phone-display').textContent   = user.phone  || '—';
+      document.getElementById('usr-edad-display').textContent    = user.edad   || '—';
+      document.getElementById('usr-puntos-num').textContent      = user.puntos || 0;
+      document.getElementById('usr-pts-cantidad').value          = '';
+      document.getElementById('usr-pts-motivo').value            = '';
+      document.getElementById('usr-pts-msg').textContent         = '';
+
+      const docWrap = document.getElementById('usr-doc-wrap');
+      if (user.foto_documento) {
+        docWrap.style.display = 'block';
+        document.getElementById('usr-doc-img').src  = `${API_BASE}${user.foto_documento}`;
+        document.getElementById('usr-doc-link').href = `${API_BASE}${user.foto_documento}`;
+      } else {
+        docWrap.style.display = 'none';
+      }
+
+      document.getElementById('usr-verif-badge').style.display = user.verificado ? 'inline-block' : 'none';
+      const vBtn = document.getElementById('usr-verif-btn');
+      if (user.verificado) {
+        vBtn.textContent = '✅ Verificado — quitar verificación';
+        vBtn.className = 'btn btn-sm btn-outline';
+      } else {
+        vBtn.textContent = '🪪 Marcar como verificado';
+        vBtn.className = 'btn btn-sm btn-accent';
+      }
+
+      document.getElementById('usr-resultado').style.display = 'block';
+    } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
+    finally  { showLoading(false); }
+  }
+
+  async function toggleVerificado() {
+    if (!_usuarioEncontrado) return;
+    const nuevoValor = !_usuarioEncontrado.verificado;
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ verificado: nuevoValor }).eq('id', _usuarioEncontrado.id);
+      if (error) throw error;
+      _usuarioEncontrado.verificado = nuevoValor;
+      document.getElementById('usr-verif-badge').style.display = nuevoValor ? 'inline-block' : 'none';
+      const vBtn = document.getElementById('usr-verif-btn');
+      vBtn.textContent = nuevoValor ? '✅ Verificado — quitar verificación' : '🪪 Marcar como verificado';
+      vBtn.className = nuevoValor ? 'btn btn-sm btn-outline' : 'btn btn-sm btn-accent';
+      showToast(nuevoValor ? `✅ ${_usuarioEncontrado.name} ahora está verificado.` : `Verificación retirada de ${_usuarioEncontrado.name}.`, 'success');
+    } catch (e) { console.error(e); showToast('❌ Error al actualizar la verificación.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  async function ajustarPts(signo) {
+    const msgEl   = document.getElementById('usr-pts-msg');
+    const cantEl  = document.getElementById('usr-pts-cantidad');
+    if (!_usuarioEncontrado) return;
+    const cantidad = parseInt(cantEl.value) || 0;
+    if (cantidad <= 0) {
+      msgEl.style.color='var(--red)'; msgEl.textContent='Ingresa una cantidad válida.'; return;
+    }
+    const delta = signo * cantidad;
+    const nuevoPts = Math.max(0, (_usuarioEncontrado.puntos || 0) + delta);
+    msgEl.style.color='var(--muted)'; msgEl.textContent='Guardando...';
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ puntos: nuevoPts }).eq('id', _usuarioEncontrado.id);
+      if (error) throw error;
+      _usuarioEncontrado.puntos = nuevoPts;
+      document.getElementById('usr-puntos-num').textContent = nuevoPts;
+      msgEl.style.color='var(--success)';
+      msgEl.textContent = `✅ Puntos actualizados: ${nuevoPts} pts`;
+      cantEl.value=''; document.getElementById('usr-pts-motivo').value='';
+      showToast(`⭐ ${delta>0?'+':''}${delta} pts para ${_usuarioEncontrado.name}`, 'success');
+      setTimeout(()=>{ msgEl.textContent=''; }, 4000);
+    } catch (e) {
+      console.error(e);
+      msgEl.style.color='var(--red)';
+      msgEl.textContent='❌ Error al actualizar. Intenta nuevamente.';
+    } finally { showLoading(false); }
+  }
+</script>
+</body>
+</html>
