@@ -161,6 +161,35 @@
     </div>
   </div>
 
+  <!-- Sincronización automática -->
+  <div class="card" id="sync-control-card">
+    <div class="card-title" style="margin:0 0 6px;">🔄 Sincronización automática</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Controla con qué frecuencia el panel (Dashboard, Calendario, etc.) detecta cambios en los datos.
+      El intervalo se guarda en este navegador y aplica la próxima vez que abras el sistema.
+    </p>
+    <div class="form-group" style="margin-bottom:18px">
+      <label>Intervalo de polling</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="poll-interval-btns">
+        <button class="poll-btn" data-ms="10000">10 s</button>
+        <button class="poll-btn" data-ms="20000">20 s</button>
+        <button class="poll-btn active" data-ms="30000">30 s</button>
+        <button class="poll-btn" data-ms="60000">1 min</button>
+        <button class="poll-btn" data-ms="120000">2 min</button>
+        <button class="poll-btn" data-ms="300000">5 min</button>
+        <button class="poll-btn" data-ms="0">Apagado</button>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">📡 Refresco de páginas públicas</div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
+        Envía una señal para que todas las pestañas abiertas del sitio web (en este navegador) recarguen sus datos automáticamente.
+      </p>
+      <button class="btn btn-outline btn-sm" onclick="broadcastRefresh()">📢 Enviar señal de refresco a páginas públicas</button>
+      <span id="broadcast-lbl" style="font-size:.75rem;color:var(--muted);margin-left:8px"></span>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -448,6 +477,30 @@
     } finally { showLoading(false); }
   }
 
+  function initPollControls() {
+    const stored = parseInt(localStorage.getItem('poll_interval') || '30000');
+    document.querySelectorAll('.poll-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.ms) === stored);
+      btn.addEventListener('click', () => {
+        const ms = parseInt(btn.dataset.ms);
+        localStorage.setItem('poll_interval', ms);
+        document.querySelectorAll('.poll-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showToast('✅ Preferencia guardada — aplica la próxima vez que abras el sistema.', 'success');
+      });
+    });
+  }
+
+  let _bc = null;
+  try { _bc = new BroadcastChannel('sanagua_refresh'); } catch {}
+  function broadcastRefresh() {
+    const lbl = document.getElementById('broadcast-lbl');
+    if (_bc) {
+      _bc.postMessage({ type: 'REFRESH', ts: Date.now() });
+      if (lbl) { lbl.textContent = '✅ Señal enviada'; setTimeout(()=>{ lbl.textContent=''; }, 3000); }
+    } else if (lbl) { lbl.textContent = '⚠️ BroadcastChannel no soportado en este navegador'; }
+  }
+
   document.addEventListener('admin-ready', async () => {
     document.getElementById('card-crear-admin').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
     document.getElementById('card-condiciones-pdf').style.display = puedeEditarCondiciones() ? '' : 'none';
@@ -456,6 +509,7 @@
     cargarPasswordStatsUI();
     renderDowBtns();
     renderExcepcionLista();
+    initPollControls();
   });
 
 </script>

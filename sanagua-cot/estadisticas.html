@@ -55,6 +55,7 @@
 
   <div class="charts-grid">
     <div class="chart-card"><div class="chart-title">Ocupación por cabaña</div><canvas id="chart-cabanas"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Detalle de Pasadías</div><canvas id="chart-pasadias"></canvas></div>
     <div class="chart-card"><div class="chart-title">Reservas por servicio</div><canvas id="chart-servicios"></canvas></div>
     <div class="chart-card"><div class="chart-title">Campings realizados en el periodo</div><canvas id="chart-camping"></canvas></div>
     <div class="chart-card"><div class="chart-title">Tablas de picnic vendidas</div><canvas id="chart-picnic"></canvas></div>
@@ -160,6 +161,7 @@
 
       renderKPIs(quotes || [], desde, hasta);
       renderChartCabanas(quotes || []);
+      renderChartPasadias(quotes || []);
       renderChartServicios(quotes || []);
       renderChartCamping(quotes || [], desde, hasta);
       renderChartPicnic(quotes || []);
@@ -178,16 +180,34 @@
     });
     const masVendida = Object.entries(porCabana).sort((a,b)=>b[1]-a[1])[0];
     const totalCamping = quotes.filter(q => catBucket(q.categoria) === 'Camping').length;
+    const totalPasadias = quotes.filter(q => catBucket(q.categoria) === 'Pasadías').length;
+    const totalVisitantes = quotes.reduce((sum,q) => {
+      const items = q.data?.items || [];
+      return sum + items.reduce((s,it) => s + (parseInt(it.qty || it.quantity) || 0), 0);
+    }, 0);
 
     document.getElementById('kpis').innerHTML = `
       <div class="kpi-card"><div class="kpi-num">${totalReservas}</div><div class="kpi-lbl">Reservas confirmadas</div></div>
       <div class="kpi-card"><div class="kpi-num">$${totalIngresos.toFixed(0)}</div><div class="kpi-lbl">Ingresos confirmados</div></div>
+      <div class="kpi-card"><div class="kpi-num">${totalVisitantes}</div><div class="kpi-lbl">Personas visitantes</div></div>
       <div class="kpi-card"><div class="kpi-num" style="font-size:1.1rem">${masVendida ? masVendida[0] : '—'}</div><div class="kpi-lbl">Cabaña más vendida</div></div>
       <div class="kpi-card"><div class="kpi-num">${totalCamping}</div><div class="kpi-lbl">Campings realizados</div></div>
+      <div class="kpi-card"><div class="kpi-num">${totalPasadias}</div><div class="kpi-lbl">Pasadías realizadas</div></div>
       <div class="kpi-period">Periodo: ${desde} → ${hasta}</div>`;
   }
 
   function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+  function renderChartPasadias(quotes) {
+    const counts = {};
+    quotes.forEach(q => { if (catBucket(q.categoria) === 'Pasadías') counts[q.categoria] = (counts[q.categoria]||0) + 1; });
+    destroyChart('pasadias');
+    charts.pasadias = new Chart(document.getElementById('chart-pasadias'), {
+      type: 'bar',
+      data: { labels: Object.keys(counts), datasets: [{ label: 'Reservas', data: Object.values(counts), backgroundColor: '#c9a84c' }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
 
   function renderChartCabanas(quotes) {
     const counts = {};

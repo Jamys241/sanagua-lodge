@@ -458,56 +458,6 @@
     </div>
   </div>
 </div>
-  <div class="card" id="sync-control-card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div class="card-title" style="margin:0;">🔄 Sincronización automática</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span id="poll-status-dot" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block"></span>
-        <span id="poll-status-lbl" style="font-size:.78rem;color:var(--muted)">Inactivo</span>
-      </div>
-    </div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
-      Controla con qué frecuencia el sistema detecta cambios en los datos. También puedes forzar una actualización inmediata con el botón de refresco.
-    </p>
-
-    <!-- Intervalo -->
-    <div class="form-group" style="margin-bottom:18px">
-      <label>Intervalo de polling</label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="poll-interval-btns">
-        <button class="poll-btn" data-ms="10000">10 s</button>
-        <button class="poll-btn" data-ms="20000">20 s</button>
-        <button class="poll-btn active" data-ms="30000">30 s</button>
-        <button class="poll-btn" data-ms="60000">1 min</button>
-        <button class="poll-btn" data-ms="120000">2 min</button>
-        <button class="poll-btn" data-ms="300000">5 min</button>
-        <button class="poll-btn" data-ms="0">Apagado</button>
-      </div>
-    </div>
-
-    <!-- Acciones -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-accent" id="btn-poll-now" onclick="forcePoll()">
-        ⚡ Refrescar ahora
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-poll-toggle" onclick="togglePolling()">
-        ⏸ Pausar
-      </button>
-      <span id="poll-next-lbl" style="font-size:.78rem;color:var(--muted)"></span>
-    </div>
-
-    <!-- Broadcast a páginas públicas -->
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-      <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">📡 Refresco de páginas públicas</div>
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
-        Escribe un mensaje en el canal de sincronización para que todas las pestañas abiertas del sitio web recarguen sus datos automáticamente.
-      </p>
-      <button class="btn btn-outline btn-sm" onclick="broadcastRefresh()">
-        📢 Enviar señal de refresco a páginas públicas
-      </button>
-      <span id="broadcast-lbl" style="font-size:.75rem;color:var(--muted);margin-left:8px"></span>
-    </div>
-  </div>
-
 
 </div><!-- /tab-dashboard -->
 
@@ -1603,22 +1553,41 @@
   }
 
   async function loadDashboard() {
-    const nombre = currentUser?.name || currentUser?.email || '';
+    const nombre = currentUser?.username || currentUser?.email || '';
     document.getElementById('dash-saludo').textContent = `👋 Bienvenido/a${nombre ? ', ' + nombre.split(' ')[0] : ''}`;
 
     try {
       const hoy = new Date(); const hoyStr = hoy.toISOString().slice(0,10);
       const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+      const ESTADOS_ACTIVOS_EV  = ['Confirmada', 'Completada'];
+      const ESTADOS_ACTIVOS_SOL = ['confirmada', 'completada'];
 
-      const [{ count: pendCount }, { data: activas }, { data: cotizMes }] = await Promise.all([
+      const [{ count: pendCount }, { data: eventosActivos }, { data: solActivas },
+             { data: eventosMes }, { data: solMes }] = await Promise.all([
         supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-        supa.from('quotes').select('total').eq('estado', 'Confirmada').lte('visit_date', hoyStr).gte('visit_date_end', hoyStr),
-        supa.from('quotes').select('id').gte('created_at', inicioMes),
+        supa.from('events').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
+        supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL),
+        supa.from('events').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
+        supa.from('solicitudes').select('id').in('estado', ESTADOS_ACTIVOS_SOL).gte('created_at', inicioMes),
       ]);
 
+      // "Reservas activas hoy": eventos cuyo rango de fechas incluye hoy...
+      const eventosHoy = (eventosActivos || []).filter(ev => {
+        const desde = ev.visit_date, hasta = ev.visit_date_end || ev.visit_date;
+        return desde && hoyStr >= desde && hoyStr <= hasta;
+      }).length;
+      // ...más solicitudes confirmadas/completadas cuyos ítems incluyan hoy en su fecha de visita.
+      const solicitudesHoy = (solActivas || []).filter(s => {
+        const items = Array.isArray(s.items) ? s.items : [];
+        return items.some(it => {
+          const desde = it.fecha_visita, hasta = it.fecha_visita_fin || it.fecha_visita;
+          return desde && hoyStr >= desde && hoyStr <= hasta;
+        });
+      }).length;
+
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
-      document.getElementById('dash-hoy').textContent = (activas || []).length;
-      document.getElementById('dash-mes').textContent = (cotizMes || []).length;
+      document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy;
+      document.getElementById('dash-mes').textContent = (eventosMes||[]).length + (solMes||[]).length;
     } catch (e) { console.warn('loadDashboard', e); }
   }
 
