@@ -49,7 +49,7 @@
       <button onclick="window.open('nueva-cotizacion.html','_blank');closeMenu()">📋 Nueva Cotización</button>
       <button onclick="window.open('history.html','_blank');closeMenu()">📁 Historial</button>
       <button onclick="window.open('resumen.html','_blank');closeMenu()">📊 Resumen</button>
-      <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
+      <button onclick="window.open('solicitudes.html','_blank');closeMenu()">📬 Solicitudes</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -425,7 +425,7 @@
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:22px;">Este es el resumen de tu operación hoy.</p>
 
     <div class="dash-stats">
-      <div class="dash-stat-card" onclick="switchTab('solicitudes')" style="cursor:pointer">
+      <div class="dash-stat-card" onclick="window.open('solicitudes.html','_blank')" style="cursor:pointer">
         <div class="dash-stat-icon">📬</div>
         <div class="dash-stat-num" id="dash-pendientes">—</div>
         <div class="dash-stat-lbl">Solicitudes pendientes</div>
@@ -451,7 +451,7 @@
     <div class="dash-quicklinks">
       <button class="dash-qlink" onclick="window.open('nueva-cotizacion.html','_blank')">📋<span>Nueva Cotización</span></button>
       <button class="dash-qlink" onclick="window.open('calendario.html','_blank')">📅<span>Calendario</span></button>
-      <button class="dash-qlink" onclick="switchTab('solicitudes')">📬<span>Solicitudes</span></button>
+      <button class="dash-qlink" onclick="window.open('solicitudes.html','_blank')">📬<span>Solicitudes</span></button>
       <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')">🛎️<span>Mis Servicios</span></button>
       <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')">🍽️<span>Editor de Menú</span></button>
       <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')">👁️<span>Ver como usuario</span></button>
@@ -778,40 +778,6 @@
   </div>
 </div>
 </div><!-- /tab-popular -->
-
-<!-- ══════════════════════════ TAB SOLICITUDES ══════════════════════════ -->
-<div id="tab-solicitudes" class="tab-panel">
-<div class="container">
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div class="card-title" style="margin:0">📬 Solicitudes de reserva</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <select id="sol-filtro" onchange="filtrarSolicitudes()" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface)">
-          <option value="todas">Todas</option>
-          <option value="pendiente">⏳ Pendientes</option>
-          <option value="en_proceso">🔄 En proceso</option>
-          <option value="confirmada">✅ Confirmadas</option>
-          <option value="completada">✅ Completadas</option>
-          <option value="rechazada">❌ Rechazadas</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="loadSolicitudes()">🔄 Recargar</button>
-      </div>
-    </div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
-      Solicitudes enviadas desde las páginas de servicios. Aprueba para añadir al calendario o rechaza para notificar al cliente.
-    </p>
-    <div style="margin-bottom:16px">
-      <input type="text" id="sol-buscar" placeholder="🔍 Buscar por nombre o correo..." oninput="filtrarSolicitudes()"
-        style="width:100%;max-width:360px;padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.85rem;outline:none;transition:border-color .2s"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-    </div>
-    <div id="sol-stats" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
-    <div id="sol-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
-      <div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando solicitudes...</div>
-    </div>
-  </div>
-</div>
-</div><!-- /tab-solicitudes -->
 
 <!-- ════════════════════════ TAB USUARIOS ══════════════════════════════ -->
 <div id="tab-usuarios" class="tab-panel">
@@ -3905,6 +3871,7 @@
   let solicitudesData = [];
 
   async function loadSolicitudes() {
+    if (!document.getElementById('sol-lista')) return; // las solicitudes ahora viven en su propia página (solicitudes.html)
     document.getElementById('sol-lista').innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando...</div>';
     try {
       const { data, error } = await supa.from('solicitudes').select('*').order('created_at', { ascending: false });
