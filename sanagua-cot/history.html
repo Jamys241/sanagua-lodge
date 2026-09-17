@@ -18,6 +18,9 @@
     .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
     .hh-header a:hover{color:#fff}
     .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+    .container{max-width:1400px}
+    .hist-table th:last-child, .hist-table td:last-child { min-width:270px; }
+    .hist-actions{width:220px}
   </style>
 </head>
 <body>
@@ -152,6 +155,16 @@
   }
 
   let allHistory = [];
+
+  function fmtDateTimeShort(ts) {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      const fecha = d.toLocaleDateString('es-PA', { day:'2-digit', month:'short', year:'numeric' });
+      const hora  = d.toLocaleTimeString('es-PA', { hour:'2-digit', minute:'2-digit' });
+      return `${fecha}, ${hora}`;
+    } catch { return '—'; }
+  }
   let allEvents  = [];
 
   async function loadHistory() {
@@ -272,12 +285,13 @@
       <div class="hist-table-wrap">
       <table class="hist-table">
         <thead><tr>
-          <th>#</th><th>Cliente</th><th>Categoría</th><th>Fecha visita</th><th>Total</th><th>Abono</th><th>Estado</th><th>Acciones</th>
+          <th>Creado</th><th>#</th><th>Cliente</th><th>Categoría</th><th>Fecha visita</th><th>Total</th><th>Abono</th><th>Estado</th><th>Acciones</th>
         </tr></thead>
         <tbody>
           ${combined.map((item, i) => {
             return `
           <tr style="${item._type==='event'?'background:#fdf8ff':''}">
+            <td style="white-space:nowrap;font-size:.78rem;color:var(--ink-muted)">${fmtDateTimeShort(item.created_at)}</td>
             <td>${numLabel(item)}</td>
             <td>
               <div style="font-weight:600">${item.client?.name||'—'}</div>
@@ -329,6 +343,7 @@
                   ${item.visit_date ? `📅 ${fmtDateShort(item.visit_date)}` : ''}
                   ${item.client?.phone ? ` · ${item.client.phone}` : ''}
                 </div>
+                <div class="hist-card-meta" style="color:var(--ink-muted);font-size:.7rem">🕓 Creado: ${fmtDateTimeShort(item.created_at)}</div>
               </div>
               <div style="text-align:right;flex-shrink:0;">
                 <div class="hist-card-total">$${total.toFixed(2)}</div>
