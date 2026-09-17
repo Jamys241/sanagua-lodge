@@ -45,11 +45,11 @@
       📅 Reservas <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-reservas">
-      <button onclick="window.open('calendario.html','_blank');closeMenu()">📅 Calendario</button>
-      <button onclick="window.open('nueva-cotizacion.html','_blank');closeMenu()">📋 Nueva Cotización</button>
-      <button onclick="window.open('history.html','_blank');closeMenu()">📁 Historial</button>
-      <button onclick="window.open('resumen.html','_blank');closeMenu()">📊 Resumen</button>
-      <button onclick="window.open('solicitudes.html','_blank');closeMenu()">📬 Solicitudes</button>
+      <button onclick="location.href='calendario.html';closeMenu()">📅 Calendario</button>
+      <button onclick="location.href='nueva-cotizacion.html';closeMenu()">📋 Nueva Cotización</button>
+      <button onclick="location.href='history.html';closeMenu()">📁 Historial</button>
+      <button onclick="location.href='resumen.html';closeMenu()">📊 Resumen</button>
+      <button onclick="location.href='solicitudes.html';closeMenu()">📬 Solicitudes</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -81,8 +81,8 @@
       ⚙️ Sistema <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-sistema">
-      <button onclick="window.open('usuarios.html','_blank');closeMenu()">👥 Usuarios</button>
-      <button onclick="window.open('configuracion.html','_blank');closeMenu()">⚙️ Configuración</button>
+      <button onclick="location.href='usuarios.html';closeMenu()">👥 Usuarios</button>
+      <button onclick="location.href='configuracion.html';closeMenu()">⚙️ Configuración</button>
       <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;">🔐 Permisos del Admin</button>
       <button onclick="abrirCambiarPass();closeMenu()">🔑 Cambiar contraseña</button>
     </div>
@@ -425,17 +425,17 @@
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:22px;">Este es el resumen de tu operación hoy.</p>
 
     <div class="dash-stats">
-      <div class="dash-stat-card" onclick="window.open('solicitudes.html','_blank')" style="cursor:pointer">
+      <div class="dash-stat-card" onclick="location.href='solicitudes.html'" style="cursor:pointer">
         <div class="dash-stat-icon">📬</div>
         <div class="dash-stat-num" id="dash-pendientes">—</div>
         <div class="dash-stat-lbl">Solicitudes pendientes</div>
       </div>
-      <div class="dash-stat-card" onclick="window.open('calendario.html','_blank')" style="cursor:pointer">
+      <div class="dash-stat-card" onclick="location.href='calendario.html'" style="cursor:pointer">
         <div class="dash-stat-icon">📅</div>
         <div class="dash-stat-num" id="dash-hoy">—</div>
         <div class="dash-stat-lbl">Reservas activas hoy</div>
       </div>
-      <div class="dash-stat-card" onclick="window.open('history.html','_blank')" style="cursor:pointer">
+      <div class="dash-stat-card" onclick="location.href='history.html'" style="cursor:pointer">
         <div class="dash-stat-icon">📁</div>
         <div class="dash-stat-num" id="dash-mes">—</div>
         <div class="dash-stat-lbl">Cotizaciones este mes</div>
@@ -449,9 +449,9 @@
 
     <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 12px;">Accesos rápidos</div>
     <div class="dash-quicklinks">
-      <button class="dash-qlink" onclick="window.open('nueva-cotizacion.html','_blank')">📋<span>Nueva Cotización</span></button>
-      <button class="dash-qlink" onclick="window.open('calendario.html','_blank')">📅<span>Calendario</span></button>
-      <button class="dash-qlink" onclick="window.open('solicitudes.html','_blank')">📬<span>Solicitudes</span></button>
+      <button class="dash-qlink" onclick="location.href='nueva-cotizacion.html'">📋<span>Nueva Cotización</span></button>
+      <button class="dash-qlink" onclick="location.href='calendario.html'">📅<span>Calendario</span></button>
+      <button class="dash-qlink" onclick="location.href='solicitudes.html'">📬<span>Solicitudes</span></button>
       <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')">🛎️<span>Mis Servicios</span></button>
       <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')">🍽️<span>Editor de Menú</span></button>
       <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')">👁️<span>Ver como usuario</span></button>

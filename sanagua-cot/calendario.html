@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/js/pdf-generators.js"></script>
   <script src="../assets/js/admin-guard.js"></script>
+  <script src="../assets/js/admin-nav.js"></script>
   <style>
     .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
       align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
@@ -95,13 +96,13 @@
   // ── Crear/editar sigue viviendo en achive.html — aquí solo se navega ────
   function openEdit(idx) {
     const q = allHistory[idx];
-    if (q) window.open(`achive.html?edit=${encodeURIComponent(q.quote_num)}`, '_blank');
+    if (q) location.href = `achive.html?edit=${encodeURIComponent(q.quote_num)}`;
   }
   function openEditEvent(evId) {
-    window.open(`achive.html?editEvent=${encodeURIComponent(evId)}`, '_blank');
+    location.href = `achive.html?editEvent=${encodeURIComponent(evId)}`;
   }
   function openNewEvent(prefillDate) {
-    window.open(`achive.html?newEvent=${encodeURIComponent(prefillDate || localDateStr(calDate))}`, '_blank');
+    location.href = `achive.html?newEvent=${encodeURIComponent(prefillDate || localDateStr(calDate))}`;
   }
 
   function _quoteRowToRecord(row) {
