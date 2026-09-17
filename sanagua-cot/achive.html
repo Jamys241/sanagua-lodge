@@ -1132,8 +1132,6 @@
 
     // Mostrar el sistema con la sesión activa
     iniciarSesion();
-    document.getElementById('card-crear-admin').style.display =
-      esNivelSuperior(currentUser) ? '' : 'none';
 
     // Cargar datos
     (async () => {
@@ -1284,10 +1282,11 @@
       if (error) throw error;
       if (data?.value?.nombre) empresaData = data.value;
     } catch { /* usar defaults */ }
-    document.getElementById('emp-nombre').value = empresaData.nombre || '';
-    document.getElementById('emp-ruc').value    = empresaData.ruc    || '';
-    document.getElementById('emp-tel').value    = empresaData.tel    || '';
-    document.getElementById('emp-email').value  = empresaData.email  || '';
+    const setIf = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    setIf('emp-nombre', empresaData.nombre || '');
+    setIf('emp-ruc',    empresaData.ruc    || '');
+    setIf('emp-tel',    empresaData.tel    || '');
+    setIf('emp-email',  empresaData.email  || '');
   }
 
   async function saveEmpresa() {
@@ -1395,6 +1394,7 @@
     const wrap  = document.getElementById('logo-preview-wrap');
     const empty = document.getElementById('logo-empty-state');
     const rmBtn = document.getElementById('logo-remove-btn');
+    if (!img || !wrap || !empty || !rmBtn) return; // esta vista ahora vive en configuracion.html
     if (b64) {
       img.src = b64;
       wrap.style.display  = 'block';
@@ -1981,7 +1981,8 @@
 
   // ── HISTORIAL ───────────────────────────────────────────────────────────────
   async function loadHistory() {
-    document.getElementById('history-container').innerHTML='<div class="empty-hist">Cargando...</div>';
+    const container = document.getElementById('history-container');
+    if (container) container.innerHTML='<div class="empty-hist">Cargando...</div>';
     try {
       const [newHist, newEvts] = await Promise.all([
         sbListQuotes(),
@@ -1991,7 +1992,7 @@
       allEvents  = newEvts;
       renderHistory(allHistory);
     } catch {
-      document.getElementById('history-container').innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>';
+      if (container) container.innerHTML='<div class="empty-hist">❌ No se pudo cargar el historial.</div>';
     }
   }
 
