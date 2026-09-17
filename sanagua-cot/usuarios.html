@@ -29,14 +29,42 @@
 <div class="toast" id="toast"></div>
 
 <div class="container">
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div class="card-title" style="margin:0">👥 Gestión de usuarios web</div>
+
+  <!-- Sección: administradores -->
+  <div class="card" id="card-admins" style="display:none">
+    <div class="card-title" style="margin:0 0 6px">🛡️ Administradores</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
+      Busca a un administrador o superadmin por correo. Puedes quitarle el permiso de administración — pasará a ser un cliente normal, sin acceso al panel.
+    </p>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <input type="email" id="adm-buscar-email" placeholder="correo@ejemplo.com"
+        class="form-input" style="flex:1;min-width:220px"
+        onkeydown="if(event.key==='Enter')buscarAdmin()">
+      <button class="btn btn-accent" onclick="buscarAdmin()">🔍 Buscar</button>
     </div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un usuario por correo para ver sus datos, ajustar sus puntos o verificar su identidad.</p>
+    <div id="adm-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div id="adm-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div id="adm-nombre" style="font-weight:700;font-size:.95rem;color:var(--ink)"></div>
+          <div id="adm-email-display" style="font-size:.78rem;color:var(--muted)"></div>
+          <span id="adm-role-badge" style="display:inline-block;margin-top:4px;font-size:.66rem;font-weight:700;background:var(--accent);color:#fff;padding:2px 9px;border-radius:20px;"></span>
+        </div>
+        <button class="btn btn-danger btn-sm" id="adm-quitar-btn" onclick="quitarPermisoAdmin()">🚫 Quitar permiso de administrador</button>
+      </div>
+    </div>
+    <div id="adm-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
+      ❌ No se encontró ningún administrador con ese correo.
+    </div>
+  </div>
+
+  <!-- Sección: clientes -->
+  <div class="card">
+    <div class="card-title" style="margin:0 0 6px">👥 Clientes</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un cliente por correo o cédula para ver sus datos, ajustar sus puntos o verificar su identidad.</p>
 
     <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <input type="email" id="usr-buscar-email" placeholder="correo@ejemplo.com"
+      <input type="text" id="usr-buscar-email" placeholder="correo@ejemplo.com o cédula"
         class="form-input" style="flex:1;min-width:220px"
         onkeydown="if(event.key==='Enter')buscarUsuario()">
       <button class="btn btn-accent" onclick="buscarUsuario()">🔍 Buscar</button>
@@ -112,11 +140,74 @@
     clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
   }
 
+  function esNivelSuperior(user) {
+    return user?.role === 'superadmin' || user?.role === 'desarrollador';
+  }
+
+  let _adminEncontrado = null;
+
+  async function buscarAdmin() {
+    const email = document.getElementById('adm-buscar-email').value.trim().toLowerCase();
+    if (!email) { showToast('Ingresa un correo para buscar.', 'error'); return; }
+
+    document.getElementById('adm-resultado').style.display     = 'none';
+    document.getElementById('adm-no-encontrado').style.display = 'none';
+    _adminEncontrado = null;
+
+    showLoading(true);
+    try {
+      const { data: user, error } = await supa.from('profiles').select('*')
+        .ilike('email', email).in('role', ['admin','superadmin','desarrollador']).maybeSingle();
+      if (error) throw error;
+      if (!user) { document.getElementById('adm-no-encontrado').style.display = 'block'; return; }
+
+      // Un superadmin no puede quitarle el permiso a otro superadmin ni al
+      // desarrollador — solo el desarrollador puede tocar a un superadmin.
+      if (user.role !== 'admin' && window.currentAdmin?.role !== 'desarrollador') {
+        showToast('Solo el desarrollador puede modificar a un Super Administrador.', 'error');
+        return;
+      }
+      if (user.id === window.currentAdmin?.id) {
+        showToast('No puedes quitarte el permiso a ti mismo desde aquí.', 'error');
+        return;
+      }
+
+      _adminEncontrado = user;
+      const labels = { admin: '👑 Administrador', superadmin: '⭐ Super Administrador', desarrollador: '🛠️ Desarrollador' };
+      document.getElementById('adm-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
+      document.getElementById('adm-nombre').textContent        = user.name || '—';
+      document.getElementById('adm-email-display').textContent = user.email || '—';
+      document.getElementById('adm-role-badge').textContent    = labels[user.role] || user.role;
+      document.getElementById('adm-resultado').style.display   = 'block';
+    } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  async function quitarPermisoAdmin() {
+    if (!_adminEncontrado) return;
+    if (!confirm(`¿Quitarle el permiso de administrador a ${_adminEncontrado.name || _adminEncontrado.email}? Pasará a ser un cliente normal, sin acceso al panel.`)) return;
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ role: 'cliente' }).eq('id', _adminEncontrado.id);
+      if (error) throw error;
+      showToast(`✅ ${_adminEncontrado.name || _adminEncontrado.email} ya no tiene permisos de administrador.`, 'success');
+      document.getElementById('adm-resultado').style.display = 'none';
+      document.getElementById('adm-buscar-email').value = '';
+      _adminEncontrado = null;
+    } catch (e) { console.error(e); showToast('❌ Error al actualizar el rol.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  document.addEventListener('admin-ready', () => {
+    document.getElementById('card-admins').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
+  });
+
   let _usuarioEncontrado = null;
 
   async function buscarUsuario() {
-    const email = document.getElementById('usr-buscar-email').value.trim().toLowerCase();
-    if (!email) { showToast('Ingresa un correo para buscar.', 'error'); return; }
+    const valor = document.getElementById('usr-buscar-email').value.trim();
+    if (!valor) { showToast('Ingresa un correo o cédula para buscar.', 'error'); return; }
+    const esCorreo = valor.includes('@');
 
     document.getElementById('usr-resultado').style.display      = 'none';
     document.getElementById('usr-no-encontrado').style.display  = 'none';
@@ -124,7 +215,9 @@
 
     showLoading(true);
     try {
-      const { data: user, error } = await supa.from('profiles').select('*').ilike('email', email).maybeSingle();
+      let query = supa.from('profiles').select('*').eq('role', 'cliente');
+      query = esCorreo ? query.ilike('email', valor.toLowerCase()) : query.ilike('cedula', valor);
+      const { data: user, error } = await query.maybeSingle();
       if (error) throw error;
       if (!user) {
         document.getElementById('usr-no-encontrado').style.display = 'block';

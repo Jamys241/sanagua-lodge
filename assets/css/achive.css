@@ -195,7 +195,8 @@
       .hist-table-wrap { display:none; }
       .hist-cards { display:block; }
     }
-    .hist-actions { display:flex; gap:6px; flex-wrap:wrap; min-width:200px; }
+    .hist-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; width:180px; }
+    .hist-actions .btn { width:100%; justify-content:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:6px; padding-right:6px; }
     .btn-copy { background:var(--bg); border:1.5px solid var(--border); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:.85rem; transition:background .15s,border-color .15s; flex-shrink:0; }
     .btn-copy:hover { background:var(--accent-light); border-color:var(--accent); }
     .btn-copy.copied { background:var(--success-light); border-color:var(--success); }

@@ -1553,23 +1553,36 @@
   }
 
   async function loadDashboard() {
-    const nombre = currentUser?.username || currentUser?.email || '';
-    document.getElementById('dash-saludo').textContent = `👋 Bienvenido/a${nombre ? ', ' + nombre.split(' ')[0] : ''}`;
+    try {
+      const nombre = currentUser?.username || currentUser?.email || '';
+      document.getElementById('dash-saludo').textContent = `👋 Bienvenido/a${nombre ? ', ' + nombre.split(' ')[0] : ''}`;
+    } catch (e) { console.error('loadDashboard: saludo', e); }
+
+    const hoy = new Date(); const hoyStr = hoy.toISOString().slice(0,10);
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+    const ESTADOS_ACTIVOS_EV  = ['Confirmada', 'Completada'];
+    const ESTADOS_ACTIVOS_SOL = ['confirmada', 'completada'];
+
+    const resultados = await Promise.allSettled([
+      supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      supa.from('events').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
+      supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL),
+      supa.from('events').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
+      supa.from('solicitudes').select('id').in('estado', ESTADOS_ACTIVOS_SOL).gte('created_at', inicioMes),
+    ]);
+
+    const [rPend, rEvHoy, rSolHoy, rEvMes, rSolMes] = resultados;
+    resultados.forEach((r, i) => {
+      if (r.status === 'rejected') console.error('loadDashboard: consulta', i, 'rechazada:', r.reason);
+      else if (r.value?.error) console.error('loadDashboard: consulta', i, 'error de Supabase:', r.value.error);
+    });
 
     try {
-      const hoy = new Date(); const hoyStr = hoy.toISOString().slice(0,10);
-      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
-      const ESTADOS_ACTIVOS_EV  = ['Confirmada', 'Completada'];
-      const ESTADOS_ACTIVOS_SOL = ['confirmada', 'completada'];
-
-      const [{ count: pendCount }, { data: eventosActivos }, { data: solActivas },
-             { data: eventosMes }, { data: solMes }] = await Promise.all([
-        supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-        supa.from('events').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
-        supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL),
-        supa.from('events').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
-        supa.from('solicitudes').select('id').in('estado', ESTADOS_ACTIVOS_SOL).gte('created_at', inicioMes),
-      ]);
+      const pendCount      = rPend.status === 'fulfilled'  ? rPend.value.count : null;
+      const eventosActivos = rEvHoy.status === 'fulfilled' ? rEvHoy.value.data : null;
+      const solActivas     = rSolHoy.status === 'fulfilled' ? rSolHoy.value.data : null;
+      const eventosMes     = rEvMes.status === 'fulfilled'  ? rEvMes.value.data : null;
+      const solMes         = rSolMes.status === 'fulfilled' ? rSolMes.value.data : null;
 
       // "Reservas activas hoy": eventos cuyo rango de fechas incluye hoy...
       const eventosHoy = (eventosActivos || []).filter(ev => {
