@@ -46,9 +46,9 @@
     </button>
     <div class="menu-group-items" id="grp-reservas">
       <button onclick="window.open('calendario.html','_blank');closeMenu()">📅 Calendario</button>
-      <button onclick="switchTab('nueva');closeMenu()">📋 Nueva Cotización</button>
+      <button onclick="window.open('nueva-cotizacion.html','_blank');closeMenu()">📋 Nueva Cotización</button>
       <button onclick="window.open('history.html','_blank');closeMenu()">📁 Historial</button>
-      <button onclick="switchTab('resumen');closeMenu()">📊 Resumen</button>
+      <button onclick="window.open('resumen.html','_blank');closeMenu()">📊 Resumen</button>
       <button onclick="switchTab('solicitudes');closeMenu()">📬 Solicitudes</button>
     </div>
 
@@ -93,203 +93,6 @@
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ NUEVA COTIZACIÓN -->
-<div class="container">
-<div id="tab-nueva" class="tab-panel">
-
-  <div class="card">
-    <div class="card-title">Información del Cliente</div>
-    <div class="form-grid">
-      <!-- Tipo de cliente -->
-      <div class="form-group full">
-        <label>Tipo de cliente</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;align-items:center">
-          <label class="tipo-cliente-opt" id="opt-contado">
-            <input type="radio" name="tipo-cliente" value="contado" checked onchange="onTipoClienteChange()">
-            <span>💵 Cliente Contado</span>
-          </label>
-          <label class="tipo-cliente-opt" id="opt-natural">
-            <input type="radio" name="tipo-cliente" value="natural" onchange="onTipoClienteChange()">
-            <span>👤 Persona Natural</span>
-          </label>
-          <label class="tipo-cliente-opt" id="opt-juridica">
-            <input type="radio" name="tipo-cliente" value="juridica" onchange="onTipoClienteChange()">
-            <span>🏢 Persona Jurídica</span>
-          </label>
-          <!-- Exento -->
-          <label class="tipo-cliente-opt" id="opt-exento" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff">
-            <input type="checkbox" id="client-exento" onchange="onExentoChange()">
-            <span>🔵 Exento de ITBMS</span>
-          </label>
-        </div>
-      </div>
-      <div class="form-group"><label>Nombre / Empresa <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="client-name" placeholder="Cliente S.A."></div>
-      <div class="form-group"><label>RUC / Cédula <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="client-ruc" placeholder="8-888-8888"></div>
-      <div class="form-group" id="dv-group" style="display:none"><label>DV <span style="color:var(--red)">*</span></label><input type="text" id="client-dv" placeholder="Ej: 45" maxlength="3" style="max-width:100px"></div>
-      <div class="form-group"><label>Correo electrónico <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="email" id="client-email" placeholder="correo@empresa.com"></div>
-      <div class="form-group"><label>Teléfono <span class="req-mark" style="display:none;color:var(--red)">*</span></label><input type="tel" id="client-phone" placeholder="+507 6000-0000"></div>
-      <div class="form-group full"><label>Dirección</label><input type="text" id="client-address" placeholder="Ciudad de Panamá, Panamá"></div>
-      <div class="form-group"><label>Fecha</label><input type="date" id="quote-date"></div>
-      <div class="form-group"><label>Válida hasta</label><input type="date" id="quote-valid"></div>
-      <div class="form-group"><label>📅 Fecha de inicio</label><input type="date" id="visit-date" oninput="updateNights()"></div>
-      <div class="form-group"><label>📅 Fecha de fin</label><input type="date" id="visit-date-end" oninput="updateNights()"></div>
-      <div class="form-group full" id="nights-label-wrap" style="display:none;">
-        <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="nights-label"></div>
-      </div>
-      <div class="form-group">
-        <label>Categoría</label>
-        <select id="quote-categoria">
-          <option value="">— Sin categoría —</option>
-          <option value="Pasadia Sencilla">Pasadia Sencilla</option>
-          <option value="Pasadia Completa">Pasadia Completa</option>
-          <option value="Camping Propio">Camping Propio</option>
-          <option value="Camping Suministro">Camping Suministro</option>
-          <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
-          <option value="Cabaña Ocelot">Cabaña Ocelot</option>
-          <option value="Cabaña Motmot">Cabaña Motmot</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Plataforma</label>
-        <select id="quote-plataforma">
-            <option value="">— Sin plataforma —</option>
-            <option value="WhatsApp">WhatsApp</option>
-            <option value="Instagram">Instagram</option>
-            <option value="Booking">Booking</option>
-            <option value="Airbnb">Airbnb</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Ítems de la Cotización</div>
-    <div class="products-toolbar">
-      <button class="btn btn-accent" onclick="abrirSelectorProductos()">+ Agregar productos del catálogo</button>
-      <button class="btn btn-outline" onclick="addCustomItem()">✏️ Personalizado</button>
-    </div>
-    <div class="table-wrap">
-      <table class="items-table">
-        <thead><tr><th>Descripción</th><th>Cant.</th><th>P. Unitario</th><th>Descuento</th><th>ITBMS</th><th>Monto ITBMS</th><th>Total c/imp.</th><th></th></tr></thead>
-        <tbody id="items-body"><tr><td colspan="8" class="empty-state">Agrega productos para comenzar la cotización</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Descuentos Especiales y Resumen</div>
-    <div class="note-box">💡 Los descuentos se aplican sobre el precio base <strong>antes</strong> del ITBMS, conforme a la ley panameña.</div>
-
-    <div class="section-label">Tipo de cliente</div>
-    <div style="margin-bottom:12px;">
-      <div class="option-box" id="box-none" onclick="setDiscount('none')" style="max-width:100%">
-        <input type="radio" name="discount" value="none">
-        <div class="option-label">Cliente regular — sin descuento especial</div>
-        <div class="option-desc">Precio estándar sin beneficio de ley</div>
-        <span class="option-pct" style="color:var(--ink-muted);font-size:.9rem;">0%</span>
-      </div>
-    </div>
-    <div class="section-label">Descuento Jubilado (Ley 6 de 1987)</div>
-    <div class="options-grid" style="margin-bottom:14px;">
-      <div class="option-box" id="box-jub25" onclick="setDiscount('jub25')">
-        <input type="radio" name="discount" value="jub25">
-        <div class="option-label">Jubilado</div>
-        <div class="option-desc">Descuento estándar sobre precio base</div>
-        <span class="option-pct">−25%</span>
-      </div>
-      <div class="option-box" id="box-jub30" onclick="setDiscount('jub30')">
-        <input type="radio" name="discount" value="jub30">
-        <div class="option-label">Jubilado (mayor beneficio)</div>
-        <div class="option-desc">Aplica según categoría del servicio</div>
-        <span class="option-pct">−30%</span>
-      </div>
-    </div>
-    <div class="section-label">Descuento por Discapacidad (Ley 42 de 1999)</div>
-    <div class="options-grid" style="margin-bottom:20px;">
-      <div class="option-box" id="box-disc30" onclick="setDiscount('disc30')">
-        <input type="radio" name="discount" value="disc30">
-        <div class="option-label">Persona con Discapacidad</div>
-        <div class="option-desc">Descuento sobre precio base antes de ITBMS</div>
-        <span class="option-pct" style="color:var(--purple);">−30%</span>
-      </div>
-      <div></div>
-    </div>
-
-    <!-- Descuento Especial personalizado -->
-    <div class="section-label" style="margin-top:4px;">Descuento Especial</div>
-    <div class="options-grid" style="margin-bottom:20px;grid-template-columns:1fr 1fr;">
-      <div class="option-box" id="box-custom" onclick="setDiscount('custom')">
-        <input type="radio" name="discount" value="custom">
-        <div class="option-label">Descuento Especial</div>
-        <div class="option-desc">Porcentaje personalizado sobre precio base</div>
-        <span class="option-pct" style="color:var(--gold);" id="custom-pct-label">−0%</span>
-      </div>
-      <div style="display:flex;flex-direction:column;justify-content:center;gap:8px;padding:4px 8px;">
-        <label style="margin:0">Porcentaje a descontar (%)</label>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <input type="number" id="custom-pct-input" min="0" max="100" step="0.1" placeholder="Ej: 15" style="width:100px;" oninput="updateCustomPct()">
-          <span style="font-size:1.1rem;font-weight:800;color:var(--gold);" id="custom-pct-display">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <label style="margin:0">Notas / Condiciones</label>
-        <button class="btn btn-outline" style="font-size:.76rem;padding:5px 11px;" onclick="insertCondicionesSanagua()">📋 Condiciones Sanagua Lodge</button>
-      </div>
-      <textarea id="quote-notes" placeholder="Tiempo de entrega, forma de pago, garantías..." style="min-height:110px;"></textarea>
-    </div>
-
-    <div class="totals-box">
-      <div class="totals-row"><span>Subtotal (sin ITBMS)</span><span id="t-subtotal">$0.00</span></div>
-      <div class="totals-row discount-row" id="row-discount" style="display:none"><span id="t-discount-label">Descuento</span><span id="t-discount">−$0.00</span></div>
-      <div class="totals-row" id="row-base-after" style="display:none"><span>Base gravable</span><span id="t-base-after">$0.00</span></div>
-      <div class="totals-row" id="row-itbms7"><span>ITBMS 7%</span><span id="t-itbms7">$0.00</span></div>
-      <div class="totals-row" id="row-itbms10"><span>ITBMS 10%</span><span id="t-itbms10">$0.00</span></div>
-      <div class="totals-row total-row"><span>TOTAL</span><span id="t-total">$0.00</span></div>
-      <div class="totals-row abono-row"><span>💳 Abono requerido (50%)</span><span id="t-abono">$0.00</span></div>
-    </div>
-
-    <div class="actions-bar" style="margin-top:18px;">
-      <button class="btn btn-outline btn-large" onclick="clearAll()">🗑 Limpiar</button>
-      <button class="btn btn-outline btn-large" onclick="soloGenerarPDF()">📄 Vista previa PDF</button>
-      <button class="btn btn-accent btn-large" onclick="guardarCotizacion()">💾 Guardar cotización</button>
-      <button class="btn btn-green btn-large" onclick="guardarYGenerarPDF()">📥 Guardar y generar PDF</button>
-    </div>
-  </div>
-
-</div><!-- /tab-nueva -->
-
-<!-- ═══════════════════════════════════════════════════════════ RESUMEN -->
-<div id="tab-resumen" class="tab-panel">
-  <div class="container">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <div class="card-title" style="margin:0">Resumen de Cotizaciones</div>
-        <div style="display:flex;gap:6px;">
-          <button class="resumen-view-btn active" id="rvbtn-dia"   onclick="setResumenView('dia',this)">Día</button>
-          <button class="resumen-view-btn"         id="rvbtn-mes"   onclick="setResumenView('mes',this)">Mes</button>
-          <button class="resumen-view-btn"         id="rvbtn-anio" onclick="setResumenView('anio',this)">Año</button>
-        </div>
-      </div>
-
-      <!-- Controles de navegación -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-        <button class="btn btn-outline btn-sm" onclick="resumenNav(-1)">‹ Anterior</button>
-        <span id="resumen-periodo-label" style="font-family:'DM Serif Display',serif;font-size:1.1rem;flex:1;text-align:center;"></span>
-        <button class="btn btn-outline btn-sm" onclick="resumenNav(1)">Siguiente ›</button>
-        <button class="btn btn-outline btn-sm" onclick="resumenGoToday()">Hoy</button>
-      </div>
-
-      <!-- KPIs -->
-      <div id="resumen-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;"></div>
-
-      <!-- Lista de cotizaciones del período -->
-      <div id="resumen-list"></div>
-    </div>
-  </div>
-</div>
 
 </div><!-- /container -->
 
@@ -646,7 +449,7 @@
 
     <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 12px;">Accesos rápidos</div>
     <div class="dash-quicklinks">
-      <button class="dash-qlink" onclick="switchTab('nueva')">📋<span>Nueva Cotización</span></button>
+      <button class="dash-qlink" onclick="window.open('nueva-cotizacion.html','_blank')">📋<span>Nueva Cotización</span></button>
       <button class="dash-qlink" onclick="window.open('calendario.html','_blank')">📅<span>Calendario</span></button>
       <button class="dash-qlink" onclick="switchTab('solicitudes')">📬<span>Solicitudes</span></button>
       <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')">🛎️<span>Mis Servicios</span></button>
@@ -1154,24 +957,6 @@
     if (e.target === document.getElementById('stats-lock-ov')) cerrarModalEstadisticas();
   });
 </script>
-
-<!-- Modal Selector de Productos (multi-selección para la cotización) -->
-<div id="selector-productos-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:640px;max-height:86vh;
-    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
-      justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
-      <span style="font-weight:700;color:#fff;font-size:.95rem">🛒 Agregar productos</span>
-      <button onclick="cerrarSelectorProductos()" style="background:none;border:none;
-        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:20px">
-      <div id="selector-productos-list"></div>
-      <button class="btn btn-accent" onclick="agregarSeleccionados()" style="width:100%;margin-top:8px;">+ Agregar seleccionados a la cotización</button>
-    </div>
-  </div>
-</div>
 
 <!-- Modal Control de Bloqueo / Suscripción -->
 <div id="suscrip-ov" style="position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.6);
@@ -4684,7 +4469,7 @@
 
   function onExentoChange() {
     // Recalcular totales cuando cambia exento en nueva cotización
-    recalcItems();
+    renderItems(); calcTotals();
   }
 
   // Recalcular items respetando exención

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resumen — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <style>
+    .hh-header{background:var(--ink);color:#fff;padding:16px 28px;display:flex;
+      align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .hh-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+    .hh-header a:hover{color:#fff}
+    .hh-title{font-family:'DM Serif Display',serif;font-size:1.1rem}
+  </style>
+</head>
+<body>
+
+<div class="hh-header">
+  <span class="hh-title">📊 Resumen de Cotizaciones</span>
+  <a href="achive.html">← Volver al sistema</a>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="card-title" style="margin:0">Resumen de Cotizaciones</div>
+      <div style="display:flex;gap:6px;">
+        <button class="resumen-view-btn active" id="rvbtn-dia"   onclick="setResumenView('dia',this)">Día</button>
+        <button class="resumen-view-btn"         id="rvbtn-mes"   onclick="setResumenView('mes',this)">Mes</button>
+        <button class="resumen-view-btn"         id="rvbtn-anio" onclick="setResumenView('anio',this)">Año</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" onclick="resumenNav(-1)">‹ Anterior</button>
+      <span id="resumen-periodo-label" style="font-family:'DM Serif Display',serif;font-size:1.1rem;flex:1;text-align:center;"></span>
+      <button class="btn btn-outline btn-sm" onclick="resumenNav(1)">Siguiente ›</button>
+      <button class="btn btn-outline btn-sm" onclick="resumenGoToday()">Hoy</button>
+    </div>
+
+    <div id="resumen-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;"></div>
+    <div id="resumen-list"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function showLoading(v){ document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+  function showToast(msg, type='success'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  // ── Editar sigue viviendo en achive.html ────────────────────────────
+  function openEditByNum(qnum) {
+    window.open(`achive.html?edit=${encodeURIComponent(qnum)}`, '_blank');
+  }
+
+  function _quoteRowToRecord(row) {
+    return {
+      ...row.data, quote_num: row.quote_num, estado: row.estado, categoria: row.categoria,
+      plataforma: row.plataforma, visit_date: row.visit_date, visit_date_end: row.visit_date_end,
+      total: Number(row.total)||0, abono_pagado: Number(row.abono_pagado)||0,
+      cancelacion_pagada: Number(row.cancelacion_pagada)||0, created_at: row.created_at, updated_at: row.updated_at,
+    };
+  }
+  function _eventRowToRecord(row) {
+    return {
+      ...row.data, id: row.id, type: 'event', estado: row.estado, categoria: row.categoria,
+      plataforma: row.plataforma, visit_date: row.visit_date, visit_date_end: row.visit_date_end,
+      total: Number(row.total)||0, created_at: row.created_at, updated_at: row.updated_at,
+    };
+  }
+  async function sbListQuotes() {
+    const { data, error } = await supa.from('quotes').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListQuotes', error); return []; }
+    return data.map(_quoteRowToRecord);
+  }
+  async function sbListEvents() {
+    const { data, error } = await supa.from('events').select('*').order('created_at', { ascending: false });
+    if (error) { console.warn('sbListEvents', error); return []; }
+    return data.map(_eventRowToRecord);
+  }
+
+  let allHistory = [];
+  let allEvents  = [];
+
+  let resumenView = 'dia';
+  let resumenDate = new Date();
+
+  const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function setResumenView(v, btn) {
+    resumenView = v;
+    document.querySelectorAll('.resumen-view-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderResumen();
+  }
+
+  function resumenNav(dir) {
+    if (resumenView === 'dia') {
+      resumenDate = new Date(resumenDate);
+      resumenDate.setDate(resumenDate.getDate() + dir);
+    } else if (resumenView === 'mes') {
+      resumenDate = new Date(resumenDate.getFullYear(), resumenDate.getMonth() + dir, 1);
+    } else {
+      resumenDate = new Date(resumenDate.getFullYear() + dir, 0, 1);
+    }
+    renderResumen();
+  }
+
+  function resumenGoToday() { resumenDate = new Date(); renderResumen(); }
+
+  function filterByPeriod(items) {
+    const y = resumenDate.getFullYear();
+    const m = resumenDate.getMonth();
+    const d = resumenDate.getDate();
+    return items.filter(q => {
+      const df = (q.date || q.visit_date || q.created_at || '').slice(0,10);
+      if (!df) return false;
+      const qd = new Date(df + 'T12:00:00');
+      if (resumenView === 'dia')  return qd.getFullYear()===y && qd.getMonth()===m && qd.getDate()===d;
+      if (resumenView === 'mes')  return qd.getFullYear()===y && qd.getMonth()===m;
+      if (resumenView === 'anio') return qd.getFullYear()===y;
+      return false;
+    });
+  }
+
+  function periodoLabel() {
+    const y = resumenDate.getFullYear();
+    const m = resumenDate.getMonth();
+    const d = resumenDate.getDate();
+    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    if (resumenView === 'dia')  return `${dias[resumenDate.getDay()]}, ${d} de ${MESES_ES[m]} de ${y}`;
+    if (resumenView === 'mes')  return `${MESES_ES[m]} ${y}`;
+    if (resumenView === 'anio') return `Año ${y}`;
+    return '';
+  }
+
+  function estadoBadgeR(e) {
+    const map = {
+      'Confirmada':'sb-conf','Cancelada':'sb-canc',
+      'Aplazada':'sb-aplz','Completada':'sb-comp'
+    };
+    const cls = map[e] || 'sb-pend';
+    return `<span class="s-badge ${cls}">${e||'Pendiente'}</span>`;
+  }
+
+  function fmtDateR(d) {
+    if (!d) return '—';
+    try { return new Date(d.slice(0,10)+'T12:00:00').toLocaleDateString('es-PA',{day:'2-digit',month:'short',year:'numeric'}); }
+    catch { return d.slice(0,10); }
+  }
+
+  function renderResumen() {
+    document.getElementById('resumen-periodo-label').textContent = periodoLabel();
+    const filteredQ = filterByPeriod(allHistory);
+    const filteredE = filterByPeriod(allEvents);
+    const filtered  = [...filteredQ, ...filteredE];
+
+    // ── KPIs ─────────────────────────────────────────────────────────────
+    const total    = filtered.reduce((s,q) => s + (q.total||0), 0);
+    const abonos   = filtered.reduce((s,q) => s + (q.abono_pagado||0) + (q.cancelacion_pagada||0), 0);
+    const saldo    = Math.max(0, total - abonos);
+    const nConf    = filtered.filter(q => q.estado==='Confirmada').length;
+    const nPend    = filtered.filter(q => (q.estado||'Pendiente')==='Pendiente').length;
+    const nAplz    = filtered.filter(q => q.estado==='Aplazada').length;
+
+    document.getElementById('resumen-kpis').innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-label">Cotizaciones</div>
+        <div class="kpi-value">${filtered.length}</div>
+        <div class="kpi-sub">${nConf} confirmadas · ${nPend} pendientes · ${nAplz} aplazadas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total cotizado</div>
+        <div class="kpi-value">$${total.toFixed(2)}</div>
+        <div class="kpi-sub">En ${filtered.length} cotización${filtered.length!==1?'es':''}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Abonos recibidos</div>
+        <div class="kpi-value" style="color:var(--success)">$${abonos.toFixed(2)}</div>
+        <div class="kpi-sub">${total>0 ? Math.round(abonos/total*100) : 0}% del total cotizado</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Saldo pendiente</div>
+        <div class="kpi-value" style="color:var(--accent)">$${saldo.toFixed(2)}</div>
+        <div class="kpi-sub">Por cobrar este período</div>
+      </div>
+    `;
+
+    // ── Lista de cotizaciones ─────────────────────────────────────────────
+    const el = document.getElementById('resumen-list');
+    if (!filtered.length) {
+      el.innerHTML = '<div class="empty-hist" style="padding:30px">📭 Sin cotizaciones en este período.</div>';
+      return;
+    }
+
+    // Ordenar por fecha descendente
+    const sorted = [...filtered].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+    // Si es vista anual, agrupar por mes
+    if (resumenView === 'anio') {
+      const byMonth = {};
+      sorted.forEach(q => {
+        const m = new Date((q.date||'2000-01-01')+'T12:00:00').getMonth();
+        if (!byMonth[m]) byMonth[m] = [];
+        byMonth[m].push(q);
+      });
+      let html = '';
+      Object.keys(byMonth).sort((a,b)=>b-a).forEach(mi => {
+        const qs = byMonth[mi];
+        const mTotal = qs.reduce((s,q)=>s+(q.total||0),0);
+        html += `<div style="margin-bottom:20px;">
+          <div style="font-family:'DM Serif Display',serif;font-size:1rem;margin-bottom:8px;padding:8px 14px;background:var(--bg);border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+            <span>${MESES_ES[mi]}</span>
+            <span style="font-size:.88rem;font-weight:700;color:var(--accent)">$${mTotal.toFixed(2)} · ${qs.length} cot.</span>
+          </div>
+          ${qs.map(q => resumenRowHTML(q)).join('')}
+        </div>`;
+      });
+      el.innerHTML = html;
+    } else {
+      el.innerHTML = sorted.map(q => resumenRowHTML(q)).join('');
+    }
+  }
+
+  function resumenRowHTML(q) {
+    const total = q.total || 0;
+    const abono = q.abono_pagado || 0;
+    return `
+      <div class="resumen-row" onclick="openEditByNum('${q.quote_num}')">
+        <div class="resumen-row-left">
+          <span class="resumen-num">#${String(q.quote_num).padStart(4,'0')}</span>
+          <div>
+            <div class="resumen-client">${q.client?.name || '—'}</div>
+            <div class="resumen-date">
+              ${fmtDateR(q.date)}
+              ${q.visit_date ? ` · 📅 Visita: ${fmtDateR(q.visit_date)}` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          ${estadoBadgeR(q.estado)}
+          <div style="text-align:right;">
+            <div class="resumen-total">$${total.toFixed(2)}</div>
+            <div style="font-size:.73rem;color:var(--ink-muted);">Abono: $${abono.toFixed(2)}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  document.addEventListener('admin-ready', async () => {
+    showLoading(true);
+    const [q, e] = await Promise.all([sbListQuotes(), sbListEvents()]);
+    allHistory = q; allEvents = e;
+    renderResumen();
+    showLoading(false);
+  });
+</script>
+</body>
+</html>
