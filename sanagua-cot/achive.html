@@ -1126,14 +1126,6 @@
   // Init — todo dentro de DOMContentLoaded para garantizar que el DOM y las
   // funciones estén disponibles antes de ejecutar
   document.addEventListener('DOMContentLoaded', async () => {
-    setDiscount('none');
-
-    // Fechas por defecto
-    const _today = new Date();
-    document.getElementById('quote-date').value = localDateStr(_today);
-    const _valid = new Date(_today); _valid.setDate(_valid.getDate()+30);
-    document.getElementById('quote-valid').value = localDateStr(_valid);
-
     // Verificar sesión real de Supabase Auth (y su role) — si no hay sesión
     // válida de admin/superadmin, redirige al sitio web.
     if (!(await verificarSesionAsync())) return;
