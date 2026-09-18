@@ -266,7 +266,7 @@
     .cal-view-btns { display:flex; gap:4px; }
     .cal-view-btn { padding:6px 13px; border:1.5px solid var(--border); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:600; cursor:pointer; background:var(--surface); color:var(--muted); transition:.15s; }
     .cal-view-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .cal-title { font-family:'DM Serif Display',serif; font-size:1.1rem; min-width:180px; text-align:center; }
+    .cal-title { font-family:'DM Serif Display',serif; font-size:1.1rem; width:320px; flex:0 0 auto; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     /* Leyenda */
    /* Colores de esta sección → texto: var(--muted) */
     .cal-legend { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; font-size:.73rem; font-weight:600; color:var(--muted); }
@@ -422,7 +422,7 @@
     .cal-empty-day { text-align:center; padding:48px 20px; color:var(--muted); font-size:.88rem; }
     /* Responsive calendario */
     @media(max-width:640px) {
-      .cal-title { font-size:.95rem; min-width:120px; }
+      .cal-title { font-size:.95rem; width:200px; }
       .cal-grid td { height:60px; }
       .cal-grid th { font-size:.6rem; padding:4px 1px; }
       .cal-event { font-size:.58rem; padding:1px 3px; }
