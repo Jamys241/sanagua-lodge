@@ -99,7 +99,7 @@
 <!-- ═══════════════ MODAL PERMISOS (solo superadmin) ════════════════════════ -->
 <div class="modal-overlay" id="permisos-modal">
   <div class="modal" style="max-width:500px;">
-    <div class="modal-head">
+    <div class="modal-header">
       <h2>🔐 Permisos del Admin</h2>
       <button class="modal-close" onclick="closePermisosModal()">×</button>
     </div>
@@ -123,7 +123,7 @@
 <!-- ═══════════════ MODAL NUEVO EVENTO ═══════════════════════════════════════ -->
 <div class="modal-overlay" id="event-modal">
   <div class="modal">
-    <div class="modal-head">
+    <div class="modal-header">
       <h2 id="event-modal-title">📅 Nuevo Evento</h2>
       <button class="modal-close" onclick="closeEventModal()">×</button>
     </div>
@@ -1613,14 +1613,6 @@
         });
       }).length;
 
-      console.log('📊 Dashboard — "Reservas activas hoy" (hoy =', hoyStr, ')');
-      console.log('  Eventos que cuentan:', (eventosActivos||[]).filter(enRangoHoy));
-      console.log('  Cotizaciones que cuentan:', (quotesActivas||[]).filter(enRangoHoy));
-      console.log('  Solicitudes (sin cotización) que cuentan:', (solActivas||[]).filter(s => {
-        const items = Array.isArray(s.items) ? s.items : [];
-        return items.some(it => { const d=it.fecha_visita,h=it.fecha_visita_fin||it.fecha_visita; return d && hoyStr>=d && hoyStr<=h; });
-      }));
-      console.log('  Total:', eventosHoy, '+', quotesHoy, '+', solicitudesHoy, '=', eventosHoy+quotesHoy+solicitudesHoy);
 
       // "Cotizaciones este mes": lo mismo, pero contando reservas cuya
       // fecha de visita cae dentro del mes en curso (no la fecha en que se
@@ -1638,12 +1630,6 @@
           return desde && desde <= finMes && hasta >= inicioMes;
         });
       }).length;
-
-      console.log('📊 Dashboard — "Cotizaciones este mes" (rango:', inicioMes, '→', finMes, ')');
-      console.log('  Eventos que cuentan:', (eventosMes||[]).filter(enRangoMes));
-      console.log('  Cotizaciones que cuentan:', (quotesMes||[]).filter(enRangoMes));
-      console.log('  Total cotizaciones confirmadas/completadas en la BD (sin filtrar por mes):', (quotesMes||[]).length);
-      console.log('  Total:', eventosDelMes, '+', quotesDelMes, '+', solicitudesDelMes, '=', eventosDelMes+quotesDelMes+solicitudesDelMes);
 
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
       document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy + quotesHoy;

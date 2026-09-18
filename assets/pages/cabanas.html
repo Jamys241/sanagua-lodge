@@ -113,10 +113,16 @@
 
     // Precios desde
     const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-    Object.entries(p.cabanas).forEach(([k,precios])=>{
+    const cardIds={yaguarundi:'card-yaguarundi',ocelot:'card-ocelot',motmot:'card-motmot'};
+    Object.keys(map).forEach(k=>{
+      const card = document.getElementById(cardIds[k]);
+      if (!card) return;
+      // Si esta cabaña no tiene ningún precio cargado en el catálogo, no
+      // está realmente disponible — se oculta en vez de mostrarla vacía.
+      if (!p.cabanas[k] || !p.cabanas[k].length) { card.style.display = 'none'; return; }
       const el=document.getElementById(map[k]);
       if(!el)return;
-      const desde=precios.length?Math.min(...precios):0;
+      const desde=Math.min(...p.cabanas[k]);
       el.textContent=`$${desde.toFixed(2)}`;
     });
 
@@ -146,11 +152,16 @@
     const hash = JSON.stringify({p,populares});
     if (hash === _lastHashCabs) return;
     _lastHashCabs = hash;
-    // Actualizar precios desde
+    // Actualizar precios desde (y ocultar cabañas sin catálogo)
     const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-    Object.entries(p.cabanas).forEach(([k,precios])=>{
+    const cardIds={yaguarundi:'card-yaguarundi',ocelot:'card-ocelot',motmot:'card-motmot'};
+    Object.keys(map).forEach(k=>{
+      const card = document.getElementById(cardIds[k]);
+      if (!card) return;
+      if (!p.cabanas[k] || !p.cabanas[k].length) { card.style.display = 'none'; return; }
+      card.style.display = '';
       const el=document.getElementById(map[k]); if(!el)return;
-      el.textContent=`$${precios.length?Math.min(...precios).toFixed(2):'—'}`;
+      el.textContent=`$${Math.min(...p.cabanas[k]).toFixed(2)}`;
     });
     // Actualizar insignias populares
     document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
