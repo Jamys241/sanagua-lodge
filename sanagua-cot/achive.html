@@ -1553,18 +1553,23 @@
     } catch (e) { console.error('loadDashboard: saludo', e); }
 
     const hoy = new Date(); const hoyStr = hoy.toISOString().slice(0,10);
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+    const inicioMes = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).toISOString().slice(0,10);
     const ESTADOS_ACTIVOS_EV  = ['Confirmada', 'Completada'];
     const ESTADOS_ACTIVOS_SOL = ['confirmada', 'completada'];
 
+    // Importante: una solicitud web confirmada/completada SIEMPRE genera su
+    // propia fila en "quotes" (quote_num queda enlazado) — por eso, para no
+    // contar la misma reserva dos veces, aquí solo se cuentan las
+    // solicitudes que AÚN NO tengan quote_num (caso raro, de respaldo).
     const resultados = await Promise.allSettled([
       supa.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supa.from('events').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
-      supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL),
-      supa.from('events').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
-      supa.from('solicitudes').select('id').in('estado', ESTADOS_ACTIVOS_SOL).gte('created_at', inicioMes),
+      supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL).is('quote_num', null),
+      supa.from('events').select('id, visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
+      supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL).is('quote_num', null),
       supa.from('quotes').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
-      supa.from('quotes').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
+      supa.from('quotes').select('id, visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
     ]);
 
     const [rPend, rEvHoy, rSolHoy, rEvMes, rSolMes, rQHoy, rQMes] = resultados;
@@ -1589,7 +1594,7 @@
       };
       const eventosHoy = (eventosActivos || []).filter(enRangoHoy).length;
       const quotesHoy   = (quotesActivas  || []).filter(enRangoHoy).length;
-      // ...más solicitudes confirmadas/completadas cuyos ítems incluyan hoy en su fecha de visita.
+      // ...más solicitudes sin cotización propia cuyos ítems incluyan hoy en su fecha de visita.
       const solicitudesHoy = (solActivas || []).filter(s => {
         const items = Array.isArray(s.items) ? s.items : [];
         return items.some(it => {
@@ -1598,9 +1603,26 @@
         });
       }).length;
 
+      // "Cotizaciones este mes": lo mismo, pero contando reservas cuya
+      // fecha de visita cae dentro del mes en curso (no la fecha en que se
+      // creó el registro) — coincide con lo que se ve en el Historial.
+      const enRangoMes = (item) => {
+        const desde = item.visit_date, hasta = item.visit_date_end || item.visit_date;
+        return desde && desde <= finMes && hasta >= inicioMes;
+      };
+      const eventosDelMes = (eventosMes || []).filter(enRangoMes).length;
+      const quotesDelMes  = (quotesMes  || []).filter(enRangoMes).length;
+      const solicitudesDelMes = (solMes || []).filter(s => {
+        const items = Array.isArray(s.items) ? s.items : [];
+        return items.some(it => {
+          const desde = it.fecha_visita, hasta = it.fecha_visita_fin || it.fecha_visita;
+          return desde && desde <= finMes && hasta >= inicioMes;
+        });
+      }).length;
+
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
       document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy + quotesHoy;
-      document.getElementById('dash-mes').textContent = (eventosMes||[]).length + (solMes||[]).length + (quotesMes||[]).length;
+      document.getElementById('dash-mes').textContent = eventosDelMes + solicitudesDelMes + quotesDelMes;
     } catch (e) { console.warn('loadDashboard', e); }
   }
 
