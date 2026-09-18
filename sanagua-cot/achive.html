@@ -1603,6 +1603,15 @@
         });
       }).length;
 
+      console.log('📊 Dashboard — "Reservas activas hoy" (hoy =', hoyStr, ')');
+      console.log('  Eventos que cuentan:', (eventosActivos||[]).filter(enRangoHoy));
+      console.log('  Cotizaciones que cuentan:', (quotesActivas||[]).filter(enRangoHoy));
+      console.log('  Solicitudes (sin cotización) que cuentan:', (solActivas||[]).filter(s => {
+        const items = Array.isArray(s.items) ? s.items : [];
+        return items.some(it => { const d=it.fecha_visita,h=it.fecha_visita_fin||it.fecha_visita; return d && hoyStr>=d && hoyStr<=h; });
+      }));
+      console.log('  Total:', eventosHoy, '+', quotesHoy, '+', solicitudesHoy, '=', eventosHoy+quotesHoy+solicitudesHoy);
+
       // "Cotizaciones este mes": lo mismo, pero contando reservas cuya
       // fecha de visita cae dentro del mes en curso (no la fecha en que se
       // creó el registro) — coincide con lo que se ve en el Historial.
@@ -1619,6 +1628,12 @@
           return desde && desde <= finMes && hasta >= inicioMes;
         });
       }).length;
+
+      console.log('📊 Dashboard — "Cotizaciones este mes" (rango:', inicioMes, '→', finMes, ')');
+      console.log('  Eventos que cuentan:', (eventosMes||[]).filter(enRangoMes));
+      console.log('  Cotizaciones que cuentan:', (quotesMes||[]).filter(enRangoMes));
+      console.log('  Total cotizaciones confirmadas/completadas en la BD (sin filtrar por mes):', (quotesMes||[]).length);
+      console.log('  Total:', eventosDelMes, '+', quotesDelMes, '+', solicitudesDelMes, '=', eventosDelMes+quotesDelMes+solicitudesDelMes);
 
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
       document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy + quotesHoy;
