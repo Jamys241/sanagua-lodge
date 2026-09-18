@@ -1569,7 +1569,7 @@
       supa.from('events').select('id, visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
       supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL).is('quote_num', null),
       supa.from('quotes').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
-      supa.from('quotes').select('id, visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
+      supa.from('quotes').select('quote_num, visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
     ]);
 
     const [rPend, rEvHoy, rSolHoy, rEvMes, rSolMes, rQHoy, rQMes] = resultados;
@@ -1588,8 +1588,18 @@
       const quotesMes      = rQMes.status === 'fulfilled'   ? rQMes.value.data  : null;
 
       // "Reservas activas hoy": eventos + cotizaciones cuyo rango de fechas incluye hoy...
+      const ultimoDiaOcupado = (item) => {
+        // Si hay fecha de fin distinta a la de inicio (Cabañas/Camping), el
+        // último día realmente ocupado es un día antes de la salida — el
+        // huésped ya se va esa mañana. Coincide con la misma regla que usa
+        // el Calendario (occupiedRange). Las Pasadías no tienen este caso.
+        if (!item.visit_date_end || item.visit_date_end === item.visit_date) return item.visit_date;
+        const fin = new Date(item.visit_date_end + 'T12:00:00');
+        fin.setDate(fin.getDate() - 1);
+        return fin.toISOString().slice(0,10);
+      };
       const enRangoHoy = (item) => {
-        const desde = item.visit_date, hasta = item.visit_date_end || item.visit_date;
+        const desde = item.visit_date, hasta = ultimoDiaOcupado(item);
         return desde && hoyStr >= desde && hoyStr <= hasta;
       };
       const eventosHoy = (eventosActivos || []).filter(enRangoHoy).length;
@@ -1616,7 +1626,7 @@
       // fecha de visita cae dentro del mes en curso (no la fecha en que se
       // creó el registro) — coincide con lo que se ve en el Historial.
       const enRangoMes = (item) => {
-        const desde = item.visit_date, hasta = item.visit_date_end || item.visit_date;
+        const desde = item.visit_date, hasta = ultimoDiaOcupado(item);
         return desde && desde <= finMes && hasta >= inicioMes;
       };
       const eventosDelMes = (eventosMes || []).filter(enRangoMes).length;
