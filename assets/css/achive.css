@@ -181,7 +181,7 @@
     /* Tabla visible en desktop, oculta en móvil */
     .hist-table-wrap { overflow-x:auto; }
     .hist-cards { display:none; }
-    .hist-pagination { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+    .hist-pagination { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
     .hist-pagination-label { font-size:.85rem; font-weight:600; color:var(--ink); }
     .hist-pagination .btn:disabled { opacity:.4; cursor:not-allowed; }
     /* Tarjetas visibles en móvil */

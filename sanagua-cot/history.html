@@ -584,9 +584,11 @@
     // ── Controles de paginación ──────────────────────────────────────────
     const paginationHTML = totalPages > 1 ? `
       <div class="hist-pagination">
+        <button class="btn btn-outline btn-sm" onclick="histGoToPage(1)" ${histPage<=1?'disabled':''} title="Primera página">« Primera</button>
         <button class="btn btn-outline btn-sm" onclick="histGoToPage(${histPage - 1})" ${histPage<=1?'disabled':''}>‹ Anterior</button>
         <span class="hist-pagination-label">Página ${histPage} de ${totalPages} <span style="color:var(--muted);font-weight:400">(${combined.length} en total)</span></span>
         <button class="btn btn-outline btn-sm" onclick="histGoToPage(${histPage + 1})" ${histPage>=totalPages?'disabled':''}>Siguiente ›</button>
+        <button class="btn btn-outline btn-sm" onclick="histGoToPage(${totalPages})" ${histPage>=totalPages?'disabled':''} title="Última página">Última »</button>
       </div>` : `
       <div class="hist-pagination">
         <span class="hist-pagination-label" style="color:var(--muted)">${combined.length} registro${combined.length===1?'':'s'}</span>
