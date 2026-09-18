@@ -1563,9 +1563,11 @@
       supa.from('solicitudes').select('items').in('estado', ESTADOS_ACTIVOS_SOL),
       supa.from('events').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
       supa.from('solicitudes').select('id').in('estado', ESTADOS_ACTIVOS_SOL).gte('created_at', inicioMes),
+      supa.from('quotes').select('visit_date, visit_date_end').in('estado', ESTADOS_ACTIVOS_EV),
+      supa.from('quotes').select('id').in('estado', ESTADOS_ACTIVOS_EV).gte('created_at', inicioMes),
     ]);
 
-    const [rPend, rEvHoy, rSolHoy, rEvMes, rSolMes] = resultados;
+    const [rPend, rEvHoy, rSolHoy, rEvMes, rSolMes, rQHoy, rQMes] = resultados;
     resultados.forEach((r, i) => {
       if (r.status === 'rejected') console.error('loadDashboard: consulta', i, 'rechazada:', r.reason);
       else if (r.value?.error) console.error('loadDashboard: consulta', i, 'error de Supabase:', r.value.error);
@@ -1577,12 +1579,16 @@
       const solActivas     = rSolHoy.status === 'fulfilled' ? rSolHoy.value.data : null;
       const eventosMes     = rEvMes.status === 'fulfilled'  ? rEvMes.value.data : null;
       const solMes         = rSolMes.status === 'fulfilled' ? rSolMes.value.data : null;
+      const quotesActivas  = rQHoy.status === 'fulfilled'   ? rQHoy.value.data  : null;
+      const quotesMes      = rQMes.status === 'fulfilled'   ? rQMes.value.data  : null;
 
-      // "Reservas activas hoy": eventos cuyo rango de fechas incluye hoy...
-      const eventosHoy = (eventosActivos || []).filter(ev => {
-        const desde = ev.visit_date, hasta = ev.visit_date_end || ev.visit_date;
+      // "Reservas activas hoy": eventos + cotizaciones cuyo rango de fechas incluye hoy...
+      const enRangoHoy = (item) => {
+        const desde = item.visit_date, hasta = item.visit_date_end || item.visit_date;
         return desde && hoyStr >= desde && hoyStr <= hasta;
-      }).length;
+      };
+      const eventosHoy = (eventosActivos || []).filter(enRangoHoy).length;
+      const quotesHoy   = (quotesActivas  || []).filter(enRangoHoy).length;
       // ...más solicitudes confirmadas/completadas cuyos ítems incluyan hoy en su fecha de visita.
       const solicitudesHoy = (solActivas || []).filter(s => {
         const items = Array.isArray(s.items) ? s.items : [];
@@ -1593,8 +1599,8 @@
       }).length;
 
       document.getElementById('dash-pendientes').textContent = pendCount ?? 0;
-      document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy;
-      document.getElementById('dash-mes').textContent = (eventosMes||[]).length + (solMes||[]).length;
+      document.getElementById('dash-hoy').textContent = eventosHoy + solicitudesHoy + quotesHoy;
+      document.getElementById('dash-mes').textContent = (eventosMes||[]).length + (solMes||[]).length + (quotesMes||[]).length;
     } catch (e) { console.warn('loadDashboard', e); }
   }
 
