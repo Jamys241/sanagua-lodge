@@ -413,9 +413,15 @@
     return true;
   }
 
+  const HIST_PAGE_SIZE = 20;
+  let histPage = 1;
+  let _histLastList = [];
+  let _histLastFilters = null;
+
   function filterHistory() {
     const f = getHistFilters();
     const filteredQ = allHistory.filter(h => matchesHistFilter(h, f));
+    histPage = 1;
     renderHistory(filteredQ, f);
   }
 
@@ -426,6 +432,7 @@
     ['hist-estado','hist-plataforma','hist-categoria'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value='';
     });
+    histPage = 1;
     renderHistory(allHistory);
   }
 
@@ -440,6 +447,8 @@
   }
 
   function renderHistory(listQ, filters) {
+    _histLastList = listQ;
+    _histLastFilters = filters;
     const el = document.getElementById('history-container');
     // Aplicar el mismo filtro a los eventos si viene del filterHistory
     const filteredEvts = filters
@@ -458,6 +467,13 @@
     });
 
     if (!combined.length) { el.innerHTML = '<div class="empty-hist">No hay registros aún.</div>'; return; }
+
+    // ── Paginación: 20 ítems por página ──────────────────────────────────
+    const totalPages = Math.max(1, Math.ceil(combined.length / HIST_PAGE_SIZE));
+    if (histPage > totalPages) histPage = totalPages;
+    if (histPage < 1) histPage = 1;
+    const desde = (histPage - 1) * HIST_PAGE_SIZE;
+    const pageItems = combined.slice(desde, desde + HIST_PAGE_SIZE);
 
     const numLabel = item => item._type==='event'
       ? `<span style="color:var(--purple);font-weight:700">Evento</span>`
@@ -487,7 +503,7 @@
           <th>Creado</th><th>#</th><th>Cliente</th><th>Categoría</th><th>Fecha visita</th><th>Total</th><th>Abono</th><th>Estado</th><th>Acciones</th>
         </tr></thead>
         <tbody>
-          ${combined.map((item, i) => {
+          ${pageItems.map((item, i) => {
             return `
           <tr style="${item._type==='event'?'background:#fdf8ff':''}">
             <td style="white-space:nowrap;font-size:.78rem;color:var(--ink-muted)">${fmtDateTimeShort(item.created_at)}</td>
@@ -518,7 +534,7 @@
     // Vista móvil: tarjetas
     const cardsHTML = `
       <div class="hist-cards">
-        ${combined.map((item, i) => {
+        ${pageItems.map((item, i) => {
           const total      = Number(item.total||0);
           const abono      = Number(item.abono_pagado||0);
           const cancelacion= Number(item.cancelacion_pagada||0);
@@ -565,9 +581,27 @@
         }).join('')}
       </div>`;
 
-    el.innerHTML = tableHTML + cardsHTML;
+    // ── Controles de paginación ──────────────────────────────────────────
+    const paginationHTML = totalPages > 1 ? `
+      <div class="hist-pagination">
+        <button class="btn btn-outline btn-sm" onclick="histGoToPage(${histPage - 1})" ${histPage<=1?'disabled':''}>‹ Anterior</button>
+        <span class="hist-pagination-label">Página ${histPage} de ${totalPages} <span style="color:var(--muted);font-weight:400">(${combined.length} en total)</span></span>
+        <button class="btn btn-outline btn-sm" onclick="histGoToPage(${histPage + 1})" ${histPage>=totalPages?'disabled':''}>Siguiente ›</button>
+      </div>` : `
+      <div class="hist-pagination">
+        <span class="hist-pagination-label" style="color:var(--muted)">${combined.length} registro${combined.length===1?'':'s'}</span>
+      </div>`;
+
+    el.innerHTML = tableHTML + cardsHTML + paginationHTML;
     // Aplicar permisos de viewer después de renderizar
     // (sin permisos por fila en esta página independiente)
+  }
+
+  function histGoToPage(n) {
+    if (n < 1) return;
+    histPage = n;
+    renderHistory(_histLastList, _histLastFilters);
+    document.getElementById('history-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ── MODAL EDICIÓN ────────────────────────────────────────────────────────────

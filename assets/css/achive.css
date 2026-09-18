@@ -181,6 +181,9 @@
     /* Tabla visible en desktop, oculta en móvil */
     .hist-table-wrap { overflow-x:auto; }
     .hist-cards { display:none; }
+    .hist-pagination { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+    .hist-pagination-label { font-size:.85rem; font-weight:600; color:var(--ink); }
+    .hist-pagination .btn:disabled { opacity:.4; cursor:not-allowed; }
     /* Tarjetas visibles en móvil */
    /* Colores de esta sección → fondo: var(--surface), var(--bg), var(--accent-light), var(--success-light) | texto: var(--accent), var(--blue), var(--ink-muted), var(--ink) | borde: var(--border), var(--accent), var(--success) */
     .hist-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
