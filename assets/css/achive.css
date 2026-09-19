@@ -74,6 +74,7 @@
     .rol-badge { font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; }
     .rol-super  { background:#fff8e1; color:#b45309; }
     .rol-admin  { background:var(--accent-light); color:var(--accent); }
+    .rol-dev    { background:#e8f0f2; color:#3d6b78; }
     .rol-viewer { background:var(--blue-lt); color:var(--blue); }
 
 

@@ -18,9 +18,7 @@
 
 <header>
   <div class="header-left">
-    <h1>🌿 Sanagua Lodge</h1>
-    <span class="counter" id="quote-counter">Cargando...</span>
-    <span id="rol-badge" class="rol-badge" style="display:none"></span>
+    <h1>Sanagua Lodge S.A.</h1>
   </div>
   <button class="hamburger" id="hamburger-btn" onclick="toggleMenu()" aria-label="Menú">
     <span></span><span></span><span></span>
@@ -37,6 +35,10 @@
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="side-menu" id="side-menu">
   <nav>
+
+    <div style="padding:16px 24px 6px;">
+      <span id="rol-badge" class="rol-badge" style="display:none"></span>
+    </div>
 
     <button onclick="switchTab('dashboard');closeMenu()" style="font-weight:700">🏠 Dashboard</button>
 
@@ -826,9 +828,9 @@
 
   function iniciarSesion() {
     const badge = document.getElementById('rol-badge');
-    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin' };
-    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador' };
-    const roleCls    = { superadmin:'rol-super', admin:'rol-admin' };
+    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin', desarrollador:'🛠️ Desarrollador' };
+    const roleNames  = { superadmin:'Super Administrador', admin:'Administrador', desarrollador:'Desarrollador' };
+    const roleCls    = { superadmin:'rol-super', admin:'rol-admin', desarrollador:'rol-dev' };
     badge.textContent = roleLabels[currentUser.role] || currentUser.role;
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-admin'}`;
     badge.style.display = 'inline-block';

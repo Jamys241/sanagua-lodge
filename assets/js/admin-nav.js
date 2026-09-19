@@ -41,6 +41,10 @@
     <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
     <div class="side-menu" id="side-menu">
       <nav>
+        <div style="padding:16px 24px 6px;">
+          <span id="rol-badge" class="rol-badge" style="display:none"></span>
+        </div>
+
         <button onclick="location.href='achive.html'" style="font-weight:700">🏠 Dashboard</button>
 
         <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
@@ -123,16 +127,28 @@
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
+  function aplicarRolBadge() {
+    const badge = document.getElementById('rol-badge');
+    if (!badge || !window.currentAdmin) return;
+    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin', desarrollador:'🛠️ Desarrollador' };
+    const roleCls    = { superadmin:'rol-super', admin:'rol-admin', desarrollador:'rol-dev' };
+    badge.textContent = roleLabels[window.currentAdmin.role] || window.currentAdmin.role;
+    badge.className = `rol-badge ${roleCls[window.currentAdmin.role]||'rol-admin'}`;
+    badge.style.display = 'inline-block';
+  }
+
   function init() {
     injectStyles();
     injectDom();
     if (window.currentAdmin) {
       document.getElementById('menu-user-info').textContent =
         `${window.currentAdmin.name || window.currentAdmin.email} · ${window.currentAdmin.role}`;
+      aplicarRolBadge();
     }
     document.addEventListener('admin-ready', () => {
       document.getElementById('menu-user-info').textContent =
         `${window.currentAdmin.name || window.currentAdmin.email} · ${window.currentAdmin.role}`;
+      aplicarRolBadge();
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
