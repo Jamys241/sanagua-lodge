@@ -107,29 +107,29 @@
   async function buildDrawerContent(profile) {
     const serviciosHtml = `
       <div class="sn-section-label">Servicios</div>
-      <a class="sn-item" href="${LINKS.pasadia}">☀️ Pasadías</a>
-      <a class="sn-item" href="${LINKS.camping}">⛺ Camping</a>
-      <a class="sn-item" href="${LINKS.cabanas}">🏡 Cabañas</a>
-      <a class="sn-item" href="${LINKS.restaurante}">🍽️ Restaurante</a>
+      <a class="sn-item" href="${LINKS.pasadia}"><i class="fa-solid fa-sun"></i> Pasadías</a>
+      <a class="sn-item" href="${LINKS.camping}"><i class="fa-solid fa-campground"></i> Camping</a>
+      <a class="sn-item" href="${LINKS.cabanas}"><i class="fa-solid fa-house"></i> Cabañas</a>
+      <a class="sn-item" href="${LINKS.restaurante}"><i class="fa-solid fa-utensils"></i> Restaurante</a>
       <div class="sn-divider"></div>
       <div class="sn-section-label">Explorar</div>
-      <a class="sn-item" href="${LINKS.inicio}">🌿 Inicio</a>
-      <a class="sn-item" href="${LINKS.sobre}">🌱 Sobre Sanagua</a>
-      <a class="sn-item" href="${LINKS.experiencias}">📸 Experiencias</a>
-      <a class="sn-item" href="${LINKS.contacto}">📍 Contacto</a>`;
+      <a class="sn-item" href="${LINKS.inicio}"><i class="fa-solid fa-leaf"></i> Inicio</a>
+      <a class="sn-item" href="${LINKS.sobre}"><i class="fa-solid fa-seedling"></i> Sobre Sanagua</a>
+      <a class="sn-item" href="${LINKS.experiencias}"><i class="fa-solid fa-camera"></i> Experiencias</a>
+      <a class="sn-item" href="${LINKS.contacto}"><i class="fa-solid fa-location-dot"></i> Contacto</a>`;
 
     if (profile) {
       return `
         <div class="sn-drawer-user">
           <button class="sn-close" onclick="SanaguaNav.close()">✕</button>
           <div class="sn-drawer-user-name">${profile.name || 'Mi cuenta'}${profile.verificado?badgeVerificado():''}</div>
-          <div class="sn-drawer-user-pts">✦ ${profile.puntos||0} puntos de fidelidad</div>
+          <div class="sn-drawer-user-pts"><i class="fa-solid fa-star"></i> ${profile.puntos||0} puntos de fidelidad</div>
         </div>
         ${serviciosHtml}
         <div class="sn-divider"></div>
         <div class="sn-section-label">Mi cuenta</div>
-        <a class="sn-item" href="${LINKS.perfil}">👤 Mi perfil y reservas</a>
-        <button class="sn-item" style="color:#c0392b" onclick="SanaguaNav.logout()">🚪 Cerrar sesión</button>`;
+        <a class="sn-item" href="${LINKS.perfil}"><i class="fa-solid fa-user"></i> Mi perfil y reservas</a>
+        <button class="sn-item" style="color:#c0392b" onclick="SanaguaNav.logout()"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>`;
     }
     return `
       <div class="sn-drawer-user" style="background:linear-gradient(135deg,#8a8a82,#5a5a54)">

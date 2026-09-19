@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
@@ -49,24 +50,24 @@
   </div>
 
   <div class="nav-section-label">Servicios</div>
-  <a class="nav-item" href="assets/pages/pasadia.html"><span class="nav-icon">☀️</span> Pasadías</a>
-  <a class="nav-item" href="assets/pages/camping.html"><span class="nav-icon">⛺</span> Camping</a>
-  <a class="nav-item" href="assets/pages/cabanas.html"><span class="nav-icon">🏡</span> Cabañas</a>
-  <a class="nav-item" href="assets/pages/restaurante.html"><span class="nav-icon">🍽️</span> Restaurante</a>
+  <a class="nav-item" href="assets/pages/pasadia.html"><span class="nav-icon"><i class="fa-solid fa-sun"></i></span> Pasadías</a>
+  <a class="nav-item" href="assets/pages/camping.html"><span class="nav-icon"><i class="fa-solid fa-campground"></i></span> Camping</a>
+  <a class="nav-item" href="assets/pages/cabanas.html"><span class="nav-icon"><i class="fa-solid fa-house"></i></span> Cabañas</a>
+  <a class="nav-item" href="assets/pages/restaurante.html"><span class="nav-icon"><i class="fa-solid fa-utensils"></i></span> Restaurante</a>
 
   <div class="nav-divider"></div>
 
   <div class="nav-section-label">Explorar</div>
-  <a class="nav-item" href="#sobre" onclick="closeNav()"><span class="nav-icon">🌿</span> Sobre Sanagua</a>
-  <a class="nav-item" href="#experiencias" onclick="closeNav()"><span class="nav-icon">📸</span> Experiencias</a>
-  <a class="nav-item" href="#footer" onclick="closeNav()"><span class="nav-icon">📍</span> Contacto</a>
+  <a class="nav-item" href="#sobre" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-leaf"></i></span> Sobre Sanagua</a>
+  <a class="nav-item" href="#experiencias" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-camera"></i></span> Experiencias</a>
+  <a class="nav-item" href="#footer" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-location-dot"></i></span> Contacto</a>
 
   <!-- Solo si está logueado -->
   <div id="nav-user-menu" style="display:none;">
     <div class="nav-divider"></div>
     <div class="nav-section-label">Mi cuenta</div>
-    <a class="nav-item" href="assets/pages/perfil.html"><span class="nav-icon">👤</span> Mi perfil y reservas</a>
-    <button class="nav-item" onclick="cerrarSesionPublic();closeNav()" style="color:#e88;"><span class="nav-icon">🚪</span> Cerrar sesión</button>
+    <a class="nav-item" href="assets/pages/perfil.html"><span class="nav-icon"><i class="fa-solid fa-user"></i></span> Mi perfil y reservas</a>
+    <button class="nav-item" onclick="cerrarSesionPublic();closeNav()" style="color:#e88;"><span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span> Cerrar sesión</button>
   </div>
 
   <div class="nav-divider"></div>

@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/achive.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
@@ -70,10 +71,10 @@
 
     <!-- Suscrip -->
     <button class="menu-group-btn" id="btn-grp-suscrip" onclick="toggleMenuGroup('grp-suscrip',this)" style="display:none">
-      🔒 Suscrip. <span class="menu-group-arrow">▼</span>
+      <i class="fa-solid fa-lock"></i> Suscrip. <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-suscrip">
-      <button onclick="abrirModalSuscripcion();closeMenu()">🔒 Control de Bloqueo</button>
+      <button onclick="abrirModalSuscripcion();closeMenu()"><i class="fa-solid fa-lock"></i> Control de Bloqueo</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -428,22 +429,22 @@
 
     <div class="dash-stats">
       <div class="dash-stat-card" onclick="location.href='solicitudes.html'" style="cursor:pointer">
-        <div class="dash-stat-icon">📬</div>
+        <div class="dash-stat-icon"><i class="fa-solid fa-inbox"></i></div>
         <div class="dash-stat-num" id="dash-pendientes">—</div>
         <div class="dash-stat-lbl">Solicitudes pendientes</div>
       </div>
       <div class="dash-stat-card" onclick="location.href='calendario.html'" style="cursor:pointer">
-        <div class="dash-stat-icon">📅</div>
+        <div class="dash-stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
         <div class="dash-stat-num" id="dash-hoy">—</div>
         <div class="dash-stat-lbl">Reservas activas hoy</div>
       </div>
       <div class="dash-stat-card" onclick="location.href='history.html'" style="cursor:pointer">
-        <div class="dash-stat-icon">📁</div>
+        <div class="dash-stat-icon"><i class="fa-solid fa-box-archive"></i></div>
         <div class="dash-stat-num" id="dash-mes">—</div>
         <div class="dash-stat-lbl">Cotizaciones este mes</div>
       </div>
       <div class="dash-stat-card" onclick="abrirEstadisticas()" style="cursor:pointer">
-        <div class="dash-stat-icon">🔒</div>
+        <div class="dash-stat-icon"><i class="fa-solid fa-lock"></i></div>
         <div class="dash-stat-num" style="font-size:1.1rem">Estadísticas</div>
         <div class="dash-stat-lbl">Panel de operaciones (protegido)</div>
       </div>
@@ -451,12 +452,12 @@
 
     <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 12px;">Accesos rápidos</div>
     <div class="dash-quicklinks">
-      <button class="dash-qlink" onclick="location.href='nueva-cotizacion.html'">📋<span>Nueva Cotización</span></button>
-      <button class="dash-qlink" onclick="location.href='calendario.html'">📅<span>Calendario</span></button>
-      <button class="dash-qlink" onclick="location.href='solicitudes.html'">📬<span>Solicitudes</span></button>
-      <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')">🛎️<span>Mis Servicios</span></button>
-      <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')">🍽️<span>Editor de Menú</span></button>
-      <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')">👁️<span>Ver como usuario</span></button>
+      <button class="dash-qlink" onclick="location.href='nueva-cotizacion.html'"><i class="fa-solid fa-file-invoice"></i><span>Nueva Cotización</span></button>
+      <button class="dash-qlink" onclick="location.href='calendario.html'"><i class="fa-solid fa-calendar-days"></i><span>Calendario</span></button>
+      <button class="dash-qlink" onclick="location.href='solicitudes.html'"><i class="fa-solid fa-inbox"></i><span>Solicitudes</span></button>
+      <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')"><i class="fa-solid fa-concierge-bell"></i><span>Mis Servicios</span></button>
+      <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')"><i class="fa-solid fa-utensils"></i><span>Editor de Menú</span></button>
+      <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')"><i class="fa-solid fa-eye"></i><span>Ver como usuario</span></button>
     </div>
   </div>
 </div>
@@ -828,10 +829,10 @@
 
   function iniciarSesion() {
     const badge = document.getElementById('rol-badge');
-    const roleLabels = { superadmin:'⭐ Super Admin', admin:'👑 Admin', desarrollador:'🛠️ Desarrollador' };
+    const roleLabels = { superadmin:'<i class="fa-solid fa-star"></i> Super Admin', admin:'<i class="fa-solid fa-crown"></i> Admin', desarrollador:'<i class="fa-solid fa-screwdriver-wrench"></i> Desarrollador' };
     const roleNames  = { superadmin:'Super Administrador', admin:'Administrador', desarrollador:'Desarrollador' };
     const roleCls    = { superadmin:'rol-super', admin:'rol-admin', desarrollador:'rol-dev' };
-    badge.textContent = roleLabels[currentUser.role] || currentUser.role;
+    badge.innerHTML = roleLabels[currentUser.role] || currentUser.role;
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-admin'}`;
     badge.style.display = 'inline-block';
     document.getElementById('btn-permisos').style.display =
