@@ -23,6 +23,13 @@
       .hh-hamburger.open span:nth-child(1){transform:translateY(9px) rotate(45deg)}
       .hh-hamburger.open span:nth-child(2){opacity:0}
       .hh-hamburger.open span:nth-child(3){transform:translateY(-9px) rotate(-45deg)}
+
+      /* En PC el menú queda siempre visible (regla compartida en
+         achive.css) — aquí solo ocultamos este botón, ya que usa una
+         clase propia distinta al .hamburger de achive.html. */
+      @media (min-width: 900px) {
+        .hh-hamburger { display: none !important; }
+      }
     `;
     const style = document.createElement('style');
     style.textContent = css;

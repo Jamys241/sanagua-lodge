@@ -464,3 +464,18 @@
 }
 .dash-qlink span { font-size: .74rem; font-weight: 600; text-align: center; }
 .dash-qlink:hover { border-color: var(--accent); background: var(--bg); }
+
+/* ── Menú lateral estático en pantallas grandes (PC) ──────────────────────
+   En vez de ocultarse tras el botón de hamburguesa, el menú queda siempre
+   visible pegado a la derecha. En móviles esto NO aplica — sigue
+   funcionando igual que antes (hamburguesa + menú deslizante). */
+@media (min-width: 900px) {
+  .hamburger { display: none !important; }
+  .side-menu {
+    transform: translateX(0) !important;
+    box-shadow: none;
+    border-left: 1px solid rgba(255,255,255,.08);
+  }
+  .side-menu-overlay { display: none !important; }
+  body { padding-right: 260px; }
+}
