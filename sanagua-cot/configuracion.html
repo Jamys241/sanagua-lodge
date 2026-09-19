@@ -23,7 +23,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title">⚙️ Configuración</span>
+  <span class="hh-title"><i class="fa-gear"></i> Configuración</span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -45,12 +45,12 @@
         <span style="font-size:.72rem;color:var(--ink-muted);margin-top:6px;display:block;">Vista previa</span>
       </div>
       <div id="logo-empty-state" style="background:#f8f8f8;border:2px dashed var(--border);border-radius:8px;padding:24px 32px;text-align:center;color:var(--ink-muted);font-size:.85rem;">
-        📷 Sin logo cargado
+        <i class="fa-camera"></i> Sin logo cargado
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <label for="logo-upload" class="btn btn-accent" style="cursor:pointer;margin:0;">📁 Seleccionar logo</label>
+        <label for="logo-upload" class="btn btn-accent" style="cursor:pointer;margin:0;"><i class="fa-box-archive"></i> Seleccionar logo</label>
         <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="handleLogoUpload(event)">
-        <button class="btn btn-danger" id="logo-remove-btn" style="display:none;" onclick="removeLogo()">✕ Eliminar logo</button>
+        <button class="btn btn-danger" id="logo-remove-btn" style="display:none;" onclick="removeLogo()"><i class="fa-xmark"></i> Eliminar logo</button>
         <p style="font-size:.75rem;color:var(--ink-muted);margin:0;">PNG o JPG · Máx. 500 KB<br>Recomendado: fondo transparente</p>
       </div>
     </div>
@@ -58,7 +58,7 @@
 
   <!-- Notas y condiciones del PDF -->
   <div class="card" id="card-condiciones-pdf" style="display:none">
-    <div class="card-title">📝 Notas y Condiciones del PDF</div>
+    <div class="card-title"><i class="fa-note-sticky"></i> Notas y Condiciones del PDF</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
       Este texto aparece por defecto en la sección "Notas y Condiciones" de cada cotización nueva.
       Puedes seguir editándolo por cotización individual si hace falta un caso especial.
@@ -66,14 +66,14 @@
     <textarea id="condiciones-pdf-texto" class="form-input" rows="6" style="width:100%;font-family:inherit;resize:vertical"
       placeholder="Ej: Precios sujetos a disponibilidad. Reserva se confirma con el 50% de abono..."></textarea>
     <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-      <button class="btn btn-accent" onclick="guardarCondicionesPdf()">💾 Guardar</button>
+      <button class="btn btn-accent" onclick="guardarCondicionesPdf()"><i class="fa-floppy-disk"></i> Guardar</button>
       <span id="condiciones-pdf-msg" style="font-size:.82rem"></span>
     </div>
   </div>
 
   <!-- Contraseña del panel de Estadísticas -->
   <div class="card" id="card-pass-stats">
-    <div class="card-title">🔒 Contraseña del panel de Estadísticas</div>
+    <div class="card-title"><i class="fa-lock"></i> Contraseña del panel de Estadísticas</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">
       Esta contraseña protege el panel de operaciones (ingresos, ocupación, etc.).
       Admin, superadmin y desarrollador pueden cambiarla — pero solo el <strong>desarrollador</strong> puede ver cuál es la actual.
@@ -81,7 +81,7 @@
     <div id="stats-pass-actual" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.9rem;"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <input type="text" id="stats-pass-nueva" class="form-input" placeholder="Nueva contraseña" style="max-width:220px">
-      <button class="btn btn-accent" onclick="cambiarPasswordStats()">💾 Guardar contraseña</button>
+      <button class="btn btn-accent" onclick="cambiarPasswordStats()"><i class="fa-floppy-disk"></i> Guardar contraseña</button>
       <span id="stats-pass-msg" style="font-size:.82rem;"></span>
     </div>
   </div>
@@ -89,8 +89,8 @@
   <!-- Días de cierre y excepciones -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div class="card-title" style="margin:0;">🗓️ Días de cierre</div>
-      <button class="btn btn-accent" onclick="guardarHorarios()">💾 Guardar horarios</button>
+      <div class="card-title" style="margin:0;"><i class="fa-calendar"></i> Días de cierre</div>
+      <button class="btn btn-accent" onclick="guardarHorarios()"><i class="fa-floppy-disk"></i> Guardar horarios</button>
     </div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
       Los días marcados aparecen con patrón rayado en el calendario. Puedes habilitar fechas específicas aunque caigan en día de cierre.
@@ -113,7 +113,7 @@
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0;">Datos de la empresa en PDF</div>
-      <button class="btn btn-accent" onclick="saveEmpresa()">💾 Guardar cambios</button>
+      <button class="btn btn-accent" onclick="saveEmpresa()"><i class="fa-floppy-disk"></i> Guardar cambios</button>
     </div>
     <p style="font-size:.82rem;color:var(--ink-muted);margin-bottom:18px;">
       Estos datos aparecen en el encabezado de todas las cotizaciones y confirmaciones PDF.
@@ -134,7 +134,7 @@
     <div class="form-group"><label>Contraseña actual</label><input type="password" id="mypass-actual" placeholder="••••••••"></div>
     <div class="form-group"><label>Contraseña nueva</label><input type="password" id="mypass-nueva" placeholder="Mínimo 6 caracteres"></div>
     <div style="margin-top:14px;">
-      <button class="btn btn-accent" onclick="cambiarMiPassword()">💾 Cambiar mi contraseña</button>
+      <button class="btn btn-accent" onclick="cambiarMiPassword()"><i class="fa-floppy-disk"></i> Cambiar mi contraseña</button>
     </div>
   </div>
 
@@ -158,13 +158,13 @@
       </div>
     </div>
     <div style="margin-top:14px;">
-      <button class="btn btn-accent" onclick="crearNuevoAdmin()">➕ Crear administrador</button>
+      <button class="btn btn-accent" onclick="crearNuevoAdmin()"><i class="fa-plus"></i> Crear administrador</button>
     </div>
   </div>
 
   <!-- Sincronización automática -->
   <div class="card" id="sync-control-card">
-    <div class="card-title" style="margin:0 0 6px;">🔄 Sincronización automática</div>
+    <div class="card-title" style="margin:0 0 6px;"><i class="fa-arrows-rotate"></i> Sincronización automática</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
       Controla con qué frecuencia el panel (Dashboard, Calendario, etc.) detecta cambios en los datos.
       El intervalo se guarda en este navegador y aplica la próxima vez que abras el sistema.
@@ -182,11 +182,11 @@
       </div>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-      <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">📡 Refresco de páginas públicas</div>
+      <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px"><i class="fa-satellite-dish"></i> Refresco de páginas públicas</div>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
         Envía una señal para que todas las pestañas abiertas del sitio web (en este navegador) recarguen sus datos automáticamente.
       </p>
-      <button class="btn btn-outline btn-sm" onclick="broadcastRefresh()">📢 Enviar señal de refresco a páginas públicas</button>
+      <button class="btn btn-outline btn-sm" onclick="broadcastRefresh()"><i class="fa-bullhorn"></i> Enviar señal de refresco a páginas públicas</button>
       <span id="broadcast-lbl" style="font-size:.75rem;color:var(--muted);margin-left:8px"></span>
     </div>
   </div>

@@ -21,7 +21,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title">⭐ Populares Web</span>
+  <span class="hh-title"><i class="fa-star"></i> Populares Web</span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -31,8 +31,8 @@
 <div class="container">
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div class="card-title" style="margin:0">⭐ Servicios populares</div>
-      <button class="btn btn-accent" onclick="savePopulares()">💾 Guardar</button>
+      <div class="card-title" style="margin:0"><i class="fa-star"></i> Servicios populares</div>
+      <button class="btn btn-accent" onclick="savePopulares()"><i class="fa-floppy-disk"></i> Guardar</button>
     </div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:24px;">
       Marca los servicios que quieres destacar con la insignia <strong>"Más popular"</strong> en el sitio web. Se mostrará una cinta dorada en la tarjeta del servicio.
@@ -41,7 +41,7 @@
     <div class="form-grid">
 
       <div style="grid-column:1/-1">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px;">☀️ Pasadías</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px;"><i class="fa-sun"></i> Pasadías</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s" id="lbl-pop-pasadia-sencilla">
             <input type="checkbox" id="pop-pasadia-sencilla" onchange="updatePopLabel('pasadia-sencilla')" style="width:18px;height:18px;accent-color:var(--accent)">
@@ -61,7 +61,7 @@
       </div>
 
       <div style="grid-column:1/-1">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">⛺ Camping</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;"><i class="fa-campground"></i> Camping</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-camping-propio">
             <input type="checkbox" id="pop-camping-propio" onchange="updatePopLabel('camping-propio')" style="width:18px;height:18px;accent-color:var(--accent)">
@@ -81,7 +81,7 @@
       </div>
 
       <div style="grid-column:1/-1">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🏡 Cabañas</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;"><i class="fa-house"></i> Cabañas</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
           <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-cabana-yaguarundi">
             <input type="checkbox" id="pop-cabana-yaguarundi" onchange="updatePopLabel('cabana-yaguarundi')" style="width:18px;height:18px;accent-color:var(--accent)">
@@ -108,7 +108,7 @@
       </div>
 
       <div style="grid-column:1/-1">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;">🍽️ Restaurante</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 12px;"><i class="fa-utensils"></i> Restaurante</div>
         <label style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer" id="lbl-pop-restaurante">
           <input type="checkbox" id="pop-restaurante" onchange="updatePopLabel('restaurante')" style="width:18px;height:18px;accent-color:var(--accent)">
           <div>
@@ -123,7 +123,7 @@
     <div style="margin-top:24px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
       <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;">Vista previa de la insignia</div>
       <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#c9a84c,#e8c870);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(201,168,76,.4)">
-        ⭐ Más popular
+        <i class="fa-star"></i> Más popular
       </div>
       <span style="font-size:.8rem;color:var(--muted);margin-left:12px">Así se verá en las tarjetas del sitio web</span>
     </div>

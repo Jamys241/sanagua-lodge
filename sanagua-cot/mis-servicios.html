@@ -20,7 +20,7 @@
     <span class="header-title">Mis Servicios</span>
   </div>
   <div class="header-right">
-    <a href="menu-editor.html" class="btn-back">🍽️ Editor de Menú (Restaurante)</a>
+    <a href="menu-editor.html" class="btn-back"><i class="fa-utensils"></i> Editor de Menú (Restaurante)</a>
     <a href="achive.html" class="btn-back">← Volver al sistema</a>
   </div>
 </header>
@@ -41,7 +41,7 @@
 <div class="modal-ov" id="modal-cat">
   <div class="modal-box">
     <div class="modal-head"><span id="modal-cat-titulo">Editar subcategoría</span>
-      <button onclick="cerrarModalCat()">✕</button></div>
+      <button onclick="cerrarModalCat()"><i class="fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>Nombre</label>
         <input class="form-input" id="mc-nombre" placeholder="Ej: Pasadías"></div>
@@ -51,7 +51,7 @@
         <input class="form-input" id="mc-foto" placeholder="https://..."></div>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="cerrarModalCat()">Cancelar</button>
-        <button class="btn btn-accent" onclick="guardarCategoriaModal()">💾 Guardar</button>
+        <button class="btn btn-accent" onclick="guardarCategoriaModal()"><i class="fa-floppy-disk"></i> Guardar</button>
       </div>
     </div>
   </div>
@@ -61,7 +61,7 @@
 <div class="modal-ov" id="modal-item">
   <div class="modal-box">
     <div class="modal-head"><span id="modal-item-titulo">Editar ítem</span>
-      <button onclick="cerrarModalItem()">✕</button></div>
+      <button onclick="cerrarModalItem()"><i class="fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>Nombre</label>
         <input class="form-input" id="mi-nombre" placeholder="Ej: Pasadía Adulto"></div>
@@ -83,7 +83,7 @@
         <input class="form-input" type="number" step="1" min="0" id="mi-puntos" placeholder="0"></div>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="cerrarModalItem()">Cancelar</button>
-        <button class="btn btn-accent" onclick="guardarItemModal()">💾 Guardar</button>
+        <button class="btn btn-accent" onclick="guardarItemModal()"><i class="fa-floppy-disk"></i> Guardar</button>
       </div>
     </div>
   </div>
@@ -147,7 +147,7 @@
           <span class="cat-count">${totalItems}</span>
         </button>
         <button class="cat-eye ${c.activo?'':'off'}" title="${c.activo?'Visible en la web':'Oculta en la web'}"
-          onclick="toggleCategoriaActivo('${c.id}', event)">${c.activo?'👁️':'🚫'}</button>
+          onclick="toggleCategoriaActivo('${c.id}', event)">${c.activo?'<i class="fa-eye"></i>':'<i class="fa-ban"></i>'}</button>
       </div>`;
     }
     el.innerHTML = padres.map(p => fila(p,0) + catHijos(p.id).map(h => fila(h,14)).join('')).join('');
@@ -172,7 +172,7 @@
     const main = document.getElementById('main-content');
     const cat = categorias.find(c => c.id === catActualId);
     if (!cat) {
-      main.innerHTML = `<div class="empty-cat"><div class="empty-icon">🛎️</div><p>Crea tu primera subcategoría de Servicios (ej. "Pasadías").</p></div>`;
+      main.innerHTML = `<div class="empty-cat"><div class="empty-icon"><i class="fa-concierge-bell"></i></div><p>Crea tu primera subcategoría de Servicios (ej. "Pasadías").</p></div>`;
       return;
     }
     const hijos = catHijos(cat.id);
@@ -182,38 +182,38 @@
     main.innerHTML = `
       <div class="cat-header">
         <div class="cat-header-main">
-          <div class="cat-foto">${cat.foto ? `<img src="${esc(cat.foto)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : '🛎️'}</div>
+          <div class="cat-foto">${cat.foto ? `<img src="${esc(cat.foto)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : '<i class="fa-concierge-bell"></i>'}</div>
           <div>
             <div class="cat-name">${esc(cat.nombre)}${!cat.activo?'<span class="cat-badge-oculto">Oculta</span>':''}</div>
             <div class="cat-sub">${esc(cat.descripcion||'Sin descripción todavía.')}</div>
           </div>
         </div>
         <div class="cat-header-actions">
-          <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${cat.id}')">${cat.activo?'👁️ Visible':'🚫 Oculta'}</button>
-          <button class="btn btn-outline btn-sm" onclick="editarCategoria('${cat.id}')">✏️ Editar</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${cat.id}')">${cat.activo?'<i class="fa-eye"></i> Visible':'<i class="fa-ban"></i> Oculta'}</button>
+          <button class="btn btn-outline btn-sm" onclick="editarCategoria('${cat.id}')"><i class="fa-pen"></i> Editar</button>
           ${!cat.parent_id ? `<button class="btn btn-outline btn-sm" onclick="crearSubcategoria('${cat.id}')">+ Añadir dentro de "${esc(cat.nombre)}"</button>` : ''}
-          <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${cat.id}')">🗑 Eliminar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${cat.id}')"><i class="fa-trash"></i> Eliminar</button>
         </div>
       </div>
       ${hijos.length ? `
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
           ${hijos.map(h => `<button class="btn btn-sm ${h.id===sub?.id?'btn-accent':'btn-outline'}" onclick="seleccionarSubcategoria('${h.id}')">
-            ${esc(h.nombre)} <span style="opacity:.75">(${h.productos.length})</span> ${h.activo?'':'🚫'}
+            ${esc(h.nombre)} <span style="opacity:.75">(${h.productos.length})</span> ${h.activo?'':'<i class="fa-ban"></i>'}
           </button>`).join('')}
         </div>
         ${sub ? `
           <div class="cat-header" style="padding:14px 18px;margin-bottom:16px;">
             <div class="cat-header-main">
-              <div class="cat-foto" style="width:44px;height:44px;font-size:1.2rem;">${sub.foto ? `<img src="${esc(sub.foto)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : '🏡'}</div>
+              <div class="cat-foto" style="width:44px;height:44px;font-size:1.2rem;">${sub.foto ? `<img src="${esc(sub.foto)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : '<i class="fa-house"></i>'}</div>
               <div>
                 <div class="cat-name" style="font-size:1.05rem;">${esc(sub.nombre)}${!sub.activo?'<span class="cat-badge-oculto">Oculta</span>':''}</div>
                 <div class="cat-sub">${esc(sub.descripcion||'Sin descripción todavía.')}</div>
               </div>
             </div>
             <div class="cat-header-actions">
-              <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${sub.id}')">${sub.activo?'👁️ Visible':'🚫 Oculta'}</button>
-              <button class="btn btn-outline btn-sm" onclick="editarCategoria('${sub.id}')">✏️ Editar</button>
-              <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${sub.id}')">🗑 Eliminar</button>
+              <button class="btn btn-outline btn-sm" onclick="toggleCategoriaActivo('${sub.id}')">${sub.activo?'<i class="fa-eye"></i> Visible':'<i class="fa-ban"></i> Oculta'}</button>
+              <button class="btn btn-outline btn-sm" onclick="editarCategoria('${sub.id}')"><i class="fa-pen"></i> Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${sub.id}')"><i class="fa-trash"></i> Eliminar</button>
             </div>
           </div>
           <div class="items-grid" id="items-grid"></div>`
@@ -245,12 +245,12 @@
             <span class="item-precio">$${parseFloat(p.precio).toFixed(2)}</span>
             ${itbmsBadge(p.itbms)}
           </div>
-          ${p.puntos_fidelidad>0?`<div style="font-size:.74rem;color:var(--gold);font-weight:600">⭐ ${p.puntos_fidelidad} pts al confirmar</div>`:''}
+          ${p.puntos_fidelidad>0?`<div style="font-size:.74rem;color:var(--gold);font-weight:600"><i class="fa-star"></i> ${p.puntos_fidelidad} pts al confirmar</div>`:''}
         </div>
         <div class="item-actions">
-          <button class="btn btn-outline" onclick="toggleItemActivo('${p.id}')">${p.activo?'👁️':'🚫'}</button>
-          <button class="btn btn-outline" onclick="editarItem('${p.id}')">✏️ Editar</button>
-          <button class="btn btn-danger" onclick="eliminarItem('${p.id}')">🗑</button>
+          <button class="btn btn-outline" onclick="toggleItemActivo('${p.id}')">${p.activo?'<i class="fa-eye"></i>':'<i class="fa-ban"></i>'}</button>
+          <button class="btn btn-outline" onclick="editarItem('${p.id}')"><i class="fa-pen"></i> Editar</button>
+          <button class="btn btn-danger" onclick="eliminarItem('${p.id}')"><i class="fa-trash"></i></button>
         </div>
       </div>`).join('') + `
       <button class="btn-add-item-card" onclick="nuevoItem()">
