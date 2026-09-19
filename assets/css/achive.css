@@ -479,4 +479,8 @@
   }
   .side-menu-overlay { display: none !important; }
   body { padding-right: 260px; }
+  /* El body se encoge para dejarle espacio al menú, pero el header debe
+     seguir ocupando todo el ancho de la pantalla (ya tiene z-index más alto
+     que el menú, así que lo tapa limpiamente por arriba). */
+  header, .hh-header { margin-right: -260px; }
 }
