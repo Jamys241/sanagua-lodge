@@ -1646,9 +1646,10 @@
     document.querySelectorAll('.side-menu nav button').forEach(b => {
       b.classList.toggle('active',
         b.textContent.toLowerCase().includes(
+          name==='dashboard'?'dashboard':
           name==='nueva'?'cotización':name==='historial'?'historial':
           name==='resumen'?'resumen':name==='config'?'configuración':
-          name==='calendario'?'calendario':''
+          name==='calendario'?'calendario':'\u0000' // texto imposible: no marca ningún botón
         )
       );
     });

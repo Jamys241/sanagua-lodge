@@ -45,17 +45,17 @@
           <span id="rol-badge" class="rol-badge" style="display:none"></span>
         </div>
 
-        <button onclick="location.href='achive.html'" style="font-weight:700">🏠 Dashboard</button>
+        <button onclick="irA('achive.html')" style="font-weight:700">🏠 Dashboard</button>
 
         <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
           📅 Reservas <span class="menu-group-arrow">▼</span>
         </button>
         <div class="menu-group-items" id="grp-reservas">
-          <button onclick="location.href='calendario.html'">📅 Calendario</button>
-          <button onclick="location.href='nueva-cotizacion.html'">📋 Nueva Cotización</button>
-          <button onclick="location.href='history.html'">📁 Historial</button>
-          <button onclick="location.href='resumen.html'">📊 Resumen</button>
-          <button onclick="location.href='solicitudes.html'">📬 Solicitudes</button>
+          <button onclick="irA('calendario.html')">📅 Calendario</button>
+          <button onclick="irA('nueva-cotizacion.html')">📋 Nueva Cotización</button>
+          <button onclick="irA('history.html')">📁 Historial</button>
+          <button onclick="irA('resumen.html')">📊 Resumen</button>
+          <button onclick="irA('solicitudes.html')">📬 Solicitudes</button>
         </div>
 
         <div class="side-menu-divider"></div>
@@ -75,8 +75,8 @@
           ⚙️ Sistema <span class="menu-group-arrow">▼</span>
         </button>
         <div class="menu-group-items" id="grp-sistema">
-          <button onclick="location.href='usuarios.html'">👥 Usuarios</button>
-          <button onclick="location.href='configuracion.html'">⚙️ Configuración</button>
+          <button onclick="irA('usuarios.html')">👥 Usuarios</button>
+          <button onclick="irA('configuracion.html')">⚙️ Configuración</button>
         </div>
 
         <div class="side-menu-divider"></div>
@@ -102,6 +102,12 @@
       backLink.replaceWith(btn);
     }
   }
+
+  window.irA = function (pagina) {
+    const actual = location.pathname.split('/').pop();
+    if (actual === pagina) { closeMenu(); return; } // ya estás aquí — no recargar
+    location.href = pagina;
+  };
 
   window.toggleMenu = function () {
     document.getElementById('hamburger-btn')?.classList.toggle('open');
