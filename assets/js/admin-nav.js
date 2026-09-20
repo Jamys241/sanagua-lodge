@@ -126,7 +126,6 @@
     if (!isOpen) { items.classList.add('open'); btn.classList.add('open'); }
   };
   window.cerrarSesionAdmin = function () {
-    if (!confirm('¿Cerrar sesión?')) return;
     supa.auth.signOut().finally(() => { window.location.href = '../index.html'; });
   };
 

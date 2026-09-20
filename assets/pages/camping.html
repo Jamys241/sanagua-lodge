@@ -124,7 +124,13 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
-  const TARIFA_KEY_MAP = { 'Adulto':'adulto', 'Niño (3-11 años)':'nino', 'Menor de 3 años':'menor3', 'Jubilado':'jubilado' };
+  function slugKey(nombre) {
+    return (nombre || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
   const CAMPING_CATEGORIAS = { propio: 'Camping Propio', suministro: 'Camping Suministro' };
 
   // Arma el mismo objeto { camping: {...} } de siempre, leído ahora desde
@@ -144,7 +150,7 @@
       const cat = (cats||[]).find(c => c.nombre === nombreCat);
       const tarifas = {};
       if (cat) (prods||[]).filter(p => p.categoria_id === cat.id).forEach(p => {
-        const k = TARIFA_KEY_MAP[p.nombre];
+        const k = slugKey(p.nombre);
         if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
       });
       modalidades[mod] = { label: nombreCat, tarifas };

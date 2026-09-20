@@ -842,7 +842,6 @@
   }
 
   function cerrarSesion() {
-    if (!confirm('¿Cerrar sesión?')) return;
     supa.auth.signOut().finally(() => { window.location.href = '../index.html'; });
   }
 

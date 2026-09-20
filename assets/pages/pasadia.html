@@ -136,11 +136,21 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
-  const TARIFA_KEY_MAP_PAS = { 'Adulto':'adulto', 'Niño':'nino', 'Jubilado':'jubilado' };
+  // Genera una clave estable a partir del nombre del producto (sin acentos,
+  // minúsculas, espacios -> guion bajo), para no depender de una lista fija
+  // de nombres — así cualquier tarifa que se agregue en Mis Servicios
+  // aparece aquí automáticamente sin tener que tocar este archivo.
+  function slugKey(nombre) {
+    return (nombre || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
 
   // Arma el mismo objeto { pasadia: {...} } de siempre, leído ahora desde
   // el catálogo genérico de Mis Servicios (product_categories + products).
-  // "Pasadías" es una categoría plana (Adulto/Niño/Jubilado), sin modalidades.
+  // "Pasadías" es una categoría plana (Adulto/Niño/Jubilado/etc.), sin modalidades.
   async function cargarPreciosPasadia() {
     const { data: cat } = await supaPrecios.from('product_categories')
       .select('*').eq('nombre','Pasadías').eq('activo', true).single();
@@ -150,7 +160,7 @@
 
     const tarifas = {};
     (prods||[]).forEach(p => {
-      const k = TARIFA_KEY_MAP_PAS[p.nombre];
+      const k = slugKey(p.nombre);
       if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0 };
     });
 
