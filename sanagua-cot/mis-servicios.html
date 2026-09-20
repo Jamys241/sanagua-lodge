@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/js/admin-guard.js"></script>
+  <script src="../assets/js/admin-nav.js"></script>
   <link rel="stylesheet" href="../assets/css/mis-servicios.css">
   <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
 </head>
@@ -15,11 +16,14 @@
 
 <header>
   <div class="header-left">
-    <span class="header-logo">Sanagua Lodge</span>
+    <button class="hh-hamburger mobile-only" id="hamburger-btn" onclick="toggleMenu()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="header-logo">Sanagua Lodge S.A.</span>
     <span class="header-sep">/</span>
     <span class="header-title">Mis Servicios</span>
   </div>
-  <div class="header-right">
+  <div class="header-right desktop-only">
     <a href="menu-editor.html" class="btn-back"><i class="fa-solid fa-utensils"></i> Editor de Menú (Restaurante)</a>
     <a href="achive.html" class="btn-back">← Volver al sistema</a>
   </div>
