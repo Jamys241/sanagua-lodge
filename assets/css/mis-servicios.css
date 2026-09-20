@@ -12,7 +12,7 @@
    ============================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
 
     /* ── HEADER ── */
    /* Colores de esta sección → fondo: var(--ink) | texto: #fff, rgba(255,255,255,.3), rgba(255,255,255,.7), rgba(255,255,255,.6) | borde: rgba(255,255,255,.15) */
@@ -30,6 +30,15 @@
 
     /* ── LAYOUT ── */
     .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 60px)}
+
+    /* ── RESPONSIVE (móvil) ── */
+    @media (max-width: 768px) {
+      header{height:auto;flex-wrap:wrap;gap:8px;padding:12px 16px;position:static}
+      .header-left{flex-wrap:wrap;row-gap:4px}
+      .header-right{flex-wrap:wrap;width:100%;justify-content:flex-start}
+      .layout{grid-template-columns:1fr;min-height:auto}
+      .sidebar{border-right:none;border-bottom:1px solid rgba(255,255,255,.06);max-height:320px}
+    }
 
     /* ── SIDEBAR ── */
    /* Colores de esta sección → fondo: var(--ink), rgba(255,255,255,.08), rgba(255,255,255,.1), var(--gold) | texto: rgba(255,255,255,.3), rgba(255,255,255,.6), rgba(255,255,255,.5), rgba(255,255,255,.4) | borde: rgba(255,255,255,.2) */
