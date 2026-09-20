@@ -210,7 +210,7 @@
       document.getElementById('adm-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
       document.getElementById('adm-nombre').textContent        = user.name || '—';
       document.getElementById('adm-email-display').textContent = user.email || '—';
-      document.getElementById('adm-role-badge').textContent    = labels[user.role] || user.role;
+      document.getElementById('adm-role-badge').innerHTML       = labels[user.role] || user.role;
       document.getElementById('adm-editar-btn').style.display  = puedeEditarDatosUsuarios() ? '' : 'none';
       document.getElementById('adm-edit-form').style.display   = 'none';
       document.getElementById('adm-edit-msg').textContent      = '';
