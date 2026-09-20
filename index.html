@@ -438,11 +438,21 @@
           </div>
           <div class="auth-field">
             <label>Contraseña</label>
-            <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" oninput="limpiarAuthError()">
+            <div style="position:relative">
+              <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" oninput="limpiarAuthError()" style="width:100%;padding-right:40px">
+              <button type="button" onclick="toggleVerPassword('reg-password', this)"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+                cursor:pointer;font-size:1rem;color:#999;padding:4px"><i class="fa-solid fa-eye"></i></button>
+            </div>
           </div>
           <div class="auth-field">
             <label>Confirmar contraseña</label>
-            <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña" oninput="limpiarAuthError()">
+            <div style="position:relative">
+              <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña" oninput="limpiarAuthError()" style="width:100%;padding-right:40px">
+              <button type="button" onclick="toggleVerPassword('reg-password-confirm', this)"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+                cursor:pointer;font-size:1rem;color:#999;padding:4px"><i class="fa-solid fa-eye"></i></button>
+            </div>
           </div>
           <button class="auth-btn" onclick="doRegister()">Crear cuenta</button>
           <div id="reg-error-msg" style="display:none;margin-top:12px;padding:10px 14px;
@@ -544,11 +554,21 @@
               <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:12px">Cambiar contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
               <div class="auth-field" style="margin-bottom:12px">
                 <label>Contraseña actual</label>
-                <input type="password" id="edit-pass-actual" class="auth-input" placeholder="Tu contraseña actual">
+                <div style="position:relative">
+                  <input type="password" id="edit-pass-actual" class="auth-input" placeholder="Tu contraseña actual" style="width:100%;padding-right:40px">
+                  <button type="button" onclick="toggleVerPassword('edit-pass-actual', this)"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+                    cursor:pointer;font-size:1rem;color:#999;padding:4px"><i class="fa-solid fa-eye"></i></button>
+                </div>
               </div>
               <div class="auth-field" style="margin-bottom:12px">
                 <label>Nueva contraseña</label>
-                <input type="password" id="edit-pass-nueva" class="auth-input" placeholder="Mínimo 6 caracteres">
+                <div style="position:relative">
+                  <input type="password" id="edit-pass-nueva" class="auth-input" placeholder="Mínimo 6 caracteres" style="width:100%;padding-right:40px">
+                  <button type="button" onclick="toggleVerPassword('edit-pass-nueva', this)"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+                    cursor:pointer;font-size:1rem;color:#999;padding:4px"><i class="fa-solid fa-eye"></i></button>
+                </div>
               </div>
             </div>
 
@@ -734,7 +754,7 @@
     const input = document.getElementById(inputId);
     const verlo = input.type === 'password';
     input.type = verlo ? 'text' : 'password';
-    btn.textContent = verlo ? '🙈' : '👁️';
+    btn.innerHTML = verlo ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
   }
 
   async function doPublicLogin() {
