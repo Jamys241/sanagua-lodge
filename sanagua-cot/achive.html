@@ -51,7 +51,6 @@
       <button onclick="location.href='calendario.html';closeMenu()"><i class="fa-solid fa-calendar-days"></i> Calendario</button>
       <button onclick="location.href='nueva-cotizacion.html';closeMenu()"><i class="fa-solid fa-file-invoice"></i> Nueva Cotización</button>
       <button onclick="location.href='history.html';closeMenu()"><i class="fa-solid fa-box-archive"></i> Historial</button>
-      <button onclick="location.href='resumen.html';closeMenu()"><i class="fa-solid fa-chart-column"></i> Resumen</button>
       <button onclick="location.href='solicitudes.html';closeMenu()"><i class="fa-solid fa-inbox"></i> Solicitudes</button>
     </div>
 
@@ -1520,7 +1519,7 @@
   function abrirEstadisticas() {
     document.getElementById('stats-lock-pass').value = '';
     document.getElementById('stats-lock-pass').type = 'password';
-    document.getElementById('stats-lock-eye').textContent = '👁️';
+    document.getElementById('stats-lock-eye').innerHTML = '<i class="fa-solid fa-eye"></i>';
     document.getElementById('stats-lock-error').textContent = '';
     document.getElementById('stats-lock-ov').style.display = 'flex';
     setTimeout(() => document.getElementById('stats-lock-pass').focus(), 100);
@@ -1530,7 +1529,7 @@
     const eye   = document.getElementById('stats-lock-eye');
     const verlo = input.type === 'password';
     input.type = verlo ? 'text' : 'password';
-    eye.textContent = verlo ? '🙈' : '👁️';
+    eye.innerHTML = verlo ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
   }
   function cerrarModalEstadisticas() {
     document.getElementById('stats-lock-ov').style.display = 'none';

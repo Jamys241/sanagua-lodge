@@ -54,7 +54,6 @@
           <button onclick="irA('calendario.html')"><i class="fa-solid fa-calendar-days"></i> Calendario</button>
           <button onclick="irA('nueva-cotizacion.html')"><i class="fa-solid fa-file-invoice"></i> Nueva Cotización</button>
           <button onclick="irA('history.html')"><i class="fa-solid fa-box-archive"></i> Historial</button>
-          <button onclick="irA('resumen.html')"><i class="fa-solid fa-chart-column"></i> Resumen</button>
           <button onclick="irA('solicitudes.html')"><i class="fa-solid fa-inbox"></i> Solicitudes</button>
         </div>
 
