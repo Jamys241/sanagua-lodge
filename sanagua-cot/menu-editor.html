@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/js/admin-guard.js"></script>
-  <link rel="stylesheet" href="../assets/css/menu-editor.css?v=2">
+  <link rel="stylesheet" href="../assets/css/menu-editor.css?v=3">
   <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
 </head>
 <body>
@@ -16,24 +16,33 @@
 <!-- Header -->
 <header>
   <div class="header-left">
-    <span class="header-logo"><i class="fa-solid fa-leaf"></i> Sanagua</span>
-    <span class="header-sep">›</span>
-    <span class="header-title">Editor de Menú · Restaurante</span>
+    <button class="cat-hamburger" id="cat-hamburger-btn" onclick="toggleCatDrawer()" aria-label="Categorías">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="header-logo"><i class="fa-solid fa-leaf"></i> Sanagua Lodge S.A.</span>
   </div>
   <div class="header-right">
-    <a class="btn-back" href="achive.html">← Sistema</a>
     <button class="btn-save-all" onclick="saveAll()" id="btn-save-all">
       <i class="fa-solid fa-floppy-disk"></i> Guardar todo
     </button>
   </div>
 </header>
 
+<div class="cat-drawer-overlay" id="cat-drawer-overlay" onclick="closeCatDrawer()"></div>
+
 <div class="layout">
 
-  <!-- Sidebar de categorías -->
-  <aside class="sidebar">
+  <!-- Drawer de categorías (oculto hasta abrir con la hamburguesa) -->
+  <aside class="sidebar" id="cat-drawer">
+    <div class="sidebar-label" style="font-size:.8rem;letter-spacing:.02em;text-transform:none;color:#fff;font-weight:700;padding:16px 16px 10px">
+      <i class="fa-solid fa-utensils"></i> Editor de Menú
+    </div>
     <div class="sidebar-label">Categorías</div>
     <div id="sidebar-cats"></div>
+    <button class="cat-btn" onclick="location.href='achive.html'" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+      <span class="cat-icon"><i class="fa-solid fa-arrow-left"></i></span>
+      <span>Volver</span>
+    </button>
   </aside>
 
   <!-- Panel principal -->
@@ -173,12 +182,22 @@
   function renderSidebar() {
     document.getElementById('sidebar-cats').innerHTML =
       menuData.categorias.map((cat, i) => `
-        <button class="cat-btn ${i===catActual?'active':''}" onclick="renderCategoria(${i})">
+        <button class="cat-btn ${i===catActual?'active':''}" onclick="renderCategoria(${i});closeCatDrawer()">
           <span class="cat-icon">${cat.icon}</span>
           <span>${cat.label}</span>
           <span class="cat-count">${cat.platos.length}</span>
         </button>`).join('');
   }
+
+  function toggleCatDrawer() {
+    document.getElementById('cat-drawer').classList.toggle('open');
+    document.getElementById('cat-drawer-overlay').classList.toggle('open');
+  }
+  function closeCatDrawer() {
+    document.getElementById('cat-drawer').classList.remove('open');
+    document.getElementById('cat-drawer-overlay').classList.remove('open');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCatDrawer(); });
 
   // ── Renderizar categoría ────────────────────────────────────────────
   function renderCategoria(idx) {
