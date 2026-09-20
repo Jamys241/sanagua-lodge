@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Pasadías — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/pasadia.css">
+  <link rel="stylesheet" href="../css/pasadia.css?v=2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -71,27 +71,6 @@
 
     <!-- COLUMNA STICKY -->
     <div class="sticky-col">
-      <div class="price-summary">
-        <div class="price-from">Desde</div>
-        <div class="price-main" id="price-main">$0.00</div>
-        <div class="price-sub">por persona · ITBMS incluido</div>
-        <button class="btn-reservar-big" onclick="openModal()">Solicitar reserva →</button>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="label">Tarifas</div>
-        <div id="tarifas-list">
-          <div class="tarifa-row"><span class="tarifa-label">Cargando...</span></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:16px;background:#eef4f5;border-color:#cfe0e4;">
-        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--forest);margin-bottom:6px;">☀️ ¿Sencilla o Completa?</div>
-        <div style="font-size:.82rem;color:#5a7880;line-height:1.6">
-          <strong>Sencilla:</strong> Acceso a piscinas, senderos y áreas de descanso.<br>
-          <strong>Completa:</strong> Todo lo anterior más actividades, entretenimiento y acceso a zonas premium.
-        </div>
-      </div>
 
       <div class="card" style="margin-top:16px;background:var(--cream);border:none">
         <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
@@ -160,25 +139,38 @@
   // el catálogo genérico de Mis Servicios (product_categories + products).
   // "Pasadías" es una categoría plana (Adulto/Niño/Jubilado/etc.), sin modalidades.
   async function cargarPreciosPasadia() {
-    const { data: cat } = await supaPrecios.from('product_categories')
+    // "Pasadías" ahora es una categoría PADRE con subcategorías propias
+    // (ej. "Pasadía Conexión", "Pasadía Esencia"), y los productos viven
+    // dentro de cada subcategoría — no directamente bajo "Pasadías".
+    const { data: catPadre } = await supaPrecios.from('product_categories')
       .select('*').eq('nombre','Pasadías').eq('activo', true).single();
-    const { data: prods } = cat
-      ? await supaPrecios.from('products').select('*').eq('categoria_id', cat.id).eq('activo', true)
+
+    const { data: subcats } = catPadre
+      ? await supaPrecios.from('product_categories').select('*')
+          .eq('parent_id', catPadre.id).eq('activo', true).order('orden', { ascending: true })
+      : { data: [] };
+
+    const catIds = (subcats||[]).map(c => c.id);
+    const { data: prods } = catIds.length
+      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true).order('orden', { ascending: true })
       : { data: [] };
 
     const tarifas = {};
-    (prods||[]).forEach(p => {
-      const k = slugKey(p.nombre);
-      if (k) tarifas[k] = {
-        label: p.nombre, precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0,
-        descripcion: p.descripcion || '', foto: p.foto || '',
-      };
+    (subcats||[]).forEach(sub => {
+      (prods||[]).filter(p => p.categoria_id === sub.id).forEach(p => {
+        const k = slugKey(`${sub.nombre}_${p.nombre}`);
+        if (k) tarifas[k] = {
+          label: p.nombre, subcategoria: sub.nombre,
+          precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0,
+          descripcion: p.descripcion || sub.descripcion || '', foto: p.foto || sub.foto || '',
+        };
+      });
     });
 
     return {
       pasadia: {
         itbms: 7,
-        descripcion: cat?.descripcion || '',
+        descripcion: catPadre?.descripcion || '',
         incluye: [],
         tarifas,
       },
@@ -343,17 +335,12 @@
         // Adulto/Niño/Jubilado directamente bajo la categoría "Pasadías".
         const vals = Object.values(s.tarifas).filter(t=>t.precio>0).map(t=>t.precio*(1+itbms/100));
         const desde = vals.length ? Math.min(...vals) : 0;
-        document.getElementById('price-main').textContent = `$${desde.toFixed(2)}`;
-        document.getElementById('tarifas-list').innerHTML = Object.values(s.tarifas).map(t=>`
-          <div class="tarifa-row">
-            <span class="tarifa-label">${t.label}</span>
-            <span class="tarifa-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span class="tarifa-itbms">ITBMS inc.</span>`}</span>
-          </div>`).join('');
         // Tarjetas elegantes con imagen, título, descripción y precio
         document.getElementById('pasadia-cards-grid').innerHTML = Object.values(s.tarifas).map(t=>`
           <div class="pasadia-card">
             <div class="pasadia-card-img">${t.foto ? `<img src="${t.foto}" alt="${t.label}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-sun\\'></i>'">` : '<i class="fa-solid fa-sun"></i>'}</div>
             <div class="pasadia-card-body">
+              ${t.subcategoria ? `<div class="pasadia-card-tag">${t.subcategoria}</div>` : ''}
               <div class="pasadia-card-title">${t.label}</div>
               <div class="pasadia-card-desc">${t.descripcion || ''}</div>
               <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`}</div>
