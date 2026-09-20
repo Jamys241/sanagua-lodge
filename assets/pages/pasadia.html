@@ -84,6 +84,20 @@
   </div>
 </div>
 
+<!-- MODAL DETALLE DE SUBCATEGORÍA -->
+<div class="modal-overlay" id="detalle-overlay">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-head">
+      <div class="modal-title" id="detalle-titulo">Detalles</div>
+      <button class="modal-close" onclick="closeDetalleGrupo()">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="detalle-desc" style="color:#8a8676;font-size:.9rem;margin-bottom:18px"></p>
+      <div id="detalle-items" class="pasadia-cards-grid"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RESERVA -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -156,15 +170,18 @@
       : { data: [] };
 
     const tarifas = {};
-    (subcats||[]).forEach(sub => {
-      (prods||[]).filter(p => p.categoria_id === sub.id).forEach(p => {
+    const grupos = (subcats||[]).map(sub => {
+      const items = (prods||[]).filter(p => p.categoria_id === sub.id).map(p => {
         const k = slugKey(`${sub.nombre}_${p.nombre}`);
-        if (k) tarifas[k] = {
-          label: p.nombre, subcategoria: sub.nombre,
+        const t = {
+          key: k, label: p.nombre, subcategoria: sub.nombre,
           precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0,
-          descripcion: p.descripcion || sub.descripcion || '', foto: p.foto || sub.foto || '',
+          descripcion: p.descripcion || '', foto: p.foto || '',
         };
+        if (k) tarifas[k] = t;
+        return t;
       });
+      return { id: sub.id, nombre: sub.nombre, descripcion: sub.descripcion || '', foto: sub.foto || '', items };
     });
 
     return {
@@ -173,6 +190,7 @@
         descripcion: catPadre?.descripcion || '',
         incluye: [],
         tarifas,
+        grupos,
       },
     };
   }
@@ -184,6 +202,29 @@
   // ── Estado ────────────────────────────────────────────────────────────
   let precios    = null;
   let contadores = {}; // { adulto:0, nino:0, ... }
+  let gruposPasadia = [];
+
+  function verDetalleGrupo(i) {
+    const g = gruposPasadia[i];
+    if (!g) return;
+    const itbms = precios?.[SERVICIO]?.itbms || 7;
+    document.getElementById('detalle-titulo').textContent = g.nombre;
+    document.getElementById('detalle-desc').textContent = g.descripcion || '';
+    document.getElementById('detalle-items').innerHTML = (g.items||[]).map(t=>`
+      <div class="pasadia-card">
+        <div class="pasadia-card-img">${t.foto ? `<img src="${t.foto}" alt="${t.label}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-sun\\'></i>'">` : '<i class="fa-solid fa-sun"></i>'}</div>
+        <div class="pasadia-card-body">
+          <div class="pasadia-card-title">${t.label}</div>
+          <div class="pasadia-card-desc">${t.descripcion || ''}</div>
+          <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`}</div>
+          <button class="pasadia-card-btn" onclick="closeDetalleGrupo();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+        </div>
+      </div>`).join('') || '<div style="color:var(--muted);font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
+    document.getElementById('detalle-overlay').classList.add('open');
+  }
+  function closeDetalleGrupo() {
+    document.getElementById('detalle-overlay').classList.remove('open');
+  }
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const SERVICIO = 'pasadia';
@@ -335,18 +376,17 @@
         // Adulto/Niño/Jubilado directamente bajo la categoría "Pasadías".
         const vals = Object.values(s.tarifas).filter(t=>t.precio>0).map(t=>t.precio*(1+itbms/100));
         const desde = vals.length ? Math.min(...vals) : 0;
-        // Tarjetas elegantes con imagen, título, descripción y precio
-        document.getElementById('pasadia-cards-grid').innerHTML = Object.values(s.tarifas).map(t=>`
-          <div class="pasadia-card">
-            <div class="pasadia-card-img">${t.foto ? `<img src="${t.foto}" alt="${t.label}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-sun\\'></i>'">` : '<i class="fa-solid fa-sun"></i>'}</div>
-            <div class="pasadia-card-body">
-              ${t.subcategoria ? `<div class="pasadia-card-tag">${t.subcategoria}</div>` : ''}
-              <div class="pasadia-card-title">${t.label}</div>
-              <div class="pasadia-card-desc">${t.descripcion || ''}</div>
-              <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`}</div>
-              <button class="pasadia-card-btn" onclick="openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+        // Tarjetas de subcategoría (imagen a la izquierda, nombre/desc a la derecha, botón Detalles)
+        gruposPasadia = s.grupos || [];
+        document.getElementById('pasadia-cards-grid').innerHTML = gruposPasadia.map((g,i)=>`
+          <div class="pasadia-group-card" onclick="verDetalleGrupo(${i})">
+            <div class="pasadia-group-img">${g.foto ? `<img src="${g.foto}" alt="${g.nombre}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-sun\\'></i>'">` : '<i class="fa-solid fa-sun"></i>'}</div>
+            <div class="pasadia-group-body">
+              <div class="pasadia-group-title">${g.nombre}</div>
+              <div class="pasadia-group-desc">${g.descripcion || ''}</div>
+              <button class="pasadia-group-btn" onclick="event.stopPropagation();verDetalleGrupo(${i})">Detalles <i class="fa-solid fa-arrow-right"></i></button>
             </div>
-          </div>`).join('');
+          </div>`).join('') || '<div style="color:var(--muted);font-size:.85rem">Aún no hay opciones de pasadía cargadas.</div>';
         modalidadActual = null;
         contadores = Object.fromEntries(Object.keys(s.tarifas).map(k=>[k,0]));
       }
@@ -428,6 +468,9 @@
 
   function openModal(){ verificarYReservar(() => { document.getElementById('modal-overlay').classList.add('open'); setTimeout(autorellenarDatos,100); }); }
   function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+  document.getElementById('detalle-overlay').addEventListener('click',e=>{
+    if(e.target===document.getElementById('detalle-overlay'))closeDetalleGrupo();
+  });
   document.getElementById('modal-overlay').addEventListener('click',e=>{
     if(e.target===document.getElementById('modal-overlay'))closeModal();
   });
