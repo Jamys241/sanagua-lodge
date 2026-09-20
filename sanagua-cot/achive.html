@@ -62,7 +62,7 @@
       <i class="fa-solid fa-concierge-bell"></i> Mis Servicios <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-servicios">
-      <button onclick="window.open('mis-servicios.html','_blank');closeMenu()"><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</button>
+      <button onclick="location.href='mis-servicios.html'"><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</button>
       <button onclick="window.open('populares.html','_blank');closeMenu()"><i class="fa-solid fa-star"></i> Populares Web</button>
       <button onclick="abrirMenuEditor();closeMenu()"><i class="fa-solid fa-utensils"></i> Editor de Menú Web</button>
     </div>
@@ -455,8 +455,8 @@
       <button class="dash-qlink" onclick="location.href='nueva-cotizacion.html'"><i class="fa-solid fa-file-invoice"></i><span>Nueva Cotización</span></button>
       <button class="dash-qlink" onclick="location.href='calendario.html'"><i class="fa-solid fa-calendar-days"></i><span>Calendario</span></button>
       <button class="dash-qlink" onclick="location.href='solicitudes.html'"><i class="fa-solid fa-inbox"></i><span>Solicitudes</span></button>
-      <button class="dash-qlink" onclick="window.open('mis-servicios.html','_blank')"><i class="fa-solid fa-concierge-bell"></i><span>Mis Servicios</span></button>
-      <button class="dash-qlink" onclick="window.open('menu-editor.html','_blank')"><i class="fa-solid fa-utensils"></i><span>Editor de Menú</span></button>
+      <button class="dash-qlink" onclick="location.href='mis-servicios.html'"><i class="fa-solid fa-concierge-bell"></i><span>Mis Servicios</span></button>
+      <button class="dash-qlink" onclick="location.href='menu-editor.html'"><i class="fa-solid fa-utensils"></i><span>Editor de Menú</span></button>
       <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')"><i class="fa-solid fa-eye"></i><span>Ver como usuario</span></button>
     </div>
   </div>
@@ -3539,7 +3539,7 @@
     if (currentUser?.role !== 'superadmin' && !getPermisos().ver_menu_editor) {
       showToast('No tienes permiso para acceder al editor de menú.', 'error'); return;
     }
-    window.open('menu-editor.html', '_blank');
+    location.href='menu-editor.html';
   }
 
   // ══════════════════════════════════════════════════════════════════════

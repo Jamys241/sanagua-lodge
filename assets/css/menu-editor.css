@@ -112,7 +112,7 @@
 
     /* Acciones de plato */
    /* Colores de esta sección → fondo: var(--accent) | texto: var(--muted), #fff | borde: var(--border), var(--red) */
-    .plato-actions{display:flex;gap:8px;padding:0 16px 14px}
+    .plato-actions{display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap}
     .btn-del{background:none;border:1.5px solid var(--border);border-radius:6px;
       padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:.78rem;
       color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
@@ -148,6 +148,10 @@
     @keyframes spin{to{transform:rotate(360deg)}}
 
     @media(max-width:700px){
-      .layout{grid-template-columns:1fr}
-      .sidebar{display:none}
+      header{height:auto;flex-wrap:wrap;gap:8px;padding:12px 16px}
+      .header-left{flex-wrap:wrap;row-gap:4px}
+      .header-right{flex-wrap:wrap;width:100%;justify-content:flex-start}
+      .layout{grid-template-columns:1fr;height:auto}
+      .sidebar{display:block;max-height:260px;overflow-y:auto;
+        border-right:none;border-bottom:1px solid var(--border)}
     }

@@ -64,9 +64,9 @@
           <i class="fa-solid fa-concierge-bell"></i> Mis Servicios <span class="menu-group-arrow">▼</span>
         </button>
         <div class="menu-group-items" id="grp-servicios">
-          <button onclick="window.open('mis-servicios.html','_blank');closeMenu()"><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</button>
+          <button onclick="irA('mis-servicios.html')"><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</button>
           <button onclick="window.open('populares.html','_blank');closeMenu()"><i class="fa-solid fa-star"></i> Populares Web</button>
-          <button onclick="window.open('menu-editor.html','_blank');closeMenu()"><i class="fa-solid fa-utensils"></i> Editor de Menú Web</button>
+          <button onclick="irA('menu-editor.html')"><i class="fa-solid fa-utensils"></i> Editor de Menú Web</button>
         </div>
 
         <div class="side-menu-divider"></div>
