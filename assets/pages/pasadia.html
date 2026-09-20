@@ -34,6 +34,14 @@
 
     <!-- COLUMNA PRINCIPAL -->
     <div>
+      <!-- Nuestras opciones (tarjetas elegantes por tarifa) -->
+      <div style="margin-bottom:28px">
+        <div class="label" style="margin-bottom:14px">Nuestras opciones</div>
+        <div id="pasadia-cards-grid" class="pasadia-cards-grid">
+          <div style="color:var(--muted);font-size:.85rem">Cargando opciones...</div>
+        </div>
+      </div>
+
       <!-- Qué incluye -->
       <div class="card" style="margin-bottom:24px">
         <div class="label">¿Qué incluye?</div>
@@ -161,7 +169,10 @@
     const tarifas = {};
     (prods||[]).forEach(p => {
       const k = slugKey(p.nombre);
-      if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0 };
+      if (k) tarifas[k] = {
+        label: p.nombre, precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0,
+        descripcion: p.descripcion || '', foto: p.foto || '',
+      };
     });
 
     return {
@@ -337,6 +348,17 @@
           <div class="tarifa-row">
             <span class="tarifa-label">${t.label}</span>
             <span class="tarifa-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span class="tarifa-itbms">ITBMS inc.</span>`}</span>
+          </div>`).join('');
+        // Tarjetas elegantes con imagen, título, descripción y precio
+        document.getElementById('pasadia-cards-grid').innerHTML = Object.values(s.tarifas).map(t=>`
+          <div class="pasadia-card">
+            <div class="pasadia-card-img">${t.foto ? `<img src="${t.foto}" alt="${t.label}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-sun\\'></i>'">` : '<i class="fa-solid fa-sun"></i>'}</div>
+            <div class="pasadia-card-body">
+              <div class="pasadia-card-title">${t.label}</div>
+              <div class="pasadia-card-desc">${t.descripcion || ''}</div>
+              <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`}</div>
+              <button class="pasadia-card-btn" onclick="openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+            </div>
           </div>`).join('');
         modalidadActual = null;
         contadores = Object.fromEntries(Object.keys(s.tarifas).map(k=>[k,0]));
