@@ -45,7 +45,7 @@
     items.push({ cantidad: 1, itbms: 7, puntos_fidelidad: 0, ...item, id: `ci_${Date.now()}_${Math.random().toString(36).slice(2,7)}` });
     saveItems(items);
     abrirCarrito();
-    mostrarToastCarrito(`✅ "${item.nombre}" añadido al carrito.`);
+    mostrarToastCarrito(`<i class="fa-solid fa-circle-check"></i> "${item.nombre}" añadido al carrito.`);
   }
   function removeItem(id) {
     saveItems(getItems().filter(i => i.id !== id));
@@ -114,7 +114,7 @@
   function injectDom() {
     const fab = document.createElement('button');
     fab.id = 'sc-fab';
-    fab.innerHTML = `🛒<span id="sc-fab-count" style="display:none">0</span>`;
+    fab.innerHTML = `<i class="fa-solid fa-cart-shopping"></i><span id="sc-fab-count" style="display:none">0</span>`;
     fab.onclick = abrirCarrito;
     document.body.appendChild(fab);
 
@@ -122,7 +122,7 @@
     overlay.id = 'sc-overlay';
     overlay.innerHTML = `
       <div id="sc-panel">
-        <div id="sc-panel-head"><span>🛒 Tu carrito</span><button id="sc-close">✕</button></div>
+        <div id="sc-panel-head"><span><i class="fa-solid fa-cart-shopping"></i> Tu carrito</span><button id="sc-close"><i class="fa-solid fa-xmark"></i></button></div>
         <div id="sc-items"></div>
         <div id="sc-footer">
           <textarea id="sc-notas" placeholder="Notas para tu reserva (opcional)"></textarea>
@@ -164,18 +164,18 @@
     const items = getItems();
     const cont = document.getElementById('sc-items');
     if (!items.length) {
-      cont.innerHTML = `<div id="sc-empty">🛍️<br>Tu carrito está vacío.<br>Agrega una pasadía, cabaña, tabla de picnic o lo que quieras reservar.</div>`;
+      cont.innerHTML = `<div id="sc-empty"><i class="fa-solid fa-bag-shopping"></i><br>Tu carrito está vacío.<br>Agrega una pasadía, cabaña, tabla de picnic o lo que quieras reservar.</div>`;
     } else {
       cont.innerHTML = items.map(it => `
         <div class="sc-item">
           <div class="sc-item-info">
             <div class="sc-item-cat">${(it.categoria||'').toString()}</div>
             <div class="sc-item-nombre">${it.nombre} ${it.cantidad>1?`× ${it.cantidad}`:''}</div>
-            ${it.fecha_visita ? `<div class="sc-item-fecha">📅 ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita ? ' → '+it.fecha_visita_fin : ''}</div>` : ''}
+            ${it.fecha_visita ? `<div class="sc-item-fecha"><i class="fa-solid fa-calendar-days"></i> ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita ? ' → '+it.fecha_visita_fin : ''}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <span class="sc-item-precio">$${((parseFloat(it.precio)||0)*(it.cantidad||1)).toFixed(2)}</span>
-            <button class="sc-item-del" onclick="SanaguaCart.remove('${it.id}')">🗑</button>
+            <button class="sc-item-del" onclick="SanaguaCart.remove('${it.id}')"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>`).join('');
     }
@@ -200,7 +200,7 @@
 
     const { data: { session } } = await supaCart.auth.getSession();
     if (!session) {
-      mostrarToastCarrito('⚠️ Inicia sesión para enviar tu solicitud de reserva.');
+      mostrarToastCarrito('<i class="fa-solid fa-triangle-exclamation"></i> Inicia sesión para enviar tu solicitud de reserva.');
       setTimeout(() => { window.location.href = `${INDEX_URL}?action=login`; }, 1200);
       return;
     }
@@ -245,10 +245,10 @@
 
       clearItems();
       cerrarCarrito();
-      mostrarToastCarrito('✅ ¡Solicitud enviada! Podrás ver su estado en tu perfil.');
+      mostrarToastCarrito('<i class="fa-solid fa-circle-check"></i> ¡Solicitud enviada! Podrás ver su estado en tu perfil.');
     } catch (e) {
       console.error(e);
-      mostrarToastCarrito('❌ No se pudo enviar la solicitud. Intenta de nuevo.');
+      mostrarToastCarrito('<i class="fa-solid fa-circle-xmark"></i> No se pudo enviar la solicitud. Intenta de nuevo.');
     } finally {
       btn.disabled = false; btn.textContent = 'Enviar solicitud de reserva';
     }
