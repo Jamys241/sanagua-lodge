@@ -16,14 +16,14 @@
 <!-- Header -->
 <header>
   <div class="header-left">
-    <span class="header-logo"><i class="fa-leaf"></i> Sanagua</span>
+    <span class="header-logo"><i class="fa-solid fa-leaf"></i> Sanagua</span>
     <span class="header-sep">›</span>
     <span class="header-title">Editor de Menú · Restaurante</span>
   </div>
   <div class="header-right">
     <a class="btn-back" href="achive.html">← Sistema</a>
     <button class="btn-save-all" onclick="saveAll()" id="btn-save-all">
-      <i class="fa-floppy-disk"></i> Guardar todo
+      <i class="fa-solid fa-floppy-disk"></i> Guardar todo
     </button>
   </div>
 </header>
@@ -39,7 +39,7 @@
   <!-- Panel principal -->
   <main class="main" id="main-content">
     <div class="empty-cat">
-      <div class="empty-icon"><i class="fa-utensils"></i></div>
+      <div class="empty-icon"><i class="fa-solid fa-utensils"></i></div>
       <p>Cargando menú...</p>
     </div>
   </main>
@@ -98,7 +98,7 @@
       categorias: (cats || []).map(c => ({
         id: c.id,               // uuid real de Supabase
         key: c.key || c.id,
-        icon: c.icon || '<i class="fa-utensils"></i>',
+        icon: c.icon || '<i class="fa-solid fa-utensils"></i>',
         label: c.nombre,
         subtitulo: c.subtitulo || '',
         platos: (prods || [])
@@ -161,7 +161,7 @@
     if (!menuData.categorias.length) {
       document.getElementById('main-content').innerHTML = `
         <div class="empty-cat">
-          <div class="empty-icon"><i class="fa-utensils"></i></div>
+          <div class="empty-icon"><i class="fa-solid fa-utensils"></i></div>
           <p>Aún no hay categorías en Supabase. Corre el script de semilla del menú o crea una desde aquí.</p>
         </div>`;
     }
@@ -198,7 +198,7 @@
       </div>
       <div class="platos-grid" id="platos-grid-${idx}">
         ${cat.platos.length === 0
-          ? `<div class="empty-cat" style="grid-column:1/-1"><div class="empty-icon">🍴</div><p>No hay platos aún.</p></div>`
+          ? `<div class="empty-cat" style="grid-column:1/-1"><div class="empty-icon"><i class="fa-solid fa-utensils"></i></div><p>No hay platos aún.</p></div>`
           : cat.platos.map((p, pi) => renderPlatoCard(idx, pi, p)).join('')
         }
       </div>`;
@@ -215,10 +215,10 @@
           ${fotoSrc
             ? `<img id="img-preview-${id}" src="${fotoSrc}" alt="${plato.nombre}">`
             : `<div class="plato-img-placeholder" id="img-preview-${id}">
-                <span><i class="fa-utensils"></i></span><small>Subir foto</small>
+                <span><i class="fa-solid fa-utensils"></i></span><small>Subir foto</small>
                </div>`
           }
-          <div class="plato-img-overlay"><span><i class="fa-camera"></i> Cambiar foto</span></div>
+          <div class="plato-img-overlay"><span><i class="fa-solid fa-camera"></i> Cambiar foto</span></div>
           <input type="file" class="plato-img-input" id="img-input-${id}" accept="image/*"
             onchange="handleFoto(event,'${id}',${catIdx},${platoIdx})">
         </div>
@@ -242,9 +242,9 @@
         </div>
         <!-- Acciones -->
         <div class="plato-actions">
-          <button class="btn-del" onclick="deletePlato(${catIdx},${platoIdx})"><i class="fa-trash"></i> Eliminar</button>
+          <button class="btn-del" onclick="deletePlato(${catIdx},${platoIdx})"><i class="fa-solid fa-trash"></i> Eliminar</button>
           <button class="btn-save-plato" id="btn-${id}" onclick="savePlato('${id}',${catIdx},${platoIdx})">
-            <i class="fa-floppy-disk"></i> Guardar
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
           </button>
         </div>
       </div>`;

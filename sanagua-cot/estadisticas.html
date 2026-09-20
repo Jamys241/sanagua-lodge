@@ -15,13 +15,13 @@
 <body>
 
 <header>
-  <span class="logo"><i class="fa-chart-column"></i> Estadísticas de operación</span>
+  <span class="logo"><i class="fa-solid fa-chart-column"></i> Estadísticas de operación</span>
   <a class="btn-back" href="achive.html">← Volver al sistema</a>
 </header>
 
 <div id="lock-wrap" class="lock-wrap">
   <div class="lock-card">
-    <div class="lock-icon"><i class="fa-lock"></i></div>
+    <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
     <div class="lock-title">Panel protegido</div>
     <p>Ingresa la contraseña de acceso para ver las estadísticas.</p>
     <input type="password" id="lock-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')desbloquear()">
@@ -48,7 +48,7 @@
       <div id="f-rango-wrap" style="display:none;gap:8px;align-items:center">
         <select id="f-rango-desde"></select><span>—</span><select id="f-rango-hasta"></select>
       </div>
-      <button class="btn btn-accent" onclick="cargarEstadisticas()"><i class="fa-magnifying-glass"></i> Aplicar</button>
+      <button class="btn btn-accent" onclick="cargarEstadisticas()"><i class="fa-solid fa-magnifying-glass"></i> Aplicar</button>
     </div>
   </div>
 

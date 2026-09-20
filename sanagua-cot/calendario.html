@@ -23,7 +23,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title"><i class="fa-calendar-days"></i> Calendario</span>
+  <span class="hh-title"><i class="fa-solid fa-calendar-days"></i> Calendario</span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -54,7 +54,7 @@
       <span><span class="cal-legend-dot" style="background:#2d7a4f"></span>Completada</span>
       <span><span class="cal-legend-dot" style="background:#e09000"></span>Aplazada</span>
       <span><span class="cal-legend-dot" style="background:#888"></span>Cancelada</span>
-      <span><span class="cal-legend-dot" style="background:#7fa0ac;outline:2px dashed #7fa0ac;outline-offset:2px;border-radius:50%"></span>Evento manual <i class="fa-star"></i></span>
+      <span><span class="cal-legend-dot" style="background:#7fa0ac;outline:2px dashed #7fa0ac;outline-offset:2px;border-radius:50%"></span>Evento manual <i class="fa-solid fa-star"></i></span>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
       <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Filtrar:</span>
@@ -76,7 +76,7 @@
         <option value="Cabaña Ocelot">Cabaña Ocelot</option>
         <option value="Cabaña Motmot">Cabaña Motmot</option>
       </select>
-      <button class="cal-nav-btn" onclick="clearCalFilters()" style="font-size:.75rem;padding:4px 10px;color:var(--muted);"><i class="fa-xmark"></i> Limpiar</button>
+      <button class="cal-nav-btn" onclick="clearCalFilters()" style="font-size:.75rem;padding:4px 10px;color:var(--muted);"><i class="fa-solid fa-xmark"></i> Limpiar</button>
     </div>
     <div id="cal-body"></div>
   </div>
@@ -85,7 +85,7 @@
 <div class="modal-overlay" id="event-modal">
   <div class="modal">
     <div class="modal-header">
-      <h2 id="event-modal-title"><i class="fa-calendar-days"></i> Nuevo Evento</h2>
+      <h2 id="event-modal-title"><i class="fa-solid fa-calendar-days"></i> Nuevo Evento</h2>
       <button class="modal-close" onclick="closeEventModal()">×</button>
     </div>
     <div class="modal-body">
@@ -96,10 +96,10 @@
           <div class="form-group full">
             <label>Tipo de cliente</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span><i class="fa-money-bill"></i> Contado</span></label>
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span><i class="fa-user"></i> Persona Natural</span></label>
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span><i class="fa-building"></i> Persona Jurídica</span></label>
-              <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="ev-client-exento"><span><i class="fa-circle"></i> Exento de ITBMS</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-money-bill"></i> Contado</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-user"></i> Persona Natural</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-building"></i> Persona Jurídica</span></label>
+              <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="ev-client-exento"><span><i class="fa-solid fa-circle"></i> Exento de ITBMS</span></label>
             </div>
           </div>
           <div class="form-group full"><label>Nombre / Empresa <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
@@ -147,8 +147,8 @@
               <option value="Completada">Completada</option>
             </select>
           </div>
-          <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="ev-visit-date" oninput="updateEvNights()"></div>
-          <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de fin</label><input type="date" id="ev-visit-date-end" oninput="updateEvNights()"></div>
+          <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="ev-visit-date" oninput="updateEvNights()"></div>
+          <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de fin</label><input type="date" id="ev-visit-date-end" oninput="updateEvNights()"></div>
           <div class="form-group full" id="ev-nights-wrap" style="display:none;">
             <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="ev-nights-label"></div>
           </div>
@@ -169,11 +169,11 @@
       </div>
 
       <div class="actions-bar">
-        <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;"><i class="fa-trash"></i> Eliminar</button>
+        <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;"><i class="fa-solid fa-trash"></i> Eliminar</button>
         <button class="btn btn-outline" onclick="closeEventModal()">Cancelar</button>
-        <button class="btn btn-outline" onclick="soloGenerarPDFevento()"><i class="fa-file"></i> Vista previa PDF</button>
-        <button class="btn btn-green" onclick="saveEvent()"><i class="fa-floppy-disk"></i> Guardar evento</button>
-        <button class="btn btn-accent" onclick="saveEventYGenerarPDF()"><i class="fa-download"></i> Guardar y generar PDF</button>
+        <button class="btn btn-outline" onclick="soloGenerarPDFevento()"><i class="fa-solid fa-file"></i> Vista previa PDF</button>
+        <button class="btn btn-green" onclick="saveEvent()"><i class="fa-solid fa-floppy-disk"></i> Guardar evento</button>
+        <button class="btn btn-accent" onclick="saveEventYGenerarPDF()"><i class="fa-solid fa-download"></i> Guardar y generar PDF</button>
       </div>
     </div>
   </div>
@@ -204,10 +204,10 @@
         <div class="form-group full">
           <label>Tipo de cliente</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span><i class="fa-money-bill"></i> Contado</span></label>
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span><i class="fa-user"></i> Persona Natural</span></label>
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span><i class="fa-building"></i> Persona Jurídica</span></label>
-            <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="edit-client-exento"><span><i class="fa-circle"></i> Exento de ITBMS</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-money-bill"></i> Contado</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-user"></i> Persona Natural</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-building"></i> Persona Jurídica</span></label>
+            <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="edit-client-exento"><span><i class="fa-solid fa-circle"></i> Exento de ITBMS</span></label>
           </div>
         </div>
         <div class="form-group full">
@@ -253,11 +253,11 @@
           </div>
         </div>
         <div class="form-group">
-          <label><i class="fa-calendar-days"></i> Fecha de inicio</label>
+          <label><i class="fa-solid fa-calendar-days"></i> Fecha de inicio</label>
           <input type="date" id="edit-visit-date" oninput="updateEditNights()">
         </div>
         <div class="form-group">
-          <label><i class="fa-calendar-days"></i> Fecha de fin</label>
+          <label><i class="fa-solid fa-calendar-days"></i> Fecha de fin</label>
           <input type="date" id="edit-visit-date-end" oninput="updateEditNights()">
         </div>
         <div class="form-group full" id="edit-nights-wrap" style="display:none;">
@@ -370,10 +370,10 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-danger" onclick="deleteQuote()"><i class="fa-trash"></i> Eliminar</button>
+      <button class="btn btn-danger" onclick="deleteQuote()"><i class="fa-solid fa-trash"></i> Eliminar</button>
       <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-green" onclick="saveEdit()"><i class="fa-floppy-disk"></i> Guardar cambios</button>
-      <button class="btn btn-blue" onclick="exportConfirmation()"><i class="fa-file"></i> Exportar Confirmación</button>
+      <button class="btn btn-green" onclick="saveEdit()"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+      <button class="btn btn-blue" onclick="exportConfirmation()"><i class="fa-solid fa-file"></i> Exportar Confirmación</button>
     </div>
   </div>
 </div>
@@ -704,7 +704,7 @@
 
     if (!evts.length) {
       document.getElementById('cal-body').innerHTML =
-        `<div class="cal-empty-day"><i class="fa-envelope-open"></i> Sin reservaciones para este día.</div>`;
+        `<div class="cal-empty-day"><i class="fa-solid fa-envelope-open"></i> Sin reservaciones para este día.</div>`;
       return;
     }
 
@@ -733,8 +733,8 @@
             <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
             <div class="cal-dia-sub">
               ${q.visit_date_end && q.visit_date_end !== q.visit_date
-                ? `<i class="fa-calendar-days"></i> Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · <i class="fa-moon"></i> ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
-                : q.visit_date ? `<i class="fa-calendar-days"></i> ${fmtDateShort(q.visit_date)}` : ''}
+                ? `<i class="fa-solid fa-calendar-days"></i> Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · <i class="fa-solid fa-moon"></i> ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
+                : q.visit_date ? `<i class="fa-solid fa-calendar-days"></i> ${fmtDateShort(q.visit_date)}` : ''}
             </div>
             <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
           </div>
@@ -823,7 +823,7 @@
   function itemEventHTML(item) {
     const cls   = evClass(item);
     const label = isEvent(item)
-      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} <i class="fa-star"></i>`
+      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} <i class="fa-solid fa-star"></i>`
       : calEventLabel(item);
     if (isEvent(item)) {
       return `<div class="cal-event ${cls}" style="border-style:dashed;opacity:.9"
@@ -1117,7 +1117,7 @@
         <input type="number" value="${Number(it.price||0).toFixed(2)}" step="0.01" placeholder="Precio"
           oninput="editItems[${i}].price=parseFloat(this.value)||0;recalcEditItem(${i})"
           style="padding:6px 9px;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;background:var(--bg)">
-        <button class="btn btn-danger btn-sm" onclick="removeEditItem(${i})"><i class="fa-xmark"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="removeEditItem(${i})"><i class="fa-solid fa-xmark"></i></button>
       </div>
     `).join('') + `<div style="font-size:.75rem;color:var(--ink-muted);padding:6px 0 0">Cant. · Precio unitario (sin ITBMS ni descuento)</div>`;
   }
@@ -1442,7 +1442,7 @@
   function nightsBanner(s, e) {
     const n = calcNights(s, e);
     if (n <= 0) return '';
-    return `<i class="fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
+    return `<i class="fa-solid fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
   }
   function updateEditNights() {
     const s = document.getElementById('edit-visit-date').value;

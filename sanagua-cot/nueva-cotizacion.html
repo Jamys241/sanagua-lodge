@@ -24,7 +24,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title"><i class="fa-file-invoice"></i> Nueva Cotización <span id="quote-counter" style="font-weight:400;opacity:.7;font-size:.8rem;margin-left:10px"></span></span>
+  <span class="hh-title"><i class="fa-solid fa-file-invoice"></i> Nueva Cotización <span id="quote-counter" style="font-weight:400;opacity:.7;font-size:.8rem;margin-left:10px"></span></span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -41,19 +41,19 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;align-items:center">
           <label class="tipo-cliente-opt" id="opt-contado">
             <input type="radio" name="tipo-cliente" value="contado" checked onchange="onTipoClienteChange()">
-            <span><i class="fa-money-bill"></i> Cliente Contado</span>
+            <span><i class="fa-solid fa-money-bill"></i> Cliente Contado</span>
           </label>
           <label class="tipo-cliente-opt" id="opt-natural">
             <input type="radio" name="tipo-cliente" value="natural" onchange="onTipoClienteChange()">
-            <span><i class="fa-user"></i> Persona Natural</span>
+            <span><i class="fa-solid fa-user"></i> Persona Natural</span>
           </label>
           <label class="tipo-cliente-opt" id="opt-juridica">
             <input type="radio" name="tipo-cliente" value="juridica" onchange="onTipoClienteChange()">
-            <span><i class="fa-building"></i> Persona Jurídica</span>
+            <span><i class="fa-solid fa-building"></i> Persona Jurídica</span>
           </label>
           <label class="tipo-cliente-opt" id="opt-exento" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff">
             <input type="checkbox" id="client-exento" onchange="onExentoChange()">
-            <span><i class="fa-circle"></i> Exento de ITBMS</span>
+            <span><i class="fa-solid fa-circle"></i> Exento de ITBMS</span>
           </label>
         </div>
       </div>
@@ -65,8 +65,8 @@
       <div class="form-group full"><label>Dirección</label><input type="text" id="client-address" placeholder="Ciudad de Panamá, Panamá"></div>
       <div class="form-group"><label>Fecha</label><input type="date" id="quote-date"></div>
       <div class="form-group"><label>Válida hasta</label><input type="date" id="quote-valid"></div>
-      <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="visit-date" oninput="updateNights()"></div>
-      <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de fin</label><input type="date" id="visit-date-end" oninput="updateNights()"></div>
+      <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="visit-date" oninput="updateNights()"></div>
+      <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de fin</label><input type="date" id="visit-date-end" oninput="updateNights()"></div>
       <div class="form-group full" id="nights-label-wrap" style="display:none;">
         <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="nights-label"></div>
       </div>
@@ -100,7 +100,7 @@
     <div class="card-title">Ítems de la Cotización</div>
     <div class="products-toolbar">
       <button class="btn btn-accent" onclick="abrirSelectorProductos()">+ Agregar productos del catálogo</button>
-      <button class="btn btn-outline" onclick="addCustomItem()"><i class="fa-pen"></i> Personalizado</button>
+      <button class="btn btn-outline" onclick="addCustomItem()"><i class="fa-solid fa-pen"></i> Personalizado</button>
     </div>
     <div class="table-wrap">
       <table class="items-table">
@@ -169,7 +169,7 @@
     <div class="form-group" style="margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label style="margin:0">Notas / Condiciones</label>
-        <button class="btn btn-outline" style="font-size:.76rem;padding:5px 11px;" onclick="insertCondicionesSanagua()"><i class="fa-file-invoice"></i> Condiciones Sanagua Lodge</button>
+        <button class="btn btn-outline" style="font-size:.76rem;padding:5px 11px;" onclick="insertCondicionesSanagua()"><i class="fa-solid fa-file-invoice"></i> Condiciones Sanagua Lodge</button>
       </div>
       <textarea id="quote-notes" placeholder="Tiempo de entrega, forma de pago, garantías..." style="min-height:110px;"></textarea>
     </div>
@@ -181,14 +181,14 @@
       <div class="totals-row" id="row-itbms7"><span>ITBMS 7%</span><span id="t-itbms7">$0.00</span></div>
       <div class="totals-row" id="row-itbms10"><span>ITBMS 10%</span><span id="t-itbms10">$0.00</span></div>
       <div class="totals-row total-row"><span>TOTAL</span><span id="t-total">$0.00</span></div>
-      <div class="totals-row abono-row"><span><i class="fa-credit-card"></i> Abono requerido (50%)</span><span id="t-abono">$0.00</span></div>
+      <div class="totals-row abono-row"><span><i class="fa-solid fa-credit-card"></i> Abono requerido (50%)</span><span id="t-abono">$0.00</span></div>
     </div>
 
     <div class="actions-bar" style="margin-top:18px;">
-      <button class="btn btn-outline btn-large" onclick="clearAll()"><i class="fa-trash"></i> Limpiar</button>
-      <button class="btn btn-outline btn-large" onclick="soloGenerarPDF()"><i class="fa-file"></i> Vista previa PDF</button>
-      <button class="btn btn-accent btn-large" onclick="guardarCotizacion()"><i class="fa-floppy-disk"></i> Guardar cotización</button>
-      <button class="btn btn-green btn-large" onclick="guardarYGenerarPDF()"><i class="fa-download"></i> Guardar y generar PDF</button>
+      <button class="btn btn-outline btn-large" onclick="clearAll()"><i class="fa-solid fa-trash"></i> Limpiar</button>
+      <button class="btn btn-outline btn-large" onclick="soloGenerarPDF()"><i class="fa-solid fa-file"></i> Vista previa PDF</button>
+      <button class="btn btn-accent btn-large" onclick="guardarCotizacion()"><i class="fa-solid fa-floppy-disk"></i> Guardar cotización</button>
+      <button class="btn btn-green btn-large" onclick="guardarYGenerarPDF()"><i class="fa-solid fa-download"></i> Guardar y generar PDF</button>
     </div>
   </div>
 
@@ -201,9 +201,9 @@
     overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
       justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
-      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-cart-shopping"></i> Agregar productos</span>
+      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-solid fa-cart-shopping"></i> Agregar productos</span>
       <button onclick="cerrarSelectorProductos()" style="background:none;border:none;
-        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer"><i class="fa-xmark"></i></button>
+        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:20px">
       <div id="selector-productos-list"></div>
@@ -428,7 +428,7 @@
           <option value="0"  ${it.itbms===0 ?'selected':''}>Sin</option></select></td>
         <td style="text-align:right">$${iamt.toFixed(2)}</td>
         <td style="text-align:right;font-weight:600">$${tot.toFixed(2)}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="removeItem(${i})"><i class="fa-xmark"></i></button></td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeItem(${i})"><i class="fa-solid fa-xmark"></i></button></td>
       </tr>`;
     }).join('');
   }
@@ -621,7 +621,7 @@
   function nightsBanner(s, e) {
     const n = calcNights(s, e);
     if (n <= 0) return '';
-    return `<i class="fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
+    return `<i class="fa-solid fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
   }
   function updateNights() {
     const s = document.getElementById('visit-date').value;

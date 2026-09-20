@@ -29,7 +29,7 @@
 <!-- Cintillo de cuenta atrás de bloqueo -->
 <div id="suscrip-banner" style="display:none;background:#7a1f1f;color:#fff;padding:8px 16px;
   text-align:center;font-size:.8rem;font-weight:700;letter-spacing:.02em">
-  <i class="fa-hourglass-half"></i> El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
+  <i class="fa-solid fa-hourglass-half"></i> El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
 </div>
 
 <!-- Overlay y menú lateral -->
@@ -41,30 +41,30 @@
       <span id="rol-badge" class="rol-badge" style="display:none"></span>
     </div>
 
-    <button onclick="switchTab('dashboard');closeMenu()" style="font-weight:700"><i class="fa-house"></i> Dashboard</button>
+    <button onclick="switchTab('dashboard');closeMenu()" style="font-weight:700"><i class="fa-solid fa-house"></i> Dashboard</button>
 
     <!-- Reservas -->
     <button class="menu-group-btn" onclick="toggleMenuGroup('grp-reservas',this)">
-      <i class="fa-calendar-days"></i> Reservas <span class="menu-group-arrow">▼</span>
+      <i class="fa-solid fa-calendar-days"></i> Reservas <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-reservas">
-      <button onclick="location.href='calendario.html';closeMenu()"><i class="fa-calendar-days"></i> Calendario</button>
-      <button onclick="location.href='nueva-cotizacion.html';closeMenu()"><i class="fa-file-invoice"></i> Nueva Cotización</button>
-      <button onclick="location.href='history.html';closeMenu()"><i class="fa-box-archive"></i> Historial</button>
-      <button onclick="location.href='resumen.html';closeMenu()"><i class="fa-chart-column"></i> Resumen</button>
-      <button onclick="location.href='solicitudes.html';closeMenu()"><i class="fa-inbox"></i> Solicitudes</button>
+      <button onclick="location.href='calendario.html';closeMenu()"><i class="fa-solid fa-calendar-days"></i> Calendario</button>
+      <button onclick="location.href='nueva-cotizacion.html';closeMenu()"><i class="fa-solid fa-file-invoice"></i> Nueva Cotización</button>
+      <button onclick="location.href='history.html';closeMenu()"><i class="fa-solid fa-box-archive"></i> Historial</button>
+      <button onclick="location.href='resumen.html';closeMenu()"><i class="fa-solid fa-chart-column"></i> Resumen</button>
+      <button onclick="location.href='solicitudes.html';closeMenu()"><i class="fa-solid fa-inbox"></i> Solicitudes</button>
     </div>
 
     <div class="side-menu-divider"></div>
 
     <!-- Mis Servicios -->
     <button class="menu-group-btn" onclick="toggleMenuGroup('grp-servicios',this)">
-      <i class="fa-concierge-bell"></i> Mis Servicios <span class="menu-group-arrow">▼</span>
+      <i class="fa-solid fa-concierge-bell"></i> Mis Servicios <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-servicios">
-      <button onclick="window.open('mis-servicios.html','_blank');closeMenu()"><i class="fa-concierge-bell"></i> Mis Servicios</button>
-      <button onclick="window.open('populares.html','_blank');closeMenu()"><i class="fa-star"></i> Populares Web</button>
-      <button onclick="abrirMenuEditor();closeMenu()"><i class="fa-utensils"></i> Editor de Menú Web</button>
+      <button onclick="window.open('mis-servicios.html','_blank');closeMenu()"><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</button>
+      <button onclick="window.open('populares.html','_blank');closeMenu()"><i class="fa-solid fa-star"></i> Populares Web</button>
+      <button onclick="abrirMenuEditor();closeMenu()"><i class="fa-solid fa-utensils"></i> Editor de Menú Web</button>
     </div>
 
     <div class="side-menu-divider"></div>
@@ -81,17 +81,17 @@
 
     <!-- Sistema -->
     <button class="menu-group-btn" onclick="toggleMenuGroup('grp-sistema',this)">
-      <i class="fa-gear"></i> Sistema <span class="menu-group-arrow">▼</span>
+      <i class="fa-solid fa-gear"></i> Sistema <span class="menu-group-arrow">▼</span>
     </button>
     <div class="menu-group-items" id="grp-sistema">
-      <button onclick="location.href='usuarios.html';closeMenu()"><i class="fa-users"></i> Usuarios</button>
-      <button onclick="location.href='configuracion.html';closeMenu()"><i class="fa-gear"></i> Configuración</button>
-      <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;"><i class="fa-lock"></i> Permisos del Admin</button>
-      <button onclick="abrirCambiarPass();closeMenu()"><i class="fa-key"></i> Cambiar contraseña</button>
+      <button onclick="location.href='usuarios.html';closeMenu()"><i class="fa-solid fa-users"></i> Usuarios</button>
+      <button onclick="location.href='configuracion.html';closeMenu()"><i class="fa-solid fa-gear"></i> Configuración</button>
+      <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;"><i class="fa-solid fa-lock"></i> Permisos del Admin</button>
+      <button onclick="abrirCambiarPass();closeMenu()"><i class="fa-solid fa-key"></i> Cambiar contraseña</button>
     </div>
 
     <div class="side-menu-divider"></div>
-    <button onclick="cerrarSesion()" style="color:#e88;"><i class="fa-right-from-bracket"></i> Cerrar sesión</button>
+    <button onclick="cerrarSesion()" style="color:#e88;"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
   </nav>
   <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
@@ -103,7 +103,7 @@
 <div class="modal-overlay" id="permisos-modal">
   <div class="modal" style="max-width:500px;">
     <div class="modal-header">
-      <h2><i class="fa-lock"></i> Permisos del Admin</h2>
+      <h2><i class="fa-solid fa-lock"></i> Permisos del Admin</h2>
       <button class="modal-close" onclick="closePermisosModal()">×</button>
     </div>
     <div class="modal-body">
@@ -117,7 +117,7 @@
       <div id="permisos-lista"></div>
       <div class="actions-bar" style="margin-top:20px;">
         <button class="btn btn-outline" onclick="closePermisosModal()">Cancelar</button>
-        <button class="btn btn-accent" onclick="savePermisos()"><i class="fa-floppy-disk"></i> Guardar permisos</button>
+        <button class="btn btn-accent" onclick="savePermisos()"><i class="fa-solid fa-floppy-disk"></i> Guardar permisos</button>
       </div>
     </div>
   </div>
@@ -127,7 +127,7 @@
 <div class="modal-overlay" id="event-modal">
   <div class="modal">
     <div class="modal-header">
-      <h2 id="event-modal-title"><i class="fa-calendar-days"></i> Nuevo Evento</h2>
+      <h2 id="event-modal-title"><i class="fa-solid fa-calendar-days"></i> Nuevo Evento</h2>
       <button class="modal-close" onclick="closeEventModal()">×</button>
     </div>
     <div class="modal-body">
@@ -138,10 +138,10 @@
           <div class="form-group full">
             <label>Tipo de cliente</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span><i class="fa-money-bill"></i> Contado</span></label>
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span><i class="fa-user"></i> Persona Natural</span></label>
-              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span><i class="fa-building"></i> Persona Jurídica</span></label>
-              <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="ev-client-exento"><span><i class="fa-circle"></i> Exento de ITBMS</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="contado" checked onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-money-bill"></i> Contado</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="natural" onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-user"></i> Persona Natural</span></label>
+              <label class="tipo-cliente-opt"><input type="radio" name="ev-tipo-cliente" value="juridica" onchange="onEvTipoClienteChange()"><span><i class="fa-solid fa-building"></i> Persona Jurídica</span></label>
+              <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="ev-client-exento"><span><i class="fa-solid fa-circle"></i> Exento de ITBMS</span></label>
             </div>
           </div>
           <div class="form-group full"><label>Nombre / Empresa <span class="ev-req-mark" style="display:none;color:var(--red)">*</span></label><input type="text" id="ev-client-name" placeholder="Nombre del cliente"></div>
@@ -189,8 +189,8 @@
               <option value="Completada">Completada</option>
             </select>
           </div>
-          <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="ev-visit-date" oninput="updateEvNights()"></div>
-          <div class="form-group"><label><i class="fa-calendar-days"></i> Fecha de fin</label><input type="date" id="ev-visit-date-end" oninput="updateEvNights()"></div>
+          <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de inicio</label><input type="date" id="ev-visit-date" oninput="updateEvNights()"></div>
+          <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> Fecha de fin</label><input type="date" id="ev-visit-date-end" oninput="updateEvNights()"></div>
           <div class="form-group full" id="ev-nights-wrap" style="display:none;">
             <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="ev-nights-label"></div>
           </div>
@@ -211,11 +211,11 @@
       </div>
 
       <div class="actions-bar">
-        <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;"><i class="fa-trash"></i> Eliminar</button>
+        <button class="btn btn-danger btn-sm" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;"><i class="fa-solid fa-trash"></i> Eliminar</button>
         <button class="btn btn-outline" onclick="closeEventModal()">Cancelar</button>
-        <button class="btn btn-outline" onclick="soloGenerarPDFevento()"><i class="fa-file"></i> Vista previa PDF</button>
-        <button class="btn btn-green" onclick="saveEvent()"><i class="fa-floppy-disk"></i> Guardar evento</button>
-        <button class="btn btn-accent" onclick="saveEventYGenerarPDF()"><i class="fa-download"></i> Guardar y generar PDF</button>
+        <button class="btn btn-outline" onclick="soloGenerarPDFevento()"><i class="fa-solid fa-file"></i> Vista previa PDF</button>
+        <button class="btn btn-green" onclick="saveEvent()"><i class="fa-solid fa-floppy-disk"></i> Guardar evento</button>
+        <button class="btn btn-accent" onclick="saveEventYGenerarPDF()"><i class="fa-solid fa-download"></i> Guardar y generar PDF</button>
       </div>
     </div>
   </div>
@@ -246,10 +246,10 @@
         <div class="form-group full">
           <label>Tipo de cliente</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span><i class="fa-money-bill"></i> Contado</span></label>
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span><i class="fa-user"></i> Persona Natural</span></label>
-            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span><i class="fa-building"></i> Persona Jurídica</span></label>
-            <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="edit-client-exento"><span><i class="fa-circle"></i> Exento de ITBMS</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="contado" checked onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-money-bill"></i> Contado</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="natural" onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-user"></i> Persona Natural</span></label>
+            <label class="tipo-cliente-opt"><input type="radio" name="edit-tipo-cliente" value="juridica" onchange="onEditTipoClienteChange()"><span><i class="fa-solid fa-building"></i> Persona Jurídica</span></label>
+            <label class="tipo-cliente-opt" style="border-color:#4a9aba;color:#2a6a8a;background:#f0f8ff"><input type="checkbox" id="edit-client-exento"><span><i class="fa-solid fa-circle"></i> Exento de ITBMS</span></label>
           </div>
         </div>
         <div class="form-group full">
@@ -295,11 +295,11 @@
           </div>
         </div>
         <div class="form-group">
-          <label><i class="fa-calendar-days"></i> Fecha de inicio</label>
+          <label><i class="fa-solid fa-calendar-days"></i> Fecha de inicio</label>
           <input type="date" id="edit-visit-date" oninput="updateEditNights()">
         </div>
         <div class="form-group">
-          <label><i class="fa-calendar-days"></i> Fecha de fin</label>
+          <label><i class="fa-solid fa-calendar-days"></i> Fecha de fin</label>
           <input type="date" id="edit-visit-date-end" oninput="updateEditNights()">
         </div>
         <div class="form-group full" id="edit-nights-wrap" style="display:none;">
@@ -412,10 +412,10 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-danger" onclick="deleteQuote()"><i class="fa-trash"></i> Eliminar</button>
+      <button class="btn btn-danger" onclick="deleteQuote()"><i class="fa-solid fa-trash"></i> Eliminar</button>
       <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-green" onclick="saveEdit()"><i class="fa-floppy-disk"></i> Guardar cambios</button>
-      <button class="btn btn-blue" onclick="exportConfirmation()"><i class="fa-file"></i> Exportar Confirmación</button>
+      <button class="btn btn-green" onclick="saveEdit()"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+      <button class="btn btn-blue" onclick="exportConfirmation()"><i class="fa-solid fa-file"></i> Exportar Confirmación</button>
     </div>
   </div>
 </div>
@@ -424,7 +424,7 @@
 <div id="tab-dashboard" class="tab-panel active">
 <div class="container">
   <div class="card">
-    <div class="card-title" id="dash-saludo"><i class="fa-hand"></i> Bienvenido/a</div>
+    <div class="card-title" id="dash-saludo"><i class="fa-solid fa-hand"></i> Bienvenido/a</div>
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:22px;">Este es el resumen de tu operación hoy.</p>
 
     <div class="dash-stats">
@@ -473,9 +473,9 @@
     box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
     <div style="background:var(--ink);padding:18px 24px;display:flex;align-items:center;
       justify-content:space-between">
-      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-key"></i> Cambiar contraseña</span>
+      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-solid fa-key"></i> Cambiar contraseña</span>
       <button onclick="cerrarCambiarPass()" style="background:none;border:none;color:rgba(255,255,255,.5);
-        font-size:1.2rem;cursor:pointer;line-height:1"><i class="fa-xmark"></i></button>
+        font-size:1.2rem;cursor:pointer;line-height:1"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:24px">
       <div class="form-group">
@@ -496,7 +496,7 @@
       <div id="chpass-msg" style="font-size:.8rem;min-height:18px;margin-bottom:12px;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-outline" onclick="cerrarCambiarPass()" style="flex:1">Cancelar</button>
-        <button class="btn btn-accent" onclick="guardarNuevaPass()" style="flex:1"><i class="fa-floppy-disk"></i> Guardar</button>
+        <button class="btn btn-accent" onclick="guardarNuevaPass()" style="flex:1"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
       </div>
     </div>
   </div>
@@ -511,8 +511,8 @@
   backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:14px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="background:var(--ink);padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-lock"></i> Panel de Estadísticas</span>
-      <button onclick="cerrarModalEstadisticas()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer;line-height:1"><i class="fa-xmark"></i></button>
+      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-solid fa-lock"></i> Panel de Estadísticas</span>
+      <button onclick="cerrarModalEstadisticas()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer;line-height:1"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:22px">
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;">Ingresa la contraseña de acceso para ver las estadísticas de operación.</p>
@@ -521,7 +521,7 @@
           style="width:100%;padding-right:40px" onkeydown="if(event.key==='Enter')confirmarPasswordEstadisticas()">
         <button type="button" onclick="toggleVerPasswordEstadisticas()" id="stats-lock-eye"
           style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
-          cursor:pointer;font-size:1rem;color:var(--muted);padding:4px"><i class="fa-eye"></i></button>
+          cursor:pointer;font-size:1rem;color:var(--muted);padding:4px"><i class="fa-solid fa-eye"></i></button>
       </div>
       <div id="stats-lock-error" style="color:var(--red);font-size:.8rem;min-height:16px;margin-bottom:10px"></div>
       <button class="btn btn-accent" style="width:100%" onclick="confirmarPasswordEstadisticas()">Entrar</button>
@@ -541,9 +541,9 @@
     overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="background:var(--ink);padding:16px 22px;display:flex;align-items:center;
       justify-content:space-between;position:sticky;top:0;z-index:1;border-radius:14px 14px 0 0">
-      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-lock"></i> Control de Bloqueo</span>
+      <span style="font-weight:700;color:#fff;font-size:.95rem"><i class="fa-solid fa-lock"></i> Control de Bloqueo</span>
       <button onclick="cerrarModalSuscripcion()" style="background:none;border:none;
-        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer"><i class="fa-xmark"></i></button>
+        color:rgba(255,255,255,.5);font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:22px">
 
@@ -554,25 +554,25 @@
           Estado actual del sistema
         </div>
         <div id="suscrip-estado-lbl" style="font-size:1.1rem;font-weight:800;color:var(--success)">
-          <i class="fa-circle-check"></i> Activo
+          <i class="fa-solid fa-circle-check"></i> Activo
         </div>
         <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
       </div>
 
       <!-- Bloqueo inmediato -->
       <div style="background:#fff5f5;border:1.5px solid #f0c0c0;border-radius:10px;padding:16px;margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px"><i class="fa-ban"></i> Bloqueo inmediato</div>
+        <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px"><i class="fa-solid fa-ban"></i> Bloqueo inmediato</div>
         <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
           Bloquea el sistema al instante. Solo el SuperAdmin podrá acceder.
         </p>
         <button class="btn" style="background:#c0392b;color:#fff;width:100%" onclick="bloquearAhora()">
-          <i class="fa-ban"></i> Bloquear sistema ahora
+          <i class="fa-solid fa-ban"></i> Bloquear sistema ahora
         </button>
       </div>
 
       <!-- Programar cuenta atrás -->
       <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
-        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:12px"><i class="fa-hourglass-half"></i> Programar cuenta atrás</div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:12px"><i class="fa-solid fa-hourglass-half"></i> Programar cuenta atrás</div>
         <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
           <div class="form-group" style="margin:0;flex:1;min-width:90px">
             <label>Cantidad</label>
@@ -590,27 +590,27 @@
           </div>
         </div>
         <button class="btn btn-accent" style="width:100%;margin-top:10px" onclick="programarBloqueo()">
-          <i class="fa-hourglass-half"></i> Programar cuenta atrás
+          <i class="fa-solid fa-hourglass-half"></i> Programar cuenta atrás
         </button>
       </div>
 
       <!-- Quitar bloqueo -->
       <button class="btn btn-outline" style="width:100%" onclick="quitarBloqueo()">
-        <i class="fa-circle-check"></i> Quitar bloqueo / Reactivar sistema
+        <i class="fa-solid fa-circle-check"></i> Quitar bloqueo / Reactivar sistema
       </button>
 
       <!-- Contraseña maestra de desbloqueo (SuperAdmin) -->
       <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
         padding:16px;margin-top:18px">
         <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
-          <i class="fa-lock"></i> Contraseña permanente (SuperAdmin)
+          <i class="fa-solid fa-lock"></i> Contraseña permanente (SuperAdmin)
         </div>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
           Contraseña fija que solo tú conoces. Permite ACCEDER al sistema desde la pantalla de bloqueo sin desbloquearlo para los demás.
         </p>
         <div style="display:flex;gap:8px">
           <input type="password" id="suscrip-master-pass" class="form-input" placeholder="Tu contraseña permanente" style="flex:1">
-          <button class="btn btn-accent" onclick="guardarPasswordMaestra()"><i class="fa-floppy-disk"></i></button>
+          <button class="btn btn-accent" onclick="guardarPasswordMaestra()"><i class="fa-solid fa-floppy-disk"></i></button>
         </div>
         <div id="master-pass-msg" style="font-size:.76rem;min-height:16px;margin-top:6px;text-align:center"></div>
       </div>
@@ -619,7 +619,7 @@
       <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
         padding:16px;margin-top:14px">
         <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
-          <i class="fa-key"></i> Código de desbloqueo (Admin)
+          <i class="fa-solid fa-key"></i> Código de desbloqueo (Admin)
         </div>
         <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
           Código de un solo uso. Al usarlo, DESBLOQUEA el sistema para todos y caduca.
@@ -632,7 +632,7 @@
           <div id="codigo-actual-num" style="font-size:1.6rem;font-weight:800;letter-spacing:.2em;color:var(--accent)"></div>
         </div>
         <button class="btn btn-accent" style="width:100%" onclick="generarCodigoTemporal()">
-          <i class="fa-dice"></i> Generar nuevo código
+          <i class="fa-solid fa-dice"></i> Generar nuevo código
         </button>
       </div>
 
@@ -644,7 +644,7 @@
 <div id="lock-screen" style="display:none;position:fixed;inset:0;z-index:9999;
   background:var(--ink);color:#fff;align-items:center;justify-content:center;
   flex-direction:column;text-align:center;padding:24px">
-  <div style="font-size:3.5rem;margin-bottom:16px"><i class="fa-lock"></i></div>
+  <div style="font-size:3.5rem;margin-bottom:16px"><i class="fa-solid fa-lock"></i></div>
   <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">Sistema desactivado</div>
   <div style="font-size:.88rem;color:rgba(255,255,255,.6);max-width:360px;line-height:1.6;margin-bottom:24px">
     El acceso a este sistema ha sido suspendido temporalmente. Si tienes un código de acceso, ingrésalo abajo.
@@ -654,7 +654,7 @@
     border-radius:12px;padding:20px;max-width:320px;width:100%">
     <div style="font-size:.78rem;font-weight:700;color:rgba(255,255,255,.6);
       text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
-      <i class="fa-key"></i> Código de acceso
+      <i class="fa-solid fa-key"></i> Código de acceso
     </div>
     <input type="text" id="lock-codigo" placeholder="Ingresa el código"
       style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);
@@ -1836,7 +1836,7 @@
           <option value="0"  ${it.itbms===0 ?'selected':''}>Sin</option></select></td>
         <td style="text-align:right">$${iamt.toFixed(2)}</td>
         <td style="text-align:right;font-weight:600">$${tot.toFixed(2)}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="removeItem(${i})"><i class="fa-xmark"></i></button></td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeItem(${i})"><i class="fa-solid fa-xmark"></i></button></td>
       </tr>`;
     }).join('');
   }
@@ -2035,7 +2035,7 @@
       allEvents  = newEvts;
       renderHistory(allHistory);
     } catch {
-      if (container) container.innerHTML='<div class="empty-hist"><i class="fa-circle-xmark"></i> No se pudo cargar el historial.</div>';
+      if (container) container.innerHTML='<div class="empty-hist"><i class="fa-solid fa-circle-xmark"></i> No se pudo cargar el historial.</div>';
     }
   }
 
@@ -2125,16 +2125,16 @@
     const actionsCell = (item) => {
       if (item._type==='event') return `
         <div class="hist-actions">
-          <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')"><i class="fa-pen"></i> Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')"><i class="fa-trash"></i> Eliminar</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')"><i class="fa-solid fa-pen"></i> Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>
         </div>`;
       const qnum = item.quote_num;
       return `
         <div class="hist-actions">
-          <button class="btn btn-outline btn-sm" onclick="openEditByNum('${qnum}')"><i class="fa-pen"></i> Editar</button>
-          <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${qnum}')"><i class="fa-file"></i> PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditByNum('${qnum}')"><i class="fa-solid fa-pen"></i> Editar</button>
+          <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${qnum}')"><i class="fa-solid fa-file"></i> PDF</button>
           <button class="btn btn-outline btn-sm" onclick="reGeneratePDFv2ByNum('${qnum}')" title="Formato nuevo (Pantone)">📄 PDF (v3)</button>
-          <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${qnum}')"><i class="fa-file-invoice"></i> Conf.</button>
+          <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${qnum}')"><i class="fa-solid fa-file-invoice"></i> Conf.</button>
         </div>`;
     };
 
@@ -2189,7 +2189,7 @@
               <div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                   ${isEv
-                    ? '<span style="color:var(--purple);font-weight:700;font-size:.9rem"><i class="fa-star"></i> Evento</span>'
+                    ? '<span style="color:var(--purple);font-weight:700;font-size:.9rem"><i class="fa-solid fa-star"></i> Evento</span>'
                     : `<span class="hist-card-num">#${item.quote_num}</span>`}
                   ${estadoBadge(item.estado)}
                 </div>
@@ -2197,7 +2197,7 @@
                 ${item.categoria ? `<div class="hist-card-cat">${item.categoria}</div>` : ''}
                 ${item.plataforma ? `<div style="font-size:.72rem;color:var(--blue);font-weight:600">${item.plataforma}</div>` : ''}
                 <div class="hist-card-meta">
-                  ${item.visit_date ? `<i class="fa-calendar-days"></i> ${fmtDateShort(item.visit_date)}` : ''}
+                  ${item.visit_date ? `<i class="fa-solid fa-calendar-days"></i> ${fmtDateShort(item.visit_date)}` : ''}
                   ${item.client?.phone ? ` · ${item.client.phone}` : ''}
                 </div>
               </div>
@@ -2209,13 +2209,13 @@
             </div>
             <div class="hist-card-actions">
               ${isEv ? `
-                <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')"><i class="fa-pen"></i> Editar</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')"><i class="fa-trash"></i> Eliminar</button>
+                <button class="btn btn-outline btn-sm" onclick="openEditEvent('${item.id}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteEventById('${item.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>
               ` : `
-                <button class="btn btn-outline btn-sm" onclick="openEditByNum('${item.quote_num}')"><i class="fa-pen"></i> Editar</button>
-                <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${item.quote_num}')"><i class="fa-file"></i> PDF</button>
+                <button class="btn btn-outline btn-sm" onclick="openEditByNum('${item.quote_num}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                <button class="btn btn-accent btn-sm" onclick="reGeneratePDFByNum('${item.quote_num}')"><i class="fa-solid fa-file"></i> PDF</button>
                 <button class="btn btn-outline btn-sm" onclick="reGeneratePDFv2ByNum('${item.quote_num}')" title="Formato nuevo (Pantone)">📄 PDF (v3)</button>
-                <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${item.quote_num}')"><i class="fa-file-invoice"></i> Confirmación</button>
+                <button class="btn btn-blue btn-sm" onclick="quickExportConfByNum('${item.quote_num}')"><i class="fa-solid fa-file-invoice"></i> Confirmación</button>
               `}
             </div>
           </div>`;
@@ -2298,7 +2298,7 @@
         <input type="number" value="${Number(it.price||0).toFixed(2)}" step="0.01" placeholder="Precio"
           oninput="editItems[${i}].price=parseFloat(this.value)||0;recalcEditItem(${i})"
           style="padding:6px 9px;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;background:var(--bg)">
-        <button class="btn btn-danger btn-sm" onclick="removeEditItem(${i})"><i class="fa-xmark"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="removeEditItem(${i})"><i class="fa-solid fa-xmark"></i></button>
       </div>
     `).join('') + `<div style="font-size:.75rem;color:var(--ink-muted);padding:6px 0 0">Cant. · Precio unitario (sin ITBMS ni descuento)</div>`;
   }
@@ -2742,7 +2742,7 @@
     // ── Lista de cotizaciones ─────────────────────────────────────────────
     const el = document.getElementById('resumen-list');
     if (!filtered.length) {
-      el.innerHTML = '<div class="empty-hist" style="padding:30px"><i class="fa-envelope-open"></i> Sin cotizaciones en este período.</div>';
+      el.innerHTML = '<div class="empty-hist" style="padding:30px"><i class="fa-solid fa-envelope-open"></i> Sin cotizaciones en este período.</div>';
       return;
     }
 
@@ -2786,7 +2786,7 @@
             <div class="resumen-client">${q.client?.name || '—'}</div>
             <div class="resumen-date">
               ${fmtDateR(q.date)}
-              ${q.visit_date ? ` · <i class="fa-calendar-days"></i> Visita: ${fmtDateR(q.visit_date)}` : ''}
+              ${q.visit_date ? ` · <i class="fa-solid fa-calendar-days"></i> Visita: ${fmtDateR(q.visit_date)}` : ''}
             </div>
           </div>
         </div>
@@ -3017,7 +3017,7 @@
 
     if (!evts.length) {
       document.getElementById('cal-body').innerHTML =
-        `<div class="cal-empty-day"><i class="fa-envelope-open"></i> Sin reservaciones para este día.</div>`;
+        `<div class="cal-empty-day"><i class="fa-solid fa-envelope-open"></i> Sin reservaciones para este día.</div>`;
       return;
     }
 
@@ -3046,8 +3046,8 @@
             <div class="cal-dia-sub">${q.client?.email||''} ${q.client?.phone ? '· '+q.client.phone : ''}</div>
             <div class="cal-dia-sub">
               ${q.visit_date_end && q.visit_date_end !== q.visit_date
-                ? `<i class="fa-calendar-days"></i> Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · <i class="fa-moon"></i> ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
-                : q.visit_date ? `<i class="fa-calendar-days"></i> ${fmtDateShort(q.visit_date)}` : ''}
+                ? `<i class="fa-solid fa-calendar-days"></i> Entrada: ${fmtDateShort(q.visit_date)} · Salida: ${fmtDateShort(q.visit_date_end)} · <i class="fa-solid fa-moon"></i> ${nightsText(calcNights(q.visit_date, q.visit_date_end))}`
+                : q.visit_date ? `<i class="fa-solid fa-calendar-days"></i> ${fmtDateShort(q.visit_date)}` : ''}
             </div>
             <div class="cal-dia-sub">Total: $${total.toFixed(2)} · Recibido: $${recibido.toFixed(2)} · Saldo: $${saldo.toFixed(2)}</div>
           </div>
@@ -3291,7 +3291,7 @@
   function nightsBanner(s, e) {
     const n = calcNights(s, e);
     if (n <= 0) return '';
-    return `<i class="fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
+    return `<i class="fa-solid fa-moon"></i> ${nightsText(n)} · Entrada: ${fmtDateShort(s)} · Salida: ${fmtDateShort(e)}`;
   }
 
   function updateNights() {
@@ -3422,7 +3422,7 @@
   function itemEventHTML(item) {
     const cls   = evClass(item);
     const label = isEvent(item)
-      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} <i class="fa-star"></i>`
+      ? `${item.categoria||'Evento'} - ${item.client?.name||'—'} <i class="fa-solid fa-star"></i>`
       : calEventLabel(item);
     if (isEvent(item)) {
       return `<div class="cal-event ${cls}" style="border-style:dashed;opacity:.9"
@@ -3588,7 +3588,7 @@
       <div class="sol-stat-card" style="border-color:#f0c0c0"><div class="sol-stat-n" style="color:var(--red)">${rech}</div><div class="sol-stat-l">Rechazadas</div></div>`;
 
     if (!lista.length) {
-      document.getElementById('sol-lista').innerHTML = `<div style="color:var(--muted);font-size:.85rem;padding:40px 0;text-align:center;grid-column:1/-1"><i class="fa-envelope-open"></i> No hay solicitudes ${filtro==='todas'?'':'con estado "'+filtro+'"'}</div>`;
+      document.getElementById('sol-lista').innerHTML = `<div style="color:var(--muted);font-size:.85rem;padding:40px 0;text-align:center;grid-column:1/-1"><i class="fa-solid fa-envelope-open"></i> No hay solicitudes ${filtro==='todas'?'':'con estado "'+filtro+'"'}</div>`;
       return;
     }
 
@@ -3599,7 +3599,7 @@
       return new Date(b.created_at) - new Date(a.created_at);
     });
 
-    const BADGE_TXT = { pendiente:'<i class="fa-hourglass-half"></i> Pendiente', en_proceso:'<i class="fa-arrows-rotate"></i> En proceso', confirmada:'<i class="fa-circle-check"></i> Confirmada', completada:'<i class="fa-circle-check"></i> Completada', rechazada:'<i class="fa-circle-xmark"></i> Rechazada' };
+    const BADGE_TXT = { pendiente:'<i class="fa-solid fa-hourglass-half"></i> Pendiente', en_proceso:'<i class="fa-solid fa-arrows-rotate"></i> En proceso', confirmada:'<i class="fa-solid fa-circle-check"></i> Confirmada', completada:'<i class="fa-solid fa-circle-check"></i> Completada', rechazada:'<i class="fa-solid fa-circle-xmark"></i> Rechazada' };
 
     document.getElementById('sol-lista').innerHTML = ordenadas.map(sol => {
       const badgeTxt = BADGE_TXT[sol.estado] || sol.estado;
@@ -3610,24 +3610,24 @@
 
       const itemsHtml = items.map(it => `
         <div class="sol-dato"><span class="sol-dato-lbl">${it.categoria||'Ítem'}</span>
-          <span class="sol-dato-val">${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''} — $${(parseFloat(it.precio)||0).toFixed(2)}${it.fecha_visita?` (<i class="fa-calendar-days"></i> ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}</span>
+          <span class="sol-dato-val">${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''} — $${(parseFloat(it.precio)||0).toFixed(2)}${it.fecha_visita?` (<i class="fa-solid fa-calendar-days"></i> ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}</span>
         </div>`).join('');
 
       let acciones;
       if (sol.estado === 'pendiente') {
-        acciones = `<button class="btn-sol-done" onclick="cambiarEstadoAdmin('${sol.id}','en_proceso')"><i class="fa-arrows-rotate"></i> Marcar en proceso</button>
-          <button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')"><i class="fa-circle-check"></i> Confirmar</button>
-          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')"><i class="fa-circle-xmark"></i> Rechazar</button>`;
+        acciones = `<button class="btn-sol-done" onclick="cambiarEstadoAdmin('${sol.id}','en_proceso')"><i class="fa-solid fa-arrows-rotate"></i> Marcar en proceso</button>
+          <button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')"><i class="fa-solid fa-circle-check"></i> Confirmar</button>
+          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')"><i class="fa-solid fa-circle-xmark"></i> Rechazar</button>`;
       } else if (sol.estado === 'en_proceso') {
-        acciones = `<button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')"><i class="fa-circle-check"></i> Confirmar</button>
-          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')"><i class="fa-circle-xmark"></i> Rechazar</button>`;
+        acciones = `<button class="btn-aprobar" onclick="cambiarEstadoAdmin('${sol.id}','confirmada')"><i class="fa-solid fa-circle-check"></i> Confirmar</button>
+          <button class="btn-rechazar" onclick="cambiarEstadoAdmin('${sol.id}','rechazada')"><i class="fa-solid fa-circle-xmark"></i> Rechazar</button>`;
       } else {
-        acciones = `<button class="btn-sol-done">${badgeTxt}${sol.puntos_otorgados>0?` · <i class="fa-star"></i> ${sol.puntos_otorgados} pts otorgados`:''}</button>`;
+        acciones = `<button class="btn-sol-done">${badgeTxt}${sol.puntos_otorgados>0?` · <i class="fa-solid fa-star"></i> ${sol.puntos_otorgados} pts otorgados`:''}</button>`;
       }
 
       return `<div class="sol-card" id="sol-card-${sol.id}">
         <div class="sol-card-head">
-          <div class="sol-servicio"><i class="fa-cart-shopping"></i> Solicitud (${items.length} ítem${items.length===1?'':'s'})</div>
+          <div class="sol-servicio"><i class="fa-solid fa-cart-shopping"></i> Solicitud (${items.length} ítem${items.length===1?'':'s'})</div>
           <span class="sol-badge ${sol.estado}">${badgeTxt}</span>
         </div>
         <div class="sol-card-body">
@@ -3636,10 +3636,10 @@
             <div>
               <div class="sol-u-nombre">${sol.contacto?.nombre||'—'}${sol.contacto?.verificado?' <span title="Cliente verificado" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;background:#3d8bfd;border-radius:50%;vertical-align:middle;"><svg viewBox="0 0 24 24" style="width:8px;height:8px;fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"></polyline></svg></span>':''}</div>
               <div class="sol-u-contacto">
-                ${sol.contacto?.cedula?`<i class="fa-id-card"></i> ${sol.contacto.cedula}`:''}
-                ${sol.contacto?.edad?`· <i class="fa-cake-candles"></i> ${sol.contacto.edad} años`:''}
-                ${sol.contacto?.telefono?`· <i class="fa-mobile-screen"></i> ${sol.contacto.telefono}`:''}
-                ${sol.contacto?.email?`· <i class="fa-envelope"></i> ${sol.contacto.email}`:''}
+                ${sol.contacto?.cedula?`<i class="fa-solid fa-id-card"></i> ${sol.contacto.cedula}`:''}
+                ${sol.contacto?.edad?`· <i class="fa-solid fa-cake-candles"></i> ${sol.contacto.edad} años`:''}
+                ${sol.contacto?.telefono?`· <i class="fa-solid fa-mobile-screen"></i> ${sol.contacto.telefono}`:''}
+                ${sol.contacto?.email?`· <i class="fa-solid fa-envelope"></i> ${sol.contacto.email}`:''}
               </div>
             </div>
           </div>
@@ -3647,7 +3647,7 @@
             ${itemsHtml}
             ${sol.notas_cliente?`<div class="sol-dato"><span class="sol-dato-lbl">Notas</span><span class="sol-dato-val">${sol.notas_cliente}</span></div>`:''}
             <div class="sol-dato"><span class="sol-dato-lbl">Total</span><span class="sol-dato-val">$${parseFloat(sol.total||0).toFixed(2)}</span></div>
-            ${puntosTotal>0?`<div class="sol-dato"><span class="sol-dato-lbl">Puntos al confirmar</span><span class="sol-dato-val"><i class="fa-star"></i> ${puntosTotal}</span></div>`:''}
+            ${puntosTotal>0?`<div class="sol-dato"><span class="sol-dato-lbl">Puntos al confirmar</span><span class="sol-dato-val"><i class="fa-solid fa-star"></i> ${puntosTotal}</span></div>`:''}
           </div>
           <div class="sol-fecha">Recibida: ${fecha}</div>
         </div>

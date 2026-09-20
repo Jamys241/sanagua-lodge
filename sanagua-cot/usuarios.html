@@ -22,7 +22,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title"><i class="fa-users"></i> Gestión de usuarios web</span>
+  <span class="hh-title"><i class="fa-solid fa-users"></i> Gestión de usuarios web</span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -41,7 +41,7 @@
       <input type="email" id="adm-buscar-email" placeholder="correo@ejemplo.com"
         class="form-input" style="flex:1;min-width:220px"
         onkeydown="if(event.key==='Enter')buscarAdmin()">
-      <button class="btn btn-accent" onclick="buscarAdmin()"><i class="fa-magnifying-glass"></i> Buscar</button>
+      <button class="btn btn-accent" onclick="buscarAdmin()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
     </div>
     <div id="adm-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -51,8 +51,8 @@
           <div id="adm-email-display" style="font-size:.78rem;color:var(--muted)"></div>
           <span id="adm-role-badge" style="display:inline-block;margin-top:4px;font-size:.66rem;font-weight:700;background:var(--accent);color:#fff;padding:2px 9px;border-radius:20px;"></span>
         </div>
-        <button class="btn btn-outline btn-sm" id="adm-editar-btn" onclick="toggleEditarAdmin()" style="display:none"><i class="fa-pen"></i> Editar datos</button>
-        <button class="btn btn-danger btn-sm" id="adm-quitar-btn" onclick="quitarPermisoAdmin()"><i class="fa-ban"></i> Quitar permiso de administrador</button>
+        <button class="btn btn-outline btn-sm" id="adm-editar-btn" onclick="toggleEditarAdmin()" style="display:none"><i class="fa-solid fa-pen"></i> Editar datos</button>
+        <button class="btn btn-danger btn-sm" id="adm-quitar-btn" onclick="quitarPermisoAdmin()"><i class="fa-solid fa-ban"></i> Quitar permiso de administrador</button>
       </div>
       <div id="adm-edit-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
         <div class="form-grid" style="margin-bottom:10px">
@@ -61,25 +61,25 @@
           <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Teléfono</label><input type="text" id="adm-edit-phone" class="form-input"></div>
         </div>
         <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">El correo no se puede editar aquí porque es la credencial de inicio de sesión (vive en Supabase Auth).</p>
-        <button class="btn btn-accent btn-sm" onclick="guardarEdicionAdmin()"><i class="fa-floppy-disk"></i> Guardar cambios</button>
+        <button class="btn btn-accent btn-sm" onclick="guardarEdicionAdmin()"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
         <span id="adm-edit-msg" style="font-size:.8rem;margin-left:8px"></span>
       </div>
     </div>
     <div id="adm-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
-      <i class="fa-circle-xmark"></i> No se encontró ningún administrador con ese correo.
+      <i class="fa-solid fa-circle-xmark"></i> No se encontró ningún administrador con ese correo.
     </div>
   </div>
 
   <!-- Sección: clientes -->
   <div class="card">
-    <div class="card-title" style="margin:0 0 6px"><i class="fa-users"></i> Clientes</div>
+    <div class="card-title" style="margin:0 0 6px"><i class="fa-solid fa-users"></i> Clientes</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Busca un cliente por correo o cédula para ver sus datos, ajustar sus puntos o verificar su identidad.</p>
 
     <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
       <input type="text" id="usr-buscar-email" placeholder="correo@ejemplo.com o cédula"
         class="form-input" style="flex:1;min-width:220px"
         onkeydown="if(event.key==='Enter')buscarUsuario()">
-      <button class="btn btn-accent" onclick="buscarUsuario()"><i class="fa-magnifying-glass"></i> Buscar</button>
+      <button class="btn btn-accent" onclick="buscarUsuario()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
     </div>
 
     <div id="usr-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
@@ -100,8 +100,8 @@
 
       <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)"><i class="fa-id-card"></i> Datos de identidad</div>
-          <button class="btn btn-outline btn-sm" id="usr-editar-btn" onclick="toggleEditarUsuario()" style="display:none"><i class="fa-pen"></i> Editar</button>
+          <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)"><i class="fa-solid fa-id-card"></i> Datos de identidad</div>
+          <button class="btn btn-outline btn-sm" id="usr-editar-btn" onclick="toggleEditarUsuario()" style="display:none"><i class="fa-solid fa-pen"></i> Editar</button>
         </div>
         <div class="form-grid" style="margin-bottom:12px" id="usr-datos-view">
           <div><label style="display:block;font-size:.68rem;color:var(--muted);margin-bottom:2px">Nombre</label><div id="usr-nombre-display" style="font-size:.88rem;color:var(--ink)">—</div></div>
@@ -117,7 +117,7 @@
             <div><label style="display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px">Edad</label><input type="number" id="usr-edit-edad" class="form-input" min="0" max="120"></div>
           </div>
           <p style="font-size:.72rem;color:var(--muted);margin-bottom:10px">El correo no se puede editar aquí porque es la credencial de inicio de sesión (vive en Supabase Auth).</p>
-          <button class="btn btn-accent btn-sm" onclick="guardarEdicionUsuario()"><i class="fa-floppy-disk"></i> Guardar cambios</button>
+          <button class="btn btn-accent btn-sm" onclick="guardarEdicionUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
           <span id="usr-edit-msg" style="font-size:.8rem;margin-left:8px"></span>
         </div>
         <div id="usr-doc-wrap" style="margin-bottom:12px;display:none">
@@ -129,7 +129,7 @@
       </div>
 
       <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px">
-        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px"><i class="fa-star"></i> Ajustar puntos</div>
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px"><i class="fa-solid fa-star"></i> Ajustar puntos</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="form-group" style="margin:0;flex:1;min-width:90px">
             <label>Cantidad</label>
@@ -141,15 +141,15 @@
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-accent" onclick="ajustarPts(1)" style="flex:1"><i class="fa-plus"></i> Añadir</button>
-          <button class="btn btn-danger" onclick="ajustarPts(-1)" style="flex:1"><i class="fa-minus"></i> Restar</button>
+          <button class="btn btn-accent" onclick="ajustarPts(1)" style="flex:1"><i class="fa-solid fa-plus"></i> Añadir</button>
+          <button class="btn btn-danger" onclick="ajustarPts(-1)" style="flex:1"><i class="fa-solid fa-minus"></i> Restar</button>
         </div>
         <div id="usr-pts-msg" style="font-size:.78rem;min-height:16px;margin-top:8px;text-align:center"></div>
       </div>
     </div>
 
     <div id="usr-no-encontrado" style="display:none;color:var(--muted);font-size:.85rem;padding:16px 0">
-      <i class="fa-circle-xmark"></i> No se encontró ningún usuario con ese correo.
+      <i class="fa-solid fa-circle-xmark"></i> No se encontró ningún usuario con ese correo.
     </div>
   </div>
 </div>
@@ -206,7 +206,7 @@
       }
 
       _adminEncontrado = user;
-      const labels = { admin: '<i class="fa-crown"></i> Administrador', superadmin: '<i class="fa-star"></i> Super Administrador', desarrollador: '<i class="fa-screwdriver-wrench"></i> Desarrollador' };
+      const labels = { admin: '<i class="fa-solid fa-crown"></i> Administrador', superadmin: '<i class="fa-solid fa-star"></i> Super Administrador', desarrollador: '<i class="fa-solid fa-screwdriver-wrench"></i> Desarrollador' };
       document.getElementById('adm-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
       document.getElementById('adm-nombre').textContent        = user.name || '—';
       document.getElementById('adm-email-display').textContent = user.email || '—';

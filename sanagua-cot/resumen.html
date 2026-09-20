@@ -22,7 +22,7 @@
 <body>
 
 <div class="hh-header">
-  <span class="hh-title"><i class="fa-chart-column"></i> Resumen de Cotizaciones</span>
+  <span class="hh-title"><i class="fa-solid fa-chart-column"></i> Resumen de Cotizaciones</span>
   <a href="achive.html">← Volver al sistema</a>
 </div>
 
@@ -206,7 +206,7 @@
     // ── Lista de cotizaciones ─────────────────────────────────────────────
     const el = document.getElementById('resumen-list');
     if (!filtered.length) {
-      el.innerHTML = '<div class="empty-hist" style="padding:30px"><i class="fa-envelope-open"></i> Sin cotizaciones en este período.</div>';
+      el.innerHTML = '<div class="empty-hist" style="padding:30px"><i class="fa-solid fa-envelope-open"></i> Sin cotizaciones en este período.</div>';
       return;
     }
 
@@ -250,7 +250,7 @@
             <div class="resumen-client">${q.client?.name || '—'}</div>
             <div class="resumen-date">
               ${fmtDateR(q.date)}
-              ${q.visit_date ? ` · <i class="fa-calendar-days"></i> Visita: ${fmtDateR(q.visit_date)}` : ''}
+              ${q.visit_date ? ` · <i class="fa-solid fa-calendar-days"></i> Visita: ${fmtDateR(q.visit_date)}` : ''}
             </div>
           </div>
         </div>
