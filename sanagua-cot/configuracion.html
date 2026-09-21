@@ -142,24 +142,17 @@
   <div class="card" id="card-crear-admin" style="display:none;">
     <div class="card-title">Crear nuevo administrador</div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
-      Se crea directamente en Supabase Auth. Comparte la contraseña con la persona por un canal seguro; podrá cambiarla desde "Mi contraseña".<br>
+      Crear una cuenta con acceso al panel requiere una clave privilegiada de Supabase que nunca debe
+      quedar expuesta en el navegador — por eso este paso se hace manualmente, directo desde el
+      dashboard de Supabase. Son 2 minutos:
       <strong>Solo visible para Super Administrador y Desarrollador.</strong>
     </p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="form-group"><label>Nombre</label><input type="text" id="newadmin-name" placeholder="Nombre completo"></div>
-      <div class="form-group"><label>Correo</label><input type="email" id="newadmin-email" placeholder="correo@ejemplo.com"></div>
-      <div class="form-group"><label>Contraseña temporal</label><input type="password" id="newadmin-pass" placeholder="Mínimo 6 caracteres"></div>
-      <div class="form-group">
-        <label>Role</label>
-        <select id="newadmin-role" style="width:100%;padding:8px;border-radius:6px;">
-          <option value="admin">Administrador</option>
-          <option value="superadmin">Super Administrador</option>
-        </select>
-      </div>
-    </div>
-    <div style="margin-top:14px;">
-      <button class="btn btn-accent" onclick="crearNuevoAdmin()"><i class="fa-solid fa-plus"></i> Crear administrador</button>
-    </div>
+    <ol style="font-size:.85rem;color:var(--ink);line-height:1.8;padding-left:20px;margin-bottom:14px;">
+      <li>Entra al <strong>dashboard de Supabase</strong> → <strong>Authentication → Users</strong>.</li>
+      <li>Clic en <strong>"Add user"</strong> → <strong>"Create new user"</strong>. Ingresa correo y contraseña temporal (marca "Auto Confirm User").</li>
+      <li>Ve a <strong>Table Editor → profiles</strong>, busca la fila con ese correo y cambia su columna <code>role</code> a <code>admin</code> o <code>superadmin</code>.</li>
+      <li>Comparte la contraseña por un canal seguro — la persona podrá cambiarla luego desde "Mi contraseña".</li>
+    </ol>
   </div>
 
   <!-- Sincronización automática -->
@@ -197,11 +190,6 @@
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  // URL del backend Flask (app.py) — solo lo usa "Crear nuevo administrador".
-  // Mientras no despliegues app.py en algún servidor, esa acción mostrará un
-  // aviso; el resto de esta página no depende de él.
-  const API_BASE = 'http://localhost:5000';
-
   function showLoading(v){ document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
   function showToast(msg, type='success'){
     const t = document.getElementById('toast');
@@ -215,10 +203,6 @@
   function puedeEditarCondiciones() {
     if (window.currentAdmin?.role === 'desarrollador') return true;
     return !!window.currentAdmin?.permisos?.editar_condiciones_pdf;
-  }
-  function authFetch(url, options = {}) {
-    const headers = { ...(options.headers || {}), 'Authorization': `Bearer ${window.currentAdmin?.accessToken || ''}` };
-    return fetch(url, { ...options, headers });
   }
 
   let empresaData = { nombre:'Sanagua Lodge S.A.', ruc:'155761744-2-2025', tel:'+507 6166-0114', email:'sanagualodge@gmail.com' };
@@ -450,32 +434,6 @@
       showToast('✅ Contraseña actualizada.', 'success');
     } catch (e) { showToast('❌ ' + (e.message || 'Error al guardar.'), 'error'); }
     finally { showLoading(false); }
-  }
-
-  async function crearNuevoAdmin() {
-    if (!esNivelSuperior(window.currentAdmin)) { showToast('No tienes permiso para crear administradores.', 'error'); return; }
-    const name  = document.getElementById('newadmin-name').value.trim();
-    const email = document.getElementById('newadmin-email').value.trim();
-    const pass  = document.getElementById('newadmin-pass').value;
-    const role  = document.getElementById('newadmin-role').value;
-    if (!name || !email || !pass) { showToast('Completa nombre, correo y contraseña.', 'error'); return; }
-    if (pass.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
-    showLoading(true);
-    try {
-      const resp = await authFetch(`${API_BASE}/auth/admins`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pass, role }),
-      });
-      const result = await resp.json();
-      if (!resp.ok) throw new Error(result.error || 'Error al crear el administrador.');
-      document.getElementById('newadmin-name').value  = '';
-      document.getElementById('newadmin-email').value = '';
-      document.getElementById('newadmin-pass').value  = '';
-      showToast(`✅ Administrador ${email} creado.`, 'success');
-    } catch (e) {
-      showToast('❌ ' + e.message + ' — ¿ya desplegaste el backend en ' + API_BASE + '? Mientras tanto puedes crear la cuenta manualmente desde el dashboard de Supabase.', 'error');
-    } finally { showLoading(false); }
   }
 
   function initPollControls() {

@@ -146,7 +146,7 @@
   function mostrarToastCarrito(msg) {
     const t = document.getElementById('sc-toast');
     if (!t) return;
-    t.textContent = msg;
+    t.innerHTML = msg;
     t.classList.add('show');
     clearTimeout(t._tt);
     t._tt = setTimeout(() => t.classList.remove('show'), 3500);

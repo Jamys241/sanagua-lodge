@@ -65,13 +65,6 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // URL del backend Flask (app.py) en el VPS. Ahí se suben y sirven las
-  // fotos del menú (ver /upload-image en app.py). Cambia este valor por el
-  // dominio real cuando despliegues (el mismo que en achive.html y
-  // assets/js/admin-guard.js).
-  const API_BASE = 'http://localhost:5000';
-
-
   // ── Verificar sesión ────────────────────────────────────────────────
   // La verificación real ahora la hace assets/js/admin-guard.js (Supabase
   // Auth + confirmación server-side), cargado en <head>. Si no hay sesión
@@ -273,24 +266,14 @@
     return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── Subir imagen al VPS (backend Flask) ───────────────────────────────
+  // ── Subir imagen a Supabase Storage (bucket "services") ────────────────
   async function uploadImagen(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', 'restaurante');
-
-    const r = await window.authFetch(`${API_BASE}/upload-image`, {
-      method: 'POST',
-      body: formData,
-    });
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${r.status}`);
-    }
-    const data = await r.json();
-    // El backend devuelve una ruta relativa (/static/uploads/...); la
-    // convertimos en URL absoluta contra el mismo backend que la sirve.
-    return `${API_BASE}${data.url}`;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `menu-${Date.now()}.${ext}`;
+    const { error } = await supa.storage.from('services').upload(path, file, { upsert: true });
+    if (error) throw new Error(error.message || 'Error al subir la imagen.');
+    const { data } = supa.storage.from('services').getPublicUrl(path);
+    return data.publicUrl;
   }
 
   // ── Modal de recorte ──────────────────────────────────────────────────

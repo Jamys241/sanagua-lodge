@@ -727,12 +727,6 @@
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  // URL del backend Flask (app.py) en el VPS — usado para subir la foto de
-  // cédula/pasaporte al registrarse. Cambia esto (y el mismo valor en
-  // sanagua-cot/achive.html y assets/js/admin-guard.js) por el dominio real
-  // cuando despliegues.
-  const API_BASE = 'http://localhost:5000';
-
   // Trae el profile (nombre, role, puntos, etc.) del usuario ya autenticado.
   // Devuelve { profile, errorMsg } — si algo falla, errorMsg trae el motivo
   // exacto para poder mostrarlo en pantalla (sin depender de la consola).
@@ -868,24 +862,24 @@
       // Subir la foto del documento (opcional) y guardar edad — el trigger
       // que crea el profile solo copia name/cedula/phone, así que estos dos
       // campos se completan aquí con una actualización directa.
-      let fotoUrl = '';
+      // Bucket PRIVADO (no público): el documento de identidad es un dato
+      // sensible — solo su dueño y los administradores pueden verlo.
+      let fotoPath = '';
       if (docFile) {
         btn.textContent = 'Subiendo documento...';
         try {
-          const formData = new FormData();
-          formData.append('file', docFile);
-          const up = await fetch(`${API_BASE}/upload-document`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${data.session.access_token}` },
-            body: formData,
-          });
-          if (up.ok) { const upData = await up.json(); fotoUrl = upData.url || ''; }
+          const ext = (docFile.name.split('.').pop() || 'jpg').toLowerCase();
+          const path = `${data.session.user.id}/documento.${ext}`;
+          const { error: upErr } = await supa.storage.from('documentos-identidad')
+            .upload(path, docFile, { upsert: true });
+          if (!upErr) fotoPath = path;
+          else console.warn('No se pudo subir el documento:', upErr);
         } catch (e) { console.warn('No se pudo subir el documento:', e); }
       }
 
       await supa.from('profiles').update({
         edad: parseInt(edad) || null,
-        foto_documento: fotoUrl,
+        foto_documento: fotoPath,
       }).eq('id', data.session.user.id);
 
       publicUser = { name, email, cedula, phone, edad: parseInt(edad)||null, verificado: false, puntos: 0, reservas: [] };
