@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=2">
+  <link rel="stylesheet" href="../css/camping.css?v=3">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -151,23 +151,14 @@
   // Arma el mismo objeto { camping: {...} } de siempre, leído ahora desde
   // el catálogo genérico de Mis Productos (product_categories + products).
   async function cargarPreciosCamping() {
-    // "Camping Propio" y "Camping Suministro" son ahora categorías PADRE,
-    // cada una con sus propias subcategorías (ej. "Carpa Individual",
-    // "Carpa Familiar"...) — los productos viven dentro de esas subcategorías.
-    const { data: padres } = await supaPrecios.from('product_categories')
-      .select('*').in('nombre', Object.values(CAMPING_CATEGORIAS)).eq('activo', true);
-    const { data: catCarpas } = await supaPrecios.from('product_categories')
-      .select('*').eq('nombre','Carpas').eq('activo', true).maybeSingle();
-
-    const padreIds = (padres||[]).map(c => c.id);
-    const { data: subcats } = padreIds.length
-      ? await supaPrecios.from('product_categories').select('*').in('parent_id', padreIds).eq('activo', true).order('orden', { ascending: true })
-      : { data: [] };
-
-    const subIds = (subcats||[]).map(c => c.id);
-    const idsProductos = [...subIds, ...(catCarpas ? [catCarpas.id] : [])];
-    const { data: prods } = idsProductos.length
-      ? await supaPrecios.from('products').select('*').in('categoria_id', idsProductos).eq('activo', true).order('orden', { ascending: true })
+    // "Camping Propio" y "Camping Suministro" SON las subcategorías (un
+    // solo nivel) — los ítems viven directo dentro de cada una, sin otra
+    // capa de subcategorías en medio.
+    const { data: cats } = await supaPrecios.from('product_categories')
+      .select('*').in('nombre', [...Object.values(CAMPING_CATEGORIAS), 'Carpas']).eq('activo', true);
+    const catIds = (cats||[]).map(c => c.id);
+    const { data: prods } = catIds.length
+      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true).order('orden', { ascending: true })
       : { data: [] };
 
     const { data: cfg } = await supaPrecios.from('camping_config').select('*').eq('key','settings');
@@ -175,22 +166,22 @@
 
     const modalidades = {};
     Object.entries(CAMPING_CATEGORIAS).forEach(([mod, nombreCat]) => {
-      const padre = (padres||[]).find(c => c.nombre === nombreCat);
-      const misSubcats = padre ? (subcats||[]).filter(s => s.parent_id === padre.id) : [];
+      const cat = (cats||[]).find(c => c.nombre === nombreCat);
       const tarifas = {};
-      const grupos = misSubcats.map(sub => {
-        const items = (prods||[]).filter(p => p.categoria_id === sub.id).map(p => {
-          const k = slugKey(`${sub.nombre}_${p.nombre}`);
-          const t = { key: k, label: p.nombre, subcategoria: sub.nombre, precio: parseFloat(p.precio)||0,
-                      descripcion: p.descripcion || '', foto: p.foto || '' };
-          if (k) tarifas[k] = t;
-          return t;
-        });
-        return { id: sub.id, nombre: sub.nombre, descripcion: sub.descripcion || '', foto: sub.foto || '', items };
-      });
+      const items = cat ? (prods||[]).filter(p => p.categoria_id === cat.id).map(p => {
+        const k = slugKey(p.nombre);
+        const t = { key: k, label: p.nombre, precio: parseFloat(p.precio)||0,
+                    descripcion: p.descripcion || '', foto: p.foto || '' };
+        if (k) tarifas[k] = t;
+        return t;
+      }) : [];
+      // Un solo "grupo" por modalidad (Propio / Suministro), con sus ítems
+      // directo adentro — así reutilizamos la misma tarjeta+modal de detalle.
+      const grupos = items.length ? [{ id: cat?.id, nombre: nombreCat, descripcion: cat?.descripcion || '', foto: cat?.foto || '', items }] : [];
       modalidades[mod] = { label: nombreCat, tarifas, grupos };
     });
 
+    const catCarpas = (cats||[]).find(c => c.nombre === 'Carpas');
     if (catCarpas) {
       const carpasProds = (prods||[]).filter(p => p.categoria_id === catCarpas.id);
       if (carpasProds.length) {
