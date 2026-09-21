@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css">
+  <link rel="stylesheet" href="../css/camping.css?v=2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -28,6 +28,12 @@
 <div class="pw">
   <div class="tc">
     <div>
+      <div style="margin-bottom:24px">
+        <div class="lbl" style="margin-bottom:14px">Nuestras opciones</div>
+        <div id="camping-cards-grid" class="camping-cards-grid">
+          <div style="color:#999;font-size:.85rem">Cargando opciones...</div>
+        </div>
+      </div>
       <div class="card">
         <div class="lbl">¿Qué incluye?</div>
         <div class="inc-grid" id="inc-list"></div>
@@ -65,10 +71,6 @@
         <div class="psub">por persona por noche · ITBMS incluido</div>
         <button class="btn-rb" onclick="openModal()">Solicitar reserva →</button>
       </div>
-      <div class="card" style="margin-top:16px">
-        <div class="lbl">Tarifas de entrada</div>
-        <div id="tar-list"></div>
-      </div>
       <div class="card" id="carpas-sidebar" style="margin-top:16px;display:none">
         <div class="lbl">Carpas disponibles</div>
         <div id="carpas-sidebar-list"></div>
@@ -84,6 +86,19 @@
 </div>
 
 <!-- MODAL -->
+<!-- MODAL DETALLE DE SUBCATEGORÍA -->
+<div class="ov" id="detalle-overlay-camp">
+  <div class="m" style="max-width:760px">
+    <div class="mh">
+      <div class="mt" id="detalle-titulo-camp">Detalles</div>
+      <button class="mc" onclick="closeDetalleGrupoCamping()">×</button>
+    </div>
+    <div class="mb">
+      <p id="detalle-desc-camp" style="color:#8a8676;font-size:.9rem;margin-bottom:18px"></p>
+      <div id="detalle-items-camp" class="pasadia-cards-grid" style="display:grid"></div>
+    </div>
+  </div>
+</div>
 <div class="ov" id="modal-ov">
   <div class="mo">
     <div class="mh">
@@ -136,27 +151,46 @@
   // Arma el mismo objeto { camping: {...} } de siempre, leído ahora desde
   // el catálogo genérico de Mis Productos (product_categories + products).
   async function cargarPreciosCamping() {
-    const { data: cats } = await supaPrecios.from('product_categories')
-      .select('*').in('nombre', [...Object.values(CAMPING_CATEGORIAS), 'Carpas']).eq('activo', true);
-    const catIds = (cats||[]).map(c => c.id);
-    const { data: prods } = catIds.length
-      ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true).order('orden', { ascending: true })
+    // "Camping Propio" y "Camping Suministro" son ahora categorías PADRE,
+    // cada una con sus propias subcategorías (ej. "Carpa Individual",
+    // "Carpa Familiar"...) — los productos viven dentro de esas subcategorías.
+    const { data: padres } = await supaPrecios.from('product_categories')
+      .select('*').in('nombre', Object.values(CAMPING_CATEGORIAS)).eq('activo', true);
+    const { data: catCarpas } = await supaPrecios.from('product_categories')
+      .select('*').eq('nombre','Carpas').eq('activo', true).maybeSingle();
+
+    const padreIds = (padres||[]).map(c => c.id);
+    const { data: subcats } = padreIds.length
+      ? await supaPrecios.from('product_categories').select('*').in('parent_id', padreIds).eq('activo', true).order('orden', { ascending: true })
       : { data: [] };
+
+    const subIds = (subcats||[]).map(c => c.id);
+    const idsProductos = [...subIds, ...(catCarpas ? [catCarpas.id] : [])];
+    const { data: prods } = idsProductos.length
+      ? await supaPrecios.from('products').select('*').in('categoria_id', idsProductos).eq('activo', true).order('orden', { ascending: true })
+      : { data: [] };
+
     const { data: cfg } = await supaPrecios.from('camping_config').select('*').eq('key','settings');
     const settings = (cfg||[]).find(r => r.key === 'settings')?.value || {};
 
     const modalidades = {};
     Object.entries(CAMPING_CATEGORIAS).forEach(([mod, nombreCat]) => {
-      const cat = (cats||[]).find(c => c.nombre === nombreCat);
+      const padre = (padres||[]).find(c => c.nombre === nombreCat);
+      const misSubcats = padre ? (subcats||[]).filter(s => s.parent_id === padre.id) : [];
       const tarifas = {};
-      if (cat) (prods||[]).filter(p => p.categoria_id === cat.id).forEach(p => {
-        const k = slugKey(p.nombre);
-        if (k) tarifas[k] = { label: p.nombre, precio: parseFloat(p.precio)||0 };
+      const grupos = misSubcats.map(sub => {
+        const items = (prods||[]).filter(p => p.categoria_id === sub.id).map(p => {
+          const k = slugKey(`${sub.nombre}_${p.nombre}`);
+          const t = { key: k, label: p.nombre, subcategoria: sub.nombre, precio: parseFloat(p.precio)||0,
+                      descripcion: p.descripcion || '', foto: p.foto || '' };
+          if (k) tarifas[k] = t;
+          return t;
+        });
+        return { id: sub.id, nombre: sub.nombre, descripcion: sub.descripcion || '', foto: sub.foto || '', items };
       });
-      modalidades[mod] = { label: nombreCat, tarifas };
+      modalidades[mod] = { label: nombreCat, tarifas, grupos };
     });
 
-    const catCarpas = (cats||[]).find(c => c.nombre === 'Carpas');
     if (catCarpas) {
       const carpasProds = (prods||[]).filter(p => p.categoria_id === catCarpas.id);
       if (carpasProds.length) {
@@ -316,11 +350,46 @@
     calcN();
   }
 
+  let gruposCamping = []; // grupos combinados de ambas modalidades, para el modal de detalle
+
+  function verDetalleGrupoCamping(i) {
+    const g = gruposCamping[i];
+    if (!g) return;
+    const itbms = P?.camping?.itbms || 7;
+    document.getElementById('detalle-titulo-camp').textContent = g.nombre;
+    document.getElementById('detalle-desc-camp').textContent = g.descripcion || '';
+    document.getElementById('detalle-items-camp').innerHTML = (g.items||[]).map(t=>`
+      <div class="pasadia-card">
+        <div class="pasadia-card-img">${t.foto ? `<img src="${t.foto}" alt="${t.label}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-campground\\'></i>'">` : '<i class="fa-solid fa-campground"></i>'}</div>
+        <div class="pasadia-card-body">
+          <div class="pasadia-card-title">${t.label}</div>
+          <div class="pasadia-card-desc">${t.descripcion || ''}</div>
+          <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>ITBMS inc.</span>`}</div>
+          <button class="pasadia-card-btn" onclick="closeDetalleGrupoCamping();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+        </div>
+      </div>`).join('') || '<div style="color:#999;font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
+    document.getElementById('detalle-overlay-camp').classList.add('open');
+  }
+  function closeDetalleGrupoCamping() {
+    document.getElementById('detalle-overlay-camp').classList.remove('open');
+  }
+
   function renderTar(){
     const it=P.camping.itbms||7, mods=P.camping.modalidades||{};
-    document.getElementById('tar-list').innerHTML=Object.values(mods).map(m=>`
-      <div style="font-size:.72rem;font-weight:700;color:var(--earth);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.08em">${m.label}</div>
-      ${Object.values(m.tarifas||{}).map(t=>`<div class="tr"><span class="tl">${t.label}</span><span class="tp">${t.precio===0?'Gratis':`$${(t.precio*(1+it/100)).toFixed(2)}<span class="ti">ITBMS</span>`}</span></div>`).join('')}`).join('');
+    gruposCamping = [];
+    Object.entries(mods).forEach(([modKey, m]) => {
+      (m.grupos||[]).forEach(g => gruposCamping.push({ ...g, modLabel: m.label }));
+    });
+    document.getElementById('camping-cards-grid').innerHTML = gruposCamping.map((g,i)=>`
+      <div class="pasadia-group-card" onclick="verDetalleGrupoCamping(${i})">
+        <div class="pasadia-group-img">${g.foto ? `<img src="${g.foto}" alt="${g.nombre}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-campground\\'></i>'">` : '<i class="fa-solid fa-campground"></i>'}</div>
+        <div class="pasadia-group-body">
+          <div class="pasadia-card-tag">${g.modLabel}</div>
+          <div class="pasadia-group-title">${g.nombre}</div>
+          <div class="pasadia-group-desc">${g.descripcion || ''}</div>
+          <button class="pasadia-group-btn" onclick="event.stopPropagation();verDetalleGrupoCamping(${i})">Detalles <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>`).join('') || '<div style="color:#999;font-size:.85rem">Aún no hay opciones de camping cargadas.</div>';
     const c=P.camping.modalidades?.suministro?.carpas;
     if(c){
       document.getElementById('carpas-sidebar').style.display='';
@@ -438,6 +507,9 @@
 
   function openModal(){verificarYReservar(()=>{document.getElementById('modal-ov').classList.add('open');loadYMostrarPopularesCamp();setTimeout(autorellenarDatos,100);});}
   function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+  document.getElementById('detalle-overlay-camp').addEventListener('click',e=>{
+    if(e.target===document.getElementById('detalle-overlay-camp'))closeDetalleGrupoCamping();
+  });
   document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
 
   async function loadYMostrarPopularesCamp(){
