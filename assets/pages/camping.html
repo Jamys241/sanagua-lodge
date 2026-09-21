@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=4">
+  <link rel="stylesheet" href="../css/camping.css?v=5">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -65,18 +65,12 @@
       </div>
     </div>
     <div class="sc">
-      <div class="ps">
-        <div class="pf">Desde</div>
-        <div class="pm" id="price-main">$0.00</div>
-        <div class="psub">por persona por noche · ITBMS incluido</div>
-        <button class="btn-rb" onclick="openModal()">Solicitar reserva →</button>
-      </div>
       <div class="card" id="carpas-sidebar" style="margin-top:16px;display:none">
         <div class="lbl">Carpas disponibles</div>
         <div id="carpas-sidebar-list"></div>
       </div>
       <div class="card" style="margin-top:16px;background:var(--cream);border:none">
-        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
+        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px"><i class="fa-solid fa-phone"></i> ¿Preguntas?</div>
         <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
           <a href="https://instagram.com/sanagualodge" style="color:var(--earth)">@sanagualodge</a>
         </div>
@@ -328,8 +322,6 @@
       const s=P.camping, it=s.itbms||7, mods=s.modalidades||{};
       document.getElementById('hero-desc').textContent=s.descripcion;
       if(s.incluye?.length) document.getElementById('inc-list').innerHTML=s.incluye.map(i=>`<div class="inc-item">${i}</div>`).join('');
-      const av=Object.values(mods).flatMap(m=>Object.values(m.tarifas||{}).filter(t=>t.precio>0).map(t=>t.precio*(1+it/100)));
-      if(av.length) document.getElementById('price-main').textContent=`$${Math.min(...av).toFixed(2)}`;
       renderTar(); renderStock();
     }
     renderCal(); renderModSel();
