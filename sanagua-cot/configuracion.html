@@ -139,22 +139,6 @@
   </div>
 
   <!-- Crear administrador (solo nivel superior) -->
-  <div class="card" id="card-crear-admin" style="display:none;">
-    <div class="card-title">Crear nuevo administrador</div>
-    <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">
-      Crear una cuenta con acceso al panel requiere una clave privilegiada de Supabase que nunca debe
-      quedar expuesta en el navegador — por eso este paso se hace manualmente, directo desde el
-      dashboard de Supabase. Son 2 minutos:
-      <strong>Solo visible para Super Administrador y Desarrollador.</strong>
-    </p>
-    <ol style="font-size:.85rem;color:var(--ink);line-height:1.8;padding-left:20px;margin-bottom:14px;">
-      <li>Entra al <strong>dashboard de Supabase</strong> → <strong>Authentication → Users</strong>.</li>
-      <li>Clic en <strong>"Add user"</strong> → <strong>"Create new user"</strong>. Ingresa correo y contraseña temporal (marca "Auto Confirm User").</li>
-      <li>Ve a <strong>Table Editor → profiles</strong>, busca la fila con ese correo y cambia su columna <code>role</code> a <code>admin</code> o <code>superadmin</code>.</li>
-      <li>Comparte la contraseña por un canal seguro — la persona podrá cambiarla luego desde "Mi contraseña".</li>
-    </ol>
-  </div>
-
   <!-- Sincronización automática -->
   <div class="card" id="sync-control-card">
     <div class="card-title" style="margin:0 0 6px;"><i class="fa-solid fa-arrows-rotate"></i> Sincronización automática</div>
@@ -318,7 +302,9 @@
 
   async function cargarPasswordStatsUI() {
     const box = document.getElementById('stats-pass-actual');
-    if (window.currentAdmin?.role !== 'desarrollador') { box.style.display = 'none'; return; }
+    const puedeVer = window.currentAdmin?.role === 'desarrollador' ||
+      (window.currentAdmin?.role === 'superadmin' && !!window.currentAdmin?.permisos?.ver_password_estadisticas);
+    if (!puedeVer) { box.style.display = 'none'; return; }
     try {
       const { data, error } = await supa.rpc('ver_password_estadisticas');
       if (error) throw error;
@@ -461,7 +447,6 @@
   }
 
   document.addEventListener('admin-ready', async () => {
-    document.getElementById('card-crear-admin').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
     document.getElementById('card-condiciones-pdf').style.display = puedeEditarCondiciones() ? '' : 'none';
     await Promise.all([loadEmpresa(), loadLogo(), loadHorarios()]);
     if (puedeEditarCondiciones()) cargarCondicionesPdf();

@@ -718,6 +718,7 @@
     ver_sincronizacion:  true,
     editar_condiciones_pdf: false,
     editar_datos_usuarios: false,
+    ver_password_estadisticas: false,
   };
 
   const PERMISOS_LABELS = {
@@ -739,6 +740,7 @@
     ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
     editar_condiciones_pdf: { label:'Editar notas y condiciones del PDF', desc:'Puede cambiar el texto legal/condiciones que aparece en las cotizaciones. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
     editar_datos_usuarios: { label:'Editar datos de usuarios', desc:'Puede corregir los datos (nombre, cédula, teléfono, edad, rol) de administradores y clientes en la página de Usuarios. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
+    ver_password_estadisticas: { label:'Ver contraseña de Estadísticas', desc:'Puede ver cuál es la contraseña actual del panel de Estadísticas. El desarrollador siempre lo tiene; solo puede otorgárselo a un superadmin (no a admin).' },
   };
 
   function verificarSesion() {
@@ -1345,7 +1347,9 @@
     const esSuper = admin.role === 'superadmin' && currentUser.role !== 'desarrollador';
     document.getElementById('permisos-lista').innerHTML = (esSuper
       ? `<p style="font-size:.85rem;color:var(--muted);">Este usuario es Super Administrador: solo el desarrollador puede editar sus permisos.</p>`
-      : Object.entries(PERMISOS_LABELS).map(([key,info])=>`
+      : Object.entries(PERMISOS_LABELS)
+          .filter(([key]) => !(key === 'ver_password_estadisticas' && admin.role !== 'superadmin'))
+          .map(([key,info])=>`
       <div class="perm-row">
         <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
         <label class="toggle-sw">
