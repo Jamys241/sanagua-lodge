@@ -52,6 +52,7 @@
           <span id="adm-role-badge" style="display:inline-block;margin-top:4px;font-size:.66rem;font-weight:700;background:var(--accent);color:#fff;padding:2px 9px;border-radius:20px;"></span>
         </div>
         <button class="btn btn-outline btn-sm" id="adm-editar-btn" onclick="toggleEditarAdmin()" style="display:none"><i class="fa-solid fa-pen"></i> Editar datos</button>
+        <button class="btn btn-outline btn-sm" id="adm-permisos-btn" onclick="abrirPermisosDesdeUsuarios()" style="display:none"><i class="fa-solid fa-lock"></i> Configurar permisos</button>
         <button class="btn btn-danger btn-sm" id="adm-quitar-btn" onclick="quitarPermisoAdmin()"><i class="fa-solid fa-ban"></i> Quitar permiso de administrador</button>
       </div>
       <div id="adm-edit-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
@@ -154,6 +155,26 @@
   </div>
 </div>
 
+<!-- MODAL PERMISOS -->
+<div class="modal-overlay" id="permisos-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h2><i class="fa-solid fa-lock"></i> Permisos del Admin</h2>
+      <button class="modal-close" onclick="closePermisosModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">
+        Controla qué puede hacer <strong id="perm-admin-name"></strong>.
+      </p>
+      <div id="permisos-lista"></div>
+      <div class="actions-bar" style="margin-top:20px;">
+        <button class="btn btn-outline" onclick="closePermisosModal()">Cancelar</button>
+        <button class="btn btn-accent" onclick="savePermisos()"><i class="fa-solid fa-floppy-disk"></i> Guardar permisos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
@@ -164,6 +185,94 @@
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = `toast ${type} show`;
     clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3800);
+  }
+
+  const PERMISOS_DEFAULT = {
+    ver_historial:       true,
+    ver_resumen:         true,
+    ver_calendario:      true,
+    crear_cotizacion:    true,
+    editar_cotizacion:   true,
+    eliminar_cotizacion: true,
+    crear_evento:        true,
+    editar_evento:       true,
+    eliminar_evento:     true,
+    exportar_pdf:        true,
+    ver_precios:         true,
+    ver_populares:       true,
+    ver_menu_editor:     true,
+    ver_solicitudes:     true,
+    gestionar_usuarios:  true,
+    ver_sincronizacion:  true,
+    editar_condiciones_pdf: false,
+    editar_datos_usuarios: false,
+    ver_password_estadisticas: false,
+  };
+
+  const PERMISOS_LABELS = {
+    ver_historial:       { label:'Ver historial',             desc:'Puede ver la lista de cotizaciones y eventos' },
+    ver_resumen:         { label:'Ver resumen',               desc:'Puede ver estadísticas y totales' },
+    ver_calendario:      { label:'Ver calendario',            desc:'Puede ver el calendario de reservas' },
+    crear_cotizacion:    { label:'Crear cotizaciones',        desc:'Puede generar nuevas cotizaciones' },
+    editar_cotizacion:   { label:'Editar cotizaciones',       desc:'Puede modificar estado, abono y datos del cliente' },
+    eliminar_cotizacion: { label:'Eliminar cotizaciones',     desc:'Puede eliminar cotizaciones del historial' },
+    crear_evento:        { label:'Crear eventos manuales',    desc:'Puede añadir eventos en el calendario' },
+    editar_evento:       { label:'Editar eventos manuales',   desc:'Puede modificar eventos existentes' },
+    eliminar_evento:     { label:'Eliminar eventos',          desc:'Puede eliminar eventos del calendario' },
+    exportar_pdf:        { label:'Exportar PDF',              desc:'Puede descargar cotizaciones y confirmaciones' },
+    ver_precios:         { label:'Ver y editar precios',      desc:'Puede acceder al módulo de precios de servicios' },
+    ver_populares:       { label:'Ver servicios populares',   desc:'Puede ver y cambiar los servicios destacados' },
+    ver_menu_editor:     { label:'Editor de menú',            desc:'Puede abrir y editar el menú del restaurante' },
+    ver_solicitudes:     { label:'Ver solicitudes web',       desc:'Puede ver, aprobar y rechazar solicitudes de reserva' },
+    gestionar_usuarios:  { label:'Gestionar usuarios web',    desc:'Puede buscar usuarios y cambiar contraseñas' },
+    ver_sincronizacion:  { label:'Control de sincronización', desc:'Puede ver y controlar el polling automático en Configuración' },
+    editar_condiciones_pdf: { label:'Editar notas y condiciones del PDF', desc:'Puede cambiar el texto legal/condiciones que aparece en las cotizaciones. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
+    editar_datos_usuarios: { label:'Editar datos de usuarios', desc:'Puede corregir los datos (nombre, cédula, teléfono, edad, rol) de administradores y clientes en la página de Usuarios. El desarrollador siempre lo tiene; decide si dárselo a superadmin o admin.' },
+    ver_password_estadisticas: { label:'Ver contraseña de Estadísticas', desc:'Puede ver cuál es la contraseña actual del panel de Estadísticas. El desarrollador siempre lo tiene; solo puede otorgárselo a un superadmin (no a admin).' },
+  };
+
+  function abrirPermisosDesdeUsuarios() {
+    if (!_adminEncontrado) return;
+    // Un superadmin solo puede configurar permisos de un admin (no de otro
+    // superadmin ni del desarrollador) — el desarrollador puede con ambos.
+    if (_adminEncontrado.role === 'superadmin' && window.currentAdmin?.role !== 'desarrollador') {
+      showToast('Solo el desarrollador puede configurar los permisos de un Super Administrador.', 'error');
+      return;
+    }
+    document.getElementById('perm-admin-name').textContent = _adminEncontrado.name || _adminEncontrado.email;
+    const permisos = { ...PERMISOS_DEFAULT, ...(_adminEncontrado.permisos||{}) };
+    document.getElementById('permisos-lista').innerHTML = Object.entries(PERMISOS_LABELS)
+      .filter(([key]) => !(key === 'ver_password_estadisticas' && _adminEncontrado.role !== 'superadmin'))
+      .map(([key,info])=>`
+      <div class="perm-row">
+        <div><div class="perm-info">${info.label}</div><div class="perm-desc">${info.desc}</div></div>
+        <label class="toggle-sw">
+          <input type="checkbox" id="perm-${key}" ${permisos[key]?'checked':''}>
+          <span class="slider"></span>
+        </label>
+      </div>`).join('');
+    document.getElementById('permisos-modal').classList.add('open');
+  }
+
+  function closePermisosModal() {
+    document.getElementById('permisos-modal').classList.remove('open');
+  }
+
+  async function savePermisos() {
+    if (!_adminEncontrado) return;
+    const permisos = {};
+    Object.keys(PERMISOS_LABELS).forEach(key => {
+      permisos[key] = document.getElementById('perm-'+key)?.checked || false;
+    });
+    showLoading(true);
+    try {
+      const { error } = await supa.from('profiles').update({ permisos }).eq('id', _adminEncontrado.id);
+      if (error) throw error;
+      _adminEncontrado.permisos = permisos;
+      closePermisosModal();
+      showToast(`✅ Permisos de ${_adminEncontrado.name||_adminEncontrado.email} guardados.`, 'success');
+    } catch (e) { showToast('❌ Error al guardar permisos: ' + e.message, 'error'); }
+    finally { showLoading(false); }
   }
 
   function esNivelSuperior(user) {
@@ -211,6 +320,7 @@
       document.getElementById('adm-email-display').textContent = user.email || '—';
       document.getElementById('adm-role-badge').innerHTML       = labels[user.role] || user.role;
       document.getElementById('adm-editar-btn').style.display  = puedeEditarDatosUsuarios() ? '' : 'none';
+      document.getElementById('adm-permisos-btn').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
       document.getElementById('adm-edit-form').style.display   = 'none';
       document.getElementById('adm-edit-msg').textContent      = '';
       document.getElementById('adm-resultado').style.display   = 'block';
