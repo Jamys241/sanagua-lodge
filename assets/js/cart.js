@@ -187,7 +187,16 @@
     renderBadge();
   }
 
-  function abrirCarrito() { renderDrawer(); document.getElementById('sc-overlay').classList.add('show'); }
+  async function abrirCarrito() {
+    const { data: { session } } = await supaCart.auth.getSession();
+    if (!session) {
+      mostrarToastCarrito('<i class="fa-solid fa-triangle-exclamation"></i> Inicia sesión para ver tu carrito.');
+      setTimeout(() => { window.location.href = `${INDEX_URL}?action=login`; }, 1200);
+      return;
+    }
+    renderDrawer();
+    document.getElementById('sc-overlay').classList.add('show');
+  }
   function cerrarCarrito() { document.getElementById('sc-overlay').classList.remove('show'); }
 
   // Número de WhatsApp del lodge donde llegan las notificaciones de reserva.
