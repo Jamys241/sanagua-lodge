@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=6">
+  <link rel="stylesheet" href="../css/camping.css?v=7">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -355,7 +355,7 @@
           <div class="pasadia-card-title">${t.label}</div>
           <div class="pasadia-card-desc">${t.descripcion || ''}</div>
           <div class="pasadia-card-price">${formatoPrecioHTML(t)}</div>
-          <button class="pasadia-card-btn" onclick="closeDetalleGrupoCamping();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+          <button class="pasadia-card-btn" onclick="abrirReservaCamping(${i})"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
         </div>
       </div>`).join('') || '<div style="color:#999;font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
     document.getElementById('detalle-overlay-camp').classList.add('open');
@@ -364,11 +364,21 @@
     document.getElementById('detalle-overlay-camp').classList.remove('open');
   }
 
+  // Abre el modal de reserva con la modalidad (Propio/Suministro) del grupo
+  // desde el que se hizo clic — no siempre la que estaba antes por defecto.
+  function abrirReservaCamping(i) {
+    const g = gruposCamping[i];
+    if (!g) return;
+    closeDetalleGrupoCamping();
+    openModal();
+    if (g.modKey) setTimeout(() => selMod(g.modKey), 150);
+  }
+
   function renderTar(){
     const it=P.camping.itbms||7, mods=P.camping.modalidades||{};
     gruposCamping = [];
     Object.entries(mods).forEach(([modKey, m]) => {
-      (m.grupos||[]).forEach(g => gruposCamping.push({ ...g, modLabel: m.label }));
+      (m.grupos||[]).forEach(g => gruposCamping.push({ ...g, modKey, modLabel: m.label }));
     });
     document.getElementById('camping-cards-grid').innerHTML = gruposCamping.map((g,i)=>`
       <div class="pasadia-group-card" onclick="verDetalleGrupoCamping(${i})">

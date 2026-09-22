@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Pasadías — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/pasadia.css?v=3">
+  <link rel="stylesheet" href="../css/pasadia.css?v=4">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -228,7 +228,7 @@
           <div class="pasadia-card-title">${t.label}</div>
           <div class="pasadia-card-desc">${t.descripcion || ''}</div>
           <div class="pasadia-card-price">${formatoPrecioHTML(t)}</div>
-          <button class="pasadia-card-btn" onclick="closeDetalleGrupo();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+          <button class="pasadia-card-btn" onclick="abrirReservaDeGrupo(${i})"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
         </div>
       </div>`).join('') || '<div style="color:var(--muted);font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
     document.getElementById('detalle-overlay').classList.add('open');
@@ -486,12 +486,14 @@
     if(e.target===document.getElementById('modal-overlay'))closeModal();
   });
 
-  function renderPersonasGrid() {
+  function renderPersonasGrid(itemsFiltrados) {
     if (!precios?.[SERVICIO]) return;
     const mod     = precios[SERVICIO].modalidades?.[modalidadActual] || precios[SERVICIO];
-    const tarifas = mod.tarifas;
+    const tarifas = itemsFiltrados
+      ? Object.fromEntries(itemsFiltrados.map(t => [t.key, t]))
+      : mod.tarifas;
     if (!tarifas) return;
-    const itbms   = precios[SERVICIO].itbms || 7;
+    contadores = Object.fromEntries(Object.keys(tarifas).map(k=>[k,0]));
     document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
       <div class="persona-item">
         <div class="persona-label">${t.label}</div>
@@ -503,6 +505,16 @@
         </div>
       </div>`).join('');
     actualizarResumen();
+  }
+
+  // Abre el modal de reserva mostrando SOLO los ítems del grupo (subcategoría)
+  // desde el que se hizo clic en "Añadir al carrito" — no todos los de la página.
+  function abrirReservaDeGrupo(i) {
+    const g = gruposPasadia[i];
+    if (!g) return;
+    closeDetalleGrupo();
+    renderPersonasGrid(g.items || []);
+    openModal();
   }
 
   function cambiarContador(key, delta) {
