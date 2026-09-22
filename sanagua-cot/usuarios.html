@@ -347,17 +347,6 @@
 
   function mostrarDetalleAdmin(user) {
       document.getElementById('adm-lista-resultados').style.display = 'none';
-      // Un superadmin no puede quitarle el permiso a otro superadmin ni al
-      // desarrollador — solo el desarrollador puede tocar a un superadmin.
-      if (user.role !== 'admin' && window.currentAdmin?.role !== 'desarrollador') {
-        showToast('Solo el desarrollador puede modificar a un Super Administrador.', 'error');
-        return;
-      }
-      if (user.id === window.currentAdmin?.id) {
-        showToast('No puedes quitarte el permiso a ti mismo desde aquí.', 'error');
-        return;
-      }
-
       _adminEncontrado = user;
       const labels = { admin: '<i class="fa-solid fa-crown"></i> Administrador', superadmin: '<i class="fa-solid fa-star"></i> Super Administrador', desarrollador: '<i class="fa-solid fa-screwdriver-wrench"></i> Desarrollador' };
       document.getElementById('adm-avatar').textContent        = (user.name||'?').charAt(0).toUpperCase();
@@ -368,6 +357,12 @@
       document.getElementById('adm-permisos-btn').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
       document.getElementById('adm-edit-form').style.display   = 'none';
       document.getElementById('adm-edit-msg').textContent      = '';
+      // El botón de quitar permiso solo se muestra si de verdad se puede
+      // usar — así, buscar/ver a alguien nunca dispara un aviso, solo el
+      // intentar quitarle el permiso cuando no corresponde.
+      const esUnoMismo   = user.id === window.currentAdmin?.id;
+      const puedeTocarlo = user.role === 'admin' || window.currentAdmin?.role === 'desarrollador';
+      document.getElementById('adm-quitar-btn').style.display = (!esUnoMismo && puedeTocarlo) ? '' : 'none';
       document.getElementById('adm-resultado').style.display   = 'block';
   }
 

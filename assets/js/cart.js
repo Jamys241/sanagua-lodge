@@ -160,6 +160,17 @@
     document.body.appendChild(toast);
   }
 
+  function formatoFechaHoraEnvio() {
+    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const d = new Date();
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12; if (h === 0) h = 12;
+    const min = String(d.getMinutes()).padStart(2,'0');
+    return `${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]}, ${d.getFullYear()} - ${h}:${min} ${ampm}`;
+  }
+
   function mostrarToastCarrito(msg) {
     const t = document.getElementById('sc-toast');
     if (!t) return;
@@ -290,7 +301,8 @@
         `Cédula: ${contacto.cedula||'—'}\n`+
         `Teléfono: ${contacto.telefono||'—'}\nCorreo: ${contacto.email}\n`+
         `Alergias: ${alergia}`+
-        `${notas?`\nNotas: ${notas}`:''}`
+        `${notas?`\nNotas: ${notas}`:''}`+
+        `\n\n${formatoFechaHoraEnvio()}`
       );
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 
