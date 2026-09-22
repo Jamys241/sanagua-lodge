@@ -85,7 +85,6 @@
     <div class="menu-group-items" id="grp-sistema">
       <button onclick="location.href='usuarios.html';closeMenu()"><i class="fa-solid fa-users"></i> Usuarios</button>
       <button onclick="location.href='configuracion.html';closeMenu()"><i class="fa-solid fa-gear"></i> Configuración</button>
-      <button id="btn-permisos" onclick="openPermisosModal();closeMenu()" style="display:none;"><i class="fa-solid fa-lock"></i> Permisos del Admin</button>
       <button onclick="abrirCambiarPass();closeMenu()"><i class="fa-solid fa-key"></i> Cambiar contraseña</button>
     </div>
 
@@ -558,6 +557,7 @@
         <div id="suscrip-estado-detalle" style="font-size:.78rem;color:var(--muted);margin-top:4px"></div>
       </div>
 
+      <div id="suscrip-controles-activos">
       <!-- Bloqueo inmediato -->
       <div style="background:#fff5f5;border:1.5px solid #f0c0c0;border-radius:10px;padding:16px;margin-bottom:18px">
         <div style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:8px"><i class="fa-solid fa-ban"></i> Bloqueo inmediato</div>
@@ -597,6 +597,11 @@
       <button class="btn btn-outline" style="width:100%" onclick="quitarBloqueo()">
         <i class="fa-solid fa-circle-check"></i> Quitar bloqueo / Reactivar sistema
       </button>
+      </div>
+
+      <!-- Desactivar por completo -->
+      <div id="suscrip-desactivar-wrap" style="margin-top:18px;padding-top:18px;border-top:1px dashed var(--border)">
+      </div>
 
       <!-- Contraseña maestra de desbloqueo (SuperAdmin) -->
       <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
@@ -836,8 +841,8 @@
     badge.innerHTML = roleLabels[currentUser.role] || currentUser.role;
     badge.className = `rol-badge ${roleCls[currentUser.role]||'rol-admin'}`;
     badge.style.display = 'inline-block';
-    document.getElementById('btn-permisos').style.display =
-      esNivelSuperior(currentUser) ? 'block' : 'none';
+    const btnPermisos = document.getElementById('btn-permisos');
+    if (btnPermisos) btnPermisos.style.display = esNivelSuperior(currentUser) ? 'block' : 'none';
     document.getElementById('menu-user-info').textContent =
       `${currentUser.username} · ${roleNames[currentUser.role]||currentUser.role}`;
     aplicarPermisos();
@@ -4198,10 +4203,10 @@
 
   let _suscripTimer = null;
 
-  // Mostrar el botón "Suscrip." solo para SuperAdmin
+  // Mostrar el botón "Suscrip." solo para el Desarrollador
   function initSuscripVisibility() {
     const btn = document.getElementById('btn-grp-suscrip');
-    if (btn) btn.style.display = esNivelSuperior(currentUser) ? '' : 'none';
+    if (btn) btn.style.display = currentUser?.role === 'desarrollador' ? '' : 'none';
   }
 
   // Cargar estado de suscripción — llamado al iniciar sesión
@@ -4218,8 +4223,20 @@
 
   // Aplicar el estado: bloquear pantalla o mostrar cintillo
   function aplicarEstadoSuscripcion() {
-    const isSuper = esNivelSuperior(currentUser);
     const data = _suscripData || {};
+    const banner = document.getElementById('suscrip-banner');
+    const lockScreen = document.getElementById('lock-screen');
+
+    // El sistema quedó libre de forma permanente — no se revisa nada más.
+    if (data.desactivado) {
+      clearInterval(_suscripTimer);
+      if (lockScreen) lockScreen.style.display = 'none';
+      if (banner) banner.style.display = 'none';
+      document.body.style.overflow = '';
+      return;
+    }
+
+    const isSuper = esNivelSuperior(currentUser);
     const ahora = Date.now();
     const expiraEn = data.expira_en ? new Date(data.expira_en).getTime() : null;
 
@@ -4228,8 +4245,6 @@
     const estaBloqueado = bloqueadoInmediato || expirado;
 
     clearInterval(_suscripTimer);
-    const banner = document.getElementById('suscrip-banner');
-    const lockScreen = document.getElementById('lock-screen');
 
     if (estaBloqueado) {
       if (isSuper) {
@@ -4296,6 +4311,7 @@
 
   function renderSuscripEstado() {
     const data = _suscripData || {};
+    renderDesactivarWrap(data);
     const lbl = document.getElementById('suscrip-estado-lbl');
     const det = document.getElementById('suscrip-estado-detalle');
     const ahora = Date.now();
@@ -4327,6 +4343,52 @@
     } else if (codBox) {
       codBox.style.display = 'none';
     }
+  }
+
+  function renderDesactivarWrap(data) {
+    const wrap = document.getElementById('suscrip-desactivar-wrap');
+    const controles = document.getElementById('suscrip-controles-activos');
+    if (!wrap) return;
+    if (data.desactivado) {
+      if (controles) controles.style.display = 'none';
+      wrap.innerHTML = `
+        <div style="background:#eef7ee;border:1.5px solid #c8e6c8;border-radius:10px;padding:16px">
+          <div style="font-size:.78rem;font-weight:700;color:#2e7d32;margin-bottom:8px">
+            <i class="fa-solid fa-circle-check"></i> Sistema de bloqueo desactivado
+          </div>
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+            Ya no se revisa ningún bloqueo ni cuenta atrás — el sitio queda siempre libre.
+          </p>
+          <button class="btn btn-outline" style="width:100%" onclick="reactivarSuscripcion()">
+            <i class="fa-solid fa-arrows-rotate"></i> Reactivar el sistema de bloqueo
+          </button>
+        </div>`;
+    } else {
+      if (controles) controles.style.display = '';
+      wrap.innerHTML = `
+        <div style="font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:8px">
+          <i class="fa-solid fa-ban"></i> Desactivar por completo
+        </div>
+        <p style="font-size:.76rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          Cuando el sistema ya esté totalmente pagado y no necesites bloquearlo nunca más, puedes apagar
+          esta función por completo — deja de revisar bloqueos, cuentas atrás y contraseñas.
+          Se puede reactivar cuando quieras.
+        </p>
+        <button class="btn btn-outline" style="width:100%;color:#c0392b;border-color:#e0b0b0" onclick="desactivarSuscripcion()">
+          <i class="fa-solid fa-ban"></i> Desactivar sistema de bloqueo
+        </button>`;
+    }
+  }
+
+  async function desactivarSuscripcion() {
+    if (!confirm('¿Desactivar por completo el sistema de bloqueo? El sitio quedará siempre libre — podrás reactivarlo cuando quieras.')) return;
+    const ok = await guardarSuscripcion({ desactivado: true, bloqueado: false, expira_en: null, codigo_temporal: null });
+    if (ok) showToast('✅ Sistema de bloqueo desactivado.', 'success');
+  }
+
+  async function reactivarSuscripcion() {
+    const ok = await guardarSuscripcion({ desactivado: false });
+    if (ok) showToast('✅ Sistema de bloqueo reactivado.', 'success');
   }
 
   async function guardarSuscripcion(data) {

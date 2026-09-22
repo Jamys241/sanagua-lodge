@@ -37,12 +37,19 @@
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">
       Busca a un administrador o superadmin por correo. Puedes quitarle el permiso de administración — pasará a ser un cliente normal, sin acceso al panel.
     </p>
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <input type="email" id="adm-buscar-email" placeholder="correo@ejemplo.com"
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <input type="email" id="adm-buscar-email" placeholder="correo@ejemplo.com (opcional)"
         class="form-input" style="flex:1;min-width:220px"
         onkeydown="if(event.key==='Enter')buscarAdmin()">
+      <select id="adm-filtro-rol" class="form-input" style="max-width:200px">
+        <option value="">Todos los roles</option>
+        <option value="admin">Administrador</option>
+        <option value="superadmin">Super Administrador</option>
+        <option value="desarrollador" id="adm-opt-dev" style="display:none">Desarrollador</option>
+      </select>
       <button class="btn btn-accent" onclick="buscarAdmin()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
     </div>
+    <div id="adm-lista-resultados" style="display:none;margin-bottom:20px"></div>
     <div id="adm-resultado" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:20px">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div id="adm-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0"></div>
@@ -289,19 +296,57 @@
 
   async function buscarAdmin() {
     const email = document.getElementById('adm-buscar-email').value.trim().toLowerCase();
-    if (!email) { showToast('Ingresa un correo para buscar.', 'error'); return; }
+    const rolFiltro = document.getElementById('adm-filtro-rol').value;
 
     document.getElementById('adm-resultado').style.display     = 'none';
     document.getElementById('adm-no-encontrado').style.display = 'none';
+    document.getElementById('adm-lista-resultados').style.display = 'none';
     _adminEncontrado = null;
+
+    // Jerarquía: un superadmin nunca ve datos del desarrollador. Solo el
+    // desarrollador puede ver/filtrar por ese rol.
+    const rolesPermitidos = window.currentAdmin?.role === 'desarrollador'
+      ? ['admin','superadmin','desarrollador']
+      : ['admin','superadmin'];
 
     showLoading(true);
     try {
-      const { data: user, error } = await supa.from('profiles').select('*')
-        .ilike('email', email).in('role', ['admin','superadmin','desarrollador']).maybeSingle();
+      let query = supa.from('profiles').select('*');
+      query = email ? query.ilike('email', email) : query;
+      query = rolFiltro ? query.eq('role', rolFiltro) : query.in('role', rolesPermitidos);
+      const { data: rows, error } = await query;
       if (error) throw error;
-      if (!user) { document.getElementById('adm-no-encontrado').style.display = 'block'; return; }
 
+      // Si el filtro de rol pedido no está permitido para este usuario (ej.
+      // un superadmin intentando filtrar por "desarrollador" a mano).
+      const users = (rows||[]).filter(u => rolesPermitidos.includes(u.role));
+
+      if (!users.length) { document.getElementById('adm-no-encontrado').style.display = 'block'; return; }
+
+      if (users.length === 1) {
+        mostrarDetalleAdmin(users[0]);
+      } else {
+        const labels = { admin: 'Administrador', superadmin: 'Super Administrador', desarrollador: 'Desarrollador' };
+        document.getElementById('adm-lista-resultados').style.display = 'block';
+        document.getElementById('adm-lista-resultados').innerHTML = users.map((u,i) => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);
+            border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer"
+            onclick='mostrarDetalleAdmin(${JSON.stringify(u).replace(/'/g,"&#39;")})'>
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;
+              display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${(u.name||'?').charAt(0).toUpperCase()}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.88rem">${u.name||'—'}</div>
+              <div style="font-size:.76rem;color:var(--muted)">${u.email||''}</div>
+            </div>
+            <span style="font-size:.7rem;font-weight:700;background:var(--accent);color:#fff;padding:2px 9px;border-radius:20px;flex-shrink:0">${labels[u.role]||u.role}</span>
+          </div>`).join('');
+      }
+    } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
+    finally { showLoading(false); }
+  }
+
+  function mostrarDetalleAdmin(user) {
+      document.getElementById('adm-lista-resultados').style.display = 'none';
       // Un superadmin no puede quitarle el permiso a otro superadmin ni al
       // desarrollador — solo el desarrollador puede tocar a un superadmin.
       if (user.role !== 'admin' && window.currentAdmin?.role !== 'desarrollador') {
@@ -324,8 +369,6 @@
       document.getElementById('adm-edit-form').style.display   = 'none';
       document.getElementById('adm-edit-msg').textContent      = '';
       document.getElementById('adm-resultado').style.display   = 'block';
-    } catch (e) { console.error(e); showToast('Error al buscar. Verifica la conexión.', 'error'); }
-    finally { showLoading(false); }
   }
 
   function toggleEditarAdmin() {
@@ -377,6 +420,8 @@
 
   document.addEventListener('admin-ready', () => {
     document.getElementById('card-admins').style.display = esNivelSuperior(window.currentAdmin) ? '' : 'none';
+    const optDev = document.getElementById('adm-opt-dev');
+    if (optDev) optDev.style.display = window.currentAdmin?.role === 'desarrollador' ? '' : 'none';
   });
 
   let _usuarioEncontrado = null;
