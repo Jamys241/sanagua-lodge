@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=7">
+  <link rel="stylesheet" href="../css/camping.css?v=8">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -105,7 +105,7 @@
         <div class="ms" id="mod-sel"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="fg"><label class="fl">Fecha entrada</label><input type="date" class="fi" id="f-ent" onchange="calcN()"></div>
+        <div class="fg"><label class="fl">Fecha entrada</label><input type="date" class="fi" id="f-ent" onchange="onFechaEntradaChange()"></div>
         <div class="fg"><label class="fl">Fecha salida</label><input type="date" class="fi" id="f-sal" onchange="calcN()"></div>
       </div>
       <div id="n-badge" style="display:none;background:#eef4f5;border:1px solid #cfe0e4;border-radius:7px;padding:8px 14px;font-size:.84rem;color:var(--forest);font-weight:600;margin-bottom:16px"></div>
@@ -337,6 +337,7 @@
     document.getElementById('f-ent').value=lds(m);
     document.getElementById('f-sal').value=lds(s2);
     document.getElementById('f-ent').min=lds(new Date());
+    document.getElementById('f-sal').min=lds(s2);
     calcN();
   }
 
@@ -355,7 +356,7 @@
           <div class="pasadia-card-title">${t.label}</div>
           <div class="pasadia-card-desc">${t.descripcion || ''}</div>
           <div class="pasadia-card-price">${formatoPrecioHTML(t)}</div>
-          <button class="pasadia-card-btn" onclick="abrirReservaCamping(${i})"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+          <button class="pasadia-card-btn" onclick="abrirReservaCamping(${i}, '${t.key}')"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
         </div>
       </div>`).join('') || '<div style="color:#999;font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
     document.getElementById('detalle-overlay-camp').classList.add('open');
@@ -364,14 +365,21 @@
     document.getElementById('detalle-overlay-camp').classList.remove('open');
   }
 
-  // Abre el modal de reserva con la modalidad (Propio/Suministro) del grupo
-  // desde el que se hizo clic — no siempre la que estaba antes por defecto.
-  function abrirReservaCamping(i) {
+  // Abre el modal de reserva mostrando SOLO el ítem específico que se eligió
+  // (no todos los de la subcategoría, ni el selector de tipo de camping,
+  // ya que ambas cosas ya quedaron decididas al llegar hasta aquí).
+  function abrirReservaCamping(i, itemKey) {
     const g = gruposCamping[i];
     if (!g) return;
     closeDetalleGrupoCamping();
     openModal();
-    if (g.modKey) setTimeout(() => selMod(g.modKey), 150);
+    setTimeout(() => {
+      if (g.modKey) selMod(g.modKey, false);
+      const modSel = document.getElementById('mod-sel');
+      if (modSel) modSel.closest('.fg').style.display = 'none';
+      renderPers(itemKey);
+      calcN();
+    }, 150);
   }
 
   function renderTar(){
@@ -579,10 +587,12 @@
 
   function selCarpa(k){CARPA=k;renderCarpaSel();calcN();}
 
-  function renderPers(){
+  function renderPers(soloKey){
     const m=P?.camping?.modalidades?.[MOD];if(!m)return;
     const it=P.camping.itbms||7;
-    document.getElementById('pers-grid').innerHTML=Object.entries(m.tarifas).map(([k,t])=>`
+    const entradas = soloKey ? Object.entries(m.tarifas).filter(([k])=>k===soloKey) : Object.entries(m.tarifas);
+    if (soloKey) CNT = Object.fromEntries(entradas.map(([k])=>[k,0]));
+    document.getElementById('pers-grid').innerHTML=entradas.map(([k,t])=>`
       <div class="pi">
         <div class="pil">${t.label}</div>
         <div class="pip">${t.precio===0?'Gratis':`$${(t.precio*(1+it/100)).toFixed(2)}/noche`}</div>
@@ -595,6 +605,21 @@
   }
 
   function chg(k,d){CNT[k]=Math.max(0,(CNT[k]||0)+d);document.getElementById(`cnt-${k}`).textContent=CNT[k];calcN();}
+
+  function onFechaEntradaChange(){
+    const ent = document.getElementById('f-ent').value;
+    const salInput = document.getElementById('f-sal');
+    if (ent) {
+      const siguiente = new Date(ent+'T12:00:00');
+      siguiente.setDate(siguiente.getDate()+1);
+      const minStr = localDateStr(siguiente);
+      salInput.min = minStr;
+      // Si la salida actual ya no es válida (vacía o anterior/igual a la
+      // nueva entrada), se ajusta automáticamente al día siguiente.
+      if (!salInput.value || salInput.value <= ent) salInput.value = minStr;
+    }
+    calcN();
+  }
 
   function calcN(){
     const ent=document.getElementById('f-ent').value, sal=document.getElementById('f-sal').value;

@@ -96,6 +96,12 @@
       .sc-item-del{background:none;border:none;color:#c0392b;cursor:pointer;font-size:.95rem;padding:4px}
       #sc-empty{text-align:center;color:#999;padding:40px 20px;font-size:.88rem}
       #sc-footer{padding:18px 20px;border-top:1px solid #eee}
+      .sc-alergia-box{background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+      .sc-alergia-label{font-size:.82rem;font-weight:700;color:#5a4a30;margin-bottom:8px}
+      .sc-alergia-opts{display:flex;flex-direction:column;gap:6px;font-size:.83rem;color:#444;margin-bottom:6px}
+      .sc-alergia-opts label{display:flex;align-items:center;gap:7px;cursor:pointer}
+      #sc-alergia-detalle{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:.85rem;margin-top:4px;font-family:inherit}
+      .sc-alergia-error{font-size:.76rem;color:#c0392b;margin-top:4px;min-height:14px}
       .sc-total-row{display:flex;justify-content:space-between;font-size:.85rem;color:#555;margin-bottom:4px}
       .sc-total-row.grand{font-weight:700;font-size:1.05rem;color:#222;margin-top:8px}
       #sc-submit{width:100%;background:var(--moss,#7fa0ac);color:#fff;border:none;border-radius:8px;
@@ -127,6 +133,15 @@
         <div id="sc-panel-head"><span><i class="fa-solid fa-cart-shopping"></i> Tu carrito</span><button id="sc-close"><i class="fa-solid fa-xmark"></i></button></div>
         <div id="sc-items"></div>
         <div id="sc-footer">
+          <div class="sc-alergia-box">
+            <div class="sc-alergia-label">¿Alguien en el grupo es alérgico a algo? <span style="color:#c0392b">*</span></div>
+            <div class="sc-alergia-opts">
+              <label><input type="radio" name="sc-alergia" value="no" onchange="SanaguaCart._toggleAlergia()"> No, ninguna alergia</label>
+              <label><input type="radio" name="sc-alergia" value="si" onchange="SanaguaCart._toggleAlergia()"> Sí, tenemos alguna</label>
+            </div>
+            <input type="text" id="sc-alergia-detalle" placeholder="¿A qué? (ej: maní, mariscos, gluten...)" style="display:none">
+            <div id="sc-alergia-error" class="sc-alergia-error"></div>
+          </div>
           <textarea id="sc-notas" placeholder="Notas para tu reserva (opcional)"></textarea>
           <div class="sc-total-row"><span>Subtotal</span><span id="sc-subtotal">$0.00</span></div>
           <div class="sc-total-row"><span>ITBMS</span><span id="sc-itbms">$0.00</span></div>
@@ -204,10 +219,34 @@
   // Número de WhatsApp del lodge donde llegan las notificaciones de reserva.
   const WHATSAPP_NUMBER = '50761660114'; // +507 6166-0114
 
+  function _toggleAlergia() {
+    const si = document.querySelector('input[name="sc-alergia"][value="si"]');
+    const detalle = document.getElementById('sc-alergia-detalle');
+    detalle.style.display = si?.checked ? 'block' : 'none';
+    document.getElementById('sc-alergia-error').textContent = '';
+  }
+
+  function _validarAlergia() {
+    const sel = document.querySelector('input[name="sc-alergia"]:checked');
+    const err = document.getElementById('sc-alergia-error');
+    if (!sel) { err.textContent = 'Por favor indícanos si hay alguna alergia antes de continuar.'; return null; }
+    if (sel.value === 'si') {
+      const detalle = document.getElementById('sc-alergia-detalle').value.trim();
+      if (!detalle) { err.textContent = 'Cuéntanos a qué es alérgico/a — es importante para tu seguridad.'; return null; }
+      err.textContent = '';
+      return detalle;
+    }
+    err.textContent = '';
+    return 'Ninguna';
+  }
+
   async function enviarSolicitud() {
     const items = getItems();
     if (!items.length) return;
     const btn = document.getElementById('sc-submit');
+
+    const alergia = _validarAlergia();
+    if (alergia === null) { document.getElementById('sc-alergia-error').scrollIntoView({behavior:'smooth', block:'center'}); return; }
 
     const { data: { session } } = await supaCart.auth.getSession();
     if (!session) {
@@ -236,7 +275,7 @@
         subtotal: Math.round(t.subtotal*100)/100,
         itbms: Math.round(t.itbms*100)/100,
         total: Math.round(t.total*100)/100,
-        notas_cliente: notas,
+        notas_cliente: `Alergias: ${alergia}.${notas ? ' ' + notas : ''}`,
         contacto,
       });
       if (error) throw error;
@@ -248,13 +287,17 @@
         `Hola Sanagua Lodge! Quiero hacer la siguiente solicitud de reserva:\n\n${detalle}\n\n`+
         `💰 Total: $${t.total.toFixed(2)}\n`+
         `👤 ${contacto.nombre}${contacto.verificado?' ✓ (verificado)':''}\n`+
-        `🪪 ${contacto.cedula||'—'}\n`+
-        `📱 ${contacto.telefono||'—'}\n📧 ${contacto.email}`+
+        `🆔 ${contacto.cedula||'—'}\n`+
+        `📱 ${contacto.telefono||'—'}\n📧 ${contacto.email}\n`+
+        `🍽️ Alergias: ${alergia}`+
         `${notas?`\n📝 Notas: ${notas}`:''}`
       );
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 
       document.getElementById('sc-notas').value = '';
+      document.querySelectorAll('input[name="sc-alergia"]').forEach(r => r.checked = false);
+      document.getElementById('sc-alergia-detalle').value = '';
+      document.getElementById('sc-alergia-detalle').style.display = 'none';
       clearItems();
       cerrarCarrito();
       mostrarToastCarrito('<i class="fa-solid fa-circle-check"></i> ¡Solicitud enviada! Podrás ver su estado en tu perfil.');
@@ -281,5 +324,6 @@
     items: getItems,
     open: abrirCarrito,
     close: cerrarCarrito,
+    _toggleAlergia,
   };
 })();
