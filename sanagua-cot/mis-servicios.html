@@ -99,8 +99,12 @@
             <option value="7">7%</option>
             <option value="10">10%</option>
             <option value="0">Sin ITBMS</option>
+            <option value="-1">ITBMS Incluido</option>
           </select></div>
       </div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:-8px;margin-bottom:14px">
+        "ITBMS Incluido" significa que el precio que escribas arriba ya trae el impuesto — no se le sumará nada más al mostrarlo o cobrarlo. Las otras opciones suman el porcentaje sobre el precio al momento de mostrarlo.
+      </p>
       <div class="form-group"><label>Puntos de fidelidad (al confirmar la reserva)</label>
         <input class="form-input" type="number" step="1" min="0" id="mi-puntos" placeholder="0"></div>
       <div class="modal-actions">
@@ -304,6 +308,7 @@
   function itbmsBadge(v) {
     if (v==7) return '<span class="badge badge-7">ITBMS 7%</span>';
     if (v==10) return '<span class="badge badge-10">ITBMS 10%</span>';
+    if (v==-1) return '<span class="badge badge-10" style="background:#e8f0f2;color:#3d6b78">ITBMS Incluido</span>';
     return '<span class="badge badge-no">Sin ITBMS</span>';
   }
 

@@ -58,7 +58,9 @@
     items.forEach(it => {
       const base = (parseFloat(it.precio)||0) * (parseInt(it.cantidad)||1);
       subtotal += base;
-      itbmsTotal += base * ((parseFloat(it.itbms)||0)/100);
+      const itbmsPct = parseFloat(it.itbms) || 0;
+      // -1 = "ITBMS Incluido": el precio ya trae el impuesto, no se suma nada más
+      if (itbmsPct > 0) itbmsTotal += base * (itbmsPct/100);
     });
     return { subtotal, itbms: itbmsTotal, total: subtotal + itbmsTotal };
   }

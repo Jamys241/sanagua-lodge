@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=5">
+  <link rel="stylesheet" href="../css/camping.css?v=6">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -133,6 +133,13 @@
   const SUPABASE_ANON_KEY_PRECIOS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPrecios = window.supabase.createClient(SUPABASE_URL_PRECIOS, SUPABASE_ANON_KEY_PRECIOS);
 
+  function formatoPrecioHTML(t) {
+    if (t.precio === 0) return 'Gratis';
+    if (t.itbms === -1) return `$${t.precio.toFixed(2)}<span>ITBMS incluido</span>`;
+    if (!t.itbms) return `$${t.precio.toFixed(2)}<span>sin ITBMS</span>`;
+    return `$${(t.precio*(1+t.itbms/100)).toFixed(2)}<span>ITBMS inc.</span>`;
+  }
+
   function slugKey(nombre) {
     return (nombre || '')
       .toLowerCase()
@@ -165,7 +172,7 @@
       const items = cat ? (prods||[]).filter(p => p.categoria_id === cat.id).map(p => {
         const k = slugKey(p.nombre);
         const t = { key: k, label: p.nombre, precio: parseFloat(p.precio)||0,
-                    descripcion: p.descripcion || '', foto: p.foto || '' };
+                    descripcion: p.descripcion || '', foto: p.foto || '', itbms: p.itbms ?? 7 };
         if (k) tarifas[k] = t;
         return t;
       }) : [];
@@ -180,7 +187,7 @@
       const carpasProds = (prods||[]).filter(p => p.categoria_id === catCarpas.id);
       if (carpasProds.length) {
         modalidades.suministro.carpas = {};
-        carpasProds.forEach(p => modalidades.suministro.carpas[p.id] = { label: p.nombre, precio: parseFloat(p.precio)||0, stock: 99 });
+        carpasProds.forEach(p => modalidades.suministro.carpas[p.id] = { label: p.nombre, precio: parseFloat(p.precio)||0, itbms: p.itbms ?? 7, stock: 99 });
       }
     }
 
@@ -347,7 +354,7 @@
         <div class="pasadia-card-body">
           <div class="pasadia-card-title">${t.label}</div>
           <div class="pasadia-card-desc">${t.descripcion || ''}</div>
-          <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>ITBMS inc.</span>`}</div>
+          <div class="pasadia-card-price">${formatoPrecioHTML(t)}</div>
           <button class="pasadia-card-btn" onclick="closeDetalleGrupoCamping();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
         </div>
       </div>`).join('') || '<div style="color:#999;font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
@@ -379,7 +386,7 @@
       document.getElementById('carpas-sidebar-list').innerHTML=Object.values(c).map(cp=>{
         const sc=cp.stock===0?'s-no':cp.stock<=2?'s-low':'s-ok';
         const st=cp.stock===0?'No disponible':`${cp.stock} disponible${cp.stock===1?'':'s'}`;
-        return`<div class="tr"><div><div class="tl">${cp.label}</div><div class="cc-stock ${sc}">${st}</div></div><span class="tp">$${(cp.precio*(1+it/100)).toFixed(2)}<span class="ti">ITBMS</span></span></div>`;
+        return`<div class="tr"><div><div class="tl">${cp.label}</div><div class="cc-stock ${sc}">${st}</div></div><span class="tp">${formatoPrecioHTML(cp)}</span></div>`;
       }).join('');
     }
   }
@@ -598,21 +605,25 @@
     actRes(n);return n;
   }
 
+  function itbmsDeLinea(precio, itbms) {
+    if (itbms === -1 || !itbms) return 0;
+    return precio * (itbms / 100);
+  }
+
   function actRes(n){
     const m=P?.camping?.modalidades?.[MOD];if(!m)return;
-    const it=P.camping.itbms||7;
-    const nn=Math.max(n,1); let sub=0; const ls=[];
+    const nn=Math.max(n,1); let sub=0, itbmsTotal=0; const ls=[];
     Object.entries(CNT).forEach(([k,q])=>{
-      if(q>0&&m.tarifas[k]){const t=m.tarifas[k];const s=t.precio*q*nn;sub+=s;ls.push({l:`${t.label} × ${q} × ${nn} noche${nn===1?'':'s'}`,v:s});}
+      if(q>0&&m.tarifas[k]){const t=m.tarifas[k];const s=t.precio*q*nn;sub+=s;itbmsTotal+=itbmsDeLinea(t.precio,t.itbms)*q*nn;ls.push({l:`${t.label} × ${q} × ${nn} noche${nn===1?'':'s'}`,v:s});}
     });
-    if(MOD==='suministro'&&CARPA&&m.carpas?.[CARPA]){const c=m.carpas[CARPA];const s=c.precio*nn;sub+=s;ls.push({l:`${c.label} × ${nn} noche${nn===1?'':'s'}`,v:s});}
+    if(MOD==='suministro'&&CARPA&&m.carpas?.[CARPA]){const c=m.carpas[CARPA];const s=c.precio*nn;sub+=s;itbmsTotal+=itbmsDeLinea(c.precio,c.itbms)*nn;ls.push({l:`${c.label} × ${nn} noche${nn===1?'':'s'}`,v:s});}
     const tot=Object.values(CNT).reduce((a,b)=>a+b,0);
     if(tot===0&&!CARPA){document.getElementById('res-box').innerHTML='<div style="font-size:.82rem;color:#bbb;text-align:center">Completa los datos</div>';return;}
-    const ia=sub*(it/100), total=sub+ia;
+    const total=sub+itbmsTotal;
     document.getElementById('res-box').innerHTML=`
       ${ls.map(l=>`<div class="rr"><span>${l.l}</span><span>$${l.v.toFixed(2)}</span></div>`).join('')}
       <div class="rdiv"></div>
-      <div class="rr itb"><span>ITBMS ${it}%</span><span>$${ia.toFixed(2)}</span></div>
+      <div class="rr itb"><span>ITBMS</span><span>$${itbmsTotal.toFixed(2)}</span></div>
       <div class="rr tot"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
@@ -623,7 +634,6 @@
     if(Object.values(CNT).reduce((a,b)=>a+b,0)===0){alert('Selecciona al menos una persona.');return;}
     if(MOD==='suministro'&&!CARPA){alert('Selecciona el tipo de carpa.');return;}
     const m=P.camping.modalidades[MOD];
-    const itbms=P.camping.itbms||7;
     const nn=Math.round((new Date(sal+'T12:00:00')-new Date(ent+'T12:00:00'))/86400000);
 
     Object.entries(CNT).filter(([,q])=>q>0).forEach(([k,q])=>{
@@ -633,7 +643,7 @@
         categoria: m.label,
         nombre: t.label,
         precio: t.precio,
-        itbms,
+        itbms: t.itbms ?? 7,
         cantidad: q*nn,
         fecha_visita: ent,
         fecha_visita_fin: sal,
@@ -648,7 +658,7 @@
         categoria: m.label,
         nombre: c.label,
         precio: c.precio,
-        itbms,
+        itbms: c.itbms ?? 7,
         cantidad: nn,
         fecha_visita: ent,
         fecha_visita_fin: sal,

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Pasadías — Sanagua Lodge</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/pasadia.css?v=2">
+  <link rel="stylesheet" href="../css/pasadia.css?v=3">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js"></script>
@@ -141,6 +141,17 @@
   // minúsculas, espacios -> guion bajo), para no depender de una lista fija
   // de nombres — así cualquier tarifa que se agregue en Mis Servicios
   // aparece aquí automáticamente sin tener que tocar este archivo.
+  // Calcula el precio final a mostrar/cobrar según el ITBMS del producto:
+  //  - itbms === -1 → "ITBMS Incluido": el precio ya trae el impuesto, no se suma nada
+  //  - itbms === 0  → sin impuesto
+  //  - itbms > 0    → se suma ese porcentaje sobre el precio base
+  function formatoPrecioHTML(t) {
+    if (t.precio === 0) return 'Gratis';
+    if (t.itbms === -1) return `$${t.precio.toFixed(2)}<span>ITBMS incluido</span>`;
+    if (!t.itbms) return `$${t.precio.toFixed(2)}<span>sin ITBMS</span>`;
+    return `$${(t.precio*(1+t.itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`;
+  }
+
   function slugKey(nombre) {
     return (nombre || '')
       .toLowerCase()
@@ -176,7 +187,7 @@
         const t = {
           key: k, label: p.nombre, subcategoria: sub.nombre,
           precio: parseFloat(p.precio)||0, puntos_fidelidad: p.puntos_fidelidad||0,
-          descripcion: p.descripcion || '', foto: p.foto || '',
+          descripcion: p.descripcion || '', foto: p.foto || '', itbms: p.itbms ?? 7,
         };
         if (k) tarifas[k] = t;
         return t;
@@ -216,7 +227,7 @@
         <div class="pasadia-card-body">
           <div class="pasadia-card-title">${t.label}</div>
           <div class="pasadia-card-desc">${t.descripcion || ''}</div>
-          <div class="pasadia-card-price">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)}<span>por persona · ITBMS inc.</span>`}</div>
+          <div class="pasadia-card-price">${formatoPrecioHTML(t)}</div>
           <button class="pasadia-card-btn" onclick="closeDetalleGrupo();openModal()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
         </div>
       </div>`).join('') || '<div style="color:var(--muted);font-size:.85rem">Esta opción aún no tiene ítems cargados.</div>';
@@ -484,7 +495,7 @@
     document.getElementById('personas-grid').innerHTML = Object.entries(tarifas).map(([key,t])=>`
       <div class="persona-item">
         <div class="persona-label">${t.label}</div>
-        <div class="persona-precio">${t.precio===0?'Gratis':`$${(t.precio*(1+itbms/100)).toFixed(2)} c/u (ITBMS inc.)`}</div>
+        <div class="persona-precio">${t.precio===0?'Gratis':(t.itbms===-1?`$${t.precio.toFixed(2)} c/u (ITBMS incluido)`:!t.itbms?`$${t.precio.toFixed(2)} c/u (sin ITBMS)`:`$${(t.precio*(1+t.itbms/100)).toFixed(2)} c/u (ITBMS inc.)`)}</div>
         <div class="persona-counter">
           <button class="counter-btn" onclick="cambiarContador('${key}',-1)">−</button>
           <span class="counter-val" id="cnt-${key}">0</span>
@@ -500,18 +511,24 @@
     actualizarResumen();
   }
 
+  function itbmsDeLinea(t) {
+    // -1 = incluido en el precio (no se suma nada); 0/null = sin ITBMS; N = se suma N%
+    if (t.itbms === -1 || !t.itbms) return 0;
+    return t.precio * (t.itbms / 100);
+  }
+
   function actualizarResumen() {
     if (!precios?.[SERVICIO]) return;
     const mod     = precios[SERVICIO].modalidades?.[modalidadActual] || precios[SERVICIO];
     const tarifas = mod.tarifas || {};
-    const itbms   = precios[SERVICIO].itbms || 7;
-    let subtotal = 0;
+    let subtotal = 0, itbmsTotal = 0;
     const lineas = [];
     Object.entries(contadores).forEach(([key,qty])=>{
       if (qty > 0 && tarifas[key]) {
         const t = tarifas[key];
         const sub = t.precio * qty;
         subtotal += sub;
+        itbmsTotal += itbmsDeLinea(t) * qty;
         lineas.push({label:`${t.label} × ${qty}`, monto:sub});
       }
     });
@@ -521,11 +538,10 @@
         '<div style="font-size:.82rem;color:#bbb;text-align:center">Selecciona personas para ver el total</div>';
       return;
     }
-    const itbmsAmt = subtotal * (itbms/100);
-    const total    = subtotal + itbmsAmt;
+    const total = subtotal + itbmsTotal;
     document.getElementById('resumen-box').innerHTML = `
       ${lineas.map(l=>`<div class="resumen-row"><span>${l.label}</span><span>$${l.monto.toFixed(2)}</span></div>`).join('')}
-      <div class="resumen-row itbms"><span>ITBMS ${itbms}%</span><span>$${itbmsAmt.toFixed(2)}</span></div>
+      <div class="resumen-row itbms"><span>ITBMS</span><span>$${itbmsTotal.toFixed(2)}</span></div>
       <div class="resumen-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
@@ -540,7 +556,6 @@
 
     const mod = precios?.[SERVICIO]?.modalidades?.[modalidadActual] || precios?.[SERVICIO] || {};
     const tarifas = mod.tarifas || {};
-    const itbms = precios?.[SERVICIO]?.itbms || 7;
 
     let agregados = 0;
     Object.entries(contadores).forEach(([key, qty]) => {
@@ -551,7 +566,7 @@
           categoria: 'Pasadía',
           nombre: t.label,
           precio: t.precio,
-          itbms,
+          itbms: t.itbms ?? 7, // ITBMS propio de este ítem, no uno fijo para todo el carrito
           cantidad: qty,
           fecha_visita: fecha,
           fecha_visita_fin: fecha,
