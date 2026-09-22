@@ -282,15 +282,15 @@
 
       // Notificar por WhatsApp — el cliente ya no escribe sus datos a mano,
       // se toman directo de su perfil verificado.
-      const detalle = items.map(it => `• ${it.categoria ? it.categoria+': ' : ''}${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''}${it.fecha_visita?` (📅 ${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}`).join('\n');
+      const detalle = items.map(it => `• ${it.categoria ? it.categoria+': ' : ''}${it.nombre}${it.cantidad>1?` × ${it.cantidad}`:''}${it.fecha_visita?` (${it.fecha_visita}${it.fecha_visita_fin && it.fecha_visita_fin!==it.fecha_visita?' → '+it.fecha_visita_fin:''})`:''}`).join('\n');
       const msg = encodeURIComponent(
         `Hola Sanagua Lodge! Quiero hacer la siguiente solicitud de reserva:\n\n${detalle}\n\n`+
-        `💰 Total: $${t.total.toFixed(2)}\n`+
-        `👤 ${contacto.nombre}${contacto.verificado?' ✓ (verificado)':''}\n`+
-        `🆔 ${contacto.cedula||'—'}\n`+
-        `📱 ${contacto.telefono||'—'}\n📧 ${contacto.email}\n`+
-        `🍽️ Alergias: ${alergia}`+
-        `${notas?`\n📝 Notas: ${notas}`:''}`
+        `Total: $${t.total.toFixed(2)}\n`+
+        `Nombre: ${contacto.nombre}${contacto.verificado?' (verificado)':''}\n`+
+        `Cédula: ${contacto.cedula||'—'}\n`+
+        `Teléfono: ${contacto.telefono||'—'}\nCorreo: ${contacto.email}\n`+
+        `Alergias: ${alergia}`+
+        `${notas?`\nNotas: ${notas}`:''}`
       );
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 
