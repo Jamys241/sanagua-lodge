@@ -202,7 +202,7 @@
   function cerrarCarrito() { document.getElementById('sc-overlay').classList.remove('show'); }
 
   // Número de WhatsApp del lodge donde llegan las notificaciones de reserva.
-  const WHATSAPP_NUMBER = '50766000000';
+  const WHATSAPP_NUMBER = '50761660114'; // +507 6166-0114
 
   async function enviarSolicitud() {
     const items = getItems();
@@ -254,6 +254,7 @@
       );
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 
+      document.getElementById('sc-notas').value = '';
       clearItems();
       cerrarCarrito();
       mostrarToastCarrito('<i class="fa-solid fa-circle-check"></i> ¡Solicitud enviada! Podrás ver su estado en tu perfil.');
