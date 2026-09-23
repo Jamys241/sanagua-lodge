@@ -32,7 +32,7 @@
     </div>
     <div class="sidebar-label">Categoría base: Servicios</div>
     <div id="sidebar-cats"></div>
-    <button class="btn-add-cat" onclick="crearSubcategoria()">+ Nueva subcategoría</button>
+    <button class="btn-add-cat" onclick="crearSubcategoria()">+ Nueva categoría base</button>
     <button class="cat-btn" onclick="location.href='menu-editor.html'" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1)">
       <i class="fa-solid fa-utensils"></i>&nbsp; Editor de Menú (Restaurante)
     </button>
@@ -91,6 +91,21 @@
         </div></div>
       <div class="form-group"><label>URL de la foto (opcional, si prefieres pegar un enlace)</label>
         <input class="form-input" id="mi-foto-url" placeholder="https://..." oninput="document.getElementById('mi-foto').value=this.value.trim()"></div>
+
+      <div class="form-group">
+        <label>Galería de fotos adicionales <span style="color:var(--muted);font-weight:400">(el cliente puede verlas en grande, con botones para pasar entre ellas)</span></label>
+        <input type="file" class="form-input" id="mi-galeria-file" accept="image/*" multiple onchange="subirGaleriaItem(this)">
+        <input type="hidden" id="mi-galeria" value="[]">
+        <div id="mi-galeria-preview" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
+        <span id="mi-galeria-status" style="font-size:.78rem;color:var(--muted)"></span>
+      </div>
+
+      <div class="form-group"><label>Qué incluye <span style="color:var(--muted);font-weight:400">(una línea por cada cosa, ej. "Aire acondicionado")</span></label>
+        <textarea class="form-input" id="mi-incluye" placeholder="Aire acondicionado&#10;Wifi&#10;Parrilla" style="min-height:80px"></textarea></div>
+
+      <div class="form-group"><label>Personas adicionales — capacidad máxima total <span style="color:var(--muted);font-weight:400">(opcional, solo para Cabañas)</span></label>
+        <input class="form-input" type="number" min="1" step="1" id="mi-capacidad" placeholder="Ej: 6"></div>
+
       <div class="form-row">
         <div class="form-group"><label>Precio (USD)</label>
           <input class="form-input" type="number" step="0.01" min="0" id="mi-precio" placeholder="0.00"></div>
@@ -168,6 +183,52 @@
   }
   function subirFotoItem(input) {
     subirFotoAStorage(input.files[0], 'mi-nombre', 'mi-foto', 'mi-foto-preview', 'mi-foto-status');
+  }
+
+  function renderGaleriaPreview() {
+    const urls = JSON.parse(document.getElementById('mi-galeria').value || '[]');
+    document.getElementById('mi-galeria-preview').innerHTML = urls.map((url, i) => `
+      <div style="position:relative">
+        <img src="${url}" style="width:70px;height:70px;object-fit:cover;border-radius:6px">
+        <button type="button" onclick="quitarFotoGaleria(${i})"
+          style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+          background:#c0392b;color:#fff;border:none;cursor:pointer;font-size:.7rem;line-height:1">✕</button>
+      </div>`).join('');
+  }
+
+  function quitarFotoGaleria(idx) {
+    const urls = JSON.parse(document.getElementById('mi-galeria').value || '[]');
+    urls.splice(idx, 1);
+    document.getElementById('mi-galeria').value = JSON.stringify(urls);
+    renderGaleriaPreview();
+  }
+
+  async function subirGaleriaItem(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const nombreItem = (document.getElementById('mi-nombre')?.value || 'item').trim();
+    const status = document.getElementById('mi-galeria-status');
+    const urls = JSON.parse(document.getElementById('mi-galeria').value || '[]');
+    status.textContent = `Subiendo ${files.length} foto${files.length===1?'':'s'}...`;
+    try {
+      for (const file of files) {
+        if (file.size > 3 * 1024 * 1024) { showToast(`"${file.name}" pesa más de 3 MB, se omitió.`, 'error'); continue; }
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `${slugKey(nombreItem)}-galeria-${Date.now()}-${Math.floor(Math.random()*10000)}.${ext}`;
+        const { error } = await supa.storage.from('services').upload(path, file, { upsert: true });
+        if (error) throw error;
+        const { data: pub } = supa.storage.from('services').getPublicUrl(path);
+        urls.push(pub.publicUrl);
+      }
+      document.getElementById('mi-galeria').value = JSON.stringify(urls);
+      renderGaleriaPreview();
+      status.textContent = '✅ Listo';
+      showToast('✅ Fotos añadidas a la galería.', 'success');
+    } catch (e) {
+      console.error(e);
+      status.textContent = '';
+      showToast('❌ Error al subir alguna foto.', 'error');
+    }
   }
   function subirFotoCategoria(input) {
     subirFotoAStorage(input.files[0], 'mc-nombre', 'mc-foto', 'mc-foto-preview', 'mc-foto-status');
@@ -346,7 +407,7 @@
     const padre = esHija ? categorias.find(c => c.id === parentId) : null;
     const nombre = prompt(esHija
       ? `Nombre de la nueva cabaña/opción dentro de "${padre?.nombre}" (ej. "Cabaña Jaguar"):`
-      : 'Nombre de la nueva subcategoría de Servicios (ej. "Tours guiados"):');
+      : 'Nombre de la nueva categoría base (ej. "Carpas Disponibles"):');
     if (!nombre || !nombre.trim()) return;
     try {
       const { data, error } = await supa.from('product_categories')
@@ -432,6 +493,12 @@
     document.getElementById('mi-precio').value = '';
     document.getElementById('mi-itbms').value = '7';
     document.getElementById('mi-puntos').value = '0';
+    document.getElementById('mi-incluye').value = '';
+    document.getElementById('mi-capacidad').value = '';
+    document.getElementById('mi-galeria').value = '[]';
+    document.getElementById('mi-galeria-file').value = '';
+    document.getElementById('mi-galeria-preview').innerHTML = '';
+    document.getElementById('mi-galeria-status').textContent = '';
     document.getElementById('modal-item').classList.add('show');
   }
 
@@ -463,6 +530,12 @@
     document.getElementById('mi-precio').value = p.precio;
     document.getElementById('mi-itbms').value = p.itbms;
     document.getElementById('mi-puntos').value = p.puntos_fidelidad || 0;
+    document.getElementById('mi-incluye').value = (p.incluye||[]).join('\n');
+    document.getElementById('mi-capacidad').value = p.capacidad_maxima || '';
+    document.getElementById('mi-galeria').value = JSON.stringify(p.galeria||[]);
+    document.getElementById('mi-galeria-file').value = '';
+    document.getElementById('mi-galeria-status').textContent = '';
+    renderGaleriaPreview();
     document.getElementById('modal-item').classList.add('show');
   }
   function cerrarModalItem(){ document.getElementById('modal-item').classList.remove('show'); }
@@ -476,15 +549,19 @@
     const precio = parseFloat(document.getElementById('mi-precio').value) || 0;
     const itbms = parseInt(document.getElementById('mi-itbms').value) || 0;
     const puntos_fidelidad = parseInt(document.getElementById('mi-puntos').value) || 0;
+    const incluye = document.getElementById('mi-incluye').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const capacidad_maxima = parseInt(document.getElementById('mi-capacidad').value) || null;
+    let galeria = [];
+    try { galeria = JSON.parse(document.getElementById('mi-galeria').value || '[]'); } catch {}
     if (!nombre) { showToast('Ingresa el nombre del ítem.', 'error'); return; }
     try {
       if (editandoItemId) {
-        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad }).eq('id', editandoItemId);
+        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria }).eq('id', editandoItemId);
         if (error) throw error;
       } else {
         const cat = categorias.find(c => c.id === catId);
         const { error } = await supa.from('products').insert({
-          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, orden: cat?.productos.length || 0,
+          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria, orden: cat?.productos.length || 0,
         });
         if (error) throw error;
       }

@@ -6,7 +6,7 @@
   <title>Camping — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/camping.css?v=10">
+  <link rel="stylesheet" href="../css/camping.css?v=11">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/site-nav.js"></script>
   <script src="../js/cart.js?v=5"></script>
@@ -156,7 +156,7 @@
     // solo nivel) — los ítems viven directo dentro de cada una, sin otra
     // capa de subcategorías en medio.
     const { data: cats } = await supaPrecios.from('product_categories')
-      .select('*').in('nombre', [...Object.values(CAMPING_CATEGORIAS), 'Carpas']).eq('activo', true);
+      .select('*').in('nombre', [...Object.values(CAMPING_CATEGORIAS), 'Carpas Disponibles']).eq('activo', true);
     const catIds = (cats||[]).map(c => c.id);
     const { data: prods } = catIds.length
       ? await supaPrecios.from('products').select('*').in('categoria_id', catIds).eq('activo', true).order('orden', { ascending: true })
@@ -182,7 +182,7 @@
       modalidades[mod] = { label: nombreCat, tarifas, grupos };
     });
 
-    const catCarpas = (cats||[]).find(c => c.nombre === 'Carpas');
+    const catCarpas = (cats||[]).find(c => c.nombre === 'Carpas Disponibles');
     if (catCarpas) {
       const carpasProds = (prods||[]).filter(p => p.categoria_id === catCarpas.id);
       if (carpasProds.length) {

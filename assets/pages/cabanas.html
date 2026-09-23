@@ -7,174 +7,258 @@
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/cabanas.css">
+  <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
+  <style>
+    .cab-gal{position:relative;width:100%;height:280px;background:#f0ede4;border-radius:12px;overflow:hidden;margin-bottom:16px;cursor:pointer}
+    .cab-gal img{width:100%;height:100%;object-fit:cover}
+    .cab-gal .cab-gal-count{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;
+      font-size:.75rem;padding:4px 10px;border-radius:20px}
+    .cab-incluye{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:14px 0}
+    .cab-incluye-item{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#555}
+    .cab-incluye-item i{color:var(--moss);width:16px}
+    .cab-capacidad{display:inline-flex;align-items:center;gap:8px;background:#eef4f5;color:var(--forest);
+      font-size:.82rem;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:14px}
+    #lightbox-ov{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:900;display:none;
+      align-items:center;justify-content:center}
+    #lightbox-ov.open{display:flex}
+    #lightbox-ov img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px}
+    .lb-close{position:absolute;top:20px;right:26px;background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer}
+    .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);
+      border:none;color:#fff;width:46px;height:46px;border-radius:50%;font-size:1.3rem;cursor:pointer}
+    .lb-prev{left:16px} .lb-next{right:16px}
+    .lb-count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem;opacity:.8}
+  </style>
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
-  </nav>
+  <a class="nav-logo" href="../../index.html"><i class="fa-solid fa-leaf"></i> Sanagua Lodge</a>
+</nav>
 <section class="hero">
   <div class="hero-content">
     <div class="hero-badge">Sanagua Lodge</div>
     <h1>Nuestras <em>Cabañas</em></h1>
-    <p class="hero-sub">Tres refugios únicos en medio de la naturaleza panameña. Cada uno con su propio carácter, vistas y comodidades.</p>
+    <p class="hero-sub">Refugios únicos en medio de la naturaleza panameña, cada uno con su propio carácter y comodidades.</p>
   </div>
 </section>
 <div class="pw">
   <div class="sec-label">Alojamiento</div>
   <h2 class="sec-title">Elige tu <em>refugio perfecto</em></h2>
   <div class="cabanas-grid" id="cabanas-grid">
-    <!-- Se renderiza dinámicamente -->
-    <a class="cabana-card" id="card-yaguarundi" href="cabana-yaguarundi.html">
-      <div class="cabana-img yaguarundi">
-        <div class="cabana-num">01</div>
-        <span>🌿</span>
-        <div class="cabana-badge">Hasta 4 personas</div>
-      </div>
-      <div class="cabana-body">
-        <div class="cabana-name">Cabaña Yaguarundi</div>
-        <p class="cabana-desc">Cabaña íntima rodeada de vegetación, perfecta para parejas o familias pequeñas. Diseñada para el descanso y la conexión con la naturaleza.</p>
-        <div class="cabana-details">
-          <div class="det-item">🛏️ Cama doble + literas</div>
-          <div class="det-item">🚿 Baño privado</div>
-          <div class="det-item">❄️ Aire acondicionado</div>
-        </div>
-        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-yaguarundi">$120.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
-        <div class="cabana-link">Ver detalles y disponibilidad →</div>
-      </div>
-    </a>
-    <a class="cabana-card" id="card-ocelot" href="cabana-ocelot.html">
-      <div class="cabana-img ocelot">
-        <div class="cabana-num">02</div>
-        <span>🦌</span>
-        <div class="cabana-badge">Hasta 6 personas</div>
-      </div>
-      <div class="cabana-body">
-        <div class="cabana-name">Cabaña Ocelot</div>
-        <p class="cabana-desc">Espaciosa cabaña con vista al río, ideal para grupos familiares. Cocina equipada y amplia sala para momentos de encuentro.</p>
-        <div class="cabana-details">
-          <div class="det-item">🛏️ 2 camas dobles + literas</div>
-          <div class="det-item">🚿 Baño privado</div>
-          <div class="det-item">🍳 Cocina</div>
-        </div>
-        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-ocelot">$160.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
-        <div class="cabana-link">Ver detalles y disponibilidad →</div>
-      </div>
-    </a>
-    <a class="cabana-card" id="card-motmot" href="cabana-motmot.html">
-      <div class="cabana-img motmot">
-        <div class="cabana-num">03</div>
-        <span>🦜</span>
-        <div class="cabana-badge">Hasta 8 personas</div>
-      </div>
-      <div class="cabana-body">
-        <div class="cabana-name">Cabaña Motmot</div>
-        <p class="cabana-desc">La más grande de nuestras cabañas, perfecta para grupos y reuniones familiares. Terraza panorámica con vista al bosque.</p>
-        <div class="cabana-details">
-          <div class="det-item">🛏️ 3 camas dobles + literas</div>
-          <div class="det-item">🚿 2 baños</div>
-          <div class="det-item">🍳 Cocina equipada</div>
-        </div>
-        <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio" id="p-motmot">$200.00</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
-        <div class="cabana-link">Ver detalles y disponibilidad →</div>
-      </div>
-    </a>
+    <div style="color:#999;font-size:.9rem">Cargando cabañas...</div>
   </div>
 </div>
+
+<!-- MODAL DETALLE DE CABAÑA -->
+<div class="modal-overlay" id="detalle-cab-ov">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <div class="modal-title" id="cab-titulo">Cabaña</div>
+      <button class="modal-close" onclick="cerrarDetalleCabana()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="cab-gal" id="cab-gal-cover" onclick="abrirLightbox(0)">
+        <img id="cab-gal-img" src="" alt="">
+        <span class="cab-gal-count" id="cab-gal-count"></span>
+      </div>
+      <div id="cab-capacidad-wrap"></div>
+      <p id="cab-desc" style="color:#666;font-size:.92rem;line-height:1.6;margin-bottom:14px"></p>
+      <div class="cab-incluye" id="cab-incluye"></div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--moss);margin:16px 0" id="cab-precio"></div>
+      <button class="pasadia-card-btn" onclick="abrirReservaCabana()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox-ov">
+  <button class="lb-close" onclick="cerrarLightbox()">×</button>
+  <button class="lb-nav lb-prev" onclick="lbNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+  <img id="lb-img" src="" alt="">
+  <button class="lb-nav lb-next" onclick="lbNav(1)"><i class="fa-solid fa-chevron-right"></i></button>
+  <div class="lb-count" id="lb-count"></div>
+</div>
+
+<!-- MODAL RESERVA -->
+<div class="modal-overlay" id="modal-overlay-res">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="res-titulo">Reservar cabaña</div>
+      <button class="modal-close" onclick="closeModalRes()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Fecha de entrada</label>
+        <input type="date" class="form-input" id="cab-f-ent" onchange="onCabEntradaChange()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de salida</label>
+        <input type="date" class="form-input" id="cab-f-sal" onchange="calcCabResumen()">
+      </div>
+      <div id="cab-resumen" style="background:#faf8f4;border-radius:8px;padding:14px;margin-top:10px;font-size:.9rem"></div>
+      <button class="pasadia-card-btn" style="margin-top:16px" onclick="confirmarReservaCabana()">Añadir al carrito</button>
+      <p style="text-align:center;font-size:.78rem;color:#aaa;margin-top:10px">Confirmación por WhatsApp o correo en menos de 24 horas.</p>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/site-nav.js"></script>
+<script src="../js/site-nav.js"></script>
+<script src="../js/cart.js?v=5"></script>
 <script>
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
   const supaPub = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const CATEGORIA_POR_CABANA = { yaguarundi: 'Cabaña Yaguarundí', ocelot: 'Cabaña Ocelot', motmot: 'Cabaña Motmot' };
+  function lds(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 
-  async function cargarPreciosYPopulares() {
-    const [{ data: cats }, { data: pops }] = await Promise.all([
-      supaPub.from('product_categories').select('id, nombre').in('nombre', Object.values(CATEGORIA_POR_CABANA)),
-      supaPub.from('populares').select('item_key, activo').eq('activo', true),
-    ]);
-    const catIds = (cats||[]).map(c => c.id);
-    const { data: prods } = catIds.length
-      ? await supaPub.from('products').select('categoria_id, precio').in('categoria_id', catIds).eq('activo', true)
-      : { data: [] };
-    const precios = { cabanas: {} };
-    Object.entries(CATEGORIA_POR_CABANA).forEach(([key, nombreCat]) => {
-      const cat = (cats||[]).find(c => c.nombre === nombreCat);
-      if (!cat) return;
-      const valores = (prods||[]).filter(p => p.categoria_id === cat.id && p.precio > 0).map(p => parseFloat(p.precio));
-      if (valores.length) precios.cabanas[key] = valores;
-    });
-    return { precios, populares: (pops||[]).map(p => p.item_key) };
+  let cabanas = [];
+  let cabActual = null;
+  let lbFotos = []; let lbIdx = 0;
+
+  async function cargarCabanas() {
+    const { data: catPadre } = await supaPub.from('product_categories')
+      .select('*').eq('nombre','Cabañas').eq('activo', true).maybeSingle();
+    if (!catPadre) { cabanas = []; return; }
+    const { data: prods } = await supaPub.from('products').select('*')
+      .eq('categoria_id', catPadre.id).eq('activo', true).order('orden', { ascending: true });
+    cabanas = prods || [];
   }
 
-  async function init(){
-    const { precios: p, populares } = await cargarPreciosYPopulares();
-
-    // Precios desde
-    const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-    const cardIds={yaguarundi:'card-yaguarundi',ocelot:'card-ocelot',motmot:'card-motmot'};
-    Object.keys(map).forEach(k=>{
-      const card = document.getElementById(cardIds[k]);
-      if (!card) return;
-      // Si esta cabaña no tiene ningún precio cargado en el catálogo, no
-      // está realmente disponible — se oculta en vez de mostrarla vacía.
-      if (!p.cabanas[k] || !p.cabanas[k].length) { card.style.display = 'none'; return; }
-      const el=document.getElementById(map[k]);
-      if(!el)return;
-      const desde=Math.min(...p.cabanas[k]);
-      el.textContent=`$${desde.toFixed(2)}`;
-    });
-
-    // Insignias de popular
-    const cardMap={
-      'cabana-yaguarundi':'card-yaguarundi',
-      'cabana-ocelot':    'card-ocelot',
-      'cabana-motmot':    'card-motmot',
-    };
-    populares.forEach(pid=>{
-      const card=document.getElementById(cardMap[pid]);
-      if(!card||card.querySelector('.pop-badge'))return;
-      card.classList.add('popular');
-      card.style.position='relative';
-      const b=document.createElement('div');
-      b.className='pop-badge';
-      b.innerHTML='⭐ Más popular';
-      card.prepend(b);
-    });
+  function renderCabanasGrid() {
+    const grid = document.getElementById('cabanas-grid');
+    if (!cabanas.length) { grid.innerHTML = '<p style="color:#999">Aún no hay cabañas cargadas.</p>'; return; }
+    grid.innerHTML = cabanas.map((c,i) => `
+      <div class="cabana-card" style="cursor:pointer" onclick="abrirDetalleCabana(${i})">
+        <div class="cabana-img" style="background:#f0ede4;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          ${c.foto ? `<img src="${c.foto}" style="width:100%;height:100%;object-fit:cover">` : '<i class="fa-solid fa-house" style="font-size:2rem;color:#c9c2b0"></i>'}
+        </div>
+        <div class="cabana-body">
+          <div class="cabana-name">${c.nombre}</div>
+          <p class="cabana-desc">${c.descripcion || ''}</p>
+          <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio">$${(parseFloat(c.precio)||0).toFixed(2)}</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
+          <div class="cabana-link">Ver detalles →</div>
+        </div>
+      </div>`).join('');
   }
-  init();
 
-  // Auto-actualización cada 20 segundos (precios y populares)
-  let _lastHashCabs = null;
-  setInterval(async () => {
-    const { precios: p, populares } = await cargarPreciosYPopulares();
-    const hash = JSON.stringify({p,populares});
-    if (hash === _lastHashCabs) return;
-    _lastHashCabs = hash;
-    // Actualizar precios desde (y ocultar cabañas sin catálogo)
-    const map={yaguarundi:'p-yaguarundi',ocelot:'p-ocelot',motmot:'p-motmot'};
-    const cardIds={yaguarundi:'card-yaguarundi',ocelot:'card-ocelot',motmot:'card-motmot'};
-    Object.keys(map).forEach(k=>{
-      const card = document.getElementById(cardIds[k]);
-      if (!card) return;
-      if (!p.cabanas[k] || !p.cabanas[k].length) { card.style.display = 'none'; return; }
-      card.style.display = '';
-      const el=document.getElementById(map[k]); if(!el)return;
-      el.textContent=`$${Math.min(...p.cabanas[k]).toFixed(2)}`;
+  function abrirDetalleCabana(i) {
+    const c = cabanas[i];
+    if (!c) return;
+    cabActual = c;
+    lbFotos = [c.foto, ...(c.galeria||[])].filter(Boolean);
+    document.getElementById('cab-titulo').textContent = c.nombre;
+    document.getElementById('cab-gal-img').src = lbFotos[0] || '';
+    document.getElementById('cab-gal-count').textContent = lbFotos.length > 1 ? `1 / ${lbFotos.length}` : '';
+    document.getElementById('cab-desc').textContent = c.descripcion || '';
+    document.getElementById('cab-capacidad-wrap').innerHTML = c.capacidad_maxima
+      ? `<div class="cab-capacidad"><i class="fa-solid fa-users"></i> Hasta ${c.capacidad_maxima} personas</div>` : '';
+    document.getElementById('cab-incluye').innerHTML = (c.incluye||[]).map(t=>`
+      <div class="cab-incluye-item"><i class="fa-solid fa-circle-check"></i> ${t}</div>`).join('');
+    const itbms = c.itbms ?? 7;
+    const precioFinal = itbms === -1 ? c.precio : (!itbms ? c.precio : c.precio*(1+itbms/100));
+    document.getElementById('cab-precio').innerHTML = `$${precioFinal.toFixed(2)} <span style="font-size:.7rem;color:#999;font-weight:400">por noche ${itbms===-1?'· ITBMS incluido':(!itbms?'· sin ITBMS':'· ITBMS inc.')}</span>`;
+    document.getElementById('detalle-cab-ov').classList.add('open');
+  }
+  function cerrarDetalleCabana() { document.getElementById('detalle-cab-ov').classList.remove('open'); }
+  document.getElementById('detalle-cab-ov').addEventListener('click', e => {
+    if (e.target === document.getElementById('detalle-cab-ov')) cerrarDetalleCabana();
+  });
+
+  function abrirLightbox(i) {
+    if (!lbFotos.length) return;
+    lbIdx = i;
+    document.getElementById('lb-img').src = lbFotos[lbIdx];
+    document.getElementById('lb-count').textContent = `${lbIdx+1} / ${lbFotos.length}`;
+    document.getElementById('lightbox-ov').classList.add('open');
+  }
+  function cerrarLightbox() { document.getElementById('lightbox-ov').classList.remove('open'); }
+  function lbNav(dir) {
+    if (!lbFotos.length) return;
+    lbIdx = (lbIdx + dir + lbFotos.length) % lbFotos.length;
+    document.getElementById('lb-img').src = lbFotos[lbIdx];
+    document.getElementById('lb-count').textContent = `${lbIdx+1} / ${lbFotos.length}`;
+  }
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox-ov').classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'Escape') cerrarLightbox();
+  });
+
+  function abrirReservaCabana() {
+    cerrarDetalleCabana();
+    document.getElementById('res-titulo').textContent = `Reservar ${cabActual.nombre}`;
+    const manana = new Date(); manana.setDate(manana.getDate()+1);
+    const s2 = new Date(); s2.setDate(s2.getDate()+2);
+    document.getElementById('cab-f-ent').value = lds(manana);
+    document.getElementById('cab-f-ent').min = lds(new Date());
+    document.getElementById('cab-f-sal').value = lds(s2);
+    document.getElementById('cab-f-sal').min = lds(s2);
+    document.getElementById('modal-overlay-res').classList.add('open');
+    calcCabResumen();
+  }
+  function closeModalRes() { document.getElementById('modal-overlay-res').classList.remove('open'); }
+  document.getElementById('modal-overlay-res').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay-res')) closeModalRes();
+  });
+
+  function onCabEntradaChange() {
+    const ent = document.getElementById('cab-f-ent').value;
+    const salInput = document.getElementById('cab-f-sal');
+    if (ent) {
+      const siguiente = new Date(ent+'T12:00:00'); siguiente.setDate(siguiente.getDate()+1);
+      const minStr = lds(siguiente);
+      salInput.min = minStr;
+      if (!salInput.value || salInput.value <= ent) salInput.value = minStr;
+    }
+    calcCabResumen();
+  }
+
+  function calcCabResumen() {
+    const ent = document.getElementById('cab-f-ent').value;
+    const sal = document.getElementById('cab-f-sal').value;
+    if (!ent || !sal || !cabActual) {
+      document.getElementById('cab-resumen').innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>';
+      return;
+    }
+    const nn = Math.round((new Date(sal+'T12:00:00') - new Date(ent+'T12:00:00'))/86400000);
+    if (nn <= 0) { document.getElementById('cab-resumen').innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>'; return; }
+    const itbms = cabActual.itbms ?? 7;
+    const base = cabActual.precio * nn;
+    const itbmsMonto = (itbms === -1 || !itbms) ? 0 : base * (itbms/100);
+    const total = base + itbmsMonto;
+    document.getElementById('cab-resumen').innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${cabActual.nombre} × ${nn} noche${nn===1?'':'s'}</span><span>$${base.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#999;font-size:.85rem"><span>ITBMS</span><span>$${itbmsMonto.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #e5e0d5;padding-top:8px"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+  }
+
+  async function confirmarReservaCabana() {
+    const ent = document.getElementById('cab-f-ent').value;
+    const sal = document.getElementById('cab-f-sal').value;
+    if (!ent || !sal) { alert('Selecciona las fechas de entrada y salida.'); return; }
+    const nn = Math.round((new Date(sal+'T12:00:00') - new Date(ent+'T12:00:00'))/86400000);
+    if (nn <= 0) { alert('La fecha de salida debe ser posterior a la de entrada.'); return; }
+    SanaguaCart.add({
+      producto_id: cabActual.id,
+      categoria: 'Cabañas',
+      nombre: cabActual.nombre,
+      precio: cabActual.precio,
+      itbms: cabActual.itbms ?? 7,
+      cantidad: nn,
+      fecha_visita: ent,
+      fecha_visita_fin: sal,
+      notas: '',
+      puntos_fidelidad: cabActual.puntos_fidelidad || 0,
     });
-    // Actualizar insignias populares
-    document.querySelectorAll('.pop-badge').forEach(b=>b.remove());
-    document.querySelectorAll('.cabana-card').forEach(c=>c.classList.remove('popular'));
-    const cardMap={'cabana-yaguarundi':'card-yaguarundi','cabana-ocelot':'card-ocelot','cabana-motmot':'card-motmot'};
-    populares.forEach(pid=>{
-      const card=document.getElementById(cardMap[pid]); if(!card||card.querySelector('.pop-badge'))return;
-      card.classList.add('popular'); card.style.position='relative';
-      const b=document.createElement('div'); b.className='pop-badge'; b.innerHTML='⭐ Más popular';
-      card.prepend(b);
-    });
-  }, 20000);
+    closeModalRes();
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await cargarCabanas();
+    renderCabanasGrid();
+  });
 </script>
 </body>
 </html>
