@@ -64,6 +64,18 @@
         </div></div>
       <div class="form-group"><label>URL de la foto (opcional, si prefieres pegar un enlace)</label>
         <input class="form-input" id="mc-foto-url" placeholder="https://..." oninput="document.getElementById('mc-foto').value=this.value.trim()"></div>
+      <div class="form-row">
+        <div class="form-group"><label><i class="fa-solid fa-user"></i> Para cuántas personas</label>
+          <input class="form-input" type="number" min="1" step="1" id="mc-personas" placeholder="Ej: 2"></div>
+        <div class="form-group"><label><i class="fa-solid fa-users"></i> Capacidad máxima</label>
+          <input class="form-input" type="number" min="1" step="1" id="mc-capacidad" placeholder="Ej: 6"></div>
+      </div>
+      <p style="font-size:.74rem;color:var(--muted);margin-top:-6px;margin-bottom:14px">
+        "Para cuántas personas" es lo que ya incluye el precio base. "Capacidad máxima" es el tope total
+        contando las personas adicionales — el cliente no podrá pasar de ahí al reservar.
+        Los ítems que crees dentro de esta subcategoría (Adulto, Niño, Jubilado, Mascota...) funcionan
+        como las personas adicionales, cada uno con su precio.
+      </p>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="cerrarModalCat()">Cancelar</button>
         <button class="btn btn-accent" onclick="guardarCategoriaModal()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
@@ -435,6 +447,8 @@
     } else {
       document.getElementById('mc-foto-preview').style.display = 'none';
     }
+    document.getElementById('mc-personas').value = cat.personas_base || '';
+    document.getElementById('mc-capacidad').value = cat.capacidad_maxima || '';
     document.getElementById('modal-cat').dataset.id = id;
     document.getElementById('modal-cat').classList.add('show');
   }
@@ -445,9 +459,11 @@
     const nombre = document.getElementById('mc-nombre').value.trim();
     const descripcion = document.getElementById('mc-desc').value.trim();
     const foto = document.getElementById('mc-foto').value.trim();
+    const personas_base = parseInt(document.getElementById('mc-personas').value) || null;
+    const capacidad_maxima = parseInt(document.getElementById('mc-capacidad').value) || null;
     if (!nombre) { showToast('El nombre no puede quedar vacío.', 'error'); return; }
     try {
-      const { error } = await supa.from('product_categories').update({ nombre, descripcion, foto }).eq('id', id);
+      const { error } = await supa.from('product_categories').update({ nombre, descripcion, foto, personas_base, capacidad_maxima }).eq('id', id);
       if (error) throw error;
       cerrarModalCat();
       await cargarTodo();

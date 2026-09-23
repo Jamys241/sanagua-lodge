@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=2">
+  <link rel="stylesheet" href="../css/cabanas.css?v=3">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -64,6 +64,7 @@
       <div id="cab-capacidad-wrap"></div>
       <p id="cab-desc" style="color:#666;font-size:.92rem;line-height:1.6;margin-bottom:14px"></p>
       <div class="cab-incluye" id="cab-incluye"></div>
+      <div id="cab-adicionales"></div>
       <div style="font-size:1.3rem;font-weight:700;color:var(--moss);margin:16px 0" id="cab-precio"></div>
       <button class="pasadia-card-btn" onclick="abrirReservaCabana()"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
     </div>
@@ -116,60 +117,145 @@
   let cabActual = null;
   let lbFotos = []; let lbIdx = 0;
 
+  let grupos = [];
+
   async function cargarCabanas() {
     const { data: catPadre } = await supaPub.from('product_categories')
       .select('*').eq('nombre','Cabañas').eq('activo', true).maybeSingle();
-    if (!catPadre) { cabanas = []; return; }
+    if (!catPadre) { grupos = []; return; }
 
-    // Las cabañas pueden estar cargadas de dos formas: como ítems directos
-    // dentro de "Cabañas", o dentro de subcategorías suyas (ej. una
-    // subcategoría por cabaña). Se aceptan ambas para no depender de cómo
-    // esté organizado el catálogo.
     const { data: subcats } = await supaPub.from('product_categories')
-      .select('id').eq('parent_id', catPadre.id).eq('activo', true);
-    const ids = [catPadre.id, ...(subcats||[]).map(c => c.id)];
+      .select('*').eq('parent_id', catPadre.id).eq('activo', true).order('orden', { ascending: true });
 
+    const ids = [catPadre.id, ...(subcats||[]).map(c => c.id)];
     const { data: prods } = await supaPub.from('products').select('*')
       .in('categoria_id', ids).eq('activo', true).order('orden', { ascending: true });
-    cabanas = prods || [];
-    console.log('🏡 Cabañas — categoría padre:', catPadre.nombre, '| subcategorías:', (subcats||[]).length, '| ítems encontrados:', cabanas.length, cabanas);
+
+    // Cada subcategoría es una cabaña; sus ítems son las personas adicionales.
+    grupos = (subcats||[]).map(sub => ({
+      ...sub,
+      adicionales: (prods||[]).filter(p => p.categoria_id === sub.id),
+    }));
+    // Ítems sueltos directo bajo "Cabañas" (sin subcategoría) se muestran
+    // también como cabañas simples, sin adicionales.
+    (prods||[]).filter(p => p.categoria_id === catPadre.id).forEach(p => {
+      grupos.push({ ...p, _esItem: true, adicionales: [] });
+    });
+    console.log('🏡 Cabañas —', grupos.length, 'opciones:', grupos);
   }
 
   function renderCabanasGrid() {
     const grid = document.getElementById('cabanas-grid');
-    if (!cabanas.length) { grid.innerHTML = '<p style="color:#999">Aún no hay cabañas cargadas.</p>'; return; }
-    grid.innerHTML = cabanas.map((c,i) => `
+    if (!grupos.length) { grid.innerHTML = '<p style="color:#999">Aún no hay cabañas cargadas.</p>'; return; }
+    grid.innerHTML = grupos.map((c,i) => `
       <div class="cabana-card" style="cursor:pointer" onclick="abrirDetalleCabana(${i})">
         <div class="cabana-img" style="background:#f0ede4;display:flex;align-items:center;justify-content:center;overflow:hidden">
           ${c.foto ? `<img src="${c.foto}" style="width:100%;height:100%;object-fit:cover">` : '<i class="fa-solid fa-house" style="font-size:2rem;color:#c9c2b0"></i>'}
         </div>
         <div class="cabana-body">
           <div class="cabana-name">${c.nombre}</div>
+          ${c.personas_base ? `<div style="font-size:.8rem;color:var(--moss);font-weight:600;margin-bottom:6px"><i class="fa-solid fa-user"></i> Para ${c.personas_base} persona${c.personas_base===1?'':'s'}</div>` : ''}
           <p class="cabana-desc">${c.descripcion || ''}</p>
-          <div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio">$${(parseFloat(c.precio)||0).toFixed(2)}</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>
+          ${c.precio ? `<div class="cabana-desde"><span class="desde-label">Desde</span><span class="desde-precio">$${(parseFloat(c.precio)||0).toFixed(2)}</span><span style="font-size:.78rem;color:#aaa">/noche</span></div>` : ''}
           <div class="cabana-link">Ver detalles →</div>
         </div>
       </div>`).join('');
   }
 
+  let adicCnt = {};
+
   function abrirDetalleCabana(i) {
-    const c = cabanas[i];
+    const c = grupos[i];
     if (!c) return;
     cabActual = c;
+    adicCnt = Object.fromEntries((c.adicionales||[]).map(a => [a.id, 0]));
     lbFotos = [c.foto, ...(c.galeria||[])].filter(Boolean);
     document.getElementById('cab-titulo').textContent = c.nombre;
     document.getElementById('cab-gal-img').src = lbFotos[0] || '';
     document.getElementById('cab-gal-count').textContent = lbFotos.length > 1 ? `1 / ${lbFotos.length}` : '';
     document.getElementById('cab-desc').textContent = c.descripcion || '';
-    document.getElementById('cab-capacidad-wrap').innerHTML = c.capacidad_maxima
-      ? `<div class="cab-capacidad"><i class="fa-solid fa-users"></i> Hasta ${c.capacidad_maxima} personas</div>` : '';
+    document.getElementById('cab-capacidad-wrap').innerHTML = `
+      ${c.personas_base ? `<div class="cab-capacidad"><i class="fa-solid fa-user"></i> Para ${c.personas_base} persona${c.personas_base===1?'':'s'}</div>` : ''}
+      ${c.capacidad_maxima ? `<div class="cab-capacidad" style="margin-left:8px"><i class="fa-solid fa-users"></i> Máximo ${c.capacidad_maxima}</div>` : ''}`;
     document.getElementById('cab-incluye').innerHTML = (c.incluye||[]).map(t=>`
       <div class="cab-incluye-item"><i class="fa-solid fa-circle-check"></i> ${t}</div>`).join('');
-    const itbms = c.itbms ?? 7;
-    const precioFinal = itbms === -1 ? c.precio : (!itbms ? c.precio : c.precio*(1+itbms/100));
-    document.getElementById('cab-precio').innerHTML = `$${precioFinal.toFixed(2)} <span style="font-size:.7rem;color:#999;font-weight:400">por noche ${itbms===-1?'· ITBMS incluido':(!itbms?'· sin ITBMS':'· ITBMS inc.')}</span>`;
+    renderAdicionales();
+    actualizarPrecioCabana();
     document.getElementById('detalle-cab-ov').classList.add('open');
   }
+
+  function personasTotales() {
+    const base = cabActual?.personas_base || 0;
+    return base + Object.values(adicCnt).reduce((a,b)=>a+b, 0);
+  }
+
+  function renderAdicionales() {
+    const wrap = document.getElementById('cab-adicionales');
+    const adic = cabActual?.adicionales || [];
+    if (!adic.length) { wrap.innerHTML = ''; return; }
+    const max = cabActual.capacidad_maxima;
+    const total = personasTotales();
+    wrap.innerHTML = `
+      <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999;margin:18px 0 10px">
+        Personas adicionales
+      </div>
+      ${max ? `<div style="font-size:.8rem;color:${total>=max?'#c0392b':'#888'};margin-bottom:10px">
+        <i class="fa-solid fa-users"></i> ${total} de ${max} personas${total>=max?' — capacidad máxima alcanzada':''}
+      </div>` : ''}
+      ${adic.map(a => {
+        const it = a.itbms ?? 7;
+        const pf = it === -1 ? a.precio : (!it ? a.precio : a.precio*(1+it/100));
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.9rem;font-weight:600">${a.nombre}</div>
+            <div style="font-size:.78rem;color:#999">+$${pf.toFixed(2)} c/u por noche</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <button class="counter-btn" onclick="cambiarAdic('${a.id}',-1)">−</button>
+            <span style="min-width:20px;text-align:center;font-weight:700">${adicCnt[a.id]||0}</span>
+            <button class="counter-btn" onclick="cambiarAdic('${a.id}',1)">+</button>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+
+  function cambiarAdic(id, delta) {
+    const max = cabActual?.capacidad_maxima;
+    const nuevo = (adicCnt[id]||0) + delta;
+    if (nuevo < 0) return;
+    if (delta > 0 && max && personasTotales() >= max) {
+      alert(`Esta cabaña admite un máximo de ${max} personas en total.`);
+      return;
+    }
+    adicCnt[id] = nuevo;
+    renderAdicionales();
+    actualizarPrecioCabana();
+  }
+
+  function precioConItbms(precio, itbms) {
+    const it = itbms ?? 7;
+    return it === -1 ? precio : (!it ? precio : precio*(1+it/100));
+  }
+
+  function actualizarPrecioCabana() {
+    const c = cabActual;
+    if (!c) return;
+    let porNoche = precioConItbms(parseFloat(c.precio)||0, c.itbms);
+    const lineasAdic = [];
+    (c.adicionales||[]).forEach(a => {
+      const q = adicCnt[a.id] || 0;
+      if (q > 0) {
+        const sub = precioConItbms(parseFloat(a.precio)||0, a.itbms) * q;
+        porNoche += sub;
+        lineasAdic.push(`<div style="display:flex;justify-content:space-between;font-size:.82rem;color:#888;margin-top:3px"><span>${a.nombre} × ${q}</span><span>+$${sub.toFixed(2)}</span></div>`);
+      }
+    });
+    document.getElementById('cab-precio').innerHTML = `
+      $${porNoche.toFixed(2)} <span style="font-size:.7rem;color:#999;font-weight:400">por noche · ITBMS inc.</span>
+      ${lineasAdic.join('')}`;
+  }
+
   function cerrarDetalleCabana() { document.getElementById('detalle-cab-ov').classList.remove('open'); }
   document.getElementById('detalle-cab-ov').addEventListener('click', e => {
     if (e.target === document.getElementById('detalle-cab-ov')) cerrarDetalleCabana();
@@ -228,20 +314,29 @@
   function calcCabResumen() {
     const ent = document.getElementById('cab-f-ent').value;
     const sal = document.getElementById('cab-f-sal').value;
-    if (!ent || !sal || !cabActual) {
-      document.getElementById('cab-resumen').innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>';
-      return;
-    }
+    const box = document.getElementById('cab-resumen');
+    if (!ent || !sal || !cabActual) { box.innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>'; return; }
     const nn = Math.round((new Date(sal+'T12:00:00') - new Date(ent+'T12:00:00'))/86400000);
-    if (nn <= 0) { document.getElementById('cab-resumen').innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>'; return; }
-    const itbms = cabActual.itbms ?? 7;
-    const base = cabActual.precio * nn;
-    const itbmsMonto = (itbms === -1 || !itbms) ? 0 : base * (itbms/100);
-    const total = base + itbmsMonto;
-    document.getElementById('cab-resumen').innerHTML = `
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${cabActual.nombre} × ${nn} noche${nn===1?'':'s'}</span><span>$${base.toFixed(2)}</span></div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#999;font-size:.85rem"><span>ITBMS</span><span>$${itbmsMonto.toFixed(2)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #e5e0d5;padding-top:8px"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+    if (nn <= 0) { box.innerHTML = '<div style="color:#bbb;text-align:center">Completa las fechas</div>'; return; }
+
+    const lineas = [];
+    let total = 0;
+    const baseNoche = precioConItbms(parseFloat(cabActual.precio)||0, cabActual.itbms);
+    if (baseNoche > 0) {
+      const sub = baseNoche * nn;
+      total += sub;
+      lineas.push(`<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>${cabActual.nombre} × ${nn} noche${nn===1?'':'s'}</span><span>$${sub.toFixed(2)}</span></div>`);
+    }
+    (cabActual.adicionales||[]).forEach(a => {
+      const q = adicCnt[a.id] || 0;
+      if (q > 0) {
+        const sub = precioConItbms(parseFloat(a.precio)||0, a.itbms) * q * nn;
+        total += sub;
+        lineas.push(`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.86rem;color:#777"><span>${a.nombre} × ${q} × ${nn} noche${nn===1?'':'s'}</span><span>$${sub.toFixed(2)}</span></div>`);
+      }
+    });
+    box.innerHTML = `${lineas.join('')}
+      <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #e5e0d5;padding-top:8px;margin-top:6px"><span>Total (ITBMS inc.)</span><span>$${total.toFixed(2)}</span></div>`;
   }
 
   async function confirmarReservaCabana() {
@@ -250,17 +345,27 @@
     if (!ent || !sal) { alert('Selecciona las fechas de entrada y salida.'); return; }
     const nn = Math.round((new Date(sal+'T12:00:00') - new Date(ent+'T12:00:00'))/86400000);
     if (nn <= 0) { alert('La fecha de salida debe ser posterior a la de entrada.'); return; }
-    SanaguaCart.add({
-      producto_id: cabActual.id,
-      categoria: 'Cabañas',
-      nombre: cabActual.nombre,
-      precio: cabActual.precio,
-      itbms: cabActual.itbms ?? 7,
-      cantidad: nn,
-      fecha_visita: ent,
-      fecha_visita_fin: sal,
-      notas: '',
-      puntos_fidelidad: cabActual.puntos_fidelidad || 0,
+
+    // La cabaña en sí (si tiene precio propio)
+    if (parseFloat(cabActual.precio) > 0) {
+      SanaguaCart.add({
+        producto_id: cabActual.id, categoria: 'Cabañas', nombre: cabActual.nombre,
+        precio: cabActual.precio, itbms: cabActual.itbms ?? 7, cantidad: nn,
+        fecha_visita: ent, fecha_visita_fin: sal, notas: '',
+        puntos_fidelidad: cabActual.puntos_fidelidad || 0,
+      });
+    }
+    // Cada persona adicional seleccionada, como su propia línea
+    (cabActual.adicionales||[]).forEach(a => {
+      const q = adicCnt[a.id] || 0;
+      if (q > 0) {
+        SanaguaCart.add({
+          producto_id: a.id, categoria: 'Cabañas', nombre: `${cabActual.nombre} — ${a.nombre}`,
+          precio: a.precio, itbms: a.itbms ?? 7, cantidad: q * nn,
+          fecha_visita: ent, fecha_visita_fin: sal, notas: '',
+          puntos_fidelidad: a.puntos_fidelidad || 0,
+        });
+      }
     });
     closeModalRes();
   }
