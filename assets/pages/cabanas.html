@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css">
+  <link rel="stylesheet" href="../css/cabanas.css?v=2">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -120,9 +120,19 @@
     const { data: catPadre } = await supaPub.from('product_categories')
       .select('*').eq('nombre','Cabañas').eq('activo', true).maybeSingle();
     if (!catPadre) { cabanas = []; return; }
+
+    // Las cabañas pueden estar cargadas de dos formas: como ítems directos
+    // dentro de "Cabañas", o dentro de subcategorías suyas (ej. una
+    // subcategoría por cabaña). Se aceptan ambas para no depender de cómo
+    // esté organizado el catálogo.
+    const { data: subcats } = await supaPub.from('product_categories')
+      .select('id').eq('parent_id', catPadre.id).eq('activo', true);
+    const ids = [catPadre.id, ...(subcats||[]).map(c => c.id)];
+
     const { data: prods } = await supaPub.from('products').select('*')
-      .eq('categoria_id', catPadre.id).eq('activo', true).order('orden', { ascending: true });
+      .in('categoria_id', ids).eq('activo', true).order('orden', { ascending: true });
     cabanas = prods || [];
+    console.log('🏡 Cabañas — categoría padre:', catPadre.nombre, '| subcategorías:', (subcats||[]).length, '| ítems encontrados:', cabanas.length, cabanas);
   }
 
   function renderCabanasGrid() {
