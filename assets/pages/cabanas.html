@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=5">
+  <link rel="stylesheet" href="../css/cabanas.css?v=6">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -81,43 +81,69 @@
       <p id="cab-desc" style="color:#666;font-size:.92rem;line-height:1.6;margin-bottom:10px"></p>
       <div class="cab-incluye" id="cab-incluye"></div>
 
-      <!-- Calendario de rango -->
-      <div style="margin:18px 0 6px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999">
-        <i class="fa-solid fa-calendar-days"></i> Selecciona tus fechas
-      </div>
-      <div class="cab-cal-wrap">
-        <div class="cab-cal-hdr">
-          <button class="cab-cal-nav" onclick="cabCalNav(-1)">‹</button>
-          <span id="cab-cal-mo"></span>
-          <button class="cab-cal-nav" onclick="cabCalNav(1)">›</button>
+      <!-- PASO 1: Calendario -->
+      <div id="cab-paso1">
+        <div style="margin:18px 0 6px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999">
+          <i class="fa-solid fa-calendar-days"></i> Paso 1 — Selecciona tus fechas
         </div>
-        <table class="cab-cal-grid"><thead><tr>
-          <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
-        </tr></thead><tbody id="cab-cal-body"></tbody></table>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:#888;margin-top:8px">
-          <span><span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:2px;margin-right:4px"></span>Disponible</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#ffcdd2;border-radius:2px;margin-right:4px"></span>No disponible</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:var(--moss);border-radius:2px;margin-right:4px"></span>Seleccionado</span>
+        <div class="cab-cal-wrap">
+          <div class="cab-cal-hdr">
+            <button class="cab-cal-nav" onclick="cabCalNav(-1)">‹</button>
+            <span id="cab-cal-mo"></span>
+            <button class="cab-cal-nav" onclick="cabCalNav(1)">›</button>
+          </div>
+          <table class="cab-cal-grid"><thead><tr>
+            <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
+          </tr></thead><tbody id="cab-cal-body"></tbody></table>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:#888;margin-top:8px">
+            <span><span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:2px;margin-right:4px"></span>Disponible</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#ffcdd2;border-radius:2px;margin-right:4px"></span>No disponible</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:var(--moss);border-radius:2px;margin-right:4px"></span>Seleccionado</span>
+          </div>
+          <div id="cab-aviso-cerrado" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#8a5a00;margin-top:8px"></div>
+          <div id="cab-hint-fechas" style="margin-top:10px;font-size:.84rem;color:var(--moss);font-weight:500;min-height:22px;text-align:center"></div>
         </div>
-        <div id="cab-aviso-cerrado" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#8a5a00;margin-top:8px"></div>
-      </div>
-
-      <!-- Desglose de tarifas (calculado según las noches seleccionadas) -->
-      <div id="cab-tarifas-wrap" style="display:none;margin-top:18px">
-        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:8px">Desglose de noches</div>
-        <div id="cab-tarifas-detalle"></div>
       </div>
 
-      <!-- Personas adicionales -->
-      <div id="cab-adicionales"></div>
+      <!-- PASO 2: Personas + Resumen (aparece solo cuando hay rango completo) -->
+      <div id="cab-paso2" style="display:none;margin-top:20px;border-top:2px dashed #c8dfe3;padding-top:18px">
 
-      <!-- Total + botón -->
-      <div id="cab-total-wrap" style="margin-top:18px;padding-top:14px;border-top:1px solid #ece8e0">
-        <div id="cab-total-line" style="display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;color:var(--forest);margin-bottom:14px">
-          <span>Total</span><span id="cab-total-monto">$0.00</span>
+        <!-- Resumen de fechas elegidas -->
+        <div id="cab-fechas-elegidas" style="background:#f0f7f8;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:.88rem;color:var(--forest)">
+          <i class="fa-solid fa-calendar-check" style="margin-right:6px"></i>
+          <span id="cab-fechas-txt"></span>
+          <button onclick="volverPaso1()" style="float:right;background:none;border:none;color:var(--moss);font-size:.8rem;cursor:pointer;font-family:'Jost',sans-serif;font-weight:600">Cambiar fechas</button>
         </div>
-        <button class="pasadia-card-btn" id="cab-btn-carrito" onclick="agregarCabanaCarrito()" disabled style="opacity:.5"><i class="fa-solid fa-cart-shopping"></i> Añadir al carrito</button>
-        <p style="text-align:center;font-size:.76rem;color:#aaa;margin-top:8px">Selecciona al menos una noche para continuar.</p>
+
+        <!-- Personas adicionales -->
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:12px">
+          <i class="fa-solid fa-users"></i> Paso 2 — Personas adicionales
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4;font-size:.88rem;cursor:pointer;margin-bottom:4px">
+          <input type="radio" name="cab-adic-opt" id="cab-adic-ninguna" onchange="toggleAdicionales(false)" style="width:16px;height:16px">
+          <span>No llevamos personas adicionales</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4;font-size:.88rem;cursor:pointer;margin-bottom:10px">
+          <input type="radio" name="cab-adic-opt" id="cab-adic-si" onchange="toggleAdicionales(true)" style="width:16px;height:16px">
+          <span>Sí, añadir personas adicionales</span>
+        </label>
+        <div id="cab-adicionales" style="display:none"></div>
+
+        <!-- Desglose + total -->
+        <div id="cab-resumen-detalle" style="background:#faf8f4;border-radius:10px;padding:14px 16px;margin-top:16px">
+          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:10px">Resumen</div>
+          <div id="cab-tarifas-detalle"></div>
+          <div id="cab-adic-resumen"></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;color:var(--forest);border-top:1px solid #e5e0d5;padding-top:10px;margin-top:8px">
+            <span>Total</span><span id="cab-total-monto">$0.00</span>
+          </div>
+        </div>
+
+        <button class="pasadia-card-btn" id="cab-btn-carrito" onclick="agregarCabanaCarrito()" style="margin-top:16px" disabled>
+          <i class="fa-solid fa-cart-shopping"></i> Añadir al carrito
+        </button>
+      </div>
+
       </div>
 
     </div>
@@ -338,17 +364,143 @@
     document.getElementById('cab-cal-body').innerHTML = html;
   }
 
+  // ── Flujo por pasos ──────────────────────────────────────────────────
+  function mostrarPaso2() {
+    const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const MESES2 = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const fmt = ds => {
+      const d = new Date(ds+'T12:00:00');
+      return `${DIAS[d.getDay()]} ${d.getDate()} ${MESES2[d.getMonth()]}`;
+    };
+    const nn = Math.round((new Date(rangoSal+'T12:00:00') - new Date(rangoEnt+'T12:00:00'))/86400000);
+    document.getElementById('cab-fechas-txt').textContent =
+      `${fmt(rangoEnt)} → ${fmt(rangoSal)} · ${nn} noche${nn===1?'':'s'}`;
+    // Resetear opciones de adicionales
+    document.getElementById('cab-adic-ninguna').checked = false;
+    document.getElementById('cab-adic-si').checked = false;
+    document.getElementById('cab-adicionales').style.display = 'none';
+    adicCnt = Object.fromEntries((cabActual.adicionales||[]).map(a => [a.id, 0]));
+    renderAdicionales();
+    calcCabTotal();
+    document.getElementById('cab-paso2').style.display = '';
+    // Scroll suave al paso 2
+    setTimeout(() => document.getElementById('cab-paso2').scrollIntoView({behavior:'smooth',block:'start'}), 80);
+    // Botón deshabilitado hasta que elijan una opción
+    const btn = document.getElementById('cab-btn-carrito');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+  }
+
+  function volverPaso1() {
+    rangoSal = null;
+    document.getElementById('cab-paso2').style.display = 'none';
+    document.getElementById('cab-hint-fechas').textContent = '';
+    renderCabCal();
+    calcCabTotal();
+  }
+
+  function toggleAdicionales(si) {
+    document.getElementById('cab-adicionales').style.display = si ? '' : 'none';
+    if (!si) {
+      adicCnt = Object.fromEntries((cabActual.adicionales||[]).map(a => [a.id, 0]));
+      renderAdicionales();
+    }
+    calcCabTotal();
+  }
+
+  function personasTotales() {
+    return (cabActual?.personas_base||0) + Object.values(adicCnt).reduce((a,b)=>a+b,0);
+  }
+
+  function renderAdicionales() {
+    const wrap = document.getElementById('cab-adicionales');
+    if (!wrap) return;
+    const adic = cabActual?.adicionales || [];
+    if (!adic.length) { wrap.innerHTML = '<p style="font-size:.85rem;color:#aaa">Esta cabaña no tiene opciones de personas adicionales configuradas.</p>'; return; }
+    const max = cabActual.capacidad_maxima;
+    const total = personasTotales();
+    let html = max ? '<div style="font-size:.8rem;color:' + (total>=max?'#c0392b':'#888') + ';margin-bottom:10px">' +
+      '<i class="fa-solid fa-users"></i> ' + total + ' de ' + max + ' persona' + (max===1?'':'s') +
+      (total>=max?' — máximo alcanzado':'') + '</div>' : '';
+    adic.forEach(a => {
+      const it = a.itbms ?? 7;
+      const pn = it===-1 ? a.precio : (!it ? a.precio : a.precio*(1+it/100));
+      const cnt = adicCnt[a.id]||0;
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4">' +
+        '<div style="flex:1"><div style="font-size:.9rem;font-weight:600">' + a.nombre + '</div>' +
+        '<div style="font-size:.78rem;color:#999">+$' + pn.toFixed(2) + ' por noche</div></div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">' +
+        '<button class="counter-btn" onclick="cambiarAdic(\'' + a.id + '\',-1)">−</button>' +
+        '<span style="min-width:22px;text-align:center;font-weight:700">' + cnt + '</span>' +
+        '<button class="counter-btn" onclick="cambiarAdic(\'' + a.id + '\',1)">+</button></div></div>';
+    });
+    wrap.innerHTML = html;
+  }
+
+  function cambiarAdic(id, delta) {
+    const max = cabActual?.capacidad_maxima;
+    const nuevo = (adicCnt[id]||0) + delta;
+    if (nuevo < 0) return;
+    if (delta > 0 && max && personasTotales() >= max) {
+      alert('Esta cabaña admite un máximo de ' + max + ' personas en total.'); return;
+    }
+    adicCnt[id] = nuevo;
+    renderAdicionales();
+    calcCabTotal();
+  }
+
+  function calcCabTotal() {
+    const btn = document.getElementById('cab-btn-carrito');
+    if (!rangoEnt || !rangoSal) { if (btn) { btn.disabled=true; btn.style.opacity='.5'; } return; }
+    const nn = Math.round((new Date(rangoSal+'T12:00:00') - new Date(rangoEnt+'T12:00:00'))/86400000);
+    if (nn <= 0) return;
+    const resumen = {};
+    const cur = new Date(rangoEnt+'T12:00:00'), fin = new Date(rangoSal+'T12:00:00');
+    while (cur < fin) {
+      const ds = lds(cur), t = tarifaParaDia(ds);
+      if (t) { if (!resumen[t.id]) resumen[t.id]={tarifa:t,noches:0}; resumen[t.id].noches++; }
+      cur.setDate(cur.getDate()+1);
+    }
+    let totalBase = 0;
+    const ltDiv = document.getElementById('cab-tarifas-detalle');
+    if (ltDiv) ltDiv.innerHTML = Object.values(resumen).map(r => {
+      const t=r.tarifa, it=t.itbms??7;
+      const p=it===-1?t.precio:(!it?t.precio:t.precio*(1+it/100));
+      const sub=p*r.noches; totalBase+=sub;
+      return '<div style="display:flex;justify-content:space-between;font-size:.88rem;padding:4px 0"><span>'+
+        t.nombre+' \xd7 '+r.noches+' noche'+(r.noches===1?'':'s')+'</span><span>$'+sub.toFixed(2)+'</span></div>';
+    }).join('');
+    const siAdic = document.getElementById('cab-adic-si')?.checked;
+    let totalAdic=0; let laHtml='';
+    if (siAdic) {
+      (cabActual.adicionales||[]).forEach(a => {
+        const q=adicCnt[a.id]||0; if (!q) return;
+        const it=a.itbms??7, p=it===-1?a.precio:(!it?a.precio:a.precio*(1+it/100));
+        const sub=p*q*nn; totalAdic+=sub;
+        laHtml+='<div style="display:flex;justify-content:space-between;font-size:.88rem;padding:4px 0;color:#555"><span>'+
+          a.nombre+' \xd7 '+q+' \xd7 '+nn+' noche'+(nn===1?'':'s')+'</span><span>$'+sub.toFixed(2)+'</span></div>';
+      });
+    }
+    const arEl=document.getElementById('cab-adic-resumen'); if (arEl) arEl.innerHTML=laHtml;
+    const tEl=document.getElementById('cab-total-monto'); if (tEl) tEl.textContent='$'+(totalBase+totalAdic).toFixed(2);
+    const ok=document.getElementById('cab-adic-ninguna')?.checked||document.getElementById('cab-adic-si')?.checked;
+    if (btn) { btn.disabled=!ok; btn.style.opacity=ok?'1':'.5'; }
+  }
+
   function selDia(ds) {
     const aviso = document.getElementById('cab-aviso-cerrado');
+    const hint  = document.getElementById('cab-hint-fechas');
     aviso.style.display = 'none';
-    // Si no hay entrada, o ya hay rango completo → resetear y poner la entrada
+
     if (!rangoEnt || rangoSal) {
       rangoEnt = ds; rangoSal = null;
+      hint.textContent = 'Ahora selecciona la fecha de salida →';
+      document.getElementById('cab-paso2').style.display = 'none';
     } else if (ds <= rangoEnt) {
-      // Clic anterior a la entrada → mover la entrada
       rangoEnt = ds; rangoSal = null;
+      hint.textContent = 'Ahora selecciona la fecha de salida →';
+      document.getElementById('cab-paso2').style.display = 'none';
     } else {
-      // Verificar que no haya días bloqueados ENTRE entrada y salida (sin incluirlos)
+      // Verificar que no haya días bloqueados entre entrada y salida
       let bloq = false;
       const cur = new Date(rangoEnt+'T12:00:00');
       cur.setDate(cur.getDate()+1);
@@ -361,164 +513,14 @@
         aviso.textContent = 'Hay días no disponibles dentro de ese rango. Elige otras fechas.';
         aviso.style.display = 'block';
         rangoEnt = null; rangoSal = null;
+        hint.textContent = '';
       } else {
         rangoSal = ds;
+        hint.textContent = '';
+        mostrarPaso2();
       }
     }
     renderCabCal();
-    calcCabTotal();
-  }
-
-  function calcCabTotal() {
-    const btn = document.getElementById('cab-btn-carrito');
-    const totalEl = document.getElementById('cab-total-monto');
-    const tarifasWrap = document.getElementById('cab-tarifas-wrap');
-    const tarifasDetalle = document.getElementById('cab-tarifas-detalle');
-    if (!rangoEnt || !rangoSal) {
-      tarifasWrap.style.display = 'none';
-      totalEl.textContent = '$0.00';
-      if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
-      return;
-    }
-    // Iterar noches y agrupar por tarifa
-    const resumen = {};
-    const cur = new Date(rangoEnt+'T12:00:00');
-    const fin = new Date(rangoSal+'T12:00:00');
-    while (cur < fin) {
-      const ds = lds(cur);
-      const t = tarifaParaDia(ds);
-      if (t) {
-        if (!resumen[t.id]) resumen[t.id] = { tarifa: t, noches: 0 };
-        resumen[t.id].noches++;
-      }
-      cur.setDate(cur.getDate()+1);
-    }
-    let totalBase = 0;
-    tarifasDetalle.innerHTML = Object.values(resumen).map(r => {
-      const pn = precioNoche(rangoEnt); // usamos una noche representativa
-      const t = r.tarifa;
-      const it = t.itbms ?? 7;
-      const p = it === -1 ? t.precio : (!it ? t.precio : t.precio*(1+it/100));
-      const sub = p * r.noches;
-      totalBase += sub;
-      return `<div style="display:flex;justify-content:space-between;font-size:.88rem;padding:4px 0"><span>${t.nombre} × ${r.noches} noche${r.noches===1?'':'s'}</span><span>$${sub.toFixed(2)}</span></div>`;
-    }).join('');
-    tarifasWrap.style.display = Object.keys(resumen).length ? '' : 'none';
-
-    // Adicionales
-    let totalAdic = 0;
-    const nn = Math.round((new Date(rangoSal+'T12:00:00') - new Date(rangoEnt+'T12:00:00'))/86400000);
-    (cabActual.adicionales||[]).forEach(a => {
-      const q = adicCnt[a.id]||0;
-      if (q > 0) {
-        const it = a.itbms ?? 7;
-        const p = it === -1 ? a.precio : (!it ? a.precio : a.precio*(1+it/100));
-        totalAdic += p * q * nn;
-      }
-    });
-    const total = totalBase + totalAdic;
-    totalEl.textContent = `$${total.toFixed(2)}`;
-    if (btn) { btn.disabled = total <= 0; btn.style.opacity = total > 0 ? '1' : '.5'; }
-  }
-
-  // ── Apertura del modal ────────────────────────────────────────────────
-  async function abrirDetalleCabana(i) {
-    const c = grupos[i];
-    if (!c) return;
-    cabActual = c;
-    adicCnt = Object.fromEntries((c.adicionales||[]).map(a => [a.id, 0]));
-    rangoEnt = null; rangoSal = null;
-    const hoy = new Date();
-    calAnio = hoy.getFullYear(); calMes = hoy.getMonth();
-    lbFotos = [c.foto, ...(c.galeria||[])].filter(Boolean);
-    document.getElementById('cab-titulo').textContent = c.nombre;
-    document.getElementById('cab-gal-img').src = lbFotos[0] || '';
-    document.getElementById('cab-gal-cover').style.display = lbFotos.length ? '' : 'none';
-    document.getElementById('cab-gal-count').textContent = lbFotos.length > 1 ? `1 / ${lbFotos.length}` : '';
-    document.getElementById('cab-desc').textContent = c.descripcion || '';
-    document.getElementById('cab-capacidad-wrap').innerHTML = `
-      ${c.personas_base ? `<div class="cab-capacidad"><i class="fa-solid fa-user"></i> Para ${c.personas_base} persona${c.personas_base===1?'':'s'}</div>` : ''}
-      ${c.capacidad_maxima ? `<div class="cab-capacidad"><i class="fa-solid fa-users"></i> Máximo ${c.capacidad_maxima}</div>` : ''}`;
-    document.getElementById('cab-incluye').innerHTML = (c.incluye||[]).map(t=>`
-      <div class="cab-incluye-item"><i class="fa-solid fa-circle-check"></i> ${t}</div>`).join('');
-    renderAdicionales();
-    calcCabTotal();
-    document.getElementById('detalle-cab-ov').classList.add('open');
-    await cargarDiasCerrados();
-    renderCabCal();
-  }
-
-  function cerrarDetalleCabana() { document.getElementById('detalle-cab-ov').classList.remove('open'); }
-  document.getElementById('detalle-cab-ov').addEventListener('click', e => {
-    if (e.target === document.getElementById('detalle-cab-ov')) cerrarDetalleCabana();
-  });
-
-  // ── Lightbox ──────────────────────────────────────────────────────────
-  function abrirLightbox(i) {
-    if (!lbFotos.length) return;
-    lbIdx = i;
-    document.getElementById('lb-img').src = lbFotos[lbIdx];
-    document.getElementById('lb-count').textContent = `${lbIdx+1} / ${lbFotos.length}`;
-    document.getElementById('lightbox-ov').classList.add('open');
-  }
-  function cerrarLightbox() { document.getElementById('lightbox-ov').classList.remove('open'); }
-  function lbNav(dir) {
-    lbIdx = (lbIdx + dir + lbFotos.length) % lbFotos.length;
-    document.getElementById('lb-img').src = lbFotos[lbIdx];
-    document.getElementById('lb-count').textContent = `${lbIdx+1} / ${lbFotos.length}`;
-  }
-  document.addEventListener('keydown', e => {
-    if (document.getElementById('lightbox-ov').classList.contains('open')) {
-      if (e.key === 'ArrowLeft') lbNav(-1);
-      if (e.key === 'ArrowRight') lbNav(1);
-      if (e.key === 'Escape') cerrarLightbox();
-    }
-  });
-
-  // ── Personas adicionales ──────────────────────────────────────────────
-  function personasTotales() {
-    return (cabActual?.personas_base||0) + Object.values(adicCnt).reduce((a,b)=>a+b,0);
-  }
-
-  function renderAdicionales() {
-    const wrap = document.getElementById('cab-adicionales');
-    const adic = cabActual?.adicionales || [];
-    if (!adic.length) { wrap.innerHTML = ''; return; }
-    const max = cabActual.capacidad_maxima;
-    const total = personasTotales();
-    wrap.innerHTML = `
-      <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#999;margin:18px 0 8px">
-        <i class="fa-solid fa-users"></i> Personas adicionales
-      </div>
-      ${max ? `<div style="font-size:.8rem;color:${total>=max?'#c0392b':'#888'};margin-bottom:10px">
-        ${total} de ${max} personas${total>=max?' — capacidad máxima alcanzada':''}</div>` : ''}
-      ${adic.map(a => {
-        const it = a.itbms ?? 7;
-        const pn = it === -1 ? a.precio : (!it ? a.precio : a.precio*(1+it/100));
-        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4">
-          <div style="flex:1">
-            <div style="font-size:.9rem;font-weight:600">${a.nombre}</div>
-            <div style="font-size:.78rem;color:#999">+$${pn.toFixed(2)} por noche</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-            <button class="counter-btn" onclick="cambiarAdic('${a.id}',-1)">−</button>
-            <span style="min-width:22px;text-align:center;font-weight:700">${adicCnt[a.id]||0}</span>
-            <button class="counter-btn" onclick="cambiarAdic('${a.id}',1)">+</button>
-          </div>
-        </div>`;
-      }).join('')}`;
-  }
-
-  function cambiarAdic(id, delta) {
-    const max = cabActual?.capacidad_maxima;
-    const nuevo = (adicCnt[id]||0) + delta;
-    if (nuevo < 0) return;
-    if (delta > 0 && max && personasTotales() >= max) {
-      alert(`Esta cabaña admite un máximo de ${max} personas en total.`); return;
-    }
-    adicCnt[id] = nuevo;
-    renderAdicionales();
-    calcCabTotal();
   }
 
   // ── Añadir al carrito ─────────────────────────────────────────────────
