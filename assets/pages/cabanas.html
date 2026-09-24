@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=4">
+  <link rel="stylesheet" href="../css/cabanas.css?v=5">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -35,8 +35,9 @@
     .cab-cal-grid{width:100%;border-collapse:collapse;font-family:'Jost',sans-serif;font-size:.82rem}
     .cab-cal-grid th{color:#aaa;text-align:center;padding:4px 2px;font-weight:500}
     .cab-cal-grid td{text-align:center;padding:6px 2px;border-radius:6px;cursor:default}
-    .cab-dia{color:#333;cursor:pointer} .cab-dia:hover{background:#eef4f5;color:var(--forest)}
-    .cab-dia-bloq{color:#ccc;background:repeating-linear-gradient(135deg,transparent,transparent 4px,#f5f5f5 4px,#f5f5f5 8px)}
+    .cab-dia{background:#e8f5e9;color:#2e7d32;cursor:pointer;font-weight:500}
+    .cab-dia:hover{background:#c8e6c9}
+    .cab-dia-bloq{background:#ffcdd2;color:#c62828;font-weight:500;position:relative}
     .cab-dia-rango{background:#c8dfe3;color:var(--forest);cursor:pointer}
     .cab-dia-sel{background:var(--moss);color:#fff;font-weight:700;cursor:pointer}
   </style>
@@ -94,8 +95,9 @@
           <th>Do</th><th>Lu</th><th>Ma</th><th>Mi</th><th>Ju</th><th>Vi</th><th>Sa</th>
         </tr></thead><tbody id="cab-cal-body"></tbody></table>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:#888;margin-top:8px">
-          <span><span style="display:inline-block;width:12px;height:12px;background:#c8dfe3;border-radius:2px;margin-right:4px"></span>Seleccionado</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#e0e0e0;border-radius:2px;margin-right:4px"></span>Bloqueado</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:2px;margin-right:4px"></span>Disponible</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:#ffcdd2;border-radius:2px;margin-right:4px"></span>No disponible</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--moss);border-radius:2px;margin-right:4px"></span>Seleccionado</span>
         </div>
         <div id="cab-aviso-cerrado" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#8a5a00;margin-top:8px"></div>
       </div>
@@ -216,21 +218,67 @@
   let calAnio, calMes;
 
   async function cargarDiasCerrados() {
+    diasCerrados = new Set();
     try {
-      const { data } = await supaPub.from('company_settings').select('value').eq('key','dias_cierre').maybeSingle();
-      const dias = data?.value || [];
-      diasCerrados = new Set(dias);
-      // Ocupación de ESTA cabaña
-      const { data: qs } = await supaPub.from('quotes').select('visit_date,visit_date_end,estado')
-        .in('estado',['Confirmada','Completada']);
-      const { data: evs } = await supaPub.from('events').select('visit_date,visit_date_end,estado')
-        .in('estado',['Confirmada','Completada']);
-      [...(qs||[]),...(evs||[])].forEach(it => {
-        if (!it.visit_date) return;
-        const d = new Date(it.visit_date+'T12:00:00');
-        const fin = it.visit_date_end ? new Date(new Date(it.visit_date_end+'T12:00:00').getTime()-86400000) : d;
-        const cur = new Date(d);
-        while (cur <= fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
+      // Días de cierre manual configurados en el panel
+      const { data: cfg } = await supaPub.from('company_settings')
+        .select('value').eq('key','dias_cierre').maybeSingle();
+      (cfg?.value || []).forEach(d => diasCerrados.add(d));
+
+      // Reservas confirmadas/completadas que involucren esta cabaña.
+      // La disponibilidad se determina por el nombre del ítem reservado
+      // (buscamos si alguna línea del JSON items contiene el nombre de la
+      // cabaña actual) O por el campo categoria = 'Cabañas'.
+      // El día de SALIDA queda LIBRE (igual que en el calendario admin).
+      const ESTADOS = ['Confirmada','Completada'];
+      const [{ data: qs }, { data: evs }, { data: sols }] = await Promise.all([
+        supaPub.from('quotes').select('visit_date,visit_date_end,estado,items')
+          .in('estado', ESTADOS),
+        supaPub.from('events').select('visit_date,visit_date_end,estado,categoria')
+          .in('estado', ESTADOS),
+        supaPub.from('solicitudes').select('items,estado')
+          .in('estado',['confirmada','completada']),
+      ]);
+
+      function bloquearRango(d0, d1) {
+        // d1 es la fecha de salida — NO se bloquea (queda libre para otra entrada)
+        const cur = new Date(d0+'T12:00:00');
+        const fin = d1 ? new Date(d1+'T12:00:00') : new Date(d0+'T12:00:00');
+        while (cur < fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
+        // Si solo hay 1 noche (sin fecha de salida), bloquear ese día
+        if (!d1) diasCerrados.add(d0);
+      }
+
+      const nomCabana = (cabActual.nombre || '').toLowerCase();
+
+      // Cotizaciones del historial
+      (qs||[]).forEach(q => {
+        if (!q.visit_date) return;
+        const items = Array.isArray(q.items) ? q.items : [];
+        const involucra = items.some(it =>
+          (it.categoria||'').toLowerCase().includes('cabaña') ||
+          (it.nombre||'').toLowerCase().includes(nomCabana)
+        );
+        if (involucra) bloquearRango(q.visit_date, q.visit_date_end);
+      });
+
+      // Eventos manuales del calendario
+      (evs||[]).forEach(ev => {
+        if (!ev.visit_date) return;
+        if ((ev.categoria||'').toLowerCase().includes('cabaña') ||
+            (ev.categoria||'').toLowerCase().includes(nomCabana))
+          bloquearRango(ev.visit_date, ev.visit_date_end);
+      });
+
+      // Solicitudes web confirmadas
+      (sols||[]).forEach(sol => {
+        const items = Array.isArray(sol.items) ? sol.items : [];
+        items.filter(it =>
+          (it.categoria||'').toLowerCase().includes('cabaña') ||
+          (it.nombre||'').toLowerCase().includes(nomCabana)
+        ).forEach(it => {
+          if (it.fecha_visita) bloquearRango(it.fecha_visita, it.fecha_visita_fin);
+        });
       });
     } catch (e) { console.warn('cargarDiasCerrados', e); }
   }
@@ -293,12 +341,14 @@
   function selDia(ds) {
     const aviso = document.getElementById('cab-aviso-cerrado');
     aviso.style.display = 'none';
-    if (!rangoEnt || (rangoEnt && rangoSal)) {
+    // Si no hay entrada, o ya hay rango completo → resetear y poner la entrada
+    if (!rangoEnt || rangoSal) {
       rangoEnt = ds; rangoSal = null;
     } else if (ds <= rangoEnt) {
+      // Clic anterior a la entrada → mover la entrada
       rangoEnt = ds; rangoSal = null;
     } else {
-      // Verificar que no haya días bloqueados en el rango
+      // Verificar que no haya días bloqueados ENTRE entrada y salida (sin incluirlos)
       let bloq = false;
       const cur = new Date(rangoEnt+'T12:00:00');
       cur.setDate(cur.getDate()+1);
@@ -308,7 +358,7 @@
         cur.setDate(cur.getDate()+1);
       }
       if (bloq) {
-        aviso.textContent = 'Hay días bloqueados dentro de ese rango. Elige otras fechas.';
+        aviso.textContent = 'Hay días no disponibles dentro de ese rango. Elige otras fechas.';
         aviso.style.display = 'block';
         rangoEnt = null; rangoSal = null;
       } else {

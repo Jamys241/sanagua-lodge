@@ -132,11 +132,6 @@
       <p style="font-size:.72rem;color:var(--muted);margin-top:-8px;margin-bottom:14px">
         "ITBMS Incluido" significa que el precio que escribas arriba ya trae el impuesto — no se le sumará nada más al mostrarlo o cobrarlo. Las otras opciones suman el porcentaje sobre el precio al momento de mostrarlo.
       </p>
-      <div class="form-group"><label>Tipo de ítem</label>
-        <select class="form-input" id="mi-tipo">
-          <option value="tarifa">Tarifa por noche (ej. Día de Semana, Fin de Semana)</option>
-          <option value="adicional">Persona adicional (ej. Adulto, Niño, Jubilado, Discapacitado)</option>
-        </select></div>
       <div class="form-group"><label>Puntos de fidelidad (al confirmar la reserva)</label>
         <input class="form-input" type="number" step="1" min="0" id="mi-puntos" placeholder="0"></div>
       <div class="modal-actions">
@@ -513,7 +508,6 @@
     document.getElementById('mi-foto-preview').style.display = 'none';
     document.getElementById('mi-precio').value = '';
     document.getElementById('mi-itbms').value = '7';
-    document.getElementById('mi-tipo').value = 'tarifa';
     document.getElementById('mi-puntos').value = '0';
     document.getElementById('mi-incluye').value = '';
     document.getElementById('mi-capacidad').value = '';
@@ -551,7 +545,6 @@
     }
     document.getElementById('mi-precio').value = p.precio;
     document.getElementById('mi-itbms').value = p.itbms;
-    document.getElementById('mi-tipo').value = p.tipo || 'tarifa';
     document.getElementById('mi-puntos').value = p.puntos_fidelidad || 0;
     document.getElementById('mi-incluye').value = (p.incluye||[]).join('\n');
     document.getElementById('mi-capacidad').value = p.capacidad_maxima || '';
@@ -579,12 +572,12 @@
     if (!nombre) { showToast('Ingresa el nombre del ítem.', 'error'); return; }
     try {
       if (editandoItemId) {
-        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad, tipo, incluye, capacidad_maxima, galeria }).eq('id', editandoItemId);
+        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria }).eq('id', editandoItemId);
         if (error) throw error;
       } else {
         const cat = categorias.find(c => c.id === catId);
         const { error } = await supa.from('products').insert({
-          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, tipo, incluye, capacidad_maxima, galeria, orden: cat?.productos.length || 0,
+          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria, orden: cat?.productos.length || 0,
         });
         if (error) throw error;
       }
