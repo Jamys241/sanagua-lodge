@@ -53,6 +53,12 @@
     <div class="modal-body">
       <div class="form-group"><label>Nombre</label>
         <input class="form-input" id="mc-nombre" placeholder="Ej: Pasadías"></div>
+      <div class="form-group">
+        <label>Código único <span id="mc-codigo-hint" style="font-size:.72rem;color:var(--muted)"></span></label>
+        <input class="form-input" id="mc-codigo" placeholder="Ej: PAC" style="font-family:monospace;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9\-]/g,'')">
+        <div id="mc-codigo-error" style="font-size:.75rem;color:#c0392b;margin-top:3px;display:none"></div>
+      </div>
       <div class="form-group"><label>Descripción</label>
         <textarea class="form-input" id="mc-desc" placeholder="Se muestra en la página pública"></textarea></div>
       <div class="form-group"><label>Foto</label>
@@ -438,21 +444,51 @@
       ? `Nueva subcategoría dentro de "${padre?.nombre}":\n(Ej: "Pasadía premium", "Cabaña Jaguar", "Carpa doble")`
       : 'Nombre de la nueva categoría base:\n(Ej: "Carpas Disponibles", "Tours")');
     if (!nombre || !nombre.trim()) return;
+    // Sugerir código derivado si el padre ya tiene código
+    let codigoSugerido = '';
+    if (esHija && padre?.codigo) {
+      const hermanos = categorias.filter(c => c.parent_id === parentId);
+      const n = hermanos.length + 1;
+      codigoSugerido = `${padre.codigo}-${String(n).padStart(2,'0')}`;
+    }
+    const codigoInput = prompt(
+      esHija && codigoSugerido
+        ? `Código único para "${nombre.trim()}":\n(Sugerido: ${codigoSugerido} — acepta o escribe el tuyo)`
+        : `Código único para "${nombre.trim()}":\n(Ej: PAC, CAMP, CAB)`
+    , codigoSugerido);
+    if (codigoInput === null) return; // canceló
+    const codigo = (codigoInput || '').trim().toUpperCase().replace(/[^A-Z0-9\-]/g,'') || null;
+    // Verificar unicidad
+    if (codigo) {
+      const { data: existe } = await supa.from('product_categories').select('id').eq('codigo', codigo).maybeSingle();
+      if (existe) { showToast(`❌ El código "${codigo}" ya está en uso. Edita la categoría después para cambiarlo.`, 'error'); }
+    }
     try {
       const { data, error } = await supa.from('product_categories')
-        .insert({ nombre: nombre.trim(), parent_id: esHija ? parentId : null, orden: categorias.length }).select().single();
+        .insert({ nombre: nombre.trim(), codigo: codigo||null, parent_id: esHija ? parentId : null, orden: categorias.length }).select().single();
       if (error) throw error;
       catActualId = data.id;
       await cargarTodo();
-      showToast(`✅ "${nombre.trim()}" creada.`, 'success');
+      showToast(`✅ "${nombre.trim()}"${codigo?' ('+codigo+')':''} creada.`, 'success');
     } catch (e) { console.error(e); showToast('❌ Error al crear la categoría.', 'error'); }
   }
 
   function editarCategoria(id) {
     const cat = categorias.find(c => c.id === id);
     if (!cat) return;
-    document.getElementById('modal-cat-titulo').textContent = 'Editar subcategoría';
+    const esPadre = !cat.parent_id;
+    const padre = cat.parent_id ? categorias.find(c => c.id === cat.parent_id) : null;
+    document.getElementById('modal-cat-titulo').textContent = esPadre ? 'Editar categoría base' : `Editar subcategoría de "${padre?.nombre||''}"`;
     document.getElementById('mc-nombre').value = cat.nombre || '';
+    document.getElementById('mc-codigo').value = cat.codigo || '';
+    document.getElementById('mc-codigo-error').style.display = 'none';
+    // Ayuda contextual del código
+    if (esPadre) {
+      document.getElementById('mc-codigo-hint').textContent = '— código base (ej. PAC)';
+    } else {
+      const codigoPadre = padre?.codigo || '???';
+      document.getElementById('mc-codigo-hint').textContent = `— se verá como ${codigoPadre}-XX`;
+    }
     document.getElementById('mc-desc').value   = cat.descripcion || '';
     document.getElementById('mc-foto').value   = cat.foto || '';
     document.getElementById('mc-foto-url').value = cat.foto || '';
@@ -474,17 +510,28 @@
   async function guardarCategoriaModal() {
     const id = document.getElementById('modal-cat').dataset.id;
     const nombre = document.getElementById('mc-nombre').value.trim();
+    const codigo = document.getElementById('mc-codigo').value.trim().toUpperCase();
+    const codigoErr = document.getElementById('mc-codigo-error');
     const descripcion = document.getElementById('mc-desc').value.trim();
     const foto = document.getElementById('mc-foto').value.trim();
     const personas_base = parseInt(document.getElementById('mc-personas').value) || null;
     const capacidad_maxima = parseInt(document.getElementById('mc-capacidad').value) || null;
     if (!nombre) { showToast('El nombre no puede quedar vacío.', 'error'); return; }
+    if (codigo && !/^[A-Z0-9\-]+$/.test(codigo)) {
+      codigoErr.textContent = 'Solo letras mayúsculas, números y guiones.'; codigoErr.style.display = 'block'; return;
+    }
+    codigoErr.style.display = 'none';
+    // Verificar unicidad del código si se definió uno
+    if (codigo) {
+      const { data: existe } = await supa.from('product_categories').select('id').eq('codigo', codigo).neq('id', id).maybeSingle();
+      if (existe) { codigoErr.textContent = `"${codigo}" ya está en uso. Elige otro.`; codigoErr.style.display = 'block'; return; }
+    }
     try {
-      const { error } = await supa.from('product_categories').update({ nombre, descripcion, foto, personas_base, capacidad_maxima }).eq('id', id);
+      const { error } = await supa.from('product_categories').update({ nombre, codigo: codigo||null, descripcion, foto, personas_base, capacidad_maxima }).eq('id', id);
       if (error) throw error;
       cerrarModalCat();
       await cargarTodo();
-      showToast('✅ Subcategoría actualizada.', 'success');
+      showToast('✅ Categoría actualizada.', 'success');
     } catch (e) { console.error(e); showToast('❌ Error al guardar.', 'error'); }
   }
 
@@ -514,11 +561,26 @@
   }
 
   // ── Ítems (productos) ────────────────────────────────────────────────
+  function generarCodigoItem() {
+    // Construye el prefijo jerárquico: PAC-01-ITMn
+    const catEfectId = catEfectiva();
+    const sub = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
+    const padre = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
+    const codPadre = padre?.codigo || sub?.codigo || '';
+    const codSub   = sub?.codigo || '';
+    // Prefijo completo hasta la subcategoría
+    let prefijo = codSub || codPadre;
+    if (!prefijo) return '';
+    // Contar ítems ya existentes en esta subcategoría para el número
+    const existentes = (sub?.productos || []).length;
+    return `${prefijo}-ITM${existentes + 1}`;
+  }
+
   function nuevoItem() {
     editandoItemId = null;
     document.getElementById('modal-item-titulo').textContent = 'Nuevo ítem';
     document.getElementById('mi-nombre').value = '';
-    document.getElementById('mi-codigo').value = '';
+    document.getElementById('mi-codigo').value = generarCodigoItem();
     document.getElementById('mi-codigo-error').style.display = 'none';
     document.getElementById('mi-desc').value = '';
     document.getElementById('mi-foto').value = '';
