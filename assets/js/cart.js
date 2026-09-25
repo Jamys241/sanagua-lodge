@@ -40,7 +40,13 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     renderBadge();
   }
-  function addItem(item) {
+  async function addItem(item) {
+    const { data: { session } } = await supaCart.auth.getSession();
+    if (!session) {
+      mostrarToastCarrito('<i class="fa-solid fa-triangle-exclamation"></i> Inicia sesión para añadir items al carrito.');
+      setTimeout(() => { window.location.href = `${INDEX_URL}?action=login`; }, 1400);
+      return;
+    }
     const items = getItems();
     items.push({ cantidad: 1, itbms: 7, puntos_fidelidad: 0, ...item, id: `ci_${Date.now()}_${Math.random().toString(36).slice(2,7)}` });
     saveItems(items);
@@ -321,9 +327,16 @@
     }
   }
 
-  function init() {
+  async function init() {
     injectStyles();
     injectDom();
+    // Solo mostrar el carrito si el usuario tiene sesión activa
+    const { data: { session } } = await supaCart.auth.getSession();
+    const fab = document.getElementById('sc-fab');
+    if (!session) {
+      if (fab) fab.style.display = 'none';
+      return;
+    }
     renderBadge();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

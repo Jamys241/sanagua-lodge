@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=8">
+  <link rel="stylesheet" href="../css/cabanas.css?v=9">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -40,6 +40,8 @@
     .cab-dia-bloq{background:#ffcdd2;color:#c62828;font-weight:500;position:relative}
     .cab-dia-rango{background:#c8dfe3;color:var(--forest);cursor:pointer}
     .cab-dia-sel{background:var(--moss);color:#fff;font-weight:700;cursor:pointer}
+    .cab-dia-solo-sal{background:#fff3cd;color:#856404;border:1px dashed #ffc107;cursor:pointer}
+    .cab-dia-solo-sal:hover{background:#ffe69c}
   </style>
 </head>
 <body>
@@ -98,6 +100,7 @@
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:#888;margin-top:8px">
             <span><span style="display:inline-block;width:12px;height:12px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:2px;margin-right:4px"></span>Disponible</span>
             <span><span style="display:inline-block;width:12px;height:12px;background:#ffcdd2;border-radius:2px;margin-right:4px"></span>No disponible</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px dashed #ffc107;border-radius:2px;margin-right:4px"></span>Solo salida</span>
             <span><span style="display:inline-block;width:12px;height:12px;background:var(--moss);border-radius:2px;margin-right:4px"></span>Seleccionado</span>
           </div>
           <div id="cab-aviso-cerrado" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#8a5a00;margin-top:8px"></div>
@@ -184,7 +187,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/site-nav.js"></script>
-<script src="../js/cart.js?v=5"></script>
+<script src="../js/cart.js?v=6"></script>
 <script>
   const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
@@ -284,6 +287,7 @@
     calcCabTotal();
 
     document.getElementById('detalle-cab-ov').classList.add('open');
+    console.log('🏠 Cabaña:', c.nombre, '| tarifas:', c.tarifas?.length, c.tarifas, '| adicionales:', c.adicionales?.length);
     await cargarDiasCerrados();
     renderCabCal();
   }
@@ -303,13 +307,24 @@
       // El día de SALIDA queda LIBRE (igual que en el calendario admin).
       const ESTADOS = ['Confirmada','Completada'];
 
+      // diasCerrados = días que NO se pueden elegir ni como entrada ni como salida.
+      // diasEntradaBloq = días que SÍ se pueden elegir como salida (checkout) pero
+      // NO como entrada (otro huésped llega ese mismo día más tarde).
       function bloquearRango(d0, d1) {
-        // El día de salida queda libre — solo se bloquean los días de estancia
+        if (!d0) return;
+        // Los días INTERMEDIOS y el de entrada están completamente bloqueados
         const cur = new Date(d0+'T12:00:00');
         const fin = d1 ? new Date(d1+'T12:00:00') : new Date(d0+'T12:00:00');
         while (cur < fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
-        if (!d1) diasCerrados.add(d0); // si no hay salida, bloquear el propio día
+        if (!d1) diasCerrados.add(d0);
+        // El día de SALIDA (checkout) también se bloquea para nueva ENTRADA,
+        // pero se permite como día de salida de una reserva previa.
+        // Lo marcamos en diasSoloSalida (no se pinta en rojo, sí permite ser salida).
+        if (d1 && !diasCerrados.has(d1)) window._diasSoloSalida.add(d1);
       }
+
+      window._diasSoloSalida = window._diasSoloSalida || new Set();
+      window._diasSoloSalida.clear();
 
       const [{ data: qs }, { data: evs }, { data: sols }] = await Promise.all([
         supaPub.from('quotes').select('visit_date,visit_date_end,estado,categoria')
@@ -390,16 +405,33 @@
     const hoy = lds(new Date());
     const primer = new Date(calAnio, calMes, 1);
     const dias = new Date(calAnio, calMes+1, 0).getDate();
+    const soloSal = window._diasSoloSalida || new Set();
     let html = '<tr>';
     for (let i = 0; i < primer.getDay(); i++) html += '<td></td>';
     for (let d = 1; d <= dias; d++) {
       const ds = `${calAnio}-${String(calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const cerrado = diasCerrados.has(ds) || ds < hoy;
-      const enRango = rangoEnt && rangoSal && ds >= rangoEnt && ds < rangoSal;
-      const esEnt = ds === rangoEnt;
-      const esSal = ds === rangoSal;
-      const cls = cerrado ? 'cab-dia-bloq' : (esEnt || esSal ? 'cab-dia-sel' : enRango ? 'cab-dia-rango' : 'cab-dia');
-      html += `<td class="${cls}" ${!cerrado ? `onclick="selDia('${ds}')"` : ''}>${d}</td>`;
+      const pasado  = ds < hoy;
+      const cerrado = diasCerrados.has(ds) || pasado;
+      const soloS   = !cerrado && soloSal.has(ds);
+      const enRango = rangoEnt && rangoSal && ds > rangoEnt && ds < rangoSal;
+      const esEnt   = ds === rangoEnt;
+      const esSal   = ds === rangoSal;
+      // soloS = puede ser salida pero no entrada (checkout day de otra reserva)
+      let cls, onclick = '';
+      if (cerrado) {
+        cls = 'cab-dia-bloq';
+      } else if (esEnt || esSal) {
+        cls = 'cab-dia-sel'; onclick = `onclick="selDia('${ds}')"`;
+      } else if (enRango) {
+        cls = 'cab-dia-rango'; onclick = `onclick="selDia('${ds}')"`;
+      } else if (soloS) {
+        // Si ya hay entrada seleccionada, puede usarse como salida
+        cls = rangoEnt && !rangoSal ? 'cab-dia-solo-sal' : 'cab-dia-bloq';
+        if (rangoEnt && !rangoSal) onclick = `onclick="selDia('${ds}')"`;
+      } else {
+        cls = 'cab-dia'; onclick = `onclick="selDia('${ds}')"`;
+      }
+      html += `<td class="${cls}" ${onclick}>${d}</td>`;
       if (new Date(calAnio, calMes, d).getDay() === 6) html += '</tr><tr>';
     }
     html += '</tr>';
@@ -529,20 +561,32 @@
   }
 
   function selDia(ds) {
-    const aviso = document.getElementById('cab-aviso-cerrado');
-    const hint  = document.getElementById('cab-hint-fechas');
+    const aviso  = document.getElementById('cab-aviso-cerrado');
+    const hint   = document.getElementById('cab-hint-fechas');
+    const soloS  = window._diasSoloSalida || new Set();
     aviso.style.display = 'none';
 
     if (!rangoEnt || rangoSal) {
+      // Si es un día soloSalida, no puede ser entrada
+      if (soloS.has(ds)) {
+        aviso.textContent = 'Este día ya tiene una reserva entrante — no puedes iniciar aquí. Elige otro día de entrada.';
+        aviso.style.display = 'block';
+        return;
+      }
       rangoEnt = ds; rangoSal = null;
       hint.textContent = 'Ahora selecciona la fecha de salida →';
       document.getElementById('cab-paso2').style.display = 'none';
     } else if (ds <= rangoEnt) {
+      if (soloS.has(ds)) {
+        aviso.textContent = 'Este día ya tiene una reserva entrante — no puedes iniciar aquí. Elige otro día de entrada.';
+        aviso.style.display = 'block';
+        return;
+      }
       rangoEnt = ds; rangoSal = null;
       hint.textContent = 'Ahora selecciona la fecha de salida →';
       document.getElementById('cab-paso2').style.display = 'none';
     } else {
-      // Verificar que no haya días bloqueados entre entrada y salida
+      // Verificar que no haya días TOTALMENTE bloqueados entre entrada y salida
       let bloq = false;
       const cur = new Date(rangoEnt+'T12:00:00');
       cur.setDate(cur.getDate()+1);
@@ -568,6 +612,21 @@
   // ── Añadir al carrito ─────────────────────────────────────────────────
   async function agregarCabanaCarrito() {
     if (!rangoEnt || !rangoSal || !cabActual) return;
+    // Verificar sesión antes de continuar
+    const { data: { session } } = await supaPub.auth.getSession();
+    if (!session) {
+      // Mostrar aviso visible en el propio modal
+      let avisoSesion = document.getElementById('cab-aviso-sesion');
+      if (!avisoSesion) {
+        avisoSesion = document.createElement('div');
+        avisoSesion.id = 'cab-aviso-sesion';
+        avisoSesion.style.cssText = 'background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:12px 14px;font-size:.86rem;color:#7a3e00;margin-top:12px;text-align:center';
+        document.getElementById('cab-btn-carrito').insertAdjacentElement('afterend', avisoSesion);
+      }
+      avisoSesion.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Aún no te has registrado para poder añadir ítems a tu carrito. <a href="../../index.html?action=login" style="color:var(--moss);font-weight:700;text-decoration:underline">Iniciar sesión →</a>';
+      avisoSesion.style.display = 'block';
+      return;
+    }
     const nn = Math.round((new Date(rangoSal+'T12:00:00') - new Date(rangoEnt+'T12:00:00'))/86400000);
     if (nn <= 0) return;
     // Resumen de noches por tarifa
