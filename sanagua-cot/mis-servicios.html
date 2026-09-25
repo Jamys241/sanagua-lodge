@@ -452,12 +452,18 @@
       codigoSugerido = `${padre.codigo}-${String(n).padStart(2,'0')}`;
     }
     const codigoInput = prompt(
-      esHija && codigoSugerido
-        ? `Código único para "${nombre.trim()}":\n(Sugerido: ${codigoSugerido} — acepta o escribe el tuyo)`
-        : `Código único para "${nombre.trim()}":\n(Ej: PAC, CAMP, CAB)`
+      esHija && padre?.codigo
+        ? `Código para "${nombre.trim()}" (solo el sufijo, el sistema lo combina con "${padre.codigo}-"):\n` +
+          `Sugerido: ${codigoSugerido} — acepta o escribe el tuyo (ej. 01, CON, EXP)`
+        : `Código único para "${nombre.trim()}":\n(Ej: PAS, CAB, CAMP)`
     , codigoSugerido);
     if (codigoInput === null) return; // canceló
-    const codigo = (codigoInput || '').trim().toUpperCase().replace(/[^A-Z0-9\-]/g,'') || null;
+    // Si es subcategoría y el padre tiene código, combinar: PAS + 01 = PAS-01
+    let codigoFinal = (codigoInput || '').trim().toUpperCase().replace(/[^A-Z0-9\-]/g,'');
+    if (esHija && padre?.codigo && codigoFinal && !codigoFinal.startsWith(padre.codigo)) {
+      codigoFinal = `${padre.codigo}-${codigoFinal}`;
+    }
+    const codigo = codigoFinal || null;
     // Verificar unicidad
     if (codigo) {
       const { data: existe } = await supa.from('product_categories').select('id').eq('codigo', codigo).maybeSingle();
@@ -562,18 +568,20 @@
 
   // ── Ítems (productos) ────────────────────────────────────────────────
   function generarCodigoItem() {
-    // Construye el prefijo jerárquico: PAC-01-ITMn
     const catEfectId = catEfectiva();
-    const sub = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
-    const padre = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
-    const codPadre = padre?.codigo || sub?.codigo || '';
-    const codSub   = sub?.codigo || '';
-    // Prefijo completo hasta la subcategoría
-    let prefijo = codSub || codPadre;
+    const sub    = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
+    const padre  = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
+
+    // Código completo de la subcategoría: PAD-01
+    const codSub   = sub?.codigo  || '';
+    const codPadre = padre?.codigo || '';
+    // Prefijo = código completo hasta la subcategoría
+    const prefijo  = codSub || codPadre;
     if (!prefijo) return '';
-    // Contar ítems ya existentes en esta subcategoría para el número
+
+    // El contador empieza en 0 para cada subcategoría de forma independiente
     const existentes = (sub?.productos || []).length;
-    return `${prefijo}-ITM${existentes + 1}`;
+    return `${prefijo}-ITM${existentes}`;
   }
 
   function nuevoItem() {
