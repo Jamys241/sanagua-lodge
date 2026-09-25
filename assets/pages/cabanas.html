@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=11">
+  <link rel="stylesheet" href="../css/cabanas.css?v=12">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -213,10 +213,20 @@
       .in('categoria_id', ids).eq('activo', true).order('orden', { ascending: true });
     grupos = (subcats||[]).map(sub => {
       const items = (prods||[]).filter(p => p.categoria_id === sub.id);
+      // Clasificar: si el campo tipo existe y es 'adicional' → adicional.
+      // Si tipo es null (SQL 019 no corrido aún) → detectar por nombre.
+      const NOMBRES_ADICIONAL = ['adulto','niño','jubilado','discapacitado','mascota','niñ','infant','bebe','bebé','menor','senior','tercera edad'];
+      const esAdicional = (p) => {
+        if (p.tipo === 'adicional') return true;
+        if (p.tipo === 'tarifa') return false;
+        // Fallback por nombre cuando tipo es null
+        const nom = (p.nombre||'').toLowerCase();
+        return NOMBRES_ADICIONAL.some(k => nom.includes(k));
+      };
       return {
         ...sub,
-        tarifas:     items.filter(p => !p.tipo || p.tipo === 'tarifa'),
-        adicionales: items.filter(p => p.tipo === 'adicional'),
+        tarifas:     items.filter(p => !esAdicional(p)),
+        adicionales: items.filter(p => esAdicional(p)),
       };
     });
     (prods||[]).filter(p => p.categoria_id === catPadre.id).forEach(p => {
