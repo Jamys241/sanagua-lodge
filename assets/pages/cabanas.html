@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=7">
+  <link rel="stylesheet" href="../css/cabanas.css?v=8">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -243,6 +243,10 @@
   let rangoEnt = null; let rangoSal = null;
   let calAnio, calMes;
 
+  function cerrarDetalleCabana() {
+    document.getElementById('detalle-cab-ov').classList.remove('open');
+  }
+
   async function abrirDetalleCabana(i) {
     const c = grupos[i];
     if (!c) return;
@@ -298,46 +302,43 @@
       // cabaña actual) O por el campo categoria = 'Cabañas'.
       // El día de SALIDA queda LIBRE (igual que en el calendario admin).
       const ESTADOS = ['Confirmada','Completada'];
+
+      function bloquearRango(d0, d1) {
+        // El día de salida queda libre — solo se bloquean los días de estancia
+        const cur = new Date(d0+'T12:00:00');
+        const fin = d1 ? new Date(d1+'T12:00:00') : new Date(d0+'T12:00:00');
+        while (cur < fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
+        if (!d1) diasCerrados.add(d0); // si no hay salida, bloquear el propio día
+      }
+
       const [{ data: qs }, { data: evs }, { data: sols }] = await Promise.all([
-        supaPub.from('quotes').select('visit_date,visit_date_end,estado,items')
+        supaPub.from('quotes').select('visit_date,visit_date_end,estado,categoria')
           .in('estado', ESTADOS),
         supaPub.from('events').select('visit_date,visit_date_end,estado,categoria')
           .in('estado', ESTADOS),
         supaPub.from('solicitudes').select('items,estado')
-          .in('estado',['confirmada','completada']),
+          .in('estado', ['confirmada','Confirmada','completada','Completada']),
       ]);
-
-      function bloquearRango(d0, d1) {
-        // d1 es la fecha de salida — NO se bloquea (queda libre para otra entrada)
-        const cur = new Date(d0+'T12:00:00');
-        const fin = d1 ? new Date(d1+'T12:00:00') : new Date(d0+'T12:00:00');
-        while (cur < fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
-        // Si solo hay 1 noche (sin fecha de salida), bloquear ese día
-        if (!d1) diasCerrados.add(d0);
-      }
 
       const nomCabana = (cabActual.nombre || '').toLowerCase();
 
-      // Cotizaciones del historial
+      // Cotizaciones del historial — filtra por categoría o nombre de cabaña
       (qs||[]).forEach(q => {
         if (!q.visit_date) return;
-        const items = Array.isArray(q.items) ? q.items : [];
-        const involucra = items.some(it =>
-          (it.categoria||'').toLowerCase().includes('cabaña') ||
-          (it.nombre||'').toLowerCase().includes(nomCabana)
-        );
-        if (involucra) bloquearRango(q.visit_date, q.visit_date_end);
+        const cat = (q.categoria||'').toLowerCase();
+        if (cat.includes('cabaña') || cat.includes(nomCabana) || cat.includes('cabana'))
+          bloquearRango(q.visit_date, q.visit_date_end);
       });
 
       // Eventos manuales del calendario
       (evs||[]).forEach(ev => {
         if (!ev.visit_date) return;
-        if ((ev.categoria||'').toLowerCase().includes('cabaña') ||
-            (ev.categoria||'').toLowerCase().includes(nomCabana))
+        const cat = (ev.categoria||'').toLowerCase();
+        if (cat.includes('cabaña') || cat.includes(nomCabana) || cat.includes('cabana'))
           bloquearRango(ev.visit_date, ev.visit_date_end);
       });
 
-      // Solicitudes web confirmadas
+      // Solicitudes web confirmadas — los items son JSON con campo nombre/categoria
       (sols||[]).forEach(sol => {
         const items = Array.isArray(sol.items) ? sol.items : [];
         items.filter(it =>
