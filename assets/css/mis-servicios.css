@@ -75,6 +75,9 @@
       padding:6px 8px;flex-shrink:0}
     .cat-eye:hover{color:#fff}
     .cat-eye.off{opacity:.35}
+    .cat-add-sub{background:none;border:none;color:rgba(255,255,255,.35);font-size:.75rem;cursor:pointer;
+      padding:6px 7px;flex-shrink:0;transition:color .15s}
+    .cat-add-sub:hover{color:#a8e6cf}
     .btn-add-cat{width:calc(100% - 20px);margin:14px 10px;background:rgba(255,255,255,.06);
       color:rgba(255,255,255,.7);border:1px dashed rgba(255,255,255,.2);border-radius:7px;
       padding:10px;font-size:.8rem;cursor:pointer;transition:all .2s}

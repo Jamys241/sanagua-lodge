@@ -307,6 +307,7 @@
     }
     function fila(c, indent) {
       const totalItems = c.productos.length;
+      const esPadre = !indent; // solo las categorías base tienen el botón de añadir hijo
       return `
       <div class="cat-btn-wrap ${c.id===catActualId?'active':''}" style="${indent?'padding-left:'+indent+'px':''}">
         <button class="cat-btn" style="${indent?'padding-left:'+(17+indent)+'px':''}" onclick="seleccionarCategoria('${c.id}');closeCatDrawer()">
@@ -315,6 +316,7 @@
         </button>
         <button class="cat-eye ${c.activo?'':'off'}" title="${c.activo?'Visible en la web':'Oculta en la web'}"
           onclick="toggleCategoriaActivo('${c.id}', event)">${c.activo?'<i class="fa-solid fa-eye"></i>':'<i class="fa-solid fa-ban"></i>'}</button>
+        ${esPadre ? `<button class="cat-add-sub" title="Añadir subcategoría dentro de ${esc(c.nombre)}" onclick="crearSubcategoria('${c.id}',event)"><i class="fa-solid fa-plus"></i></button>` : ''}
       </div>`;
     }
     el.innerHTML = padres.map(p => fila(p,0) + catHijos(p.id).map(h => fila(h,14)).join('')).join('');
@@ -428,12 +430,13 @@
   }
 
   // ── Categorías (subcategorías de Servicios) ─────────────────────────
-  async function crearSubcategoria(parentId) {
+  async function crearSubcategoria(parentId, event) {
+    if (event) event.stopPropagation();
     const esHija = !!parentId && typeof parentId === 'string';
     const padre = esHija ? categorias.find(c => c.id === parentId) : null;
     const nombre = prompt(esHija
-      ? `Nombre de la nueva cabaña/opción dentro de "${padre?.nombre}" (ej. "Cabaña Jaguar"):`
-      : 'Nombre de la nueva categoría base (ej. "Carpas Disponibles"):');
+      ? `Nueva subcategoría dentro de "${padre?.nombre}":\n(Ej: "Pasadía premium", "Cabaña Jaguar", "Carpa doble")`
+      : 'Nombre de la nueva categoría base:\n(Ej: "Carpas Disponibles", "Tours")');
     if (!nombre || !nombre.trim()) return;
     try {
       const { data, error } = await supa.from('product_categories')
@@ -442,7 +445,7 @@
       catActualId = data.id;
       await cargarTodo();
       showToast(`✅ "${nombre.trim()}" creada.`, 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al crear la subcategoría.', 'error'); }
+    } catch (e) { console.error(e); showToast('❌ Error al crear la categoría.', 'error'); }
   }
 
   function editarCategoria(id) {
