@@ -92,6 +92,12 @@
     <div class="modal-body">
       <div class="form-group"><label>Nombre</label>
         <input class="form-input" id="mi-nombre" placeholder="Ej: Pasadía Adulto"></div>
+      <div class="form-group">
+        <label>Código único <span style="color:#c0392b">*</span></label>
+        <input class="form-input" id="mi-codigo" placeholder="Ej: CAB-001, CAMP-002, PAS-003" style="font-family:monospace" oninput="this.value=this.value.toUpperCase()">
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Código corto que identifica este ítem en todo el sistema. Solo letras, números y guiones. No puede repetirse.</div>
+        <div id="mi-codigo-error" style="font-size:.76rem;color:#c0392b;margin-top:3px;display:none"></div>
+      </div>
       <div class="form-group"><label>Descripción</label>
         <textarea class="form-input" id="mi-desc" placeholder="Se muestra en la página pública"></textarea></div>
       <div class="form-group"><label>Foto</label>
@@ -132,6 +138,13 @@
       <p style="font-size:.72rem;color:var(--muted);margin-top:-8px;margin-bottom:14px">
         "ITBMS Incluido" significa que el precio que escribas arriba ya trae el impuesto — no se le sumará nada más al mostrarlo o cobrarlo. Las otras opciones suman el porcentaje sobre el precio al momento de mostrarlo.
       </p>
+      <div class="form-group"><label>Tipo de ítem (para Cabañas)</label>
+        <select class="form-input" id="mi-tipo">
+          <option value="tarifa">Tarifa por noche (ej. Día de Semana, Fin de Semana)</option>
+          <option value="adicional">Persona adicional (ej. Adulto, Niño, Jubilado)</option>
+        </select>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Solo aplica a ítems dentro de subcategorías de Cabañas.</div>
+      </div>
       <div class="form-group"><label>Puntos de fidelidad (al confirmar la reserva)</label>
         <input class="form-input" type="number" step="1" min="0" id="mi-puntos" placeholder="0"></div>
       <div class="modal-actions">
@@ -395,6 +408,7 @@
         </div>
         <div class="item-body">
           <div class="item-nombre">${esc(p.nombre)}</div>
+          ${p.codigo ? `<div style="font-size:.7rem;font-family:monospace;background:#f0ede4;color:#6a5a40;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:4px">${esc(p.codigo)}</div>` : ''}
           <div class="item-desc">${esc(p.descripcion||'')}</div>
           <div class="item-precio-row">
             <span class="item-precio">$${parseFloat(p.precio).toFixed(2)}</span>
@@ -501,6 +515,8 @@
     editandoItemId = null;
     document.getElementById('modal-item-titulo').textContent = 'Nuevo ítem';
     document.getElementById('mi-nombre').value = '';
+    document.getElementById('mi-codigo').value = '';
+    document.getElementById('mi-codigo-error').style.display = 'none';
     document.getElementById('mi-desc').value = '';
     document.getElementById('mi-foto').value = '';
     document.getElementById('mi-foto-url').value = '';
@@ -508,6 +524,7 @@
     document.getElementById('mi-foto-preview').style.display = 'none';
     document.getElementById('mi-precio').value = '';
     document.getElementById('mi-itbms').value = '7';
+    document.getElementById('mi-tipo').value = 'tarifa';
     document.getElementById('mi-puntos').value = '0';
     document.getElementById('mi-incluye').value = '';
     document.getElementById('mi-capacidad').value = '';
@@ -545,6 +562,9 @@
     }
     document.getElementById('mi-precio').value = p.precio;
     document.getElementById('mi-itbms').value = p.itbms;
+    document.getElementById('mi-codigo').value = p.codigo || '';
+    document.getElementById('mi-codigo-error').style.display = 'none';
+    document.getElementById('mi-tipo').value = p.tipo || 'tarifa';
     document.getElementById('mi-puntos').value = p.puntos_fidelidad || 0;
     document.getElementById('mi-incluye').value = (p.incluye||[]).join('\n');
     document.getElementById('mi-capacidad').value = p.capacidad_maxima || '';
@@ -559,25 +579,35 @@
   async function guardarItemModal() {
     const catId = catEfectiva();
     if (!catId) { showToast('Selecciona una subcategoría primero.', 'error'); return; }
-    const nombre = document.getElementById('mi-nombre').value.trim();
+    const nombre      = document.getElementById('mi-nombre').value.trim();
+    const codigo      = document.getElementById('mi-codigo').value.trim().toUpperCase();
+    const codigoErr   = document.getElementById('mi-codigo-error');
     const descripcion = document.getElementById('mi-desc').value.trim();
-    const foto = document.getElementById('mi-foto').value.trim();
+    const foto        = document.getElementById('mi-foto').value.trim();
     const precio = parseFloat(document.getElementById('mi-precio').value) || 0;
     const itbms = parseInt(document.getElementById('mi-itbms').value) || 0;
+    const tipo = document.getElementById('mi-tipo').value || 'tarifa';
     const puntos_fidelidad = parseInt(document.getElementById('mi-puntos').value) || 0;
     const incluye = document.getElementById('mi-incluye').value.split('\n').map(s=>s.trim()).filter(Boolean);
     const capacidad_maxima = parseInt(document.getElementById('mi-capacidad').value) || null;
     let galeria = [];
     try { galeria = JSON.parse(document.getElementById('mi-galeria').value || '[]'); } catch {}
     if (!nombre) { showToast('Ingresa el nombre del ítem.', 'error'); return; }
+    if (!codigo) { codigoErr.textContent = 'El código es obligatorio.'; codigoErr.style.display = 'block'; return; }
+    if (!/^[A-Z0-9\-]+$/.test(codigo)) { codigoErr.textContent = 'Solo letras mayúsculas, números y guiones (ej. CAB-001).'; codigoErr.style.display = 'block'; return; }
+    codigoErr.style.display = 'none';
+    // Verificar unicidad
+    const { data: existe } = await supa.from('products').select('id').eq('codigo', codigo)
+      .neq('id', editandoItemId || '00000000-0000-0000-0000-000000000000').maybeSingle();
+    if (existe) { codigoErr.textContent = `"${codigo}" ya está en uso. Elige un código diferente.`; codigoErr.style.display = 'block'; return; }
     try {
       if (editandoItemId) {
-        const { error } = await supa.from('products').update({ nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria }).eq('id', editandoItemId);
+        const { error } = await supa.from('products').update({ nombre, codigo, descripcion, foto, precio, itbms, puntos_fidelidad, tipo, incluye, capacidad_maxima, galeria }).eq('id', editandoItemId);
         if (error) throw error;
       } else {
         const cat = categorias.find(c => c.id === catId);
         const { error } = await supa.from('products').insert({
-          categoria_id: catId, nombre, descripcion, foto, precio, itbms, puntos_fidelidad, incluye, capacidad_maxima, galeria, orden: cat?.productos.length || 0,
+          categoria_id: catId, nombre, codigo, descripcion, foto, precio, itbms, puntos_fidelidad, tipo, incluye, capacidad_maxima, galeria, orden: cat?.productos.length || 0,
         });
         if (error) throw error;
       }

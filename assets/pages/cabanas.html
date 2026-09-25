@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=9">
+  <link rel="stylesheet" href="../css/cabanas.css?v=11">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -104,7 +104,10 @@
             <span><span style="display:inline-block;width:12px;height:12px;background:var(--moss);border-radius:2px;margin-right:4px"></span>Seleccionado</span>
           </div>
           <div id="cab-aviso-cerrado" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#8a5a00;margin-top:8px"></div>
-          <div id="cab-hint-fechas" style="margin-top:10px;font-size:.84rem;color:var(--moss);font-weight:500;min-height:22px;text-align:center"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;min-height:28px">
+            <div id="cab-hint-fechas" style="font-size:.84rem;color:var(--moss);font-weight:500"></div>
+            <button id="cab-btn-cancelar-ent" onclick="cancelarEntrada()" style="display:none;background:none;border:1.5px solid #e0e0e0;border-radius:6px;padding:4px 12px;font-size:.78rem;color:#888;cursor:pointer;font-family:'Jost',sans-serif">✕ Cancelar selección</button>
+          </div>
         </div>
       </div>
 
@@ -280,6 +283,8 @@
     document.getElementById('cab-paso2').style.display = 'none';
     document.getElementById('cab-hint-fechas').textContent = '';
     document.getElementById('cab-aviso-cerrado').style.display = 'none';
+    const btnCanc = document.getElementById('cab-btn-cancelar-ent');
+    if (btnCanc) btnCanc.style.display = 'none';
     document.getElementById('cab-adic-ninguna').checked = false;
     document.getElementById('cab-adic-si').checked = false;
     document.getElementById('cab-adicionales').style.display = 'none';
@@ -326,42 +331,40 @@
       window._diasSoloSalida = window._diasSoloSalida || new Set();
       window._diasSoloSalida.clear();
 
+      // Recolectar los códigos de los ítems (tarifas) de esta cabaña
+      const codigos = (cabActual.tarifas||[]).map(t => t.codigo).filter(Boolean);
+      // También incluir el código de la subcategoría si lo tiene
+      if (cabActual.codigo) codigos.push(cabActual.codigo);
+
+      if (!codigos.length) {
+        console.warn('⚠️ La cabaña no tiene ítems con código asignado — no se puede filtrar disponibilidad por código.');
+        return;
+      }
+
       const [{ data: qs }, { data: evs }, { data: sols }] = await Promise.all([
-        supaPub.from('quotes').select('visit_date,visit_date_end,estado,categoria')
+        supaPub.from('quotes').select('visit_date,visit_date_end,estado,producto_id')
           .in('estado', ESTADOS),
-        supaPub.from('events').select('visit_date,visit_date_end,estado,categoria')
+        supaPub.from('events').select('visit_date,visit_date_end,estado,producto_id')
           .in('estado', ESTADOS),
         supaPub.from('solicitudes').select('items,estado')
           .in('estado', ['confirmada','Confirmada','completada','Completada']),
       ]);
 
-      const nomCabana = (cabActual.nombre || '').toLowerCase();
-
-      // Cotizaciones del historial — filtra por categoría o nombre de cabaña
+      // quotes y events: filtrar por producto_id si existe, si no por categoria
       (qs||[]).forEach(q => {
         if (!q.visit_date) return;
-        const cat = (q.categoria||'').toLowerCase();
-        if (cat.includes('cabaña') || cat.includes(nomCabana) || cat.includes('cabana'))
-          bloquearRango(q.visit_date, q.visit_date_end);
+        if (q.producto_id && codigos.includes(q.producto_id)) bloquearRango(q.visit_date, q.visit_date_end);
       });
-
-      // Eventos manuales del calendario
       (evs||[]).forEach(ev => {
         if (!ev.visit_date) return;
-        const cat = (ev.categoria||'').toLowerCase();
-        if (cat.includes('cabaña') || cat.includes(nomCabana) || cat.includes('cabana'))
-          bloquearRango(ev.visit_date, ev.visit_date_end);
+        if (ev.producto_id && codigos.includes(ev.producto_id)) bloquearRango(ev.visit_date, ev.visit_date_end);
       });
 
-      // Solicitudes web confirmadas — los items son JSON con campo nombre/categoria
+      // Solicitudes web: los items tienen producto_id o codigo guardado
       (sols||[]).forEach(sol => {
         const items = Array.isArray(sol.items) ? sol.items : [];
-        items.filter(it =>
-          (it.categoria||'').toLowerCase().includes('cabaña') ||
-          (it.nombre||'').toLowerCase().includes(nomCabana)
-        ).forEach(it => {
-          if (it.fecha_visita) bloquearRango(it.fecha_visita, it.fecha_visita_fin);
-        });
+        items.filter(it => it.producto_id && codigos.includes(it.producto_id))
+          .forEach(it => { if (it.fecha_visita) bloquearRango(it.fecha_visita, it.fecha_visita_fin); });
       });
     } catch (e) { console.warn('cargarDiasCerrados', e); }
   }
@@ -560,33 +563,41 @@
     if (btn) { btn.disabled=!ok; btn.style.opacity=ok?'1':'.5'; }
   }
 
+  function cancelarEntrada() {
+    rangoEnt = null; rangoSal = null;
+    document.getElementById('cab-hint-fechas').textContent = '';
+    document.getElementById('cab-btn-cancelar-ent').style.display = 'none';
+    document.getElementById('cab-aviso-cerrado').style.display = 'none';
+    document.getElementById('cab-paso2').style.display = 'none';
+    renderCabCal();
+  }
+
   function selDia(ds) {
     const aviso  = document.getElementById('cab-aviso-cerrado');
     const hint   = document.getElementById('cab-hint-fechas');
+    const btnCanc = document.getElementById('cab-btn-cancelar-ent');
     const soloS  = window._diasSoloSalida || new Set();
     aviso.style.display = 'none';
 
     if (!rangoEnt || rangoSal) {
-      // Si es un día soloSalida, no puede ser entrada
       if (soloS.has(ds)) {
-        aviso.textContent = 'Este día ya tiene una reserva entrante — no puedes iniciar aquí. Elige otro día de entrada.';
-        aviso.style.display = 'block';
-        return;
+        aviso.textContent = 'Este día ya tiene una reserva entrante — elige otro día de entrada.';
+        aviso.style.display = 'block'; return;
       }
       rangoEnt = ds; rangoSal = null;
       hint.textContent = 'Ahora selecciona la fecha de salida →';
+      btnCanc.style.display = '';
       document.getElementById('cab-paso2').style.display = 'none';
     } else if (ds <= rangoEnt) {
       if (soloS.has(ds)) {
-        aviso.textContent = 'Este día ya tiene una reserva entrante — no puedes iniciar aquí. Elige otro día de entrada.';
-        aviso.style.display = 'block';
-        return;
+        aviso.textContent = 'Este día ya tiene una reserva entrante — elige otro día de entrada.';
+        aviso.style.display = 'block'; return;
       }
       rangoEnt = ds; rangoSal = null;
       hint.textContent = 'Ahora selecciona la fecha de salida →';
+      btnCanc.style.display = '';
       document.getElementById('cab-paso2').style.display = 'none';
     } else {
-      // Verificar que no haya días TOTALMENTE bloqueados entre entrada y salida
       let bloq = false;
       const cur = new Date(rangoEnt+'T12:00:00');
       cur.setDate(cur.getDate()+1);
@@ -599,10 +610,10 @@
         aviso.textContent = 'Hay días no disponibles dentro de ese rango. Elige otras fechas.';
         aviso.style.display = 'block';
         rangoEnt = null; rangoSal = null;
-        hint.textContent = '';
+        hint.textContent = ''; btnCanc.style.display = 'none';
       } else {
         rangoSal = ds;
-        hint.textContent = '';
+        hint.textContent = ''; btnCanc.style.display = 'none';
         mostrarPaso2();
       }
     }
