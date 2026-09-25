@@ -6,7 +6,7 @@
   <title>Cabañas — Sanagua Lodge</title>
   <link rel="icon" type="image/png" href="../images/icon/icon.PNG">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/cabanas.css?v=6">
+  <link rel="stylesheet" href="../css/cabanas.css?v=7">
   <link rel="stylesheet" href="../css/pasadia.css">
   <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
   <style>
@@ -242,6 +242,47 @@
   let diasCerrados = new Set();
   let rangoEnt = null; let rangoSal = null;
   let calAnio, calMes;
+
+  async function abrirDetalleCabana(i) {
+    const c = grupos[i];
+    if (!c) return;
+    cabActual = c;
+    adicCnt = Object.fromEntries((c.adicionales||[]).map(a => [a.id, 0]));
+    rangoEnt = null; rangoSal = null;
+    const hoy = new Date();
+    calAnio = hoy.getFullYear(); calMes = hoy.getMonth();
+    lbFotos = [c.foto, ...(c.galeria||[])].filter(Boolean);
+
+    document.getElementById('cab-titulo').textContent = c.nombre;
+    const coverEl = document.getElementById('cab-gal-cover');
+    if (lbFotos.length) {
+      document.getElementById('cab-gal-img').src = lbFotos[0];
+      coverEl.style.display = '';
+      document.getElementById('cab-gal-count').textContent = lbFotos.length > 1 ? `1 / ${lbFotos.length}` : '';
+    } else { coverEl.style.display = 'none'; }
+
+    document.getElementById('cab-capacidad-wrap').innerHTML =
+      (c.personas_base ? `<div class="cab-capacidad"><i class="fa-solid fa-user"></i> Para ${c.personas_base} persona${c.personas_base===1?'':'s'}</div>` : '') +
+      (c.capacidad_maxima ? `<div class="cab-capacidad"><i class="fa-solid fa-users"></i> Máximo ${c.capacidad_maxima}</div>` : '');
+
+    document.getElementById('cab-desc').textContent = c.descripcion || '';
+    document.getElementById('cab-incluye').innerHTML = (c.incluye||[])
+      .map(t=>`<div class="cab-incluye-item"><i class="fa-solid fa-circle-check"></i> ${t}</div>`).join('');
+
+    // Resetear paso 2
+    document.getElementById('cab-paso2').style.display = 'none';
+    document.getElementById('cab-hint-fechas').textContent = '';
+    document.getElementById('cab-aviso-cerrado').style.display = 'none';
+    document.getElementById('cab-adic-ninguna').checked = false;
+    document.getElementById('cab-adic-si').checked = false;
+    document.getElementById('cab-adicionales').style.display = 'none';
+    renderAdicionales();
+    calcCabTotal();
+
+    document.getElementById('detalle-cab-ov').classList.add('open');
+    await cargarDiasCerrados();
+    renderCabCal();
+  }
 
   async function cargarDiasCerrados() {
     diasCerrados = new Set();
