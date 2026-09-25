@@ -305,15 +305,14 @@
         </div>
         <div class="form-group">
           <label>Categoría</label>
-          <select id="edit-categoria">
-            <option value="">— Sin categoría —</option>
-            <option value="Pasadia Sencilla">Pasadia Sencilla</option>
-            <option value="Pasadia Completa">Pasadia Completa</option>
-            <option value="Camping Propio">Camping Propio</option>
-            <option value="Camping Suministro">Camping Suministro</option>
-            <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
-            <option value="Cabaña Ocelot">Cabaña Ocelot</option>
-            <option value="Cabaña Motmot">Cabaña Motmot</option>
+          <select id="edit-categoria" onchange="onEditCategoriaChange()">
+            <option value="">— Selecciona categoría —</option>
+          </select>
+        </div>
+        <div class="form-group" id="edit-grupo-producto" style="display:none">
+          <label>Ítem específico <span style="font-size:.75rem;color:var(--muted)">(opcional)</span></label>
+          <select id="edit-producto-id">
+            <option value="">— Sin ítem específico —</option>
           </select>
         </div>
         <div class="form-group">
@@ -2265,6 +2264,12 @@
     document.getElementById('edit-visit-date-end').value = q.visit_date_end || '';
     updateEditNights();
     document.getElementById('edit-categoria').value  = q.categoria  || '';
+    onEditCategoriaChange();
+    const editProd = document.getElementById('edit-producto-id');
+    if (editProd && q.producto_id) {
+      editProd.value = q.producto_id;
+      document.getElementById('edit-grupo-producto').style.display = '';
+    }
     document.getElementById('edit-plataforma').value = q.plataforma || '';
 
     // Ítems editables
@@ -2452,6 +2457,7 @@
       visit_date:          document.getElementById('edit-visit-date').value,
       visit_date_end:      document.getElementById('edit-visit-date-end').value,
       categoria:  document.getElementById('edit-categoria').value,
+      producto_id: document.getElementById('edit-producto-id')?.value || null,
       plataforma: document.getElementById('edit-plataforma').value,
       client: {
         tipo:    getTipoCliente('edit-tipo-cliente'),
@@ -4178,9 +4184,44 @@
         productos: (prods||[]).filter(p => p.categoria_id === c.id),
       }));
       products = (prods||[]); // catálogo plano usado por el picker de cotización
+      poblarSelectorCatEdit();
     } catch (e) {
       console.error(e);
       showToast('❌ Error al cargar el catálogo de servicios.', 'error');
+    }
+  }
+
+  function poblarSelectorCatEdit() {
+    const sel = document.getElementById('edit-categoria');
+    if (!sel) return;
+    const padres = categoriasProductos.filter(c => !c.parent_id);
+    const hijos  = categoriasProductos.filter(c =>  c.parent_id);
+    sel.innerHTML = '<option value="">— Selecciona categoría —</option>' +
+      padres.map(p => {
+        const subs = hijos.filter(h => h.parent_id === p.id);
+        if (subs.length) {
+          return `<optgroup label="${esc(p.nombre)}">` +
+            subs.map(h => `<option value="${esc(h.nombre)}" data-cat-id="${h.id}">${esc(h.nombre)}</option>`).join('') +
+            '</optgroup>';
+        }
+        return `<option value="${esc(p.nombre)}" data-cat-id="${p.id}">${esc(p.nombre)}</option>`;
+      }).join('');
+  }
+
+  function onEditCategoriaChange() {
+    const sel   = document.getElementById('edit-categoria');
+    const opt   = sel.options[sel.selectedIndex];
+    const catId = opt?.getAttribute('data-cat-id') || '';
+    const wrap  = document.getElementById('edit-grupo-producto');
+    const selP  = document.getElementById('edit-producto-id');
+    const items = catId ? products.filter(p => p.categoria_id === catId && p.codigo) : [];
+    if (items.length) {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>' +
+        items.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)} [${esc(p.codigo)}]</option>`).join('');
+      wrap.style.display = '';
+    } else {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>';
+      wrap.style.display = 'none';
     }
   }
 

@@ -71,16 +71,15 @@
         <div style="background:var(--blue-light);border:1px solid #bfd4f0;border-radius:7px;padding:8px 14px;font-size:.85rem;color:var(--blue);font-weight:600;" id="nights-label"></div>
       </div>
       <div class="form-group">
-        <label>Categoría</label>
-        <select id="quote-categoria">
-          <option value="">— Sin categoría —</option>
-          <option value="Pasadia Sencilla">Pasadia Sencilla</option>
-          <option value="Pasadia Completa">Pasadia Completa</option>
-          <option value="Camping Propio">Camping Propio</option>
-          <option value="Camping Suministro">Camping Suministro</option>
-          <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
-          <option value="Cabaña Ocelot">Cabaña Ocelot</option>
-          <option value="Cabaña Motmot">Cabaña Motmot</option>
+        <label>Servicio</label>
+        <select id="quote-categoria" onchange="onCategoriaChange()">
+          <option value="">— Selecciona categoría —</option>
+        </select>
+      </div>
+      <div class="form-group" id="grupo-producto" style="display:none">
+        <label>Ítem específico <span style="font-size:.75rem;color:var(--muted)">(opcional, para disponibilidad exacta)</span></label>
+        <select id="quote-producto-id">
+          <option value="">— Sin ítem específico —</option>
         </select>
       </div>
       <div class="form-group">
@@ -258,6 +257,7 @@
   async function sbInsertQuote(payload, quoteNum) {
     const row = {
       quote_num: quoteNum, estado: payload.estado || 'Pendiente', categoria: payload.categoria || null,
+      producto_id: payload.producto_id || null,
       plataforma: payload.plataforma || null, client_name: payload.client?.name || null,
       visit_date: payload.visit_date || null, visit_date_end: payload.visit_date_end || null,
       total: payload.total || 0, abono_pagado: payload.abono_pagado || 0,
@@ -303,7 +303,42 @@
       if (e1) throw e1; if (e2) throw e2;
       categoriasProductos = (cats||[]).map(c => ({ ...c, productos: (prods||[]).filter(p => p.categoria_id === c.id) }));
       products = (prods||[]);
+      poblarSelectorCategoria();
     } catch (e) { console.error(e); showToast('❌ Error al cargar el catálogo de servicios.', 'error'); }
+  }
+
+  function poblarSelectorCategoria() {
+    const sel = document.getElementById('quote-categoria');
+    if (!sel) return;
+    const padres = categoriasProductos.filter(c => !c.parent_id);
+    const hijos  = categoriasProductos.filter(c =>  c.parent_id);
+    sel.innerHTML = '<option value="">— Selecciona categoría —</option>' +
+      padres.map(p => {
+        const subs = hijos.filter(h => h.parent_id === p.id);
+        if (subs.length) {
+          return `<optgroup label="${esc(p.nombre)}">` +
+            subs.map(h => `<option value="${esc(h.nombre)}" data-cat-id="${h.id}">${esc(h.nombre)}</option>`).join('') +
+            '</optgroup>';
+        }
+        return `<option value="${esc(p.nombre)}" data-cat-id="${p.id}">${esc(p.nombre)}</option>`;
+      }).join('');
+  }
+
+  function onCategoriaChange() {
+    const sel   = document.getElementById('quote-categoria');
+    const opt   = sel.options[sel.selectedIndex];
+    const catId = opt?.getAttribute('data-cat-id') || '';
+    const wrap  = document.getElementById('grupo-producto');
+    const selP  = document.getElementById('quote-producto-id');
+    const prods = catId ? products.filter(p => p.categoria_id === catId && p.codigo) : [];
+    if (prods.length) {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>' +
+        prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}${p.codigo?' ['+p.codigo+']':''}</option>`).join('');
+      wrap.style.display = '';
+    } else {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>';
+      wrap.style.display = 'none';
+    }
   }
 
   function itbmsBadge(v) {
@@ -502,6 +537,7 @@
       notes:document.getElementById('quote-notes').value,
       logo:logoBase64||null, empresa:empresaData,
       categoria:  document.getElementById('quote-categoria').value  || '',
+      producto_id: document.getElementById('quote-producto-id')?.value || null,
       plataforma: document.getElementById('quote-plataforma').value || '',
     };
   }
@@ -590,6 +626,10 @@
     items=[]; setDiscount('none'); renderItems(); calcTotals();
     ['client-name','client-ruc','client-email','client-phone','client-address','quote-notes','visit-date','visit-date-end'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('quote-categoria').value = '';
+    if (document.getElementById('quote-producto-id')) {
+      document.getElementById('quote-producto-id').value = '';
+      document.getElementById('grupo-producto').style.display = 'none';
+    }
     document.getElementById('quote-plataforma').value = '';
     document.getElementById('nights-label-wrap').style.display='none';
   }

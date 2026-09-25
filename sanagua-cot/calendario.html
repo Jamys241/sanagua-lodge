@@ -116,15 +116,14 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Categoría</label>
-            <select id="ev-categoria">
-              <option value="">— Sin categoría —</option>
-              <option value="Pasadia Sencilla">Pasadia Sencilla</option>
-              <option value="Pasadia Completa">Pasadia Completa</option>
-              <option value="Camping Propio">Camping Propio</option>
-              <option value="Camping Suministro">Camping Suministro</option>
-              <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
-              <option value="Cabaña Ocelot">Cabaña Ocelot</option>
-              <option value="Cabaña Motmot">Cabaña Motmot</option>
+            <select id="ev-categoria" onchange="onEvCategoriaChange()">
+              <option value="">— Selecciona categoría —</option>
+            </select>
+          </div>
+          <div class="form-group" id="ev-grupo-producto" style="display:none">
+            <label>Ítem específico <span style="font-size:.75rem;color:var(--muted)">(opcional, para disponibilidad exacta)</span></label>
+            <select id="ev-producto-id">
+              <option value="">— Sin ítem específico —</option>
             </select>
           </div>
           <div class="form-group">
@@ -866,6 +865,8 @@
       document.getElementById(id).value = '';
     });
     document.getElementById('ev-categoria').value  = '';
+    const evProd = document.getElementById('ev-producto-id');
+    if (evProd) { evProd.value = ''; document.getElementById('ev-grupo-producto').style.display = 'none'; }
     document.getElementById('ev-plataforma').value = '';
     document.getElementById('ev-estado').value    = 'Confirmada';
     document.getElementById('ev-visit-date').value    = prefillDate || localDateStr(calDate);
@@ -888,6 +889,12 @@
     document.getElementById('ev-client-email').value   = ev.client?.email   || '';
     document.getElementById('ev-client-address').value = ev.client?.address || '';
     document.getElementById('ev-categoria').value  = ev.categoria  || '';
+    onEvCategoriaChange();
+    const evProd = document.getElementById('ev-producto-id');
+    if (evProd && ev.producto_id) {
+      evProd.value = ev.producto_id;
+      document.getElementById('ev-grupo-producto').style.display = '';
+    }
     document.getElementById('ev-plataforma').value = ev.plataforma || '';
     document.getElementById('ev-estado').value    = ev.estado    || 'Confirmada';
     document.getElementById('ev-visit-date').value    = ev.visit_date     || '';
@@ -942,6 +949,7 @@
         address: document.getElementById('ev-client-address').value.trim(),
       },
       categoria:  document.getElementById('ev-categoria').value,
+      producto_id: document.getElementById('ev-producto-id')?.value || null,
       plataforma: document.getElementById('ev-plataforma').value,
       estado:     document.getElementById('ev-estado').value,
       visit_date: document.getElementById('ev-visit-date').value,
@@ -979,6 +987,7 @@
         address: document.getElementById('ev-client-address').value.trim(),
       },
       categoria:  document.getElementById('ev-categoria').value,
+      producto_id: document.getElementById('ev-producto-id')?.value || null,
       plataforma: document.getElementById('ev-plataforma').value,
       estado:             document.getElementById('ev-estado').value,
       visit_date:         document.getElementById('ev-visit-date').value,
@@ -1559,11 +1568,60 @@
       // por compatibilidad — solo se bloquea si viene explícitamente en false)
     }
     showLoading(true);
-    await Promise.all([loadHistory(), loadEvents(), loadHorarios(), loadEmpresa(), loadLogo()]);
+    await Promise.all([loadHistory(), loadEvents(), loadHorarios(), loadEmpresa(), loadLogo(), loadCatalogo()]);
     buildCalIndex();
     renderCalendario();
     showLoading(false);
   });
+
+  let _cats = []; let _prods = [];
+
+  async function loadCatalogo() {
+    try {
+      const [{ data: cats }, { data: prods }] = await Promise.all([
+        supa.from('product_categories').select('*').eq('activo', true).order('orden', { ascending: true }),
+        supa.from('products').select('id,nombre,codigo,categoria_id').eq('activo', true).order('orden', { ascending: true }),
+      ]);
+      _cats = cats || []; _prods = prods || [];
+      poblarSelectorCatEv();
+    } catch (e) { console.warn('loadCatalogo:', e); }
+  }
+
+  function esc2(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function poblarSelectorCatEv() {
+    const sel = document.getElementById('ev-categoria');
+    if (!sel) return;
+    const padres = _cats.filter(c => !c.parent_id);
+    const hijos  = _cats.filter(c =>  c.parent_id);
+    sel.innerHTML = '<option value="">— Selecciona categoría —</option>' +
+      padres.map(p => {
+        const subs = hijos.filter(h => h.parent_id === p.id);
+        if (subs.length) {
+          return `<optgroup label="${esc2(p.nombre)}">` +
+            subs.map(h => `<option value="${esc2(h.nombre)}" data-cat-id="${h.id}">${esc2(h.nombre)}</option>`).join('') +
+            '</optgroup>';
+        }
+        return `<option value="${esc2(p.nombre)}" data-cat-id="${p.id}">${esc2(p.nombre)}</option>`;
+      }).join('');
+  }
+
+  function onEvCategoriaChange() {
+    const sel   = document.getElementById('ev-categoria');
+    const opt   = sel.options[sel.selectedIndex];
+    const catId = opt?.getAttribute('data-cat-id') || '';
+    const wrap  = document.getElementById('ev-grupo-producto');
+    const selP  = document.getElementById('ev-producto-id');
+    const items = catId ? _prods.filter(p => p.categoria_id === catId && p.codigo) : [];
+    if (items.length) {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>' +
+        items.map(p => `<option value="${esc2(p.codigo)}">${esc2(p.nombre)} [${esc2(p.codigo)}]</option>`).join('');
+      wrap.style.display = '';
+    } else {
+      selP.innerHTML = '<option value="">— Sin ítem específico —</option>';
+      wrap.style.display = 'none';
+    }
+  }
 </script>
 </body>
 </html>
