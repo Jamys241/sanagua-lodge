@@ -117,42 +117,42 @@
           <label>Nombre / Empresa</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-name" placeholder="Nombre del cliente" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-name')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-name')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
           <label>RUC / Cédula</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-ruc" placeholder="8-888-8888" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-ruc')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-ruc')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group" id="edit-dv-group" style="display:none">
           <label>DV <span style="color:var(--red)">*</span></label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-dv" placeholder="Ej: 45" maxlength="3" style="flex:1;max-width:100px">
-            <button class="btn-copy" onclick="copyField('edit-client-dv')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-dv')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
           <label>Teléfono</label>
           <div style="display:flex;gap:6px;">
             <input type="tel" id="edit-client-phone" placeholder="+507 6000-0000" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-phone')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-phone')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group full">
           <label>Correo electrónico</label>
           <div style="display:flex;gap:6px;">
             <input type="email" id="edit-client-email" placeholder="correo@ejemplo.com" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-email')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-email')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group full">
           <label>Dirección</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-address" placeholder="Ciudad de Panamá" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-address')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-address')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
@@ -951,7 +951,7 @@
         btn.classList.add('copied');
         setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
       }
-      showToast('📋 Copiado al portapapeles', 'success');
+      showToast('Copiado al portapapeles', 'success');
     }).catch(() => showToast('Error al copiar.', 'error'));
   }
 
