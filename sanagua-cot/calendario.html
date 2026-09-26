@@ -68,13 +68,6 @@
       </select>
       <select id="cal-filter-categoria" onchange="renderCalendario()" style="font-size:.82rem;padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);">
         <option value="">Todas las categorías</option>
-        <option value="Pasadia Sencilla">Pasadia Sencilla</option>
-        <option value="Pasadia Completa">Pasadia Completa</option>
-        <option value="Camping Propio">Camping Propio</option>
-        <option value="Camping Suministro">Camping Suministro</option>
-        <option value="Cabaña Yaguarundi">Cabaña Yaguarundi</option>
-        <option value="Cabaña Ocelot">Cabaña Ocelot</option>
-        <option value="Cabaña Motmot">Cabaña Motmot</option>
       </select>
       <button class="cal-nav-btn" onclick="clearCalFilters()" style="font-size:.75rem;padding:4px 10px;color:var(--muted);"><i class="fa-solid fa-xmark"></i> Limpiar</button>
     </div>
@@ -1584,6 +1577,22 @@
       ]);
       _cats = cats || []; _prods = prods || [];
       poblarSelectorCatEv();
+      // Poblar el filtro de categorías del calendario
+      const selFil = document.getElementById('cal-filter-categoria');
+      if (selFil) {
+        const padres = _cats.filter(c => !c.parent_id);
+        const hijos  = _cats.filter(c =>  c.parent_id);
+        selFil.innerHTML = '<option value="">Todas las categorías</option>' +
+          padres.map(p => {
+            const subs = hijos.filter(h => h.parent_id === p.id);
+            if (subs.length) {
+              return `<optgroup label="${esc2(p.nombre)}">` +
+                subs.map(h => `<option value="${esc2(h.nombre)}">${esc2(h.nombre)}</option>`).join('') +
+                '</optgroup>';
+            }
+            return `<option value="${esc2(p.nombre)}">${esc2(p.nombre)}</option>`;
+          }).join('');
+      }
     } catch (e) { console.warn('loadCatalogo:', e); }
   }
 
