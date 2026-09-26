@@ -100,8 +100,23 @@
         <input class="form-input" id="mi-nombre" placeholder="Ej: Pasadía Adulto"></div>
       <div class="form-group">
         <label>Código único <span style="color:#c0392b">*</span></label>
-        <input class="form-input" id="mi-codigo" placeholder="Ej: CAB-001, CAMP-002, PAS-003" style="font-family:monospace" oninput="this.value=this.value.toUpperCase()">
-        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Código corto que identifica este ítem en todo el sistema. Solo letras, números y guiones. No puede repetirse.</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+          <select class="form-input" id="mi-cod-cat" onchange="onMiCodCatChange()" style="font-family:monospace;font-size:.85rem">
+            <option value="">Cat. base</option>
+          </select>
+          <span style="color:#aaa;font-weight:700;font-size:.9rem">-</span>
+          <select class="form-input" id="mi-cod-sub" onchange="actualizarCodigoCompleto()" style="font-family:monospace;font-size:.85rem">
+            <option value="">Subcategoría</option>
+          </select>
+          <span style="color:#aaa;font-weight:700;font-size:.9rem">-</span>
+          <input class="form-input" id="mi-cod-sufijo" placeholder="ITM0" maxlength="20"
+            style="font-family:monospace;font-size:.85rem;width:90px;text-transform:uppercase"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');actualizarCodigoCompleto()">
+        </div>
+        <div style="font-size:.75rem;color:#888;margin-bottom:4px">
+          Código resultante: <strong id="mi-codigo-preview" style="font-family:monospace;color:var(--ink)">—</strong>
+        </div>
+        <input type="hidden" id="mi-codigo">
         <div id="mi-codigo-error" style="font-size:.76rem;color:#c0392b;margin-top:3px;display:none"></div>
       </div>
       <div class="form-group"><label>Descripción</label>
@@ -568,31 +583,71 @@
 
   // ── Ítems (productos) ────────────────────────────────────────────────
   function generarCodigoItem() {
+    // Ya no se usa para auto-generar — el usuario elige en los selectores.
+    // Se llama solo para sugerir el sufijo ITMn.
     const catEfectId = catEfectiva();
-    const sub    = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
-    const padre  = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
-
-    // Construir el prefijo completo incluyendo el codigo del padre si aplica.
-    // sub.codigo puede ser "PAS-01" (ya combinado) o solo "01" (solo sufijo).
-    let prefijo = sub?.codigo || '';
-    if (padre?.codigo && prefijo && !prefijo.startsWith(padre.codigo)) {
-      // El codigo de la subcategoria es solo el sufijo — combinarlo con el padre
-      prefijo = `${padre.codigo}-${prefijo}`;
-    }
-    if (!prefijo && padre?.codigo) prefijo = padre.codigo;
-    if (!prefijo) return '';
-
-    // Contar items existentes en ESTA subcategoria (independiente por subcategoria)
+    const sub = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
     const existentes = sub ? (sub.productos || []).length : 0;
-    return `${prefijo}-ITM${existentes}`;
+    return `ITM${existentes}`;
+  }
+
+  function poblarSelectoresCodigo() {
+    const selCat = document.getElementById('mi-cod-cat');
+    if (!selCat) return;
+    const padres = categorias.filter(c => !c.parent_id && c.codigo);
+    selCat.innerHTML = '<option value="">Cat. base</option>' +
+      padres.map(p => `<option value="${p.id}" data-cod="${p.codigo}">${p.nombre} [${p.codigo}]</option>`).join('');
+  }
+
+  function onMiCodCatChange() {
+    const selCat = document.getElementById('mi-cod-cat');
+    const selSub = document.getElementById('mi-cod-sub');
+    const opt    = selCat.options[selCat.selectedIndex];
+    const catId  = opt?.value || '';
+    const subs   = catId ? categorias.filter(c => c.parent_id === catId && c.codigo) : [];
+    selSub.innerHTML = '<option value="">Subcategoría</option>' +
+      subs.map(s => `<option value="${s.id}" data-cod="${s.codigo}">${s.nombre} [${s.codigo}]</option>`).join('');
+    actualizarCodigoCompleto();
+  }
+
+  function actualizarCodigoCompleto() {
+    const selCat   = document.getElementById('mi-cod-cat');
+    const selSub   = document.getElementById('mi-cod-sub');
+    const sufijo   = document.getElementById('mi-cod-sufijo').value.trim();
+    const optCat   = selCat.options[selCat.selectedIndex];
+    const optSub   = selSub.options[selSub.selectedIndex];
+    const codCat   = optCat?.getAttribute('data-cod') || '';
+    const codSub   = optSub?.getAttribute('data-cod') || '';
+
+    let partes = [codCat, codSub, sufijo].filter(Boolean);
+    const completo = partes.join('-');
+    document.getElementById('mi-codigo-preview').textContent = completo || '—';
+    document.getElementById('mi-codigo').value = completo;
   }
 
   function nuevoItem() {
     editandoItemId = null;
     document.getElementById('modal-item-titulo').textContent = 'Nuevo ítem';
     document.getElementById('mi-nombre').value = '';
-    document.getElementById('mi-codigo').value = generarCodigoItem();
     document.getElementById('mi-codigo-error').style.display = 'none';
+    poblarSelectoresCodigo();
+    // Preseleccionar la jerarquía actual
+    const catEfectId = catEfectiva();
+    const sub   = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
+    const padre = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
+    const selCat = document.getElementById('mi-cod-cat');
+    if (padre) {
+      selCat.value = padre.id;
+      onMiCodCatChange();
+      document.getElementById('mi-cod-sub').value = sub?.id || '';
+    } else if (sub) {
+      selCat.value = sub.id;
+      onMiCodCatChange();
+    }
+    // Sugerir sufijo ITMn
+    const existentes = sub ? (sub.productos || []).length : 0;
+    document.getElementById('mi-cod-sufijo').value = `ITM${existentes}`;
+    actualizarCodigoCompleto();
     document.getElementById('mi-desc').value = '';
     document.getElementById('mi-foto').value = '';
     document.getElementById('mi-foto-url').value = '';
@@ -608,6 +663,11 @@
     document.getElementById('mi-galeria-file').value = '';
     document.getElementById('mi-galeria-preview').innerHTML = '';
     document.getElementById('mi-galeria-status').textContent = '';
+    document.getElementById('mi-cod-cat').value = '';
+    document.getElementById('mi-cod-sub').innerHTML = '<option value="">Subcategoría</option>';
+    document.getElementById('mi-cod-sufijo').value = '';
+    document.getElementById('mi-codigo').value = '';
+    document.getElementById('mi-codigo-preview').textContent = '—';
     document.getElementById('modal-item').classList.add('show');
   }
 
@@ -638,12 +698,33 @@
     }
     document.getElementById('mi-precio').value = p.precio;
     document.getElementById('mi-itbms').value = p.itbms;
-    document.getElementById('mi-codigo').value = p.codigo || '';
     document.getElementById('mi-codigo-error').style.display = 'none';
     document.getElementById('mi-tipo').value = p.tipo || 'tarifa';
     document.getElementById('mi-puntos').value = p.puntos_fidelidad || 0;
     document.getElementById('mi-incluye').value = (p.incluye||[]).join('\n');
     document.getElementById('mi-capacidad').value = p.capacidad_maxima || '';
+    // Cargar el codigo en los selectores jerárquicos
+    poblarSelectoresCodigo();
+    const catActual = categorias.find(c => c.id === catEfectiva());
+    const padre = catActual?.parent_id ? categorias.find(c => c.id === catActual.parent_id) : null;
+    const selCat = document.getElementById('mi-cod-cat');
+    const selSub = document.getElementById('mi-cod-sub');
+    if (padre) {
+      selCat.value = padre.id;
+      onMiCodCatChange();
+      selSub.value = catActual?.id || '';
+    } else if (catActual) {
+      selCat.value = catActual.id;
+      onMiCodCatChange();
+    }
+    // Descomponer el codigo en sufijo (lo que viene después del prefijo de sub)
+    const codigoCompleto = p.codigo || '';
+    const codSub  = catActual?.codigo || '';
+    const sufijo  = codSub && codigoCompleto.startsWith(codSub + '-')
+      ? codigoCompleto.slice(codSub.length + 1)
+      : codigoCompleto;
+    document.getElementById('mi-cod-sufijo').value = sufijo;
+    actualizarCodigoCompleto();
     document.getElementById('mi-galeria').value = JSON.stringify(p.galeria||[]);
     document.getElementById('mi-galeria-file').value = '';
     document.getElementById('mi-galeria-status').textContent = '';
