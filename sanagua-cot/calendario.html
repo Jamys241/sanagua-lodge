@@ -30,7 +30,7 @@
 <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 
-<div class="container">
+<div class="container" style="max-width:1400px">
   <div class="card">
     <div class="cal-toolbar">
       <div class="cal-nav-row">
@@ -206,42 +206,42 @@
           <label>Nombre / Empresa</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-name" placeholder="Nombre del cliente" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-name')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-name')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
           <label>RUC / Cédula</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-ruc" placeholder="8-888-8888" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-ruc')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-ruc')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group" id="edit-dv-group" style="display:none">
           <label>DV <span style="color:var(--red)">*</span></label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-dv" placeholder="Ej: 45" maxlength="3" style="flex:1;max-width:100px">
-            <button class="btn-copy" onclick="copyField('edit-client-dv')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-dv')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
           <label>Teléfono</label>
           <div style="display:flex;gap:6px;">
             <input type="tel" id="edit-client-phone" placeholder="+507 6000-0000" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-phone')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-phone')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group full">
           <label>Correo electrónico</label>
           <div style="display:flex;gap:6px;">
             <input type="email" id="edit-client-email" placeholder="correo@ejemplo.com" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-email')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-email')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group full">
           <label>Dirección</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="edit-client-address" placeholder="Ciudad de Panamá" style="flex:1">
-            <button class="btn-copy" onclick="copyField('edit-client-address')" title="Copiar">📋</button>
+            <button class="btn-copy" onclick="copyField('edit-client-address')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
           </div>
         </div>
         <div class="form-group">
@@ -764,8 +764,8 @@
         value: { dias_cerrados: DIAS_CERRADOS, excepciones_abiertas: EXCEPCIONES_ABIERTAS },
       }, { onConflict: 'key' });
       if (error) throw error;
-      showToast('✅ Horarios guardados correctamente.', 'success');
-    } catch (e) { console.error(e); showToast('❌ Error al guardar horarios en Supabase.', 'error'); }
+      showToast('Horarios guardados correctamente.', 'success');
+    } catch (e) { console.error(e); showToast('Error al guardar horarios en Supabase.', 'error'); }
   }
 
   function buildCalIndex() {
@@ -850,7 +850,7 @@
   // Abrir modal para crear un nuevo evento
   function openNewEvent(prefillDate) {
     editingEvent = null;
-    document.getElementById('event-modal-title').textContent = '📅 Nuevo Evento';
+    document.getElementById('event-modal-title').innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Nuevo Evento';
     document.getElementById('ev-delete-btn').style.display = 'none';
     // Limpiar campos
     ['ev-client-name','ev-client-ruc','ev-client-phone','ev-client-email',
@@ -874,7 +874,7 @@
     const ev = allEvents.find(e => e.id === evId);
     if (!ev) return;
     editingEvent = ev;
-    document.getElementById('event-modal-title').textContent = '📅 Editar Evento';
+    document.getElementById('event-modal-title').innerHTML = '<i class="fa-solid fa-calendar-pen"></i> Editar Evento';
     document.getElementById('ev-delete-btn').style.display = 'block';
     document.getElementById('ev-client-name').value    = ev.client?.name    || '';
     document.getElementById('ev-client-ruc').value     = ev.client?.ruc     || '';
@@ -957,8 +957,8 @@
     showLoading(true);
     try {
       generatePDFlocal(payload, 'PREV', 'cotizacion');
-      showToast('📄 Vista previa generada — el evento no fue guardado.', 'success');
-    } catch(e) { showToast('❌ Error al generar el PDF.', 'error'); }
+      showToast('Vista previa generada — el evento no fue guardado.', 'success');
+    } catch(e) { showToast('Error al generar el PDF.', 'error'); }
     finally { showLoading(false); }
   }
 
@@ -1000,14 +1000,14 @@
       // Forzar rebuild del índice antes de renderizar
 
       renderCalendario();
-      showToast(`✅ Evento "${name}" guardado`, 'success');
-    } catch(e) { console.error('Error saveEvent:', e); showToast('❌ Error al guardar el evento.', 'error'); }
+      showToast(`Evento "${name}" guardado`, 'success');
+    } catch(e) { console.error('Error saveEvent:', e); showToast('Error al guardar el evento.', 'error'); }
     finally { hideLoading(); }
   }
 
   async function deleteEvent() {
     if (!editingEvent) {
-      showToast('❌ No hay evento seleccionado.', 'error');
+      showToast('No hay evento seleccionado.', 'error');
       return;
     }
     if (!confirm(`¿Eliminar el evento de "${editingEvent.client?.name}"?`)) return;
@@ -1021,7 +1021,7 @@
     } catch(e) {
       console.error('deleteEvent error:', e);
       // Revertir si falla
-      showToast('❌ Error al eliminar. Intenta nuevamente.', 'error');
+      showToast('Error al eliminar. Intenta nuevamente.', 'error');
     }
     finally { hideLoading(); }
   }
@@ -1036,7 +1036,7 @@
       await deleteEventFromServer(evId);
       renderCalendario();
       showToast('Evento eliminado.', 'success');
-    } catch { showToast('❌ Error al eliminar.', 'error'); }
+    } catch { showToast('Error al eliminar.', 'error'); }
     finally { hideLoading(); }
   }
 
@@ -1269,8 +1269,8 @@
       }
 
       closeModal();
-      showToast('✅ Cambios guardados correctamente','success');
-    } catch { showToast('❌ Error al guardar los cambios.','error'); }
+      showToast('Cambios guardados correctamente','success');
+    } catch { showToast('Error al guardar los cambios.','error'); }
     finally { showLoading(false); }
   }
 
@@ -1281,11 +1281,11 @@
       const btn = document.querySelector(`button[onclick="copyField('${id}')"]`);
       if (btn) {
         const orig = btn.textContent;
-        btn.textContent = '✅';
+        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
         btn.classList.add('copied');
         setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
       }
-      showToast('📋 Copiado al portapapeles', 'success');
+      showToast('Copiado al portapapeles', 'success');
     }).catch(() => showToast('Error al copiar.', 'error'));
   }
 
@@ -1298,7 +1298,7 @@
       allHistory = allHistory.filter(q=>q.quote_num!==currentQuote.quote_num);
       closeModal();
       showToast('Cotización eliminada.','success');
-    } catch { showToast('❌ Error al eliminar.','error'); }
+    } catch { showToast('Error al eliminar.','error'); }
     finally { showLoading(false); }
   }
 
@@ -1539,7 +1539,7 @@
       const { error: e2 } = await supa.from('profiles')
         .update({ puntos: (user.puntos || 0) + pts }).eq('id', user.id);
       if (e2) throw e2;
-      showToast(`⭐ +${pts} puntos otorgados a ${user.name || cot.client.email}`, 'success');
+      showToast(`+${pts} puntos otorgados a ${user.name || cot.client.email}`, 'success');
     } catch(e) { console.warn('Error otorgando puntos:', e); }
   }
   function setTipoCliente(name, val) {

@@ -410,7 +410,7 @@
     .cal-week { width:100%; border-collapse:collapse; }
     .cal-week th { padding:8px 4px; text-align:center; font-size:.72rem; font-weight:700; color:var(--muted); border-bottom:2px solid var(--border); border-right:1px solid var(--border); cursor:pointer; transition:background .12s; }
     .cal-week th:hover { background:var(--bg); }
-    .cal-week td { border:1px solid var(--border); vertical-align:top; padding:5px; min-height:80px; }
+    .cal-week td { border:1px solid var(--border); vertical-align:top; padding:5px; min-height:110px; }
     .cal-week td.is-today-col { background:#fff9f6; }
     /* Vista día */
    /* Colores de esta sección → fondo: var(--ink), var(--bg) | texto: #fff, var(--muted) | borde: var(--border) */
