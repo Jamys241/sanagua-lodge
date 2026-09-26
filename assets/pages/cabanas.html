@@ -315,6 +315,21 @@
         .select('value').eq('key','dias_cierre').maybeSingle();
       (cfg?.value || []).forEach(d => diasCerrados.add(d));
 
+      // Bloqueos de eventos creados desde el calendario del admin
+      const { data: evsBloq } = await supaPub.from('events')
+        .select('visit_date,visit_date_end,servicios_bloqueados,categoria')
+        .eq('estado','Confirmada');
+      (evsBloq||[]).forEach(ev => {
+        if (!ev.visit_date) return;
+        const servs = ev.servicios_bloqueados || [];
+        const afecta = servs.includes('TODOS') || servs.includes('Cabañas') ||
+          (servs.length === 0 && (ev.categoria||'').toLowerCase().includes('cabaña'));
+        if (!afecta) return;
+        const cur = new Date(ev.visit_date+'T12:00:00');
+        const fin = ev.visit_date_end ? new Date(ev.visit_date_end+'T12:00:00') : new Date(ev.visit_date+'T12:00:00');
+        while (cur <= fin) { diasCerrados.add(lds(cur)); cur.setDate(cur.getDate()+1); }
+      });
+
       // Reservas confirmadas/completadas que involucren esta cabaña.
       // La disponibilidad se determina por el nombre del ítem reservado
       // (buscamos si alguna línea del JSON items contiene el nombre de la

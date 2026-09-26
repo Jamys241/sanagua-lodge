@@ -282,18 +282,34 @@
   let DIAS_CERRADOS_PUB    = [2, 3];
   let EXCEPCIONES_ABIERTAS_PUB = [];
 
+  let BLOQUEOS_PUB = [];
+
   async function loadHorariosPub() {
-    const { data } = await supaPrecios.from('camping_config').select('value').eq('key', 'horarios').single();
+    const [{ data }, { data: evs }] = await Promise.all([
+      supaPrecios.from('camping_config').select('value').eq('key','horarios').maybeSingle(),
+      supaPrecios.from('events').select('visit_date,visit_date_end,estado,servicios_bloqueados,categoria')
+        .eq('estado','Confirmada'),
+    ]);
     if (data?.value) {
       DIAS_CERRADOS_PUB        = data.value.dias_cerrados        || [2, 3];
       EXCEPCIONES_ABIERTAS_PUB = data.value.excepciones_abiertas || [];
     }
+    BLOQUEOS_PUB = (evs || []).filter(ev => ev.visit_date);
   }
 
   function esDiaCerradoPub(ds) {
     if (EXCEPCIONES_ABIERTAS_PUB.includes(ds)) return false;
     const dow = new Date(ds + 'T12:00:00').getDay();
-    return DIAS_CERRADOS_PUB.includes(dow);
+    if (DIAS_CERRADOS_PUB.includes(dow)) return true;
+    return BLOQUEOS_PUB.some(ev => {
+      if (!ev.visit_date) return false;
+      const servs = ev.servicios_bloqueados || [];
+      const afecta = servs.includes('TODOS') || servs.includes('Camping') ||
+        (servs.length === 0 && (ev.categoria||'').includes('Camping'));
+      if (!afecta) return false;
+      const fin = ev.visit_date_end || ev.visit_date;
+      return ds >= ev.visit_date && ds <= fin;
+    });
   }
 
   const DOW_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
