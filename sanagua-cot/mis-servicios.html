@@ -572,15 +572,18 @@
     const sub    = catEfectId ? categorias.find(c => c.id === catEfectId) : null;
     const padre  = sub?.parent_id ? categorias.find(c => c.id === sub.parent_id) : null;
 
-    // Código completo de la subcategoría: PAD-01
-    const codSub   = sub?.codigo  || '';
-    const codPadre = padre?.codigo || '';
-    // Prefijo = código completo hasta la subcategoría
-    const prefijo  = codSub || codPadre;
+    // Construir el prefijo completo incluyendo el codigo del padre si aplica.
+    // sub.codigo puede ser "PAS-01" (ya combinado) o solo "01" (solo sufijo).
+    let prefijo = sub?.codigo || '';
+    if (padre?.codigo && prefijo && !prefijo.startsWith(padre.codigo)) {
+      // El codigo de la subcategoria es solo el sufijo — combinarlo con el padre
+      prefijo = `${padre.codigo}-${prefijo}`;
+    }
+    if (!prefijo && padre?.codigo) prefijo = padre.codigo;
     if (!prefijo) return '';
 
-    // El contador empieza en 0 para cada subcategoría de forma independiente
-    const existentes = (sub?.productos || []).length;
+    // Contar items existentes en ESTA subcategoria (independiente por subcategoria)
+    const existentes = sub ? (sub.productos || []).length : 0;
     return `${prefijo}-ITM${existentes}`;
   }
 
