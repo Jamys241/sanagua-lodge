@@ -33,7 +33,10 @@
     <div class="sidebar-label">Categoría base: Servicios</div>
     <div id="sidebar-cats"></div>
     <button class="btn-add-cat" onclick="crearSubcategoria()">+ Nueva categoría base</button>
-    <button class="cat-btn" onclick="location.href='menu-editor.html'" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+    <button class="cat-btn" onclick="irAlDashboard()" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+      <i class="fa-solid fa-house"></i>&nbsp; Inicio
+    </button>
+    <button class="cat-btn" onclick="location.href='menu-editor.html'">
       <i class="fa-solid fa-utensils"></i>&nbsp; Editor de Menú (Restaurante)
     </button>
     <button class="cat-btn" onclick="location.href='achive.html'">
@@ -297,7 +300,7 @@
       ]);
       if (e1) throw e1; if (e2) throw e2;
       categorias = (cats||[]).map(c => ({ ...c, productos: (prods||[]).filter(p => p.categoria_id === c.id) }));
-      if (!catActualId || !categorias.find(c=>c.id===catActualId)) catActualId = categorias[0]?.id || null;
+      if (!catActualId) catActualId = null; // arrancar en el dashboard
       renderSidebar();
       renderMain();
     } catch (e) {
@@ -345,6 +348,14 @@
 
   let subCatActualId = null; // hija seleccionada cuando catActualId es una categoria contenedora
 
+  function irAlDashboard() {
+    catActualId = null;
+    subCatActualId = null;
+    renderSidebar();
+    renderMain();
+    closeCatDrawer();
+  }
+
   function seleccionarCategoria(id) {
     catActualId = id;
     const hijos = catHijos(id);
@@ -360,9 +371,38 @@
 
   function renderMain() {
     const main = document.getElementById('main-content');
-    const cat = categorias.find(c => c.id === catActualId);
+    const cat = catActualId ? categorias.find(c => c.id === catActualId) : null;
     if (!cat) {
-      main.innerHTML = `<div class="empty-cat"><div class="empty-icon"><i class="fa-solid fa-concierge-bell"></i></div><p>Crea tu primera subcategoría de Servicios (ej. "Pasadías").</p></div>`;
+      // Dashboard principal
+      const padres = categorias.filter(c => !c.parent_id);
+      const totalItems = categorias.reduce((acc, c) => acc + c.productos.length, 0);
+      main.innerHTML = `
+        <div class="ms-dashboard">
+          <div class="ms-dash-header">
+            <h2><i class="fa-solid fa-concierge-bell"></i> Mis Servicios</h2>
+            <p>Gestiona tu catálogo de servicios. Selecciona una categoría del menú lateral o crea una nueva.</p>
+          </div>
+          <div class="ms-dash-stats">
+            <div class="ms-stat"><div class="ms-stat-num">${padres.length}</div><div class="ms-stat-lbl">Categorías base</div></div>
+            <div class="ms-stat"><div class="ms-stat-num">${categorias.filter(c=>c.parent_id).length}</div><div class="ms-stat-lbl">Subcategorías</div></div>
+            <div class="ms-stat"><div class="ms-stat-num">${totalItems}</div><div class="ms-stat-lbl">Ítems totales</div></div>
+          </div>
+          <div class="ms-dash-cats">
+            ${padres.length ? padres.map(p => {
+              const subs = categorias.filter(c => c.parent_id === p.id);
+              const items = categorias.filter(c => c.parent_id === p.id).reduce((a,c)=>a+c.productos.length,0) + p.productos.length;
+              return `<div class="ms-dash-cat-card" onclick="seleccionarCategoria('${p.id}')">
+                <div class="ms-dash-cat-icon"><i class="fa-solid fa-tags"></i></div>
+                <div class="ms-dash-cat-body">
+                  <div class="ms-dash-cat-name">${esc(p.nombre)}</div>
+                  ${p.codigo ? `<div class="ms-dash-cat-code">${esc(p.codigo)}</div>` : ''}
+                  <div class="ms-dash-cat-meta">${subs.length} subcategor${subs.length===1?'ía':'ías'} · ${items} ítem${items===1?'':'s'}</div>
+                </div>
+                <div class="ms-dash-cat-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+              </div>`;
+            }).join('') : `<div class="ms-dash-empty"><i class="fa-solid fa-plus-circle"></i><p>Aún no tienes categorías.<br>Usa <strong>"+ Nueva categoría base"</strong> en el menú lateral para empezar.</p></div>`}
+          </div>
+        </div>`;
       return;
     }
     const hijos = catHijos(cat.id);

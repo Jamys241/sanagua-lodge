@@ -176,3 +176,29 @@
       opacity:0;pointer-events:none;transition:all .3s;z-index:1000}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .toast.error{background:var(--red)}
+
+    /* ── Dashboard de Mis Servicios ── */
+    .ms-dashboard{padding:32px 28px;max-width:860px}
+    .ms-dash-header{margin-bottom:28px}
+    .ms-dash-header h2{font-size:1.5rem;font-weight:700;color:var(--ink);margin:0 0 6px;display:flex;align-items:center;gap:10px}
+    .ms-dash-header p{color:var(--muted);font-size:.88rem;margin:0}
+    .ms-dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+    .ms-stat{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+    .ms-stat-num{font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+    .ms-stat-lbl{font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:500}
+    .ms-dash-cats{display:flex;flex-direction:column;gap:10px}
+    .ms-dash-cat-card{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--border);
+      border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .18s}
+    .ms-dash-cat-card:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.06);transform:translateY(-1px)}
+    .ms-dash-cat-icon{width:40px;height:40px;border-radius:10px;background:var(--bg);display:flex;
+      align-items:center;justify-content:center;color:var(--accent);font-size:1.1rem;flex-shrink:0}
+    .ms-dash-cat-body{flex:1;min-width:0}
+    .ms-dash-cat-name{font-size:.95rem;font-weight:700;color:var(--ink)}
+    .ms-dash-cat-code{font-family:monospace;font-size:.72rem;background:#f0ede4;color:#6a5a40;
+      padding:2px 7px;border-radius:4px;display:inline-block;margin:3px 0}
+    .ms-dash-cat-meta{font-size:.78rem;color:var(--muted);margin-top:2px}
+    .ms-dash-cat-arrow{color:#ccc;font-size:.85rem;flex-shrink:0}
+    .ms-dash-empty{text-align:center;padding:48px 24px;color:var(--muted)}
+    .ms-dash-empty i{font-size:2.5rem;margin-bottom:14px;display:block;color:#d0ccc4}
+    .ms-dash-empty p{font-size:.9rem;line-height:1.6}
+    @media(max-width:600px){.ms-dash-stats{grid-template-columns:1fr 1fr}.ms-dashboard{padding:20px 16px}}
