@@ -484,3 +484,125 @@
      que el menú, así que lo tapa limpiamente por arriba). */
   header, .hh-header { margin-right: -260px; }
 }
+
+/* ════════════════════════════════════════════════
+   REDISEÑO ADMIN v2
+   ════════════════════════════════════════════════ */
+
+/* Variables adicionales */
+:root {
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --shadow-sm: 0 2px 8px rgba(26,34,38,.06);
+  --shadow-md: 0 4px 20px rgba(26,34,38,.1);
+}
+
+/* Cards con más radio y sombra suave */
+.card,
+.modal,
+.modal-box {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* Botones más redondeados */
+.btn {
+  border-radius: 10px !important;
+  font-weight: 600;
+  letter-spacing: .03em;
+  transition: all .2s !important;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-accent { box-shadow: 0 4px 14px rgba(127,160,172,.35) !important; }
+.btn-accent:hover { box-shadow: 0 6px 20px rgba(127,160,172,.45) !important; }
+
+/* Inputs más limpios */
+.form-input,
+input[type="text"]:not(.cal-search input),
+input[type="date"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+  border-radius: 10px !important;
+  border: 1.5px solid var(--border) !important;
+  transition: border-color .2s, box-shadow .2s !important;
+}
+.form-input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(127,160,172,.15) !important;
+  outline: none !important;
+}
+
+/* Nav lateral más visual */
+.nav-item {
+  border-radius: 10px;
+  margin: 2px 8px;
+  padding: 11px 16px !important;
+  border-left: none !important;
+}
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(127,160,172,.12) !important;
+  color: var(--accent) !important;
+}
+.nav-item.active {
+  background: rgba(127,160,172,.18) !important;
+  font-weight: 600;
+}
+
+/* Sidebar más compacto y elegante */
+.admin-sidebar {
+  border-right: 1px solid var(--border);
+  background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+}
+
+/* Tabla más espaciosa */
+.hist-table td,
+.items-table td {
+  padding: 14px 16px !important;
+}
+.hist-table tr:hover td {
+  background: rgba(127,160,172,.04) !important;
+}
+
+/* Badges de estado */
+.badge-conf, .estado-Confirmada { background: #e8f5ee !important; color: #2d7a4f !important; border-radius: 20px !important; }
+.badge-pend, .estado-Pendiente  { background: #fff8e1 !important; color: #b45309 !important; border-radius: 20px !important; }
+.badge-comp, .estado-Completada { background: #e8f0fe !important; color: #3b5bdb !important; border-radius: 20px !important; }
+.badge-canc, .estado-Cancelada  { background: #fee8e8 !important; color: #c53030 !important; border-radius: 20px !important; }
+
+/* Header del admin más limpio */
+.admin-header {
+  border-bottom: 1px solid var(--border) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  padding: 0 28px !important;
+}
+
+/* Calendario celdas */
+.cal-week td {
+  border-radius: 0;
+}
+
+/* Modal section más visual */
+.modal-section {
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+}
+.modal-section-title {
+  font-weight: 700;
+  font-size: .8rem;
+  letter-spacing: .04em;
+  color: var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -23,8 +23,17 @@
     </div>
   </a>
 
+  <nav class="nav-links-desktop">
+    <a href="#servicios" class="nav-link-d">Servicios</a>
+    <a href="assets/pages/pasadia.html" class="nav-link-d">Pasadías</a>
+    <a href="assets/pages/camping.html" class="nav-link-d">Camping</a>
+    <a href="assets/pages/cabanas.html" class="nav-link-d">Cabañas</a>
+    <a href="#contacto" class="nav-link-d">Contacto</a>
+  </nav>
+
   <div class="header-right">
     <button class="btn-login" onclick="openAuth('login')" id="btn-login-header">Iniciar sesión</button>
+    <button class="btn-register" onclick="openAuth('register')" style="display:none" id="btn-register-header">Reservar</button>
     <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
@@ -78,27 +87,49 @@
 </nav>
 
 <!-- ══════════════════════════════════════════════ HERO -->
-<section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grain"></div>
+<section class="hero-v2" id="inicio">
 
-  <div class="hero-content">
-    <div class="hero-eyebrow">Panamá · Naturaleza auténtica</div>
-    <h1 class="hero-title">
+  <!-- Lado izquierdo: texto -->
+  <div class="hero-v2-left">
+    <div class="hero-v2-badge">
+      <i class="fa-solid fa-leaf"></i>
+      Panamá · Naturaleza auténtica
+    </div>
+    <h1 class="hero-v2-title">
       Donde la selva<br>
       se convierte en<br>
       <em>tu hogar</em>
     </h1>
-    <p class="hero-subtitle">
+    <p class="hero-v2-sub">
       Escápate al corazón de la naturaleza panameña. Pasadías, glamping, cabañas privadas y gastronomía local en un solo lugar.
     </p>
     <div class="hero-cta">
       <a href="#servicios" class="cta-primary">Ver servicios</a>
       <a href="#" onclick="openAuth('register')" class="cta-secondary">Reservar ahora</a>
     </div>
+    <div class="hero-v2-stats">
+      <div>
+        <div class="hero-v2-stat-num">3</div>
+        <div class="hero-v2-stat-lbl">Cabañas privadas</div>
+      </div>
+      <div>
+        <div class="hero-v2-stat-num">8am</div>
+        <div class="hero-v2-stat-lbl">Apertura diaria</div>
+      </div>
+      <div>
+        <div class="hero-v2-stat-num">100%</div>
+        <div class="hero-v2-stat-lbl">Naturaleza real</div>
+      </div>
+    </div>
   </div>
 
-  <div class="scroll-hint">Descubrir</div>
+  <!-- Lado derecho: imagen -->
+  <div class="hero-v2-right">
+    <img class="hero-v2-img" src="assets/images/hero-lodge.jpg"
+      onerror="this.style.background='linear-gradient(135deg,#3a5460,#7fa0ac)'"
+      alt="Sanagua Lodge — naturaleza panameña">
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════════════════ SERVICIOS -->
@@ -127,52 +158,127 @@
     <div class="section-label">Lo que ofrecemos</div>
     <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
 
-    <div class="services-list">
+    <div class="services-cards-grid">
 
-      <a class="service-row" id="card-pasadia" href="assets/pages/pasadia.html">
-        <div class="service-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></div>
-        <div class="service-name">Pasadías</div>
-        <div class="service-body">
-          <p class="service-desc">
-            Un día completo rodeado de naturaleza. Disfruta de nuestras piscinas naturales, senderos, áreas de recreación y gastronomía local. De 8am a 6pm — el descanso que mereces sin quedarte la noche.
-          </p>
-          <span class="service-link">Más información</span>
+      <a class="srv-card" id="card-pasadia" href="assets/pages/pasadia.html">
+        <div class="srv-card-img" style="background:linear-gradient(135deg,#4f7a8a,#7fa0ac)">
+          <i class="fa-solid fa-sun" style="position:relative;z-index:1"></i>
+          <span class="srv-card-tag">Día completo</span>
+        </div>
+        <div class="srv-card-body">
+          <h3 class="srv-card-title">Pasadías</h3>
+          <p class="srv-card-desc">Piscinas naturales, senderos y gastronomía local. Disfruta de 8am a 6pm rodeado de naturaleza panameña.</p>
+          <div class="srv-card-footer">
+            <div>
+              <div class="srv-card-desde">Desde</div>
+              <div class="srv-card-precio">$25</div>
+            </div>
+            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver opciones</span>
+          </div>
         </div>
       </a>
 
-      <a class="service-row" id="card-camping" href="assets/pages/camping.html">
-        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M4 20L12 5l8 15"/><path d="M8.4 12.5L12 5l3.6 7.5"/><path d="M2 20h20"/></svg></div>
-        <div class="service-name">Camping</div>
-        <div class="service-body">
-          <p class="service-desc">
-            Duerme bajo las estrellas en nuestra zona de camping. Elige entre traer tu propio equipo o alquilar nuestro kit completo. La experiencia más auténtica en contacto con la selva panameña.
-          </p>
-          <span class="service-link">Más información</span>
+      <a class="srv-card" id="card-camping" href="assets/pages/camping.html">
+        <div class="srv-card-img" style="background:linear-gradient(135deg,#3a5460,#566d75)">
+          <i class="fa-solid fa-campground" style="position:relative;z-index:1"></i>
+          <span class="srv-card-tag">Noche en la selva</span>
+        </div>
+        <div class="srv-card-body">
+          <h3 class="srv-card-title">Camping</h3>
+          <p class="srv-card-desc">Duerme bajo las estrellas. Trae tu equipo o alquila nuestro kit completo para la experiencia más auténtica.</p>
+          <div class="srv-card-footer">
+            <div>
+              <div class="srv-card-desde">Desde</div>
+              <div class="srv-card-precio">$15</div>
+            </div>
+            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver opciones</span>
+          </div>
         </div>
       </a>
 
-      <a class="service-row" id="card-cabanas" href="assets/pages/cabanas.html">
-        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
-        <div class="service-name">Cabañas</div>
-        <div class="service-body">
-          <p class="service-desc">
-            Tres cabañas únicas para una experiencia íntima y exclusiva. Cabaña Yaguarundi, Cabaña Ocelot y Cabaña Motmot — cada una con su propio carácter, vistas y comodidades en medio de la naturaleza.
-          </p>
-          <span class="service-link">Ver cabañas</span>
+      <a class="srv-card" id="card-cabanas" href="assets/pages/cabanas.html">
+        <div class="srv-card-img" style="background:linear-gradient(135deg,#5f7881,#8fabb5)">
+          <i class="fa-solid fa-house-tree" style="position:relative;z-index:1"></i>
+          <span class="srv-card-tag">Alojamiento privado</span>
+        </div>
+        <div class="srv-card-body">
+          <h3 class="srv-card-title">Cabañas</h3>
+          <p class="srv-card-desc">Tres cabañas únicas — Yaguarundí, Ocelot y Motmot — cada una con su propio carácter en la naturaleza.</p>
+          <div class="srv-card-footer">
+            <div>
+              <div class="srv-card-desde">Desde</div>
+              <div class="srv-card-precio">$200</div>
+            </div>
+            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver cabañas</span>
+          </div>
         </div>
       </a>
 
-      <a class="service-row" id="card-restaurante" href="assets/pages/restaurante.html">
-        <div class="service-mark"><svg viewBox="0 0 24 24"><path d="M7 2v9M4.5 2v5.5a2.5 2.5 0 005 0V2M9.5 2v9"/><path d="M16.5 2c-1.4 0-2.5 1.8-2.5 5s1 5 1 5v10M17 12v10"/></svg></div>
-        <div class="service-name">Restaurante</div>
-        <div class="service-body">
-          <p class="service-desc">
-            Gastronomía local con ingredientes frescos y de temporada. Desayunos, almuerzos y cenas con sabores panameños auténticos, preparados con amor en el corazón del lodge.
-          </p>
-          <span class="service-link">Ver menú</span>
+      <a class="srv-card" id="card-restaurante" href="assets/pages/restaurante.html">
+        <div class="srv-card-img" style="background:linear-gradient(135deg,#7d6a5c,#c3c3b8)">
+          <i class="fa-solid fa-utensils" style="position:relative;z-index:1"></i>
+          <span class="srv-card-tag">Gastronomía local</span>
+        </div>
+        <div class="srv-card-body">
+          <h3 class="srv-card-title">Restaurante</h3>
+          <p class="srv-card-desc">Sabores panameños auténticos con ingredientes frescos y de temporada. Desayunos, almuerzos y cenas.</p>
+          <div class="srv-card-footer">
+            <div></div>
+            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver menú</span>
+          </div>
         </div>
       </a>
 
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ POR QUÉ ELEGIRNOS -->
+<section class="why-section">
+  <div class="why-inner">
+    <div class="why-img-wrap">
+      <img src="assets/images/naturaleza-lodge.jpg"
+        onerror="this.style.display='none'"
+        alt="Naturaleza en Sanagua Lodge">
+      <div class="why-pills">
+        <div class="why-pill"><i class="fa-solid fa-leaf"></i> Pet Friendly</div>
+        <div class="why-pill"><i class="fa-solid fa-wifi"></i> WiFi incluido</div>
+        <div class="why-pill"><i class="fa-solid fa-star"></i> Naturaleza real</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Por qué elegirnos</div>
+      <h2 class="section-title">Más que un lugar —<br><em>una experiencia</em></h2>
+      <div class="why-features">
+        <div class="why-feat">
+          <div class="why-feat-icon"><i class="fa-solid fa-tree"></i></div>
+          <div>
+            <div class="why-feat-title">Naturaleza sin filtro</div>
+            <div class="why-feat-desc">Acceso directo a bosques, ríos y senderos. Sin pantallas, sin ruido — solo lo que la naturaleza tiene para ofrecerte.</div>
+          </div>
+        </div>
+        <div class="why-feat">
+          <div class="why-feat-icon"><i class="fa-solid fa-utensils"></i></div>
+          <div>
+            <div class="why-feat-title">Gastronomía local</div>
+            <div class="why-feat-desc">Cocinamos con ingredientes panameños frescos y de temporada. Cada plato cuenta una historia del territorio.</div>
+          </div>
+        </div>
+        <div class="why-feat">
+          <div class="why-feat-icon"><i class="fa-solid fa-paw"></i></div>
+          <div>
+            <div class="why-feat-title">Pet Friendly de verdad</div>
+            <div class="why-feat-desc">Tus mascotas son parte de la familia. Espacios abiertos y senderos donde todos pueden explorar juntos.</div>
+          </div>
+        </div>
+        <div class="why-feat">
+          <div class="why-feat-icon"><i class="fa-solid fa-shield-heart"></i></div>
+          <div>
+            <div class="why-feat-title">Seguridad y atención</div>
+            <div class="why-feat-desc">Equipo presente, instalaciones cuidadas y respuesta inmediata para que tu visita sea perfecta.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
