@@ -14,7 +14,7 @@
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="../../index.html">🌿 Sanagua Lodge</a>
+  <a class="nav-logo" href="../../index.html"><i class="fa-solid fa-leaf"></i> Sanagua Lodge</a>
   <div class="nav-right">
     <a class="nav-back" href="cabanas.html">← Cabañas</a>
   </div>
@@ -60,7 +60,7 @@
     <div>
       <!-- Descripción -->
       <div class="card">
-        <div class="cap-badge" id="cap-badge">👥 Hasta 8 personas</div>
+        <div class="cap-badge" id="cap-badge"><i class="fa-solid fa-users"></i> Hasta 8 personas</div>
         <p class="desc-text" id="cab-desc">La más grande y completa de nuestras cabañas. La Motmot fue diseñada para experiencias grupales inolvidables — reuniones familiares, celebraciones especiales o retiros. Su terraza panorámica con vista al bosque es el punto de encuentro perfecto al caer la noche.</p>
         <div class="lbl">¿Qué incluye?</div>
         <div class="inc-grid" id="inc-list"></div>
@@ -104,7 +104,7 @@
       </div>
 
       <div class="card" style="margin-top:16px;background:var(--cream);border:none">
-        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px">📞 ¿Preguntas?</div>
+        <div style="font-size:.82rem;color:var(--earth);font-weight:600;margin-bottom:6px"><i class="fa-solid fa-phone"></i> ¿Preguntas?</div>
         <div style="font-size:.8rem;color:#7a7a6a;line-height:1.6">
           <a href="https://instagram.com/sanagualodge" style="color:var(--earth)">@sanagualodge</a><br>
           +507 6166-0114
@@ -118,7 +118,7 @@
 <div class="ov" id="modal-ov">
   <div class="mo">
     <div class="mh">
-      <div class="mt">🏡 Reservar — Cabaña Motmot</div>
+      <div class="mt"><i class="fa-solid fa-house"></i> Reservar — Cabaña Motmot</div>
       <button class="mc" onclick="closeModal()">×</button>
     </div>
     <div class="mb">
@@ -338,7 +338,7 @@
       // Descripción e incluye
       if(cabData.descripcion) document.getElementById('cab-desc').textContent=cabData.descripcion;
       if(cabData.incluye?.length) document.getElementById('inc-list').innerHTML=cabData.incluye.map(i=>`<div class="inc-item">${i}</div>`).join('');
-      if(cabData.capacidad) document.getElementById('cap-badge').textContent=`👥 Hasta ${cabData.capacidad} personas`;
+      if(cabData.capacidad) document.getElementById('cap-badge').textContent=`<i class="fa-solid fa-users"></i> Hasta ${cabData.capacidad} personas`;
     }
     renderCal();
     const m=new Date(); m.setDate(m.getDate()+1);

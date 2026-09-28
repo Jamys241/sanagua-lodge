@@ -118,8 +118,49 @@
   <div class="hero-v2-right">
     <img class="hero-v2-img"
       src="assets/images/hero-lodge.jpg"
-      onerror="this.style.background='linear-gradient(160deg,#2a4450 0%,#3a6070 40%,#5f8a98 100%)';this.style.display='block'"
+      onerror="this.style.display='none'"
       alt="Vista aérea de Sanagua Lodge">
+    <!-- Fondo de respaldo cuando no hay foto -->
+    <div class="hero-fallback-bg" aria-hidden="true">
+      <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%">
+        <defs>
+          <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1a3040"/>
+            <stop offset="60%" stop-color="#2d5a70"/>
+            <stop offset="100%" stop-color="#3d7a8a"/>
+          </linearGradient>
+          <linearGradient id="forest" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1e4a2e"/>
+            <stop offset="100%" stop-color="#0f2818"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="600" fill="url(#sky)"/>
+        <!-- Luna / sol -->
+        <circle cx="600" cy="120" r="50" fill="rgba(201,168,76,.15)"/>
+        <circle cx="600" cy="120" r="36" fill="rgba(201,168,76,.1)"/>
+        <!-- Montañas lejanas -->
+        <path d="M0 380 L120 240 L240 310 L360 200 L480 290 L600 160 L720 250 L800 220 L800 600 L0 600Z" fill="rgba(30,74,46,.5)"/>
+        <!-- Árboles primer plano -->
+        <path d="M0 450 L50 300 L100 450Z" fill="url(#forest)"/>
+        <path d="M80 480 L140 290 L200 480Z" fill="url(#forest)"/>
+        <path d="M160 460 L220 310 L280 460Z" fill="url(#forest)"/>
+        <path d="M250 470 L310 280 L370 470Z" fill="url(#forest)"/>
+        <path d="M340 455 L400 300 L460 455Z" fill="url(#forest)"/>
+        <path d="M430 470 L490 290 L550 470Z" fill="url(#forest)"/>
+        <path d="M520 460 L580 310 L640 460Z" fill="url(#forest)"/>
+        <path d="M620 480 L680 270 L740 480Z" fill="url(#forest)"/>
+        <path d="M710 455 L760 300 L810 455Z" fill="url(#forest)"/>
+        <!-- Río / reflejo -->
+        <path d="M0 540 Q200 510 400 530 Q600 550 800 520 L800 600 L0 600Z" fill="rgba(45,90,112,.4)"/>
+        <!-- Estrellas -->
+        <circle cx="100" cy="60" r="1.5" fill="rgba(255,255,255,.6)"/>
+        <circle cx="200" cy="40" r="1" fill="rgba(255,255,255,.4)"/>
+        <circle cx="350" cy="80" r="1.5" fill="rgba(255,255,255,.5)"/>
+        <circle cx="450" cy="30" r="1" fill="rgba(255,255,255,.6)"/>
+        <circle cx="700" cy="70" r="1.5" fill="rgba(255,255,255,.4)"/>
+        <circle cx="750" cy="45" r="1" fill="rgba(255,255,255,.5)"/>
+      </svg>
+    </div>
   </div>
 </section>
 
@@ -239,6 +280,7 @@
         <img src="assets/images/naturaleza-lodge.jpg"
           onerror="this.style.display='none'"
           alt="Naturaleza en Sanagua Lodge">
+      <!-- Icono central cuando no hay foto -->
         <div class="why-pills">
           <div class="why-pill"><i class="fa-solid fa-paw"></i> Pet Friendly</div>
           <div class="why-pill"><i class="fa-solid fa-leaf"></i> Ecológico</div>

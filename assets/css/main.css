@@ -834,3 +834,13 @@ footer {
   .cta-section { padding: 64px 0; }
   footer { padding: 48px 0 24px; }
 }
+
+/* ── Hero fallback background (cuando no hay imagen real) ── */
+.hero-fallback-bg {
+  position: absolute; inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.hero-v2-right {
+  background: linear-gradient(160deg, #1a3040 0%, #2d5a70 50%, #3d7a8a 100%);
+}

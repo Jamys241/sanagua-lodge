@@ -41,7 +41,7 @@
       <button class="btn btn-outline" onclick="loadHistory()"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <input type="text" id="hist-search" placeholder="🔍 Nombre, cédula, #..." oninput="filterHistory()" style="grid-column:1/-1;">
+      <input type="text" id="hist-search" placeholder="Nombre, cédula, #..." oninput="filterHistory()" style="grid-column:1/-1;">
       <div style="display:flex;flex-direction:column;gap:4px;">
         <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Desde</label>
         <input type="date" id="hist-date-from" onchange="filterHistory()">
