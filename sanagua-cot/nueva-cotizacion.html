@@ -687,7 +687,7 @@
     const e = document.getElementById('visit-date-end').value;
     const wrap = document.getElementById('nights-label-wrap');
     const txt = nightsBanner(s, e);
-    if (txt) { wrap.style.display='block'; document.getElementById('nights-label').textContent=txt; }
+    if (txt) { wrap.style.display='block'; document.getElementById('nights-label').innerHTML=txt; }
     else { wrap.style.display='none'; }
   }
 

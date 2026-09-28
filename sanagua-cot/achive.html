@@ -3322,7 +3322,7 @@
     const e = document.getElementById('visit-date-end').value;
     const wrap = document.getElementById('nights-label-wrap');
     const txt = nightsBanner(s, e);
-    if (txt) { wrap.style.display='block'; document.getElementById('nights-label').textContent=txt; }
+    if (txt) { wrap.style.display='block'; document.getElementById('nights-label').innerHTML=txt; }
     else { wrap.style.display='none'; }
   }
 
@@ -3331,7 +3331,7 @@
     const e = document.getElementById('ev-visit-date-end').value;
     const wrap = document.getElementById('ev-nights-wrap');
     const txt = nightsBanner(s, e);
-    if (txt) { wrap.style.display='block'; document.getElementById('ev-nights-label').textContent=txt; }
+    if (txt) { wrap.style.display='block'; document.getElementById('ev-nights-label').innerHTML=txt; }
     else { wrap.style.display='none'; }
   }
 
@@ -3341,7 +3341,7 @@
     const wrap = document.getElementById('edit-nights-wrap');
     if (!wrap) return;
     const txt = nightsBanner(s, e);
-    if (txt) { wrap.style.display='block'; document.getElementById('edit-nights-label').textContent=txt; }
+    if (txt) { wrap.style.display='block'; document.getElementById('edit-nights-label').innerHTML=txt; }
     else { wrap.style.display='none'; }
   }
 
