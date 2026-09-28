@@ -1241,6 +1241,10 @@
   }
 
   async function cerrarSesionPublic() {
+    // Limpiar datos de sesión
+    sessionStorage.clear();
+    localStorage.removeItem('sanagua_cart');
+    localStorage.removeItem('sanagua_cart_ts');
     await supa.auth.signOut();
     publicUser = null;
     document.getElementById('btn-login-header').textContent = 'Iniciar sesión';
@@ -1611,6 +1615,56 @@
     document.getElementById('cookie-banner').style.display = 'none';
   }
   mostrarBannerCookies();
+</script>
+
+
+<script>
+  // ── Limpieza de almacenamiento por seguridad ───────────────────────
+  (function limpiarStorage() {
+    // 1. Limpiar sessionStorage completo al cerrar la pestaña
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.clear();
+    });
+
+    // 2. Limpiar el carrito si la sesión de Supabase expiró
+    // El JWT de Supabase expira — si no hay token válido, el carrito debe limpiarse
+    const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (sbKey) {
+      try {
+        const token = JSON.parse(localStorage.getItem(sbKey));
+        const exp   = token?.expires_at || token?.access_token
+          ? JSON.parse(atob(token.access_token.split('.')[1])).exp
+          : 0;
+        if (exp && Date.now() / 1000 > exp) {
+          // Token expirado: limpiar sesión y carrito
+          localStorage.removeItem(sbKey);
+          localStorage.removeItem('sanagua_cart');
+          sessionStorage.clear();
+        }
+      } catch(e) { /* silencioso */ }
+    }
+
+    // 3. Limitar la edad del carrito: si tiene más de 24h sin actividad, limpiar
+    const cartRaw = localStorage.getItem('sanagua_cart');
+    const cartTs  = localStorage.getItem('sanagua_cart_ts');
+    if (cartRaw && cartTs) {
+      const horasTranscurridas = (Date.now() - parseInt(cartTs)) / 3600000;
+      if (horasTranscurridas > 24) {
+        localStorage.removeItem('sanagua_cart');
+        localStorage.removeItem('sanagua_cart_ts');
+      }
+    }
+
+    // 4. Limpiar keys huérfanas que no son de Sanagua Lodge
+    const keysPermitidas = new Set([
+      'sanagua_cart', 'sanagua_cart_ts', 'sanagua_cookies', 'poll_interval'
+    ]);
+    Object.keys(localStorage).forEach(k => {
+      if (!k.startsWith('sb-') && !keysPermitidas.has(k)) {
+        localStorage.removeItem(k);
+      }
+    });
+  })();
 </script>
 
 </body></html>

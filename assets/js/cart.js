@@ -38,6 +38,7 @@
   }
   function saveItems(items) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY + '_ts', Date.now().toString());
     renderBadge();
   }
   async function addItem(item) {

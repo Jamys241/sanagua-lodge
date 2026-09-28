@@ -849,6 +849,10 @@
   }
 
   function cerrarSesion() {
+    // Limpiar datos sensibles antes de cerrar sesión
+    sessionStorage.clear();
+    localStorage.removeItem('stats_unlocked');
+    localStorage.removeItem('poll_interval');
     supa.auth.signOut().finally(() => { window.location.href = '../index.html'; });
   }
 
