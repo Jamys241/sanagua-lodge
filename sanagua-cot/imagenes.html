@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../assets/images/icon/icon.PNG">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Editor de imágenes — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/achive.css">
+  <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/admin-guard.js"></script>
+  <script src="../assets/js/admin-nav.js"></script>
+  <style>
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+    .img-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .img-card:hover { box-shadow: var(--shadow-md); }
+    .img-preview {
+      width: 100%; height: 180px;
+      object-fit: cover; display: block;
+      background: var(--bg);
+    }
+    .img-preview-placeholder {
+      width: 100%; height: 180px;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+      color: var(--muted); font-size: .82rem;
+    }
+    .img-preview-placeholder i { font-size: 2rem; opacity: .4; }
+    .img-card-body { padding: 16px; }
+    .img-card-label {
+      font-size: .8rem; font-weight: 700; color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .img-card-sub {
+      font-size: .72rem; color: var(--muted); margin-bottom: 14px;
+    }
+    .img-card-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .img-upload-label {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--accent); color: #fff;
+      padding: 8px 16px; border-radius: 30px;
+      font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    .img-upload-label:hover { background: var(--accent-dark); }
+    .img-upload-label input { display: none; }
+    .img-delete-btn {
+      background: none; border: 1.5px solid var(--border);
+      color: var(--muted); border-radius: 30px;
+      padding: 8px 14px; font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .img-delete-btn:hover { border-color: #e53e3e; color: #e53e3e; }
+    .img-status {
+      font-size: .72rem; margin-top: 8px; min-height: 16px;
+      color: var(--accent);
+    }
+    .section-group {
+      margin-bottom: 36px;
+    }
+    .section-group-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 600;
+      color: var(--ink); margin-bottom: 6px;
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-group-sub {
+      font-size: .8rem; color: var(--muted); margin-bottom: 16px;
+    }
+    .page-header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff; padding: 24px 32px; border-radius: var(--radius);
+      margin-bottom: 28px; display: flex; align-items: center; gap: 16px;
+    }
+    .page-header i { font-size: 2rem; opacity: .8; }
+    .page-header-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; }
+    .page-header-text p { font-size: .85rem; opacity: .8; margin-top: 4px; }
+    .progress-bar {
+      height: 4px; background: var(--border); border-radius: 2px;
+      margin-top: 8px; overflow: hidden; display: none;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 2px; transition: width .3s;
+      width: 0%;
+    }
+  </style>
+</head>
+<body>
+<div id="loading" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:999;align-items:center;justify-content:center">
+  <div style="text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--accent)"></i><div style="margin-top:10px;font-size:.9rem;color:var(--muted)">Cargando...</div></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<div class="app-layout">
+  <aside class="side-menu" id="side-menu"></aside>
+  <main class="main-content" style="padding:32px">
+
+    <div class="page-header">
+      <i class="fa-solid fa-images"></i>
+      <div class="page-header-text">
+        <h1>Editor de imágenes del sitio</h1>
+        <p>Sube o reemplaza las imágenes que aparecen en la página pública. Los cambios se aplican inmediatamente.</p>
+      </div>
+    </div>
+
+    <!-- Imágenes principales (index.html) -->
+    <div class="section-group">
+      <div class="section-group-title">
+        <i class="fa-solid fa-house"></i> Página principal (Inicio)
+      </div>
+      <div class="section-group-sub">Las imágenes que aparecen en el hero y en la sección "Por qué elegirnos".</div>
+      <div class="img-grid" id="grid-inicio"></div>
+    </div>
+
+    <!-- Senderismo -->
+    <div class="section-group">
+      <div class="section-group-title">
+        <i class="fa-solid fa-hiking"></i> Senderismo — galería
+      </div>
+      <div class="section-group-sub">Imágenes de la galería en la página de senderismo (Cerro La Pita y Parque Torrijos).</div>
+      <div class="img-grid" id="grid-senderismo"></div>
+    </div>
+
+    <!-- Cascadas -->
+    <div class="section-group">
+      <div class="section-group-title">
+        <i class="fa-solid fa-water"></i> Cascadas — galería
+      </div>
+      <div class="section-group-sub">Imágenes de la galería de cascadas de Coclé.</div>
+      <div class="img-grid" id="grid-waterfalls"></div>
+    </div>
+
+    <!-- Fogata -->
+    <div class="section-group">
+      <div class="section-group-title">
+        <i class="fa-solid fa-fire"></i> Fogata — galería
+      </div>
+      <div class="section-group-sub">Imágenes de la experiencia de fogata nocturna.</div>
+      <div class="img-grid" id="grid-fogata"></div>
+    </div>
+
+    <!-- Picnic -->
+    <div class="section-group">
+      <div class="section-group-title">
+        <i class="fa-solid fa-cheese"></i> Tablas de Picnic
+      </div>
+      <div class="section-group-sub">Fotos de las tablas de picnic disponibles (pequeña, mediana, grande).</div>
+      <div class="img-grid" id="grid-picnic"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const BUCKET = 'services';
+
+  function showLoading(v) { document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
+  function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.innerHTML = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Definición de todos los slots de imágenes
+  const IMAGE_SLOTS = [
+    // Inicio
+    { grid: 'grid-inicio', key: 'img_hero',    label: 'Hero principal',        sub: 'Imagen grande dividida a la derecha en el inicio',             icon: 'fa-image' },
+    { grid: 'grid-inicio', key: 'img_why',     label: 'Por qué elegirnos',     sub: 'Imagen a la izquierda en la sección "Más que un lugar"',        icon: 'fa-image' },
+    // Senderismo
+    { grid: 'grid-senderismo', key: 'img_senderismo_1', label: 'Senderismo — Foto 1', sub: 'Primer foto de la galería', icon: 'fa-hiking' },
+    { grid: 'grid-senderismo', key: 'img_senderismo_2', label: 'Senderismo — Foto 2', sub: 'Segunda foto',              icon: 'fa-hiking' },
+    { grid: 'grid-senderismo', key: 'img_senderismo_3', label: 'Senderismo — Foto 3', sub: 'Tercera foto',              icon: 'fa-hiking' },
+    { grid: 'grid-senderismo', key: 'img_senderismo_4', label: 'Senderismo — Foto 4', sub: 'Cuarta foto',               icon: 'fa-hiking' },
+    { grid: 'grid-senderismo', key: 'img_senderismo_5', label: 'Senderismo — Foto 5', sub: 'Quinta foto',               icon: 'fa-hiking' },
+    // Waterfalls
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_1', label: 'Cascadas — Foto 1', sub: 'Primera foto de cascadas', icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_2', label: 'Cascadas — Foto 2', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_3', label: 'Cascadas — Foto 3', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_4', label: 'Cascadas — Foto 4', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_5', label: 'Cascadas — Foto 5', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_6', label: 'Cascadas — Foto 6', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_7', label: 'Cascadas — Foto 7', sub: '',                         icon: 'fa-water' },
+    { grid: 'grid-waterfalls', key: 'img_waterfalls_8', label: 'Cascadas — Foto 8', sub: '',                         icon: 'fa-water' },
+    // Fogata
+    { grid: 'grid-fogata', key: 'img_fogata_1', label: 'Fogata — Foto 1', sub: 'Primera foto de fogata', icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_2', label: 'Fogata — Foto 2', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_3', label: 'Fogata — Foto 3', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_4', label: 'Fogata — Foto 4', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_5', label: 'Fogata — Foto 5', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_6', label: 'Fogata — Foto 6', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_7', label: 'Fogata — Foto 7', sub: '',                       icon: 'fa-fire' },
+    { grid: 'grid-fogata', key: 'img_fogata_8', label: 'Fogata — Foto 8', sub: '',                       icon: 'fa-fire' },
+    // Picnic
+    { grid: 'grid-picnic', key: 'img_picnic_pequena', label: 'Tabla Pequeña',  sub: 'Ideal para 2 personas',   icon: 'fa-cheese' },
+    { grid: 'grid-picnic', key: 'img_picnic_mediana', label: 'Tabla Mediana',  sub: 'Ideal para 3–4 personas', icon: 'fa-cheese' },
+    { grid: 'grid-picnic', key: 'img_picnic_grande',  label: 'Tabla Grande',   sub: 'Ideal para 5–8 personas', icon: 'fa-cheese' },
+  ];
+
+  // Estado local de imágenes
+  let imgState = {};
+
+  async function cargarImagenes() {
+    showLoading(true);
+    try {
+      const keys = IMAGE_SLOTS.map(s => s.key);
+      const { data, error } = await supa.from('company_settings')
+        .select('key, value').in('key', keys);
+      if (error) throw error;
+      (data || []).forEach(row => { imgState[row.key] = row.value; });
+      renderCards();
+    } catch(e) {
+      console.error(e);
+      showToast('<i class="fa-solid fa-triangle-exclamation"></i> Error al cargar imágenes.', 'error');
+    } finally { showLoading(false); }
+  }
+
+  function renderCards() {
+    // Limpiar grids
+    ['grid-inicio','grid-senderismo','grid-waterfalls','grid-fogata','grid-picnic'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+    IMAGE_SLOTS.forEach(slot => {
+      const grid = document.getElementById(slot.grid);
+      if (!grid) return;
+      const url = imgState[slot.key] || null;
+      const card = document.createElement('div');
+      card.className = 'img-card';
+      card.innerHTML = `
+        ${url
+          ? `<img class="img-preview" id="prev-${slot.key}" src="${url}" alt="${slot.label}" loading="lazy">`
+          : `<div class="img-preview-placeholder" id="prev-${slot.key}">
+               <i class="fa-solid fa-image"></i>
+               <span>Sin imagen</span>
+             </div>`}
+        <div class="img-card-body">
+          <div class="img-card-label">${slot.label}</div>
+          ${slot.sub ? `<div class="img-card-sub">${slot.sub}</div>` : ''}
+          <div class="progress-bar" id="prog-${slot.key}">
+            <div class="progress-fill" id="prog-fill-${slot.key}"></div>
+          </div>
+          <div class="img-card-actions">
+            <label class="img-upload-label">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i>
+              ${url ? 'Reemplazar' : 'Subir foto'}
+              <input type="file" accept="image/*" onchange="subirImagen('${slot.key}', this)">
+            </label>
+            ${url
+              ? `<button class="img-delete-btn" onclick="eliminarImagen('${slot.key}')">
+                   <i class="fa-solid fa-trash"></i> Quitar
+                 </button>`
+              : ''}
+          </div>
+          <div class="img-status" id="status-${slot.key}"></div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  async function subirImagen(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('La imagen no puede superar 8 MB.', 'error'); return;
+    }
+    const statusEl = document.getElementById(`status-${key}`);
+    const progBar  = document.getElementById(`prog-${key}`);
+    const progFill = document.getElementById(`prog-fill-${key}`);
+    statusEl.textContent = 'Subiendo...';
+    progBar.style.display = 'block';
+    progFill.style.width = '30%';
+
+    try {
+      const ext  = file.name.split('.').pop();
+      const path = `site-images/${key}.${ext}`;
+      progFill.style.width = '60%';
+      const { error: uploadErr } = await supa.storage.from(BUCKET)
+        .upload(path, file, { upsert: true, cacheControl: '3600' });
+      if (uploadErr) throw uploadErr;
+      progFill.style.width = '85%';
+
+      const { data: pub } = supa.storage.from(BUCKET).getPublicUrl(path);
+      const publicUrl = pub.publicUrl + `?t=${Date.now()}`; // cache bust
+
+      const { error: dbErr } = await supa.from('company_settings')
+        .upsert({ key, value: pub.publicUrl }, { onConflict: 'key' });
+      if (dbErr) throw dbErr;
+
+      progFill.style.width = '100%';
+      imgState[key] = pub.publicUrl;
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Imagen actualizada';
+      setTimeout(() => { progBar.style.display = 'none'; progFill.style.width = '0'; }, 800);
+
+      // Actualizar preview sin re-renderizar todo
+      const prev = document.getElementById(`prev-${key}`);
+      if (prev) {
+        if (prev.tagName === 'IMG') {
+          prev.src = publicUrl;
+        } else {
+          // Era placeholder, reemplazar con img
+          const img = document.createElement('img');
+          img.className = 'img-preview'; img.id = `prev-${key}`;
+          img.src = publicUrl; img.alt = key;
+          prev.replaceWith(img);
+        }
+      }
+      showToast('<i class="fa-solid fa-circle-check"></i> Imagen actualizada correctamente.');
+    } catch(e) {
+      console.error(e);
+      statusEl.textContent = 'Error al subir. Intenta de nuevo.';
+      progBar.style.display = 'none';
+      showToast('<i class="fa-solid fa-triangle-exclamation"></i> Error al subir la imagen.', 'error');
+    }
+    input.value = '';
+  }
+
+  async function eliminarImagen(key) {
+    if (!confirm('¿Quitar esta imagen del sitio? La imagen dejará de mostrarse en la página pública.')) return;
+    const statusEl = document.getElementById(`status-${key}`);
+    statusEl.textContent = 'Quitando...';
+    try {
+      const { error } = await supa.from('company_settings')
+        .upsert({ key, value: null }, { onConflict: 'key' });
+      if (error) throw error;
+      imgState[key] = null;
+      showToast('<i class="fa-solid fa-circle-check"></i> Imagen quitada del sitio.');
+      renderCards(); // re-render para mostrar placeholder
+    } catch(e) {
+      statusEl.textContent = 'Error al quitar.';
+      showToast('<i class="fa-solid fa-triangle-exclamation"></i> Error al quitar la imagen.', 'error');
+    }
+  }
+
+  document.addEventListener('admin-ready', async () => {
+    await cargarImagenes();
+  });
+</script>
+</body>
+</html>

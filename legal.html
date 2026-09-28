@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="assets/images/icon/icon.PNG">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Aviso Legal — Sanagua Lodge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+  <style>
+    body { background: var(--linen); }
+    .legal-header {
+      background: var(--ink); color: #fff;
+      padding: 72px 0 48px; text-align: center;
+    }
+    .legal-header h1 {
+      font-family: var(--font-serif); font-size: clamp(2rem,5vw,3rem);
+      font-weight: 300; color: #fff;
+    }
+    .legal-header p { font-size: .9rem; color: rgba(255,255,255,.5); margin-top: 10px; }
+    .legal-nav {
+      background: var(--cream); border-bottom: 1px solid rgba(0,0,0,.08);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .legal-nav-inner {
+      max-width: 860px; margin: 0 auto; padding: 0 32px;
+      display: flex; gap: 0; overflow-x: auto;
+    }
+    .legal-nav-link {
+      padding: 14px 20px; font-size: .82rem; font-weight: 600;
+      color: var(--muted); white-space: nowrap;
+      border-bottom: 3px solid transparent; text-decoration: none;
+      transition: all .2s; display: flex; align-items: center; gap: 8px;
+    }
+    .legal-nav-link:hover { color: var(--ink); border-bottom-color: var(--moss); }
+    .legal-nav-link.active { color: var(--moss); border-bottom-color: var(--moss); }
+
+    .legal-body {
+      max-width: 860px; margin: 0 auto; padding: 56px 32px 80px;
+    }
+    .legal-section {
+      margin-bottom: 64px; scroll-margin-top: 64px;
+    }
+    .legal-section h2 {
+      font-family: var(--font-serif); font-size: 1.8rem; font-weight: 600;
+      color: var(--ink); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .legal-section h2 i { color: var(--moss); font-size: 1.3rem; }
+    .legal-section .section-date {
+      font-size: .75rem; color: var(--muted); margin-bottom: 24px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .legal-section h3 {
+      font-size: 1rem; font-weight: 700; color: var(--ink);
+      margin: 24px 0 10px;
+    }
+    .legal-section p, .legal-section li {
+      font-size: .9rem; color: #4a5860; line-height: 1.85;
+    }
+    .legal-section ul, .legal-section ol {
+      padding-left: 20px; margin: 10px 0 16px;
+    }
+    .legal-section li { margin-bottom: 6px; }
+    .legal-divider {
+      border: none; border-top: 1.5px solid var(--cream);
+      margin: 48px 0;
+    }
+    .legal-highlight {
+      background: rgba(127,160,172,.08); border-left: 4px solid var(--moss);
+      border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;
+      font-size: .88rem; color: var(--ink); line-height: 1.7;
+    }
+    .legal-contact-card {
+      background: var(--ink); color: #fff; border-radius: 16px;
+      padding: 28px 32px; margin-top: 32px;
+      display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .legal-contact-card a { color: var(--sage); }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: .85rem; font-weight: 600; color: var(--moss);
+      text-decoration: none; margin-bottom: 32px;
+      transition: gap .2s;
+    }
+    .back-btn:hover { gap: 12px; }
+  </style>
+</head>
+<body>
+
+<!-- Header mínimo -->
+<div style="background:var(--ink);padding:14px 32px;display:flex;align-items:center;justify-content:space-between">
+  <a href="index.html" style="font-family:var(--font-serif);font-size:1.1rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px">
+    <i class="fa-solid fa-leaf" style="color:var(--sage)"></i> Sanagua Lodge
+  </a>
+  <a href="index.html" style="font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none">
+    <i class="fa-solid fa-arrow-left"></i> Volver al sitio
+  </a>
+</div>
+
+<div class="legal-header">
+  <h1>Aviso Legal</h1>
+  <p>Documentos legales de Sanagua Lodge S.A. · República de Panamá</p>
+</div>
+
+<div class="legal-nav">
+  <div class="legal-nav-inner">
+    <a href="#cookies"    class="legal-nav-link"><i class="fa-solid fa-cookie-bite"></i> Aviso de cookies</a>
+    <a href="#terminos"   class="legal-nav-link"><i class="fa-solid fa-file-contract"></i> Términos de uso</a>
+    <a href="#privacidad" class="legal-nav-link"><i class="fa-solid fa-shield-halved"></i> Privacidad</a>
+  </div>
+</div>
+
+<div class="legal-body">
+
+  <!-- ═══════════════════════════════════
+       AVISO DE COOKIES
+       ═══════════════════════════════════ -->
+  <section class="legal-section" id="cookies">
+    <h2><i class="fa-solid fa-cookie-bite"></i> Aviso de Cookies</h2>
+    <div class="section-date"><i class="fa-solid fa-calendar"></i> Última actualización: enero 2025</div>
+
+    <div class="legal-highlight">
+      Este sitio web utiliza cookies y tecnologías similares para garantizar su funcionamiento, mejorar tu experiencia y analizar el uso del servicio. Al continuar navegando, aceptas su uso según lo descrito en este aviso.
+    </div>
+
+    <h3>¿Qué son las cookies?</h3>
+    <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas un sitio web. Permiten al sitio recordar tus preferencias, mantener tu sesión activa y recopilar información sobre cómo usas el servicio.</p>
+
+    <h3>Cookies que utilizamos</h3>
+    <ul>
+      <li><strong>Cookies esenciales:</strong> Necesarias para el funcionamiento del sitio. Gestionan tu sesión de usuario (inicio y cierre de sesión), mantienen tu carrito de reservas activo y aseguran la autenticación segura. Sin estas cookies, el sitio no puede funcionar correctamente.</li>
+      <li><strong>Cookies de preferencia:</strong> Guardan tus preferencias de idioma, visualización y configuración del sitio para que no tengas que volver a ajustarlas en cada visita.</li>
+      <li><strong>Cookies de análisis:</strong> Utilizamos datos anónimos para entender cómo los visitantes interactúan con el sitio (páginas más visitadas, tiempo de navegación) y mejorar nuestros servicios. Esta información no identifica a ninguna persona de forma individual.</li>
+    </ul>
+
+    <h3>Cookies de terceros</h3>
+    <p>Nuestro sistema de reservas utiliza <strong>Supabase</strong> para gestionar autenticación y datos. Supabase puede almacenar tokens de sesión en el almacenamiento local de tu navegador (<code>localStorage</code>) para mantener tu sesión activa de forma segura.</p>
+
+    <h3>¿Cómo controlar las cookies?</h3>
+    <p>Puedes configurar tu navegador para rechazar o eliminar cookies. Sin embargo, ten en cuenta que deshabilitar las cookies esenciales puede afectar el funcionamiento del sitio, impidiendo que inicies sesión o realices reservas.</p>
+    <p>Instrucciones para los navegadores más comunes:</p>
+    <ul>
+      <li>Chrome: Configuración → Privacidad y seguridad → Cookies</li>
+      <li>Firefox: Opciones → Privacidad y seguridad</li>
+      <li>Safari: Preferencias → Privacidad</li>
+    </ul>
+  </section>
+
+  <hr class="legal-divider">
+
+  <!-- ═══════════════════════════════════
+       TÉRMINOS DE USO
+       ═══════════════════════════════════ -->
+  <section class="legal-section" id="terminos">
+    <h2><i class="fa-solid fa-file-contract"></i> Términos de Uso</h2>
+    <div class="section-date"><i class="fa-solid fa-calendar"></i> Última actualización: enero 2025</div>
+
+    <div class="legal-highlight">
+      Al registrarte o utilizar los servicios de Sanagua Lodge a través de este sitio web, aceptas los presentes Términos de Uso en su totalidad. Si no estás de acuerdo con alguna parte, te pedimos que no utilices el servicio.
+    </div>
+
+    <h3>1. Identificación del titular</h3>
+    <p><strong>Sanagua Lodge S.A.</strong>, con RUC 155761744-2-2025, ubicado en la provincia de Coclé, República de Panamá. Correo de contacto: <a href="mailto:sanagualodge@gmail.com" style="color:var(--moss)">sanagualodge@gmail.com</a> · WhatsApp: +507 6166-0114.</p>
+
+    <h3>2. Objeto del servicio</h3>
+    <p>Sanagua Lodge ofrece servicios de turismo ecológico y de naturaleza en Panamá, incluyendo pasadías, camping, alojamiento en cabañas privadas, gastronomía local y experiencias de aventura. Este sitio web es la plataforma oficial para consultar información, registrarse como cliente y gestionar reservas.</p>
+
+    <h3>3. Registro de cuenta</h3>
+    <ul>
+      <li>Para realizar reservas debes crear una cuenta con información verídica y actualizada.</li>
+      <li>Eres responsable de mantener la confidencialidad de tu contraseña.</li>
+      <li>Debes ser mayor de 18 años para registrarte. Los menores de edad pueden participar en actividades acompañados de un responsable registrado.</li>
+      <li>Sanagua Lodge se reserva el derecho de suspender cuentas que violen estos términos.</li>
+    </ul>
+
+    <h3>4. Reservas y pagos</h3>
+    <ul>
+      <li>Las reservas se confirman tras recibir el abono correspondiente (generalmente 50% del total).</li>
+      <li>El saldo restante debe cancelarse antes o el día de la visita.</li>
+      <li>La disponibilidad es en tiempo real; la reserva solo queda asegurada una vez confirmada por nuestro equipo.</li>
+      <li>Los precios publicados están en dólares estadounidenses (USD) e incluyen o excluyen ITBMS según se indique.</li>
+    </ul>
+
+    <h3>5. Política de cancelación</h3>
+    <ul>
+      <li><strong>Cancelación con más de 72 horas de anticipación:</strong> Reembolso del 80% del abono recibido.</li>
+      <li><strong>Cancelación entre 24 y 72 horas:</strong> Reembolso del 50% del abono.</li>
+      <li><strong>Cancelación con menos de 24 horas o no presentación:</strong> Sin reembolso.</li>
+      <li>En casos de fuerza mayor debidamente documentados, se evaluará cada caso de forma individual.</li>
+    </ul>
+
+    <h3>6. Normas de conducta en el lodge</h3>
+    <ul>
+      <li>El respeto por la naturaleza y el entorno es fundamental. No se permite arrojar basura fuera de los contenedores designados.</li>
+      <li>El consumo de alcohol está permitido con moderación. No se tolera el comportamiento que perturbe la tranquilidad del lugar.</li>
+      <li>Las mascotas son bienvenidas bajo la responsabilidad total de su dueño.</li>
+      <li>Sanagua Lodge no se hace responsable por lesiones, pérdidas o daños derivados del incumplimiento de las instrucciones del personal.</li>
+    </ul>
+
+    <h3>7. Propiedad intelectual</h3>
+    <p>Todos los contenidos del sitio web (textos, imágenes, diseño, logotipos) son propiedad de Sanagua Lodge S.A. o de sus licenciantes. Queda prohibida su reproducción, distribución o uso comercial sin autorización expresa por escrito.</p>
+
+    <h3>8. Limitación de responsabilidad</h3>
+    <p>Sanagua Lodge no garantiza la disponibilidad ininterrumpida del sitio web. No seremos responsables por daños indirectos, pérdidas de datos o perjuicios derivados del uso o la imposibilidad de uso del servicio, salvo en los casos que la ley panameña así lo exija.</p>
+
+    <h3>9. Ley aplicable</h3>
+    <p>Estos términos se rigen por las leyes de la República de Panamá. Cualquier controversia se someterá a la jurisdicción de los Tribunales de Justicia de la ciudad de Panamá.</p>
+  </section>
+
+  <hr class="legal-divider">
+
+  <!-- ═══════════════════════════════════
+       POLÍTICA DE PRIVACIDAD
+       ═══════════════════════════════════ -->
+  <section class="legal-section" id="privacidad">
+    <h2><i class="fa-solid fa-shield-halved"></i> Política de Privacidad</h2>
+    <div class="section-date"><i class="fa-solid fa-calendar"></i> Última actualización: enero 2025</div>
+
+    <div class="legal-highlight">
+      En Sanagua Lodge nos comprometemos a proteger tu privacidad y tratar tus datos personales con la máxima transparencia, conforme a la Ley 81 de 2019 sobre Protección de Datos Personales de la República de Panamá.
+    </div>
+
+    <h3>1. Responsable del tratamiento</h3>
+    <p><strong>Sanagua Lodge S.A.</strong> · RUC 155761744-2-2025 · Coclé, Panamá<br>
+    Contacto de privacidad: <a href="mailto:sanagualodge@gmail.com" style="color:var(--moss)">sanagualodge@gmail.com</a></p>
+
+    <h3>2. Datos que recopilamos</h3>
+    <ul>
+      <li><strong>Datos de registro:</strong> Nombre completo, correo electrónico, número de cédula o pasaporte, teléfono y edad.</li>
+      <li><strong>Documento de identidad:</strong> Foto del documento oficial (opcional, para verificación de cuenta).</li>
+      <li><strong>Datos de reserva:</strong> Fechas, servicios contratados, número de personas y preferencias de visita.</li>
+      <li><strong>Datos de uso del sitio:</strong> Páginas visitadas, tiempo de sesión e interacciones con el sitio (de forma anónima y agregada).</li>
+      <li><strong>Comunicaciones:</strong> Mensajes enviados por WhatsApp, correo electrónico o a través del sitio web.</li>
+    </ul>
+
+    <h3>3. Finalidad del tratamiento</h3>
+    <ul>
+      <li>Gestionar tu cuenta de cliente y procesar tus reservas.</li>
+      <li>Comunicarnos contigo sobre tu reserva, cambios o novedades del lodge.</li>
+      <li>Gestionar el programa de puntos de fidelidad.</li>
+      <li>Cumplir obligaciones legales y fiscales aplicables.</li>
+      <li>Mejorar nuestros servicios mediante análisis de uso anónimo.</li>
+    </ul>
+
+    <h3>4. Base legal</h3>
+    <p>El tratamiento de tus datos se basa en: (a) la ejecución del contrato de reserva o prestación de servicio; (b) tu consentimiento expreso al registrarte; y (c) el cumplimiento de obligaciones legales aplicables.</p>
+
+    <h3>5. Almacenamiento y seguridad</h3>
+    <p>Tus datos se almacenan en servidores seguros gestionados por <strong>Supabase Inc.</strong> (proveedor cloud con certificación SOC 2), con cifrado en tránsito (TLS) y en reposo. Los documentos de identidad se guardan en almacenamiento privado de acceso restringido, accesible únicamente por ti y el equipo autorizado de Sanagua Lodge.</p>
+
+    <h3>6. Compartición de datos</h3>
+    <p>No vendemos ni cedemos tus datos personales a terceros con fines comerciales. Podemos compartirlos con:</p>
+    <ul>
+      <li>Proveedores tecnológicos necesarios para operar el servicio (Supabase, sistema de correo).</li>
+      <li>Autoridades gubernamentales cuando la ley así lo exija.</li>
+    </ul>
+
+    <h3>7. Tus derechos</h3>
+    <p>De acuerdo con la Ley 81 de 2019, tienes derecho a:</p>
+    <ul>
+      <li><strong>Acceso:</strong> Solicitar una copia de tus datos personales.</li>
+      <li><strong>Rectificación:</strong> Corregir datos inexactos o incompletos.</li>
+      <li><strong>Supresión:</strong> Solicitar la eliminación de tu cuenta y datos (salvo obligaciones legales que lo impidan).</li>
+      <li><strong>Oposición y limitación:</strong> Oponerte al tratamiento de tus datos para fines específicos.</li>
+      <li><strong>Portabilidad:</strong> Recibir tus datos en formato estructurado.</li>
+    </ul>
+    <p>Para ejercer cualquiera de estos derechos, escríbenos a <a href="mailto:sanagualodge@gmail.com" style="color:var(--moss)">sanagualodge@gmail.com</a>. Atenderemos tu solicitud en un plazo máximo de 15 días hábiles.</p>
+
+    <h3>8. Retención de datos</h3>
+    <p>Conservamos tus datos mientras mantengas una cuenta activa con nosotros o sean necesarios para cumplir obligaciones legales. Al eliminar tu cuenta, tus datos se anonimizarán o eliminarán en un plazo máximo de 30 días, salvo aquellos que deban conservarse por requerimiento fiscal o legal.</p>
+
+    <h3>9. Cambios en esta política</h3>
+    <p>Podemos actualizar esta Política de Privacidad periódicamente. En caso de cambios sustanciales, te notificaremos por correo electrónico o mediante un aviso visible en el sitio web antes de que entren en vigor.</p>
+
+    <div class="legal-contact-card">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;margin-bottom:10px"><i class="fa-solid fa-envelope" style="color:var(--sage)"></i> ¿Preguntas sobre privacidad?</div>
+        <p style="font-size:.85rem;color:rgba(255,255,255,.65);line-height:1.7;margin:0">
+          Si tienes dudas sobre cómo tratamos tus datos o deseas ejercer tus derechos, contáctanos directamente.<br>
+          Correo: <a href="mailto:sanagualodge@gmail.com">sanagualodge@gmail.com</a><br>
+          WhatsApp: <a href="https://wa.me/50761660114">+507 6166-0114</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Footer mínimo -->
+<div style="background:var(--ink);padding:20px 32px;text-align:center;font-size:.78rem;color:rgba(255,255,255,.35)">
+  © 2025 Sanagua Lodge S.A. · RUC 155761744-2-2025 · República de Panamá
+  · <a href="index.html" style="color:rgba(255,255,255,.4);text-decoration:none">Volver al sitio</a>
+</div>
+
+<script>
+  // Resaltar la sección activa en la navegación al hacer scroll
+  const sections = document.querySelectorAll('.legal-section');
+  const links    = document.querySelectorAll('.legal-nav-link');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>

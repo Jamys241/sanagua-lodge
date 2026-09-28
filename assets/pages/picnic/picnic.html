@@ -91,7 +91,7 @@
     <!-- Tabla Pequeña -->
     <div class="tabla-card" data-tamano="pequeña">
       <div class="tabla-img">
-        <img src="../../images/picnic/tabla-pequena.jpg" alt="Tabla Pequeña"
+        <img id="img-picnic-pequena" src="../../images/picnic/tabla-pequena.jpg" alt="Tabla Pequeña"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="tabla-img-placeholder" style="display:none">
           <div class="tabla-emoji"><i class="fa-solid fa-cheese"></i></div>
@@ -121,7 +121,7 @@
     <!-- Tabla Mediana -->
     <div class="tabla-card" data-tamano="mediana">
       <div class="tabla-img">
-        <img src="../../images/picnic/tabla-mediana.jpg" alt="Tabla Mediana"
+        <img id="img-picnic-mediana" src="../../images/picnic/tabla-mediana.jpg" alt="Tabla Mediana"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="tabla-img-placeholder" style="display:none">
           <div class="tabla-emoji"><i class="fa-solid fa-seedling"></i></div>
@@ -153,7 +153,7 @@
     <!-- Tabla Grande -->
     <div class="tabla-card" data-tamano="grande">
       <div class="tabla-img">
-        <img src="../../images/picnic/tabla-grande.jpg" alt="Tabla Grande"
+        <img id="img-picnic-grande"  src="../../images/picnic/tabla-grande.jpg" alt="Tabla Grande"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="tabla-img-placeholder" style="display:none">
           <div class="tabla-emoji"><i class="fa-solid fa-champagne-glasses"></i></div>
@@ -427,6 +427,21 @@
   }, 20000);
 
   document.addEventListener('DOMContentLoaded', initSlider);
+
+  async function cargarImagenesSitio() {
+    try {
+      const keys = ['img_picnic_pequena','img_picnic_mediana','img_picnic_grande'];
+      const { data } = await supa.from('company_settings').select('key,value').in('key', keys);
+      const id_map = { img_picnic_pequena:'img-picnic-pequena', img_picnic_mediana:'img-picnic-mediana', img_picnic_grande:'img-picnic-grande' };
+      (data || []).forEach(row => {
+        if (!row.value) return;
+        const el = document.getElementById(id_map[row.key]);
+        if (el) el.src = row.value;
+      });
+    } catch(e) {}
+  }
+
+  cargarImagenesSitio();
 </script>
 </body>
 </html>

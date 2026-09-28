@@ -38,16 +38,16 @@
     <!-- Galería -->
     <div class="gallery" style="margin-bottom:32px;height:320px">
       <div class="gallery-main" style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
-        <img src="../../images/experiences/senderismo/pita1.jpg" alt="Cerro La Pita"
+        <img id="gal-send-1" id="gal-send-1" src="../../images/experiences/senderismo/pita1.jpg" alt="Cerro La Pita"
           onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:var(--r) 0 0 var(--r)\'>⛰️</div>'">
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="flex:1;border-radius:0 var(--r) 0 0;overflow:hidden">
-          <img src="../../images/experiences/senderismo/pita2.jpg" alt="Sendero"
+          <img id="gal-send-2" id="gal-send-2" src="../../images/experiences/senderismo/pita2.jpg" alt="Sendero"
             onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 var(--r) 0 0;height:100%\'>🌿</div>'">
         </div>
         <div style="flex:1;border-radius:0 0 var(--r) 0;overflow:hidden">
-          <img src="../../images/experiences/senderismo/pita3.jpg" alt="Vista desde el cerro"
+          <img id="gal-send-3" id="gal-send-3" src="../../images/experiences/senderismo/pita3.jpg" alt="Vista desde el cerro"
             onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 0 var(--r) 0;height:100%\'>🦋</div>'">
         </div>
       </div>
@@ -112,11 +112,11 @@
     <!-- Galería parque -->
     <div class="gallery-2col" style="margin-bottom:32px">
       <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
-        <img src="../../images/experiences/senderismo/torrijos1.jpg" alt="Parque Omar Torrijos"
+        <img id="gal-send-4" id="gal-send-4" src="../../images/experiences/senderismo/torrijos1.jpg" alt="Parque Omar Torrijos"
           onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:var(--r) 0 0 var(--r);height:240px\'>🦜</div>'">
       </div>
       <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
-        <img src="../../images/experiences/senderismo/torrijos2.jpg" alt="Bosque nuboso"
+        <img id="gal-send-5" id="gal-send-5" src="../../images/experiences/senderismo/torrijos2.jpg" alt="Bosque nuboso"
           onerror="this.outerHTML='<div class=\'gallery-placeholder\' style=\'border-radius:0 var(--r) var(--r) 0;height:240px\'>🌫️</div>'">
       </div>
     </div>
@@ -202,6 +202,9 @@
 </div>
 
 <script>
+  const SUPABASE_URL_EXP      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_EXP = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_EXP, SUPABASE_ANON_KEY_EXP);
   // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
   try {
     const _bc = new BroadcastChannel('sanagua_refresh');
@@ -211,6 +214,25 @@
       }
     };
   } catch {}
+
+  async function cargarImagenesSitio() {
+    try {
+      const keys = ['img_senderismo_1','img_senderismo_2','img_senderismo_3','img_senderismo_4','img_senderismo_5'];
+      const { data } = await supaPrecios.from('company_settings').select('key,value').in('key', keys);
+      const id_map = {
+        img_senderismo_1: 'gal-send-1', img_senderismo_2: 'gal-send-2',
+        img_senderismo_3: 'gal-send-3', img_senderismo_4: 'gal-send-4',
+        img_senderismo_5: 'gal-send-5',
+      };
+      (data || []).forEach(row => {
+        if (!row.value) return;
+        const el = document.getElementById(id_map[row.key]);
+        if (el) { el.src = row.value; el.style.visibility='visible'; }
+      });
+    } catch(e) {}
+  }
+
+  cargarImagenesSitio();
 </script>
 </body>
 </html>

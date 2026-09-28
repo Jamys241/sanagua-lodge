@@ -454,7 +454,7 @@
       <button class="dash-qlink" onclick="location.href='solicitudes.html'"><i class="fa-solid fa-inbox"></i><span>Solicitudes</span></button>
       <button class="dash-qlink" onclick="location.href='mis-servicios.html'"><i class="fa-solid fa-concierge-bell"></i><span>Mis Servicios</span></button>
       <button class="dash-qlink" onclick="location.href='menu-editor.html'"><i class="fa-solid fa-utensils"></i><span>Editor de Menú</span></button>
-      <button class="dash-qlink" onclick="window.open('../index.html?admin_preview=1','_blank')"><i class="fa-solid fa-eye"></i><span>Ver como usuario</span></button>
+      <button class="dash-qlink" onclick="irComoUsuarioAdmin()"><i class="fa-solid fa-eye"></i><span>Ver como usuario</span></button>
     </div>
   </div>
 </div>
@@ -851,6 +851,11 @@
     supa.auth.signOut().finally(() => { window.location.href = '../index.html'; });
   }
 
+  function irComoUsuarioAdmin() {
+    // Guarda el flag en sessionStorage y lleva al index con la sesión activa
+    sessionStorage.setItem('admin_preview', '1');
+    window.location.href = '../index.html';
+  }
 
 
   function getPermisos() {

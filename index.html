@@ -82,16 +82,10 @@
   <div class="hero-v2-left">
     <div class="hero-badge">
       <i class="fa-solid fa-map-pin"></i>
-      Coclé, Panamá
+      <span id="cms-hero_badge">Coclé, Panamá</span>
     </div>
-    <h1 class="hero-title">
-      Donde la selva<br>
-      se convierte en<br>
-      <em>tu hogar</em>
-    </h1>
-    <p class="hero-sub">
-      Un refugio natural en el corazón de Panamá. Pasadías, glamping, cabañas privadas y gastronomía local — todo rodeado de biodiversidad auténtica.
-    </p>
+    <h1 class="hero-title" id="cms-hero_titulo">Donde la selva<br>se convierte en<br><em>tu hogar</em></h1>
+    <p class="hero-sub" id="cms-hero_subtitulo">Un refugio natural en el corazón de Panamá. Pasadías, glamping, cabañas privadas y gastronomía local — todo rodeado de biodiversidad auténtica.</p>
     <div class="hero-cta">
       <a href="#servicios" class="cta-primary">
         <i class="fa-solid fa-compass"></i> Explorar servicios
@@ -102,8 +96,8 @@
     </div>
     <div class="hero-stats">
       <div>
-        <div class="hero-stat-num">3</div>
-        <div class="hero-stat-lbl">Cabañas privadas</div>
+        <div class="hero-stat-num" id="cms-hero_stat1_num">3</div>
+        <div class="hero-stat-lbl" id="cms-hero_stat1_lbl">Cabañas privadas</div>
       </div>
       <div>
         <div class="hero-stat-num">+50</div>
@@ -188,8 +182,8 @@
 <section class="services-section" id="servicios">
   <div class="container">
     <div class="section-head">
-      <div class="section-eyebrow">Lo que ofrecemos</div>
-      <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
+      <div class="section-eyebrow" id="cms-cms_srv_eyebrow">Lo que ofrecemos</div>
+      <h2 class="section-title" id="cms-cms_srv_titulo">Una experiencia para <em>cada momento</em></h2>
       <p class="section-sub">Desde una escapada de día hasta noches bajo las estrellas — diseñamos cada servicio para conectarte con la naturaleza panameña.</p>
     </div>
 
@@ -288,8 +282,8 @@
         </div>
       </div>
       <div>
-        <div class="section-eyebrow">Por qué elegirnos</div>
-        <h2 class="section-title">Más que un lugar,<br><em>una experiencia</em></h2>
+        <div class="section-eyebrow" id="cms-cms_why_eyebrow">Por qué elegirnos</div>
+        <h2 class="section-title" id="cms-cms_why_titulo">Más que un lugar,<br><em>una experiencia</em></h2>
         <div class="why-features">
           <div class="why-feat">
             <div class="why-feat-icon"><i class="fa-solid fa-tree"></i></div>
@@ -330,8 +324,8 @@
   <div class="container">
     <div class="about-inner">
       <div class="about-text">
-        <div class="section-eyebrow">Nuestra historia</div>
-        <h2 class="about-title">Un rincón de <em>selva viva</em> en el corazón de Panamá</h2>
+        <div class="section-eyebrow" id="cms-cms_about_eyebrow">Nuestra historia</div>
+        <h2 class="about-title" id="cms-cms_about_titulo">Un rincón de <em>selva viva</em> en el corazón de Panamá</h2>
         <p class="about-body">
           Sanagua Lodge nació de un sueño simple: crear un espacio donde las familias y viajeros pudieran reconectarse con la naturaleza sin renunciar al confort. Ubicado en un entorno privilegiado, rodeado de biodiversidad única, cada rincón del lodge fue diseñado para integrarse armoniosamente con su entorno.
         </p>
@@ -443,8 +437,8 @@
 <section class="cta-section">
   <div class="container">
     <div class="cta-inner">
-      <h2 class="cta-title">¿Listo para <em>escapar</em>?</h2>
-      <p class="cta-body">Reserva tu estadía y crea recuerdos que durarán toda la vida. Disponibilidad limitada — los mejores fines de semana se agotan rápido.</p>
+      <h2 class="cta-title" id="cms-cms_cta_titulo">¿Listo para <em>escapar</em>?</h2>
+      <p class="cta-body" id="cms-cms_cta_subtitulo">Reserva tu estadía y crea recuerdos que durarán toda la vida. Disponibilidad limitada — los mejores fines de semana se agotan rápido.</p>
       <div class="cta-btns">
         <a href="#" onclick="openAuth('register')" class="cta-primary">
           <i class="fa-solid fa-calendar-check"></i> Reservar mi lugar
@@ -491,7 +485,11 @@
     </div>
     <div class="footer-bottom">
       <span>© 2025 Sanagua Lodge S.A. · RUC 155761744-2-2025</span>
-      <span>Hecho con <i class="fa-solid fa-leaf"></i> en Panamá</span>
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <a href="legal.html#cookies"    style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.75rem;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Aviso de cookies</a>
+        <a href="legal.html#terminos"   style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.75rem;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Términos de uso</a>
+        <a href="legal.html#privacidad" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:.75rem;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Privacidad</a>
+      </div>
     </div>
   </div>
 </footer>
@@ -613,6 +611,16 @@
                 style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
                 cursor:pointer;font-size:1rem;color:#999;padding:4px"><i class="fa-solid fa-eye"></i></button>
             </div>
+          </div>
+          <div class="auth-field" style="margin-bottom:10px">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;font-size:.82rem;color:#6b7a82;line-height:1.5">
+              <input type="checkbox" id="reg-tc" style="margin-top:2px;flex-shrink:0;width:15px;height:15px">
+              Acepto los
+              <a href="legal.html#terminos" target="_blank" style="color:var(--moss);text-decoration:underline">Términos de uso</a>
+              y la
+              <a href="legal.html#privacidad" target="_blank" style="color:var(--moss);text-decoration:underline">Política de privacidad</a>
+              de Sanagua Lodge.
+            </label>
           </div>
           <button class="auth-btn" onclick="doRegister()">Crear cuenta</button>
           <div id="reg-error-msg" style="display:none;margin-top:12px;padding:10px 14px;
@@ -760,6 +768,78 @@
 <script>
   // ── Estado de usuario público ─────────────────────────────────────────
   let publicUser = null; // { name, email, puntos }
+
+  // ── Carga de imágenes del sitio desde Supabase ─────────────────────
+  // Mapa de keys CMS → IDs en el DOM
+  const CMS_DOM_MAP = {
+    cms_hero_badge:       el => { if (el) el.textContent = null; },  // handled below
+    cms_hero_titulo:      'cms-hero_titulo',
+    cms_hero_subtitulo:   'cms-hero_subtitulo',
+    cms_hero_stat1_num:   'cms-hero_stat1_num',
+    cms_hero_stat1_lbl:   'cms-hero_stat1_lbl',
+    cms_hero_stat2_num:   'cms-hero_stat2_num',
+    cms_hero_stat2_lbl:   'cms-hero_stat2_lbl',
+    cms_hero_stat3_num:   'cms-hero_stat3_num',
+    cms_hero_stat3_lbl:   'cms-hero_stat3_lbl',
+    cms_srv_eyebrow:      'cms-cms_srv_eyebrow',
+    cms_srv_titulo:       'cms-cms_srv_titulo',
+    cms_why_eyebrow:      'cms-cms_why_eyebrow',
+    cms_why_titulo:       'cms-cms_why_titulo',
+    cms_about_eyebrow:    'cms-cms_about_eyebrow',
+    cms_about_titulo:     'cms-cms_about_titulo',
+    cms_cta_titulo:       'cms-cms_cta_titulo',
+    cms_cta_subtitulo:    'cms-cms_cta_subtitulo',
+  };
+
+  async function cargarImagenesSitio() {
+    try {
+      const { data } = await supa.from('company_settings').select('key,value');
+      if (!data) return;
+      data.forEach(row => {
+        if (!row.value) return;
+
+        // Imágenes
+        if (row.key === 'img_hero') {
+          const el = document.querySelector('.hero-v2-img');
+          if (el) { el.src = row.value; el.style.display = 'block'; }
+          const fb = document.querySelector('.hero-fallback-bg');
+          if (fb) fb.style.display = 'none';
+        }
+        if (row.key === 'img_why') {
+          const el = document.querySelector('.why-img-wrap img');
+          if (el) { el.src = row.value; el.style.display = 'block'; }
+        }
+
+        // Badge del hero (elemento especial con icono dentro)
+        if (row.key === 'cms_hero_badge') {
+          const el = document.getElementById('cms-hero_badge');
+          if (el) el.textContent = row.value;
+        }
+
+        // Textos generales
+        const domId = CMS_DOM_MAP[row.key];
+        if (domId && typeof domId === 'string') {
+          const el = document.getElementById(domId);
+          if (el) el.textContent = row.value;
+        }
+
+        // Features de "Por qué elegirnos"
+        const featMatch = row.key.match(/^cms_why_feat(\d+)_(titulo|desc)$/);
+        if (featMatch) {
+          const n = featMatch[1]; const field = featMatch[2];
+          const el = document.getElementById(`cms-why-feat${n}-${field}`);
+          if (el) el.textContent = row.value;
+        }
+
+        // Stats del about
+        const statMatch = row.key.match(/^cms_about_stat(\d+)_(num|lbl)$/);
+        if (statMatch) {
+          const el = document.getElementById(`cms-about-stat${statMatch[1]}-${statMatch[2]}`);
+          if (el) el.textContent = row.value;
+        }
+      });
+    } catch(e) { /* silencioso */ }
+  }
 
   // ── Menú hamburguesa ──────────────────────────────────────────────────
   function toggleNav() {
@@ -988,8 +1068,11 @@
     if (!email) { showAuthError('Ingresa tu correo electrónico.'); return; }
     if (!pass || pass.length < 6) { showAuthError('La contraseña debe tener al menos 6 caracteres.'); return; }
     if (pass !== passConfirm) { showAuthError('Las contraseñas no coinciden.'); return; }
+    if (!document.getElementById('reg-tc')?.checked) {
+      showAuthError('Debes aceptar los Términos de uso y la Política de privacidad para registrarte.');
+      return;
+    }
     const errEl = document.getElementById('login-error-pub');
-    const btn   = document.querySelector('#panel-register .auth-btn');
     errEl.textContent = '';
 
     if (!name || !email || !pass) { errEl.textContent = 'Completa los campos obligatorios.'; return; }
@@ -1011,11 +1094,10 @@
           : 'No se pudo crear la cuenta: ' + error.message;
         return;
       }
-      // Con "Confirm email" desactivado en el dashboard, signUp ya deja
-      // sesión iniciada. Si en el futuro se activa, data.session vendrá null
-      // y habría que avisar al usuario que revise su correo.
+      // Si Supabase tiene "Confirm email" activo, data.session viene null.
+      // Mostramos un panel claro indicando que debe verificar su correo.
       if (!data.session) {
-        errEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla antes de ingresar.';
+        mostrarPanelVerificacionCorreo(email);
         return;
       }
 
@@ -1056,28 +1138,84 @@
     finally { btn.textContent = 'Crear cuenta'; btn.disabled = false; }
   }
 
+  function mostrarPanelVerificacionCorreo(email) {
+    // Oculta el formulario y muestra instrucciones de verificación
+    document.getElementById('panel-register').innerHTML = `
+      <div style="text-align:center;padding:8px 0">
+        <div style="width:56px;height:56px;background:rgba(127,160,172,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:1.6rem;color:var(--moss)">
+          <i class="fa-solid fa-envelope-circle-check"></i>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--ink);margin-bottom:10px">Verifica tu correo</div>
+        <p style="font-size:.86rem;color:#6b7a82;line-height:1.65;margin-bottom:20px">
+          Te enviamos un enlace de confirmación a<br>
+          <strong style="color:var(--ink)">${email}</strong><br><br>
+          Ábrelo desde tu bandeja de entrada (revisa también en Spam). Una vez confirmado podrás iniciar sesión.
+        </p>
+        <button class="auth-btn" onclick="switchAuthTab('login')" style="background:var(--moss)">
+          <i class="fa-solid fa-arrow-left"></i> Ir al inicio de sesión
+        </button>
+        <p style="font-size:.75rem;color:#aaa;margin-top:14px">
+          ¿No llegó el correo? Espera unos minutos o revisa Spam.
+        </p>
+      </div>`;
+  }
+
   function showAdminRedirect(admin) {
-    // Crear overlay de redirección
+    // Panel de elección: Admin o ver como usuario
     const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(26,34,38,0.97);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;';
+    div.id = 'admin-choice-overlay';
+    div.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(26,34,38,.97);display:flex;align-items:center;justify-content:center;padding:24px;';
     div.innerHTML = `
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#fff;text-align:center;">
-        <i class="fa-solid fa-leaf"></i> Sanagua Lodge
-      </div>
-      <div style="font-size:1rem;color:var(--sage);font-family:'Jost',sans-serif;font-weight:500;">
-        ${admin.label}
-      </div>
-      <div style="font-size:.85rem;color:rgba(255,255,255,.5);font-family:'Jost',sans-serif;">
-        Accediendo al sistema de cotizaciones...
-      </div>
-      <div style="width:48px;height:48px;border:3px solid rgba(143,171,181,.3);border-top-color:var(--sage);border-radius:50%;animation:spin .8s linear infinite;"></div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-    `;
+      <div style="background:#1e2c32;border-radius:20px;padding:36px 40px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5);">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#fff;margin-bottom:6px;">
+          <i class="fa-solid fa-leaf" style="color:var(--sage)"></i> Sanagua Lodge
+        </div>
+        <div style="font-size:.82rem;color:var(--sage);margin-bottom:28px;letter-spacing:.04em;">${admin.label}</div>
+        <div style="font-size:1rem;color:rgba(255,255,255,.8);font-family:'Jost',sans-serif;margin-bottom:24px;font-weight:500;">
+          ¿Cómo deseas continuar?
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <button onclick="irAlPanel('${admin.url}')" style="background:var(--sage);color:#fff;border:none;border-radius:50px;padding:14px 24px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s;" onmouseover="this.style.background='var(--forest)'" onmouseout="this.style.background='var(--sage)'">
+            <i class="fa-solid fa-gear"></i> Entrar al panel de administración
+          </button>
+          <button onclick="irComoUsuario()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.15);border-radius:50px;padding:14px 24px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
+            <i class="fa-solid fa-eye"></i> Ver el sitio como cliente
+          </button>
+        </div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:20px;line-height:1.5;">
+          Puedes cambiar de modo en cualquier momento desde el menú.
+        </div>
+      </div>`;
     document.body.appendChild(div);
-    // No hace falta guardar nada nosotros: supabase-js ya persistió la
-    // sesión (JWT) en localStorage bajo su propia clave, y sanagua-cot/*
-    // usa el mismo SUPABASE_URL/ANON_KEY para leerla y revalidar el role.
-    setTimeout(() => { window.location.href = admin.url; }, 1500);
+  }
+
+  function irAlPanel(url) {
+    sessionStorage.removeItem('admin_preview');
+    const div = document.getElementById('admin-choice-overlay');
+    if (div) {
+      div.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;"><div style="width:48px;height:48px;border:3px solid rgba(143,171,181,.3);border-top-color:var(--sage);border-radius:50%;animation:spin .8s linear infinite;"></div><div style="color:rgba(255,255,255,.5);font-family:Jost,sans-serif;font-size:.85rem;">Cargando el panel...</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>';
+    }
+    setTimeout(() => { window.location.href = url; }, 800);
+  }
+
+  function irComoUsuario() {
+    sessionStorage.setItem('admin_preview', '1');
+    const div = document.getElementById('admin-choice-overlay');
+    if (div) div.remove();
+    // Cargar el perfil del admin como si fuera usuario normal
+    fetchOwnProfile().then(({ profile }) => {
+      if (profile) {
+        publicUser = {
+          name: profile.name || profile.email, email: profile.email,
+          cedula: profile.cedula || '', phone: profile.phone || '',
+          edad: profile.edad || null, verificado: !!profile.verificado,
+          puntos: profile.puntos || 0, reservas: profile.reservas || [],
+          _esAdmin: true
+        };
+        aplicarUsuarioPublico();
+        mostrarBannerPreviewAdmin();
+      }
+    });
   }
 
   function badgeVerificado() {
@@ -1429,6 +1567,50 @@
 
   cargarSuscripcionPub();
   setInterval(cargarSuscripcionPub, 60000);
+  cargarImagenesSitio();
+</script>
+
+<!-- ══ BANNER DE COOKIES ══ -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(26,34,38,.97);backdrop-filter:blur(12px);padding:18px 24px;box-shadow:0 -4px 24px rgba(0,0,0,.3);">
+  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <div style="font-family:'Jost',sans-serif;font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.6">
+        <i class="fa-solid fa-cookie-bite" style="color:var(--gold);margin-right:8px"></i>
+        Usamos cookies para garantizar el funcionamiento del sitio y mejorar tu experiencia.
+        <a href="legal.html#cookies" target="_blank" style="color:var(--sage);text-decoration:underline;white-space:nowrap">Más información</a>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap">
+      <button onclick="rechazarCookies()" style="background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.65);padding:9px 18px;border-radius:30px;font-family:'Jost',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
+        Solo esenciales
+      </button>
+      <button onclick="aceptarCookies()" style="background:var(--sage);border:none;color:#fff;padding:9px 22px;border-radius:30px;font-family:'Jost',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--forest)'" onmouseout="this.style.background='var(--sage)'">
+        <i class="fa-solid fa-check"></i> Aceptar todo
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Cookies consent ──
+  function mostrarBannerCookies() {
+    const consent = localStorage.getItem('sanagua_cookies');
+    if (!consent) {
+      setTimeout(() => {
+        const b = document.getElementById('cookie-banner');
+        if (b) b.style.display = 'block';
+      }, 1500);
+    }
+  }
+  function aceptarCookies() {
+    localStorage.setItem('sanagua_cookies', 'all');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+  function rechazarCookies() {
+    localStorage.setItem('sanagua_cookies', 'essential');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+  mostrarBannerCookies();
 </script>
 
 </body></html>

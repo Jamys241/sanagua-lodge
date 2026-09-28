@@ -34,23 +34,23 @@
   <!-- Galería masonry principal -->
   <div class="gallery-masonry">
     <div class="gm-1" style="border-radius:var(--r) 0 0 0;overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada1.jpg" alt="Cascada principal"
+      <img class="gallery-img" id="gal-wf-1" src="../../images/experiences/waterfalls/cascada1.jpg" alt="Cascada principal"
         onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:var(--r) 0 0 0\'>💧</div>'">
     </div>
     <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada2.jpg" alt="Cascada"
+      <img class="gallery-img" id="gal-wf-2" src="../../images/experiences/waterfalls/cascada2.jpg" alt="Cascada"
         onerror="this.outerHTML='<div class=\'gallery-ph\'>🌊</div>'">
     </div>
     <div style="overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada3.jpg" alt="Poza natural"
+      <img class="gallery-img" id="gal-wf-3" src="../../images/experiences/waterfalls/cascada3.jpg" alt="Poza natural"
         onerror="this.outerHTML='<div class=\'gallery-ph\'>🌿</div>'">
     </div>
     <div style="border-radius:0 0 0 var(--r);overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada4.jpg" alt="Vista"
+      <img class="gallery-img" id="gal-wf-4" src="../../images/experiences/waterfalls/cascada4.jpg" alt="Vista"
         onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 0 0 var(--r)\'>🦋</div>'">
     </div>
     <div style="border-radius:0 0 var(--r) 0;overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada5.jpg" alt="Sendero"
+      <img class="gallery-img" id="gal-wf-5" src="../../images/experiences/waterfalls/cascada5.jpg" alt="Sendero"
         onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 0 var(--r) 0\'>🐦</div>'">
     </div>
   </div>
@@ -93,15 +93,15 @@
   <!-- Segunda galería -->
   <div class="gallery-row">
     <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada6.jpg" alt="Cascada"
+      <img class="gallery-img" id="gal-wf-6" src="../../images/experiences/waterfalls/cascada6.jpg" alt="Cascada"
         onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:var(--r) 0 0 var(--r)\'>💦</div>'">
     </div>
     <div style="overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada7.jpg" alt="Naturaleza"
+      <img class="gallery-img" id="gal-wf-7" src="../../images/experiences/waterfalls/cascada7.jpg" alt="Naturaleza"
         onerror="this.outerHTML='<div class=\'gallery-ph\'>🌺</div>'">
     </div>
     <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
-      <img class="gallery-img" src="../../images/experiences/waterfalls/cascada8.jpg" alt="Poza"
+      <img class="gallery-img" id="gal-wf-8" src="../../images/experiences/waterfalls/cascada8.jpg" alt="Poza"
         onerror="this.outerHTML='<div class=\'gallery-ph\' style=\'border-radius:0 var(--r) var(--r) 0\'>🌈</div>'">
     </div>
   </div>
@@ -110,6 +110,9 @@
 </div>
 
 <script>
+  const SUPABASE_URL_EXP      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_EXP = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_EXP, SUPABASE_ANON_KEY_EXP);
   // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
   try {
     const _bc = new BroadcastChannel('sanagua_refresh');
@@ -119,6 +122,21 @@
       }
     };
   } catch {}
+
+  async function cargarImagenesSitio() {
+    try {
+      const keys = Array.from({length:8}, (_,i) => `img_waterfalls_${i+1}`);
+      const { data } = await supaPrecios.from('company_settings').select('key,value').in('key', keys);
+      (data || []).forEach(row => {
+        if (!row.value) return;
+        const num = row.key.replace('img_waterfalls_','');
+        const el = document.getElementById(`gal-wf-${num}`);
+        if (el) { el.src = row.value; el.style.visibility='visible'; }
+      });
+    } catch(e) {}
+  }
+
+  cargarImagenesSitio();
 </script>
 </body>
 </html>

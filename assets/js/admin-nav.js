@@ -75,6 +75,7 @@
         </button>
         <div class="menu-group-items" id="grp-sistema">
           <button onclick="irA('usuarios.html')"><i class="fa-solid fa-users"></i> Usuarios</button>
+          <button onclick="irA('editor-sitio.html')"><i class="fa-solid fa-pen-ruler"></i> Editor del sitio</button>
           <button onclick="irA('configuracion.html')"><i class="fa-solid fa-gear"></i> Configuración</button>
         </div>
 

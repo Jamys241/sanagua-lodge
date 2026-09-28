@@ -35,23 +35,23 @@
   <!-- Galería principal -->
   <div class="fogata-gallery">
     <div class="fg-tall" style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
-      <img class="fogata-img" src="../../images/experiences/fogata/fogata1.jpg" alt="Fogata"
+      <img class="fogata-img" id="gal-fg-1" src="../../images/experiences/fogata/fogata1.jpg" alt="Fogata"
         onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:var(--r) 0 0 var(--r)\'>🔥</div>'">
     </div>
     <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
-      <img class="fogata-img" src="../../images/experiences/fogata/fogata2.jpg" alt="Malvas"
+      <img class="fogata-img" id="gal-fg-2" src="../../images/experiences/fogata/fogata2.jpg" alt="Malvas"
         onerror="this.outerHTML='<div class=\'fogata-ph\'>🍡</div>'">
     </div>
     <div style="border-radius:0 0 var(--r) 0;overflow:hidden">
-      <img class="fogata-img" src="../../images/experiences/fogata/fogata3.jpg" alt="Noche"
+      <img class="fogata-img" id="gal-fg-3" src="../../images/experiences/fogata/fogata3.jpg" alt="Noche"
         onerror="this.outerHTML='<div class=\'fogata-ph\'>⭐</div>'">
     </div>
     <div style="border-radius:0 0 0 0;overflow:hidden">
-      <img class="fogata-img" src="../../images/experiences/fogata/fogata4.jpg" alt="Grupo"
+      <img class="fogata-img" id="gal-fg-4" src="../../images/experiences/fogata/fogata4.jpg" alt="Grupo"
         onerror="this.outerHTML='<div class=\'fogata-ph\'>👥</div>'">
     </div>
     <div style="border-radius:0 var(--r) 0 0;overflow:hidden">
-      <img class="fogata-img" src="../../images/experiences/fogata/fogata5.jpg" alt="Ambiente"
+      <img class="fogata-img" id="gal-fg-5" src="../../images/experiences/fogata/fogata5.jpg" alt="Ambiente"
         onerror="this.outerHTML='<div class=\'fogata-ph\'>🌙</div>'">
     </div>
   </div>
@@ -119,15 +119,15 @@
   <!-- Segunda galería -->
   <div class="gallery-3">
     <div style="border-radius:var(--r) 0 0 var(--r);overflow:hidden">
-      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata6.jpg" alt="Fogata"
+      <img style="width:100%;height:100%;object-fit:cover" id="gal-fg-6" src="../../images/experiences/fogata/fogata6.jpg" alt="Fogata"
         onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:var(--r) 0 0 var(--r);height:220px\'>🔥</div>'">
     </div>
     <div style="overflow:hidden">
-      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata7.jpg" alt="Noche"
+      <img style="width:100%;height:100%;object-fit:cover" id="gal-fg-7" src="../../images/experiences/fogata/fogata7.jpg" alt="Noche"
         onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'height:220px\'>🌌</div>'">
     </div>
     <div style="border-radius:0 var(--r) var(--r) 0;overflow:hidden">
-      <img style="width:100%;height:100%;object-fit:cover" src="../../images/experiences/fogata/fogata8.jpg" alt="Grupo"
+      <img style="width:100%;height:100%;object-fit:cover" id="gal-fg-8" src="../../images/experiences/fogata/fogata8.jpg" alt="Grupo"
         onerror="this.outerHTML='<div class=\'fogata-ph\' style=\'border-radius:0 var(--r) var(--r) 0;height:220px\'>🎶</div>'">
     </div>
   </div>
@@ -144,6 +144,9 @@
 </div>
 
 <script>
+  const SUPABASE_URL_EXP      = 'https://cjgdlskybcaacbpnncuw.supabase.co';
+  const SUPABASE_ANON_KEY_EXP = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZ2Rsc2t5YmNhYWNicG5uY3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTAwNjMsImV4cCI6MjEwMDM4NjA2M30.6UVRJBUxmLBo1ffTd7tZtfLald6Sm0qTmWi5Tx4HH98';
+  const supaPrecios = window.supabase.createClient(SUPABASE_URL_EXP, SUPABASE_ANON_KEY_EXP);
   // BroadcastChannel — recibe señal de refresco desde el sistema de cotizaciones
   try {
     const _bc = new BroadcastChannel('sanagua_refresh');
@@ -153,6 +156,21 @@
       }
     };
   } catch {}
+
+  async function cargarImagenesSitio() {
+    try {
+      const keys = Array.from({length:8}, (_,i) => `img_fogata_${i+1}`);
+      const { data } = await supaPrecios.from('company_settings').select('key,value').in('key', keys);
+      (data || []).forEach(row => {
+        if (!row.value) return;
+        const num = row.key.replace('img_fogata_','');
+        const el = document.getElementById(`gal-fg-${num}`);
+        if (el) { el.src = row.value; el.style.visibility='visible'; }
+      });
+    } catch(e) {}
+  }
+
+  cargarImagenesSitio();
 </script>
 </body>
 </html>
