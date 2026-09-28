@@ -21,6 +21,7 @@
   --gold:         #b45309;
   --gold-light:   #fef9ec;
   --radius:       14px;
+  --font-num:     'Playfair Display', 'Cormorant Garamond', serif;
   --radius-sm:    8px;
   --shadow:       0 2px 12px rgba(26,34,38,.07);
   --shadow-md:    0 6px 24px rgba(26,34,38,.1);
@@ -827,7 +828,7 @@ label {
   color: var(--accent); font-size: 1.1rem;
 }
 .dash-stat-num {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-num);
   font-size: 2.2rem; font-weight: 300;
   color: var(--ink); line-height: 1;
 }

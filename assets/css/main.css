@@ -24,6 +24,7 @@
   /* Tipografía */
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-sans:  'Jost', system-ui, sans-serif;
+  --font-num:   'Playfair Display', 'Cormorant Garamond', Georgia, serif;
 
   /* Espaciado */
   --section-v: 96px;
@@ -291,7 +292,7 @@ header.scrolled {
   border-top: 1px solid rgba(255,255,255,.1);
 }
 .hero-stat-num {
-  font-family: var(--font-serif);
+  font-family: var(--font-num);
   font-size: 2rem; font-weight: 300;
   color: var(--sand); line-height: 1;
 }
@@ -406,7 +407,7 @@ header.scrolled {
 .srv-card-precio-wrap { display: flex; flex-direction: column; }
 .srv-card-desde { font-size: .66rem; color: #aab; text-transform: uppercase; letter-spacing: .08em; }
 .srv-card-precio {
-  font-family: var(--font-serif);
+  font-family: var(--font-num);
   font-size: 1.55rem; font-weight: 600; color: var(--moss);
   line-height: 1;
 }
@@ -554,7 +555,7 @@ header.scrolled {
 }
 .stat-item { border-top: 1px solid rgba(255,255,255,.15); padding-top: 16px; }
 .stat-num {
-  font-family: var(--font-serif);
+  font-family: var(--font-num);
   font-size: 2.2rem; font-weight: 300; color: var(--sand);
 }
 .stat-label { font-size: .7rem; color: var(--mist); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
@@ -807,7 +808,7 @@ footer {
   background: linear-gradient(135deg, var(--moss), var(--water));
   border-radius: 14px; padding: 24px; text-align: center; margin-bottom: 16px;
 }
-.puntos-num { font-family: var(--font-serif); font-size: 3rem; color: var(--gold); font-weight: 300; }
+.puntos-num { font-family: var(--font-num); font-size: 3rem; color: var(--gold); font-weight: 300; }
 .puntos-label { font-size: .78rem; color: rgba(255,255,255,.7); margin-top: 4px; }
 .puntos-beneficio {
   display: flex; align-items: center; gap: 10px;
@@ -843,4 +844,17 @@ footer {
 }
 .hero-v2-right {
   background: linear-gradient(160deg, #1a3040 0%, #2d5a70 50%, #3d7a8a 100%);
+}
+
+/* ── Tipografía de números — Playfair Display ── */
+.hero-stat-num,
+.stat-num,
+.puntos-num,
+.srv-card-precio,
+.reserva-monto,
+.dash-stat-num,
+.puntos-num {
+  font-family: var(--font-num) !important;
+  font-feature-settings: "onum" 1, "tnum" 1; /* old-style figures + tabular */
+  font-variant-numeric: oldstyle-nums tabular-nums;
 }
