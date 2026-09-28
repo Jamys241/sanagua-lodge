@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8"/>
   <link rel="icon" type="image/png" href="assets/images/icon/icon.PNG">
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>Sanagua Lodge — Naturaleza, descanso y aventura</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════ HEADER -->
-<header>
-  <a class="header-logo" href="#">
+<!-- ══ SUSCRIP BANNER ══ -->
+<div id="suscrip-banner" style="display:none">
+  <i class="fa-solid fa-hourglass-half"></i> El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header id="main-header">
+  <a class="header-logo" href="#inicio">
     <div class="logo-mark" id="header-logo-mark"><i class="fa-solid fa-leaf"></i></div>
-    <div class="logo-text">
+    <div>
       <span class="logo-name">Sanagua Lodge</span>
       <span class="logo-tagline">Naturaleza · Descanso · Aventura</span>
     </div>
@@ -28,119 +32,103 @@
     <a href="assets/pages/pasadia.html" class="nav-link-d">Pasadías</a>
     <a href="assets/pages/camping.html" class="nav-link-d">Camping</a>
     <a href="assets/pages/cabanas.html" class="nav-link-d">Cabañas</a>
-    <a href="#contacto" class="nav-link-d">Contacto</a>
+    <a href="#sobre" class="nav-link-d">Nosotros</a>
+    <a href="#footer" class="nav-link-d">Contacto</a>
   </nav>
 
   <div class="header-right">
     <button class="btn-login" onclick="openAuth('login')" id="btn-login-header">Iniciar sesión</button>
-    <button class="btn-register" onclick="openAuth('register')" style="display:none" id="btn-register-header">Reservar</button>
+    <button class="btn-register" onclick="openAuth('register')" id="btn-register-header" style="display:none">Reservar</button>
     <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
   </div>
 </header>
 
-<!-- Cintillo de cuenta atrás de bloqueo -->
-<div id="suscrip-banner" style="display:none;background:#7a1f1f;color:#fff;padding:8px 16px;
-  text-align:center;font-size:.8rem;font-weight:700;letter-spacing:.02em">
-  <i class="fa-solid fa-hourglass-half"></i> El sistema se desactivará en: <span id="suscrip-countdown" style="font-weight:800"></span>
-</div>
-
-<!-- ══════════════════════════════════════════════ MENÚ LATERAL -->
+<!-- ══ MENÚ LATERAL ══ -->
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 <nav class="nav-drawer" id="nav-drawer">
-
-  <!-- Si el usuario está logueado -->
-  <div id="nav-user-section" style="display:none; padding:16px 20px 0;">
+  <div id="nav-user-section" style="display:none; padding:16px 18px 0;">
     <div class="nav-user-card">
-      <div class="nav-user-name" id="nav-user-name">Juan Pérez</div>
-      <div class="nav-user-pts" id="nav-user-pts"><i class="fa-solid fa-star"></i> 240 puntos de fidelidad</div>
+      <div class="nav-user-name" id="nav-user-name">—</div>
+      <div class="nav-user-pts" id="nav-user-pts"><i class="fa-solid fa-star"></i> 0 puntos</div>
     </div>
   </div>
-
   <div class="nav-section-label">Servicios</div>
   <a class="nav-item" href="assets/pages/pasadia.html"><span class="nav-icon"><i class="fa-solid fa-sun"></i></span> Pasadías</a>
   <a class="nav-item" href="assets/pages/camping.html"><span class="nav-icon"><i class="fa-solid fa-campground"></i></span> Camping</a>
   <a class="nav-item" href="assets/pages/cabanas.html"><span class="nav-icon"><i class="fa-solid fa-house"></i></span> Cabañas</a>
   <a class="nav-item" href="assets/pages/restaurante.html"><span class="nav-icon"><i class="fa-solid fa-utensils"></i></span> Restaurante</a>
-
   <div class="nav-divider"></div>
-
   <div class="nav-section-label">Explorar</div>
   <a class="nav-item" href="#sobre" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-leaf"></i></span> Sobre Sanagua</a>
   <a class="nav-item" href="#experiencias" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-camera"></i></span> Experiencias</a>
   <a class="nav-item" href="#footer" onclick="closeNav()"><span class="nav-icon"><i class="fa-solid fa-location-dot"></i></span> Contacto</a>
-
-  <!-- Solo si está logueado -->
   <div id="nav-user-menu" style="display:none;">
     <div class="nav-divider"></div>
     <div class="nav-section-label">Mi cuenta</div>
     <a class="nav-item" href="assets/pages/perfil.html"><span class="nav-icon"><i class="fa-solid fa-user"></i></span> Mi perfil y reservas</a>
     <button class="nav-item" onclick="cerrarSesionPublic();closeNav()" style="color:#e88;"><span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span> Cerrar sesión</button>
   </div>
-
   <div class="nav-divider"></div>
-  <div style="padding: 12px 28px 20px; display:flex; flex-direction:column; gap:8px;" id="nav-auth-btns">
+  <div style="padding:12px 18px 20px; display:flex; flex-direction:column; gap:8px;" id="nav-auth-btns">
     <button class="btn-register" onclick="openAuth('register');closeNav()" style="width:100%;padding:11px;">Hacer una reserva</button>
     <button class="btn-login" onclick="openAuth('login');closeNav()" style="display:block;width:100%;padding:11px;text-align:center;">Iniciar sesión</button>
   </div>
 </nav>
 
-<!-- ══════════════════════════════════════════════ HERO -->
+<!-- ══ HERO DIVIDIDO ══ -->
 <section class="hero-v2" id="inicio">
-
-  <!-- Lado izquierdo: texto -->
   <div class="hero-v2-left">
-    <div class="hero-v2-badge">
-      <i class="fa-solid fa-leaf"></i>
-      Panamá · Naturaleza auténtica
+    <div class="hero-badge">
+      <i class="fa-solid fa-map-pin"></i>
+      Coclé, Panamá
     </div>
-    <h1 class="hero-v2-title">
+    <h1 class="hero-title">
       Donde la selva<br>
       se convierte en<br>
       <em>tu hogar</em>
     </h1>
-    <p class="hero-v2-sub">
-      Escápate al corazón de la naturaleza panameña. Pasadías, glamping, cabañas privadas y gastronomía local en un solo lugar.
+    <p class="hero-sub">
+      Un refugio natural en el corazón de Panamá. Pasadías, glamping, cabañas privadas y gastronomía local — todo rodeado de biodiversidad auténtica.
     </p>
     <div class="hero-cta">
-      <a href="#servicios" class="cta-primary">Ver servicios</a>
-      <a href="#" onclick="openAuth('register')" class="cta-secondary">Reservar ahora</a>
+      <a href="#servicios" class="cta-primary">
+        <i class="fa-solid fa-compass"></i> Explorar servicios
+      </a>
+      <a href="#" onclick="openAuth('register')" class="cta-secondary">
+        Reservar ahora
+      </a>
     </div>
-    <div class="hero-v2-stats">
+    <div class="hero-stats">
       <div>
-        <div class="hero-v2-stat-num">3</div>
-        <div class="hero-v2-stat-lbl">Cabañas privadas</div>
+        <div class="hero-stat-num">3</div>
+        <div class="hero-stat-lbl">Cabañas privadas</div>
       </div>
       <div>
-        <div class="hero-v2-stat-num">8am</div>
-        <div class="hero-v2-stat-lbl">Apertura diaria</div>
+        <div class="hero-stat-num">+50</div>
+        <div class="hero-stat-lbl">Especies de aves</div>
       </div>
       <div>
-        <div class="hero-v2-stat-num">100%</div>
-        <div class="hero-v2-stat-lbl">Naturaleza real</div>
+        <div class="hero-stat-num">365</div>
+        <div class="hero-stat-lbl">Días al año</div>
       </div>
     </div>
   </div>
-
-  <!-- Lado derecho: imagen -->
   <div class="hero-v2-right">
-    <img class="hero-v2-img" src="assets/images/hero-lodge.jpg"
-      onerror="this.style.background='linear-gradient(135deg,#3a5460,#7fa0ac)'"
-      alt="Sanagua Lodge — naturaleza panameña">
+    <img class="hero-v2-img"
+      src="assets/images/hero-lodge.jpg"
+      onerror="this.style.background='linear-gradient(160deg,#2a4450 0%,#3a6070 40%,#5f8a98 100%)';this.style.display='block'"
+      alt="Vista aérea de Sanagua Lodge">
   </div>
-
 </section>
 
-<!-- ══════════════════════════════════════════════ SERVICIOS -->
-<section id="servicios">
-
-<!-- Banner Pet-Friendly -->
+<!-- ══ PET FRIENDLY BANNER ══ -->
 <div class="pet-banner">
   <div class="pet-inner">
     <div class="pet-row1">
       <div class="pet-badge">
-        <span class="pet-badge-icon">🐾</span>
+        <i class="fa-solid fa-paw" style="color:#fff;font-size:.9rem"></i>
         <span class="pet-badge-txt">Pet Friendly</span>
       </div>
       <div class="pet-divider"></div>
@@ -149,133 +137,145 @@
     <div class="pet-sub">Espacios verdes, senderos naturales y aire puro para disfrutar en familia — con o sin cuatro patas.</div>
     <div class="pet-chips">
       <span class="pet-chip"><i class="fa-solid fa-leaf"></i> Áreas al aire libre</span>
-      <span class="pet-chip">🦮 Mascotas permitidas</span>
-      <span class="pet-chip">🏕️ Naturaleza sin límites</span>
+      <span class="pet-chip"><i class="fa-solid fa-dog"></i> Mascotas permitidas</span>
+      <span class="pet-chip"><i class="fa-solid fa-campground"></i> Naturaleza sin límites</span>
     </div>
   </div>
 </div>
-  <div class="section">
-    <div class="section-label">Lo que ofrecemos</div>
-    <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
 
-    <div class="services-cards-grid">
+<!-- ══ SERVICIOS ══ -->
+<section class="services-section" id="servicios">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">Lo que ofrecemos</div>
+      <h2 class="section-title">Una experiencia para <em>cada momento</em></h2>
+      <p class="section-sub">Desde una escapada de día hasta noches bajo las estrellas — diseñamos cada servicio para conectarte con la naturaleza panameña.</p>
+    </div>
 
+    <div class="srv-grid">
+
+      <!-- Cabañas — card ancha destacada -->
+      <a class="srv-card srv-card-wide" id="card-cabanas" href="assets/pages/cabanas.html">
+        <div class="srv-card-img" style="background:linear-gradient(135deg,#2e4d57,#5f8a98)">
+          <i class="fa-solid fa-house-chimney-window srv-card-icon" style="font-size:5rem"></i>
+          <span class="srv-card-tag">Alojamiento exclusivo</span>
+        </div>
+        <div class="srv-card-body">
+          <h3 class="srv-card-title">Cabañas privadas</h3>
+          <p class="srv-card-desc">Tres cabañas únicas en la naturaleza — Yaguarundí, Ocelot y Motmot. Cada una con su propio carácter, vistas y comodidades. La experiencia más íntima y exclusiva del lodge.</p>
+          <div class="srv-card-footer">
+            <div class="srv-card-precio-wrap">
+              <span class="srv-card-desde">Desde</span>
+              <span class="srv-card-precio">$200 / noche</span>
+            </div>
+            <span class="srv-card-btn">Ver cabañas <i class="fa-solid fa-arrow-right"></i></span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Pasadías -->
       <a class="srv-card" id="card-pasadia" href="assets/pages/pasadia.html">
         <div class="srv-card-img" style="background:linear-gradient(135deg,#4f7a8a,#7fa0ac)">
-          <i class="fa-solid fa-sun" style="position:relative;z-index:1"></i>
+          <i class="fa-solid fa-sun srv-card-icon"></i>
           <span class="srv-card-tag">Día completo</span>
         </div>
         <div class="srv-card-body">
           <h3 class="srv-card-title">Pasadías</h3>
-          <p class="srv-card-desc">Piscinas naturales, senderos y gastronomía local. Disfruta de 8am a 6pm rodeado de naturaleza panameña.</p>
+          <p class="srv-card-desc">Piscinas naturales, senderos y gastronomía local. De 8am a 6pm rodeado de naturaleza panameña — el descanso que mereces.</p>
           <div class="srv-card-footer">
-            <div>
-              <div class="srv-card-desde">Desde</div>
-              <div class="srv-card-precio">$25</div>
+            <div class="srv-card-precio-wrap">
+              <span class="srv-card-desde">Desde</span>
+              <span class="srv-card-precio">$25</span>
             </div>
-            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver opciones</span>
+            <span class="srv-card-btn">Ver opciones <i class="fa-solid fa-arrow-right"></i></span>
           </div>
         </div>
       </a>
 
+      <!-- Camping -->
       <a class="srv-card" id="card-camping" href="assets/pages/camping.html">
         <div class="srv-card-img" style="background:linear-gradient(135deg,#3a5460,#566d75)">
-          <i class="fa-solid fa-campground" style="position:relative;z-index:1"></i>
+          <i class="fa-solid fa-campground srv-card-icon"></i>
           <span class="srv-card-tag">Noche en la selva</span>
         </div>
         <div class="srv-card-body">
           <h3 class="srv-card-title">Camping</h3>
-          <p class="srv-card-desc">Duerme bajo las estrellas. Trae tu equipo o alquila nuestro kit completo para la experiencia más auténtica.</p>
+          <p class="srv-card-desc">Duerme bajo las estrellas. Trae tu equipo o alquila nuestro kit completo. La experiencia más auténtica en contacto con la selva panameña.</p>
           <div class="srv-card-footer">
-            <div>
-              <div class="srv-card-desde">Desde</div>
-              <div class="srv-card-precio">$15</div>
+            <div class="srv-card-precio-wrap">
+              <span class="srv-card-desde">Desde</span>
+              <span class="srv-card-precio">$15</span>
             </div>
-            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver opciones</span>
-          </div>
-        </div>
-      </a>
-
-      <a class="srv-card" id="card-cabanas" href="assets/pages/cabanas.html">
-        <div class="srv-card-img" style="background:linear-gradient(135deg,#5f7881,#8fabb5)">
-          <i class="fa-solid fa-house-tree" style="position:relative;z-index:1"></i>
-          <span class="srv-card-tag">Alojamiento privado</span>
-        </div>
-        <div class="srv-card-body">
-          <h3 class="srv-card-title">Cabañas</h3>
-          <p class="srv-card-desc">Tres cabañas únicas — Yaguarundí, Ocelot y Motmot — cada una con su propio carácter en la naturaleza.</p>
-          <div class="srv-card-footer">
-            <div>
-              <div class="srv-card-desde">Desde</div>
-              <div class="srv-card-precio">$200</div>
-            </div>
-            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver cabañas</span>
-          </div>
-        </div>
-      </a>
-
-      <a class="srv-card" id="card-restaurante" href="assets/pages/restaurante.html">
-        <div class="srv-card-img" style="background:linear-gradient(135deg,#7d6a5c,#c3c3b8)">
-          <i class="fa-solid fa-utensils" style="position:relative;z-index:1"></i>
-          <span class="srv-card-tag">Gastronomía local</span>
-        </div>
-        <div class="srv-card-body">
-          <h3 class="srv-card-title">Restaurante</h3>
-          <p class="srv-card-desc">Sabores panameños auténticos con ingredientes frescos y de temporada. Desayunos, almuerzos y cenas.</p>
-          <div class="srv-card-footer">
-            <div></div>
-            <span class="srv-card-btn"><i class="fa-solid fa-arrow-right"></i> Ver menú</span>
+            <span class="srv-card-btn">Ver opciones <i class="fa-solid fa-arrow-right"></i></span>
           </div>
         </div>
       </a>
 
     </div>
+
+    <!-- Restaurante - fila separada más compacta -->
+    <a class="srv-card" id="card-restaurante" href="assets/pages/restaurante.html" style="margin-top:24px;flex-direction:row;max-height:140px">
+      <div class="srv-card-img" style="background:linear-gradient(135deg,#7d6a5c,#a08878);width:200px;min-width:200px;height:auto">
+        <i class="fa-solid fa-utensils srv-card-icon" style="font-size:2.5rem"></i>
+        <span class="srv-card-tag">Gastronomía local</span>
+      </div>
+      <div class="srv-card-body" style="flex-direction:row;align-items:center;padding:20px 28px;gap:28px">
+        <div style="flex:1">
+          <h3 class="srv-card-title" style="font-size:1.3rem;margin-bottom:6px">Restaurante</h3>
+          <p class="srv-card-desc" style="margin-bottom:0">Sabores panameños auténticos con ingredientes frescos. Desayunos, almuerzos y cenas preparados con amor.</p>
+        </div>
+        <span class="srv-card-btn" style="flex-shrink:0">Ver menú <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════ POR QUÉ ELEGIRNOS -->
+<!-- ══ POR QUÉ ELEGIRNOS ══ -->
 <section class="why-section">
-  <div class="why-inner">
-    <div class="why-img-wrap">
-      <img src="assets/images/naturaleza-lodge.jpg"
-        onerror="this.style.display='none'"
-        alt="Naturaleza en Sanagua Lodge">
-      <div class="why-pills">
-        <div class="why-pill"><i class="fa-solid fa-leaf"></i> Pet Friendly</div>
-        <div class="why-pill"><i class="fa-solid fa-wifi"></i> WiFi incluido</div>
-        <div class="why-pill"><i class="fa-solid fa-star"></i> Naturaleza real</div>
+  <div class="container">
+    <div class="why-inner">
+      <div class="why-img-wrap">
+        <img src="assets/images/naturaleza-lodge.jpg"
+          onerror="this.style.display='none'"
+          alt="Naturaleza en Sanagua Lodge">
+        <div class="why-pills">
+          <div class="why-pill"><i class="fa-solid fa-paw"></i> Pet Friendly</div>
+          <div class="why-pill"><i class="fa-solid fa-leaf"></i> Ecológico</div>
+          <div class="why-pill"><i class="fa-solid fa-star"></i> Experiencia única</div>
+        </div>
       </div>
-    </div>
-    <div>
-      <div class="section-label">Por qué elegirnos</div>
-      <h2 class="section-title">Más que un lugar —<br><em>una experiencia</em></h2>
-      <div class="why-features">
-        <div class="why-feat">
-          <div class="why-feat-icon"><i class="fa-solid fa-tree"></i></div>
-          <div>
-            <div class="why-feat-title">Naturaleza sin filtro</div>
-            <div class="why-feat-desc">Acceso directo a bosques, ríos y senderos. Sin pantallas, sin ruido — solo lo que la naturaleza tiene para ofrecerte.</div>
+      <div>
+        <div class="section-eyebrow">Por qué elegirnos</div>
+        <h2 class="section-title">Más que un lugar,<br><em>una experiencia</em></h2>
+        <div class="why-features">
+          <div class="why-feat">
+            <div class="why-feat-icon"><i class="fa-solid fa-tree"></i></div>
+            <div>
+              <div class="why-feat-title">Naturaleza sin filtro</div>
+              <div class="why-feat-desc">Acceso directo a bosques, ríos y senderos. Sin pantallas, sin ruido — solo lo que la naturaleza tiene para ofrecerte.</div>
+            </div>
           </div>
-        </div>
-        <div class="why-feat">
-          <div class="why-feat-icon"><i class="fa-solid fa-utensils"></i></div>
-          <div>
-            <div class="why-feat-title">Gastronomía local</div>
-            <div class="why-feat-desc">Cocinamos con ingredientes panameños frescos y de temporada. Cada plato cuenta una historia del territorio.</div>
+          <div class="why-feat">
+            <div class="why-feat-icon"><i class="fa-solid fa-utensils"></i></div>
+            <div>
+              <div class="why-feat-title">Gastronomía local</div>
+              <div class="why-feat-desc">Ingredientes panameños frescos y de temporada. Cada plato cuenta una historia del territorio.</div>
+            </div>
           </div>
-        </div>
-        <div class="why-feat">
-          <div class="why-feat-icon"><i class="fa-solid fa-paw"></i></div>
-          <div>
-            <div class="why-feat-title">Pet Friendly de verdad</div>
-            <div class="why-feat-desc">Tus mascotas son parte de la familia. Espacios abiertos y senderos donde todos pueden explorar juntos.</div>
+          <div class="why-feat">
+            <div class="why-feat-icon"><i class="fa-solid fa-paw"></i></div>
+            <div>
+              <div class="why-feat-title">Pet Friendly de verdad</div>
+              <div class="why-feat-desc">Tus mascotas son parte de la familia. Espacios abiertos donde todos pueden explorar juntos.</div>
+            </div>
           </div>
-        </div>
-        <div class="why-feat">
-          <div class="why-feat-icon"><i class="fa-solid fa-shield-heart"></i></div>
-          <div>
-            <div class="why-feat-title">Seguridad y atención</div>
-            <div class="why-feat-desc">Equipo presente, instalaciones cuidadas y respuesta inmediata para que tu visita sea perfecta.</div>
+          <div class="why-feat">
+            <div class="why-feat-icon"><i class="fa-solid fa-shield-heart"></i></div>
+            <div>
+              <div class="why-feat-title">Seguridad y atención</div>
+              <div class="why-feat-desc">Equipo siempre presente, instalaciones cuidadas y respuesta inmediata para que tu visita sea perfecta.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -283,70 +283,70 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════ SOBRE EL PROYECTO -->
+<!-- ══ SOBRE EL PROYECTO ══ -->
 <section id="sobre" class="about-section">
-  <div class="about-inner">
-    <div class="about-text">
-      <div class="section-label">Nuestra historia</div>
-      <h2 class="about-title">Un rincón de <em>selva viva</em> en el corazón de Panamá</h2>
-      <p class="about-body">
-        Sanagua Lodge nació de un sueño simple: crear un espacio donde las familias y viajeros pudieran reconectarse con la naturaleza sin renunciar al confort. Ubicado en un entorno privilegiado, rodeado de biodiversidad única, cada rincón del lodge fue diseñado para integrarse armoniosamente con su entorno.
-      </p>
-      <p class="about-body">
-        Llevamos años recibiendo familias, parejas y grupos que buscan una pausa genuina del ritmo urbano. Aquí el tiempo fluye distinto — al ritmo de los pájaros, el agua y el viento entre los árboles.
-      </p>
-
-      <div class="about-stats">
-        <div class="stat-item">
-          <div class="stat-num">3</div>
-          <div class="stat-label">Cabañas únicas</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num">+50</div>
-          <div class="stat-label">Especies de aves</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num">365</div>
-          <div class="stat-label">Días al año</div>
+  <div class="container">
+    <div class="about-inner">
+      <div class="about-text">
+        <div class="section-eyebrow">Nuestra historia</div>
+        <h2 class="about-title">Un rincón de <em>selva viva</em> en el corazón de Panamá</h2>
+        <p class="about-body">
+          Sanagua Lodge nació de un sueño simple: crear un espacio donde las familias y viajeros pudieran reconectarse con la naturaleza sin renunciar al confort. Ubicado en un entorno privilegiado, rodeado de biodiversidad única, cada rincón del lodge fue diseñado para integrarse armoniosamente con su entorno.
+        </p>
+        <p class="about-body">
+          Llevamos años recibiendo familias, parejas y grupos que buscan una pausa genuina del ritmo urbano. Aquí el tiempo fluye distinto — al ritmo de los pájaros, el agua y el viento entre los árboles.
+        </p>
+        <div class="about-stats">
+          <div class="stat-item">
+            <div class="stat-num">3</div>
+            <div class="stat-label">Cabañas únicas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">+50</div>
+            <div class="stat-label">Especies de aves</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">365</div>
+            <div class="stat-label">Días al año</div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="about-visual">
-      <div class="about-card">
-        <div class="about-feature">
-          <div class="feat-icon">🦋</div>
-          <div class="feat-text">
-            <div class="feat-title">Biodiversidad excepcional</div>
-            <div class="feat-desc">Más de 50 especies de aves y fauna local que conviven con los huéspedes</div>
+      <div class="about-visual">
+        <div class="about-card">
+          <div class="about-feature">
+            <div class="feat-icon"><i class="fa-solid fa-feather"></i></div>
+            <div class="feat-text">
+              <div class="feat-title">Biodiversidad excepcional</div>
+              <div class="feat-desc">Más de 50 especies de aves y fauna local que conviven con los huéspedes</div>
+            </div>
           </div>
-        </div>
-        <div class="about-feature">
-          <div class="feat-icon">💧</div>
-          <div class="feat-text">
-            <div class="feat-title">Aguas naturales</div>
-            <div class="feat-desc">Ríos y piscinas naturales de agua fresca en medio del paisaje verde</div>
+          <div class="about-feature">
+            <div class="feat-icon"><i class="fa-solid fa-water"></i></div>
+            <div class="feat-text">
+              <div class="feat-title">Aguas naturales</div>
+              <div class="feat-desc">Ríos y piscinas de agua fresca en medio del paisaje verde</div>
+            </div>
           </div>
-        </div>
-        <div class="about-feature">
-          <div class="feat-icon"><i class="fa-solid fa-moon"></i></div>
-          <div class="feat-text">
-            <div class="feat-title">Noches estrelladas</div>
-            <div class="feat-desc">Lejos de la contaminación lumínica, el cielo nocturno es espectacular</div>
+          <div class="about-feature">
+            <div class="feat-icon"><i class="fa-solid fa-moon"></i></div>
+            <div class="feat-text">
+              <div class="feat-title">Noches estrelladas</div>
+              <div class="feat-desc">Lejos de la contaminación lumínica, el cielo nocturno es espectacular</div>
+            </div>
           </div>
-        </div>
-        <div class="about-feature">
-          <div class="feat-icon">🍃</div>
-          <div class="feat-text">
-            <div class="feat-title">Turismo responsable</div>
-            <div class="feat-desc">Comprometidos con el equilibrio entre turismo y conservación del entorno</div>
+          <div class="about-feature">
+            <div class="feat-icon"><i class="fa-solid fa-seedling"></i></div>
+            <div class="feat-text">
+              <div class="feat-title">Turismo responsable</div>
+              <div class="feat-desc">Comprometidos con el equilibrio entre turismo y conservación del entorno</div>
+            </div>
           </div>
-        </div>
-        <div class="about-feature">
-          <div class="feat-icon">👨‍👩‍👧‍👦</div>
-          <div class="feat-text">
-            <div class="feat-title">Ideal para familias</div>
-            <div class="feat-desc">Actividades y espacios pensados para todas las edades</div>
+          <div class="about-feature">
+            <div class="feat-icon"><i class="fa-solid fa-people-group"></i></div>
+            <div class="feat-text">
+              <div class="feat-title">Ideal para familias</div>
+              <div class="feat-desc">Actividades y espacios pensados para todas las edades</div>
+            </div>
           </div>
         </div>
       </div>
@@ -354,95 +354,107 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════ EXPERIENCIAS -->
+<!-- ══ EXPERIENCIAS ══ -->
 <section id="experiencias" class="exp-section">
-  <div class="exp-inner">
-    <div class="section-label">Momentos que recordarás</div>
+  <div class="container">
+    <div class="section-eyebrow">Momentos que recordarás</div>
     <h2 class="section-title">Experiencias que <em>conectan</em></h2>
-
     <div class="exp-grid">
-      <a class="exp-card" href="assets/pages/experiences/senderismo.html" style="text-decoration:none;color:inherit;display:block;cursor:pointer">
-        <div class="exp-card-img">🥾</div>
+      <a class="exp-card" href="assets/pages/experiences/senderismo.html">
+        <div class="exp-card-img" style="background:linear-gradient(135deg,#4a6b5a,#6d9478)">
+          <i class="fa-solid fa-hiking" style="font-size:3rem;position:relative;z-index:2;color:rgba(255,255,255,.8)"></i>
+        </div>
         <div class="exp-card-body">
           <div class="exp-card-tag">Aventura</div>
           <div class="exp-card-title">Senderismo</div>
           <p class="exp-card-desc">Explora el Cerro La Pita y el Parque Nacional Omar Torrijos. Senderos para todos los niveles en plena naturaleza panameña.</p>
-          <div style="font-size:.75rem;font-weight:600;color:var(--earth);margin-top:10px;letter-spacing:.06em">Ver más →</div>
+          <div class="exp-card-link">Ver más <i class="fa-solid fa-arrow-right"></i></div>
         </div>
       </a>
-      <a class="exp-card" href="assets/pages/experiences/waterfalls.html" style="text-decoration:none;color:inherit;display:block;cursor:pointer">
-        <div class="exp-card-img">💧</div>
+      <a class="exp-card" href="assets/pages/experiences/waterfalls.html">
+        <div class="exp-card-img" style="background:linear-gradient(135deg,#2d5f6e,#4a8fa0)">
+          <i class="fa-solid fa-water-ladder" style="font-size:3rem;position:relative;z-index:2;color:rgba(255,255,255,.8)"></i>
+        </div>
         <div class="exp-card-body">
           <div class="exp-card-tag">Agua</div>
           <div class="exp-card-title">Cascadas</div>
-          <p class="exp-card-desc">Descubre las cascadas naturales de Coclé. Pozas cristalinas rodeadas de vegetación tropical — una experiencia refrescante e inolvidable.</p>
-          <div style="font-size:.75rem;font-weight:600;color:var(--earth);margin-top:10px;letter-spacing:.06em">Ver más →</div>
+          <p class="exp-card-desc">Descubre las cascadas naturales de Coclé. Pozas cristalinas rodeadas de vegetación tropical — refrescante e inolvidable.</p>
+          <div class="exp-card-link">Ver más <i class="fa-solid fa-arrow-right"></i></div>
         </div>
       </a>
-      <a class="exp-card" href="assets/pages/experiences/fogata.html" style="text-decoration:none;color:inherit;display:block;cursor:pointer">
-        <div class="exp-card-img"><i class="fa-solid fa-fire"></i></div>
+      <a class="exp-card" href="assets/pages/experiences/fogata.html">
+        <div class="exp-card-img" style="background:linear-gradient(135deg,#5a3d2a,#8a6040)">
+          <i class="fa-solid fa-fire" style="font-size:3rem;position:relative;z-index:2;color:rgba(255,255,255,.8)"></i>
+        </div>
         <div class="exp-card-body">
           <div class="exp-card-tag">Noche</div>
           <div class="exp-card-title">Fogata bajo las estrellas</div>
-          <p class="exp-card-desc">Termina el día alrededor de una fogata a las 8 PM. Malvas de cortesía, historias, risas y el sonido de la selva nocturna como banda sonora.</p>
-          <div style="font-size:.75rem;font-weight:600;color:var(--earth);margin-top:10px;letter-spacing:.06em">Ver más →</div>
+          <p class="exp-card-desc">Termina el día alrededor de una fogata a las 8 PM. Malvas de cortesía, historias y el sonido de la selva nocturna.</p>
+          <div class="exp-card-link">Ver más <i class="fa-solid fa-arrow-right"></i></div>
         </div>
       </a>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════ CTA CENTRAL -->
+<!-- ══ CTA CENTRAL ══ -->
 <section class="cta-section">
-  <div class="cta-inner">
-    <h2 class="cta-title">¿Listo para <em>escapar</em>?</h2>
-    <p class="cta-body">Reserva tu estadía y crea recuerdos que durarán toda la vida. Disponibilidad limitada — los mejores fines de semana se agotan rápido.</p>
-    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-      <a href="#" onclick="openAuth('register')" class="cta-primary">Reservar mi lugar</a>
-      <a href="#footer" class="cta-secondary">Contactarnos</a>
+  <div class="container">
+    <div class="cta-inner">
+      <h2 class="cta-title">¿Listo para <em>escapar</em>?</h2>
+      <p class="cta-body">Reserva tu estadía y crea recuerdos que durarán toda la vida. Disponibilidad limitada — los mejores fines de semana se agotan rápido.</p>
+      <div class="cta-btns">
+        <a href="#" onclick="openAuth('register')" class="cta-primary">
+          <i class="fa-solid fa-calendar-check"></i> Reservar mi lugar
+        </a>
+        <a href="#footer" class="cta-secondary">Contactarnos</a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════ FOOTER -->
+<!-- ══ FOOTER ══ -->
 <footer id="footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="footer-logo-text"><i class="fa-solid fa-leaf"></i> Sanagua Lodge</div>
-      <p class="footer-tagline">Un refugio natural en el corazón de Panamá. Donde la selva se convierte en tu hogar.</p>
-      <div class="footer-contact">
-        <a href="https://instagram.com/sanagualodge" target="_blank" class="contact-item">
-          <span class="contact-icon"><i class="fa-solid fa-camera"></i></span> @sanagualodge
-        </a>
-        <a href="tel:+50761660114" class="contact-item">
-          <span class="contact-icon"><i class="fa-solid fa-mobile-screen"></i></span> +507 6166-0114
-        </a>
-        <a href="mailto:sanagualodge@gmail.com" class="contact-item">
-          <span class="contact-icon"><i class="fa-solid fa-envelope"></i></span> sanagualodge@gmail.com
-        </a>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo-text"><i class="fa-solid fa-leaf"></i> Sanagua Lodge</div>
+        <p class="footer-tagline">Un refugio natural en el corazón de Panamá. Donde la selva se convierte en tu hogar.</p>
+        <div class="footer-contact">
+          <a href="https://instagram.com/sanagualodge" target="_blank" class="contact-item">
+            <span class="contact-icon"><i class="fa-brands fa-instagram"></i></span> @sanagualodge
+          </a>
+          <a href="tel:+50761660114" class="contact-item">
+            <span class="contact-icon"><i class="fa-solid fa-phone"></i></span> +507 6166-0114
+          </a>
+          <a href="mailto:sanagualodge@gmail.com" class="contact-item">
+            <span class="contact-icon"><i class="fa-solid fa-envelope"></i></span> sanagualodge@gmail.com
+          </a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Servicios</div>
+        <a href="assets/pages/pasadia.html" class="footer-link">Pasadías</a>
+        <a href="assets/pages/camping.html" class="footer-link">Camping</a>
+        <a href="assets/pages/cabanas.html" class="footer-link">Cabañas</a>
+        <a href="assets/pages/restaurante.html" class="footer-link">Restaurante</a>
+      </div>
+      <div>
+        <div class="footer-col-title">Información</div>
+        <a href="#sobre" class="footer-link">Sobre nosotros</a>
+        <a href="#experiencias" class="footer-link">Experiencias</a>
+        <a href="#" onclick="openAuth('register')" class="footer-link">Hacer reserva</a>
+        <a href="#" onclick="openAuth('login')" class="footer-link">Iniciar sesión</a>
       </div>
     </div>
-
-    <div>
-      <div class="footer-col-title">Servicios</div>
-      <a href="#servicios" class="footer-link">Pasadías</a>
-      <a href="#servicios" class="footer-link">Camping</a>
-      <a href="#servicios" class="footer-link">Cabañas</a>
-      <a href="#servicios" class="footer-link">Restaurante</a>
-    </div>
-
-    <div>
-      <div class="footer-col-title">Información</div>
-      <a href="#sobre" class="footer-link">Sobre nosotros</a>
-      <a href="#experiencias" class="footer-link">Experiencias</a>
-      <a href="#" onclick="openAuth('register')" class="footer-link">Hacer reserva</a>
-      <a href="#" onclick="openAuth('login')" class="footer-link">Iniciar sesión</a>
+    <div class="footer-bottom">
+      <span>© 2025 Sanagua Lodge S.A. · RUC 155761744-2-2025</span>
+      <span>Hecho con <i class="fa-solid fa-leaf"></i> en Panamá</span>
     </div>
   </div>
+</footer>
 
-  <div class="footer-bottom">
-    <span>© 2025 Sanagua Lodge S.A. · RUC 155761744-2-2025</span>
-    <span>Hecho con <i class="fa-solid fa-leaf"></i> en Panamá</span>
+<!-- ══ MODAL AUTH ══ -->
   </div>
 </footer>
 
@@ -1377,4 +1389,4 @@
   setInterval(cargarSuscripcionPub, 60000);
 </script>
 
-</body>
+</body></html>
