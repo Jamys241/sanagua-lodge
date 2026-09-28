@@ -298,7 +298,7 @@
         const compEl     = card.querySelector('.tabla-componentes');
         const precioEl   = card.querySelector('.tabla-precio');
         const btnEl      = card.querySelector('.btn-tabla');
-        if (personasEl && pkg.personas) personasEl.textContent = `<i class="fa-solid fa-users"></i> Ideal para ${pkg.personas}`;
+        if (personasEl && pkg.personas) personasEl.innerHTML = `<i class="fa-solid fa-users"></i> Ideal para ${pkg.personas}`;
         if (descEl && pkg.descripcion) descEl.textContent = pkg.descripcion;
         if (compEl && Array.isArray(pkg.componentes) && pkg.componentes.length) {
           compEl.innerHTML = pkg.componentes.map(c => `<span class="comp-chip">${c}</span>`).join('');

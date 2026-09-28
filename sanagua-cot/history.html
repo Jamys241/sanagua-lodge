@@ -1056,7 +1056,7 @@
     const wrap = document.getElementById('edit-nights-wrap');
     if (!wrap) return;
     const txt = nightsBanner(s, e);
-    if (txt) { wrap.style.display='block'; document.getElementById('edit-nights-label').textContent=txt; }
+    if (txt) { wrap.style.display='block'; document.getElementById('edit-nights-label').innerHTML=txt; }
     else { wrap.style.display='none'; }
   }
 

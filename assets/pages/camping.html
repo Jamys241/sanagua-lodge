@@ -554,7 +554,7 @@
             el.style.position = 'relative';
             const b = document.createElement('div');
             b.className = 'pop-badge';
-            b.textContent = '⭐ Más popular';
+            b.innerHTML = '<i class="fa-solid fa-star"></i> Más popular';
             el.prepend(b);
           }
         });

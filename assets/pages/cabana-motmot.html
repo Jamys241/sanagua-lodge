@@ -338,7 +338,7 @@
       // Descripción e incluye
       if(cabData.descripcion) document.getElementById('cab-desc').textContent=cabData.descripcion;
       if(cabData.incluye?.length) document.getElementById('inc-list').innerHTML=cabData.incluye.map(i=>`<div class="inc-item">${i}</div>`).join('');
-      if(cabData.capacidad) document.getElementById('cap-badge').textContent=`<i class="fa-solid fa-users"></i> Hasta ${cabData.capacidad} personas`;
+      if(cabData.capacidad) document.getElementById('cap-badge').innerHTML = `<i class="fa-solid fa-users"></i> Hasta ${cabData.capacidad} personas`;
     }
     renderCal();
     const m=new Date(); m.setDate(m.getDate()+1);
@@ -404,7 +404,7 @@
       el._timeout = setTimeout(() => { el.className = 'cal-msg'; }, 5000);
     } else {
       el.className = 'cal-msg libre show';
-      el.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">✅</span><span>¡Este día está disponible! Puedes seleccionarlo para tu reserva.</span>';
+      el.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0;color:#2d7a4f"><i class="fa-solid fa-circle-check"></i></span><span>¡Este día está disponible! Puedes seleccionarlo para tu reserva.</span>';
       clearTimeout(el._timeout);
       el._timeout = setTimeout(() => { el.className = 'cal-msg'; }, 3000);
       // Pre-llenar la fecha de entrada en el modal

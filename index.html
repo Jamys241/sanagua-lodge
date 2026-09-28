@@ -1044,7 +1044,7 @@
   function showAuthError(msg) {
     const el = document.getElementById('reg-error-msg');
     if (!el) { alert(msg); return; }
-    el.textContent = '⚠️ ' + msg;
+    el.textContent = msg;
     el.style.display = 'block';
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     clearTimeout(el._t);
@@ -1311,7 +1311,7 @@
       aplicarUsuarioPublico();
 
       msgEl.style.color = '#2d7a4f';
-      msgEl.textContent = '✅ Perfil actualizado correctamente.';
+      msgEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#2d7a4f"></i> Perfil actualizado correctamente.';
       document.getElementById('edit-pass-actual').value = '';
       document.getElementById('edit-pass-nueva').value  = '';
       setTimeout(() => { msgEl.textContent = ''; }, 4000);
@@ -1562,10 +1562,10 @@
         return;
       }
 
-      errEl.textContent = '❌ Código incorrecto.';
+      errEl.textContent = 'Código incorrecto.';
       input.value = '';
     } catch {
-      errEl.textContent = '❌ Error de conexión. Intenta de nuevo.';
+      errEl.textContent = 'Error de conexión. Intenta de nuevo.';
     }
   }
 

@@ -173,7 +173,7 @@
       document.getElementById('pf-name').innerHTML = `${nuevoNombre} ${publicUser.verificado ? badgeVerificado() : ''}`;
       document.getElementById('pf-meta').textContent = [publicUser.email, nuevoPhone].filter(Boolean).join(' · ');
 
-      msgEl.classList.add('ok'); msgEl.textContent = '✅ Perfil actualizado correctamente.';
+      msgEl.classList.add('ok'); msgEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#2d7a4f"></i> Perfil actualizado correctamente.';
       document.getElementById('edit-pass-actual').value = '';
       document.getElementById('edit-pass-nueva').value  = '';
     } catch { msgEl.classList.add('err'); msgEl.textContent = 'Error de conexión.'; }
