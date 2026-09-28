@@ -340,7 +340,7 @@
     statusEl.textContent = 'Quitando...';
     try {
       const { error } = await supa.from('company_settings')
-        .upsert({ key, value: null }, { onConflict: 'key' });
+        .upsert({ key, value: '' }, { onConflict: 'key' });
       if (error) throw error;
       imgState[key] = null;
       showToast('<i class="fa-solid fa-circle-check"></i> Imagen quitada del sitio.');

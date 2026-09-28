@@ -638,7 +638,7 @@
   async function quitarImagen(key) {
     if (!confirm('¿Quitar esta imagen del sitio?')) return;
     try {
-      await supa.from('company_settings').upsert({ key, value: null }, { onConflict: 'key' });
+      await supa.from('company_settings').upsert({ key, value: '' }, { onConflict: 'key' });
       cmsData[key] = null;
       renderImagenes();
       showToast('<i class="fa-solid fa-circle-check"></i> Imagen quitada.');
