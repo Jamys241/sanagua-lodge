@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
 </head>
 <body>
+<div class="app-layout">
 
 <div class="hh-header">
   <span class="hh-title"><i class="fa-solid fa-star"></i> Populares Web</span>
@@ -29,7 +30,7 @@
 <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 
-<div class="container">
+<div class="main-content"><div class="container">
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
       <div class="card-title" style="margin:0"><i class="fa-solid fa-star"></i> Servicios populares</div>
@@ -184,5 +185,6 @@
 
   document.addEventListener('admin-ready', () => { loadPopulares(); });
 </script>
+</div></div><!-- /app-layout -->
 </body>
 </html>

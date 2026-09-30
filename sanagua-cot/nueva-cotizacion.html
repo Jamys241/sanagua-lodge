@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
 </head>
 <body>
+<div class="app-layout">
 
 <div class="hh-header">
   <span class="hh-title"><i class="fa-solid fa-file-invoice"></i> Nueva Cotización <span id="quote-counter" style="font-weight:400;opacity:.7;font-size:.8rem;margin-left:10px"></span></span>
@@ -31,7 +32,7 @@
 <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 
-<div class="container">
+<div class="main-content"><div class="container">
 
   <div class="card">
     <div class="card-title">Información del Cliente</div>
@@ -696,5 +697,6 @@
     await Promise.all([loadEmpresa(), loadLogo(), loadCategoriasProductos(), loadCounterDisplay()]);
   });
 </script>
+</div></div><!-- /app-layout -->
 </body>
 </html>
