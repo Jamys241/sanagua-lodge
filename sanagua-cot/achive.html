@@ -34,7 +34,7 @@
 
 <!-- Overlay y menú lateral -->
 <div class="side-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
-<div class="side-menu" id="side-menu" class="side-menu">
+<div class="side-menu" id="side-menu">
   <nav>
 
     <div style="padding:16px 24px 6px;">
@@ -92,19 +92,10 @@
     <div class="side-menu-divider"></div>
     <button onclick="cerrarSesion()" style="color:#e88;"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
   </nav>
-  <div class="side-menu-footer" id="menu-user-info-wrap">
-      <button onclick="irComoUsuarioAdmin()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;background:none;border:none;color:rgba(255,255,255,.4);font-family:var(--font-sans);font-size:.8rem;cursor:pointer;border-radius:8px;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.07)';this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.background='none';this.style.color='rgba(255,255,255,.4)'">
-        <i class="fa-solid fa-eye"></i> Ver como usuario
-      </button>
-      <button onclick="cerrarSesion()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;background:none;border:none;color:rgba(220,100,100,.7);font-family:var(--font-sans);font-size:.8rem;cursor:pointer;border-radius:8px;transition:all .2s" onmouseover="this.style.background='rgba(220,100,100,.08)';this.style.color='rgba(220,100,100,.9)'" onmouseout="this.style.background='none';this.style.color='rgba(220,100,100,.7)'">
-        <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
-      </button>
-      <div style="padding:8px 12px;font-size:.72rem;color:rgba(255,255,255,.25)" id="menu-user-info"></div>
-    </div>
+  <div style="padding:12px 24px 16px;font-size:.75rem;color:#666;" id="menu-user-info"></div>
 </div>
 
 
-</div><!-- /container -->
 
 <!-- ═══════════════ MODAL PERMISOS (solo superadmin) ════════════════════════ -->
 <div class="modal-overlay" id="permisos-modal">
@@ -504,10 +495,6 @@
         <button class="btn btn-outline" onclick="cerrarCambiarPass()" style="flex:1">Cancelar</button>
         <button class="btn btn-accent" onclick="guardarNuevaPass()" style="flex:1"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
       </div>
-    </div>
-  </div>
-</div>
-
     </div>
   </div>
 </div>
